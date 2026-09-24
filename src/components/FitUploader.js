@@ -113,7 +113,7 @@ export default function FitUploader({
           max_speed_kmh: analysis.summary.max_speed_kmh ?? null,
           max_power_w: analysis.summary.max_power_w ?? null,
           peak_torque_nm: analysis.summary.peak_torque_nm ?? null,
-          curves_data: analysis.curves ?? {},
+          data: analysis.curves ?? {},
           activity_date: new Date().toISOString(),
         })
         .select()
