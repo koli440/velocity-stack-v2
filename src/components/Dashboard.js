@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { supabase } from '../lib/supabase'
-import AuthModal from './AuthModal'
+import Sidebar from './Sidebar'
+import RosterPanel from './RosterPanel'
+import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
+import ThemeToggle from './ThemeToggle'
+import AuthModal from './AuthModal'
 
 export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const [user, setUser] = useState(null)
@@ -22,141 +25,102 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  const latestActivity = activities[0] || null
+
   return (
-    <main className="min-h-screen p-6 md:p-12 max-w-6xl mx-auto space-y-8">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-nordic-border gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-nordic-orange shadow-nordic-glow animate-pulse"></span>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
-              VELOCITY<span className="text-nordic-orange">STACK</span>
-            </h1>
+    <div className="flex min-h-screen bg-slate-100 dark:bg-surface-dark transition-colors duration-300">
+      {/* 1. Sloupec: Levý Sidebar */}
+      <Sidebar />
+
+      {/* 2. Sloupec: Hlavní pracovní plocha */}
+      <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto max-w-5xl">
+        {/* Horní ovládací lišta: Search, Theme Toggle, Profil */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-200 dark:border-surface-darkBorder">
+          <div className="w-full md:w-96">
+            <input
+              type="text"
+              placeholder="🔍 Search athletes, sessions, tracks..."
+              className="w-full bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            />
           </div>
-          <p className="text-nordic-muted text-xs md:text-sm mt-0.5">
-            Precision telemetry & neuromuscular profiling for track cycling.
-          </p>
+
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <AuthModal user={user} onAuthChange={setUser} />
+          </div>
         </div>
-        
-        <AuthModal user={user} onAuthChange={setUser} />
-      </header>
 
-      {/* Uploader */}
-      <FitUploader tracks={tracks} currentUser={user} />
-
-      {/* Hlavní obsahová mřížka */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
-        {/* Katalog drah vlevo */}
-        <section className="bg-nordic-card backdrop-blur-md p-6 rounded-2xl border border-nordic-border shadow-nordic-card h-fit">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <span>🏁</span> Velodromes
-            </h2>
-            <Link 
-              href="/velodromes" 
-              className="text-xs font-semibold text-nordic-orange hover:text-orange-400 transition"
-            >
-              All 123 tracks →
-            </Link>
+        {/* Nadpis sekce */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
+              Ride Telemetry
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Live tracking & neuromuscular session analysis
+            </p>
           </div>
-          
-          <div className="space-y-3">
-            {tracks.slice(0, 5).map(track => (
-              <div 
-                key={track.id} 
-                className="p-3 bg-slate-900/60 rounded-xl border border-slate-800/80 hover:border-slate-700 transition"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="font-medium text-sm text-slate-200">{track.name}</div>
-                  {track.country_code && (
-                    <span className="text-[10px] font-bold text-slate-400 font-mono bg-slate-800 px-1.5 py-0.5 rounded">
-                      {track.country_code}
-                    </span>
-                  )}
-                </div>
-                <div className="text-xs text-nordic-muted mt-1.5 flex gap-2">
-                  <span>{track.length_m} m</span>
-                  <span>•</span>
-                  <span>{track.surface}</span>
-                  <span>•</span>
-                  <span className={track.is_indoor ? 'text-amber-400/90' : 'text-sky-400/90'}>
-                    {track.is_indoor ? 'Indoor' : 'Outdoor'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        </div>
 
-        {/* Feed aktivit vpravo */}
-        <section className="md:col-span-2 bg-nordic-card backdrop-blur-md p-6 rounded-2xl border border-nordic-border shadow-nordic-card space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-2">
-            <span>⚡</span> Track Telemetry Feed
+        {/* Telemetrické bloky z tvého návrhu */}
+        <TelemetryCards lastActivity={latestActivity} />
+
+        {/* Náš rychlý .FIT Uploader */}
+        <FitUploader tracks={tracks} currentUser={user} />
+
+        {/* Historie tréninků (Track Feed) */}
+        <section className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+            Recent Velodrome Sessions
           </h2>
 
           {activities.length === 0 ? (
-            <div className="p-12 text-center border-2 border-dashed border-nordic-border rounded-2xl text-nordic-muted">
-              <p className="text-base font-medium">No sessions analyzed yet.</p>
-              <p className="text-xs mt-1">Drop your first raw .FIT file into the analyzer above.</p>
+            <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 text-sm">
+              No sessions found. Drop a .FIT file above to analyze telemetry.
             </div>
           ) : (
-            <div className="space-y-4">
-              {activities.map(act => (
-                <div 
-                  key={act.id} 
-                  className="p-5 bg-slate-900/60 rounded-xl border border-slate-800/80 hover:border-slate-700/80 transition"
+            <div className="space-y-3">
+              {activities.slice(0, 5).map((act) => (
+                <div
+                  key={act.id}
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-white text-base tracking-tight">{act.title}</h3>
-                      <div className="text-xs text-nordic-muted mt-0.5 flex items-center gap-2">
-                        <span>{act.tracks?.name ? `📍 ${act.tracks.name}` : 'Track Oval'}</span>
-                        <span>•</span>
-                        <span>{new Date(act.activity_date).toLocaleDateString()}</span>
-                      </div>
+                  <div>
+                    <div className="font-bold text-slate-900 dark:text-white text-sm">
+                      {act.title}
                     </div>
-                    {act.chainring && act.cog && (
-                      <span className="bg-slate-800/90 border border-slate-700 text-nordic-orange text-xs font-mono font-bold px-2.5 py-1 rounded-lg">
-                        ⚙️ {act.chainring}×{act.cog}
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      {act.tracks?.name || 'Track Oval'} • {new Date(act.activity_date).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs font-mono font-bold">
+                    {act.max_power_w && (
+                      <span className="text-emerald-500 dark:text-brand-neon">
+                        {act.max_power_w} W
                       </span>
                     )}
-                  </div>
-
-                  {/* 4 hlavní metriky */}
-                  <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-slate-800/60 text-center">
-                    <div>
-                      <div className="text-[11px] uppercase tracking-wider text-nordic-muted">Cadence</div>
-                      <div className="font-extrabold text-nordic-orange text-base mt-0.5">
-                        {act.max_cadence_rpm ? `${act.max_cadence_rpm} RPM` : '-'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] uppercase tracking-wider text-nordic-muted">Speed</div>
-                      <div className="font-extrabold text-nordic-cyan text-base mt-0.5">
-                        {act.max_speed_kmh ? `${act.max_speed_kmh} km/h` : '-'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] uppercase tracking-wider text-nordic-muted">Power</div>
-                      <div className="font-extrabold text-nordic-purple text-base mt-0.5">
-                        {act.max_power_w ? `${act.max_power_w} W` : '-'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] uppercase tracking-wider text-nordic-muted">Torque</div>
-                      <div className="font-extrabold text-nordic-emerald text-base mt-0.5">
-                        {act.peak_torque_nm ? `${act.peak_torque_nm} Nm` : '-'}
-                      </div>
-                    </div>
+                    {act.max_cadence_rpm && (
+                      <span className="text-orange-500">
+                        {act.max_cadence_rpm} RPM
+                      </span>
+                    )}
+                    {act.chainring && act.cog && (
+                      <span className="bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded text-slate-700 dark:text-slate-300">
+                        {act.chainring}×{act.cog}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
         </section>
+      </main>
 
+      {/* 3. Sloupec: Pravý Roster & Quick Stats */}
+      <div className="hidden xl:block p-6 border-l border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard/40">
+        <RosterPanel />
       </div>
-    </main>
+    </div>
   )
 }
