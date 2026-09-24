@@ -1,6 +1,6 @@
 'use client'
 
-export default function RosterPanel() {
+export default function RosterPanel({ onAddWorkout }) {
   const riders = [
     { name: 'Jan M.', status: 'Training on Track', state: 'track' },
     { name: 'Petr K.', status: 'Training on Track', state: 'track' },
@@ -11,12 +11,15 @@ export default function RosterPanel() {
 
   return (
     <aside className="w-80 shrink-0 space-y-6">
-      {/* Tlačítko pro přidání tréninku */}
-      <button className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-sm shadow-md transition">
+      {/* Tlačítko pro spuštění modalu */}
+      <button
+        onClick={onAddWorkout}
+        className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg transition transform active:scale-95"
+      >
         + Add Workout / Session
       </button>
 
-      {/* Roster & Activity */}
+      {/* Active Riders */}
       <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-slate-900 dark:text-white text-sm">Active Riders</h3>

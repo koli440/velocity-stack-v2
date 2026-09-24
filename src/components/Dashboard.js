@@ -12,11 +12,12 @@ import AuthModal from './AuthModal'
 
 export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const [user, setUser] = useState(null)
-  const [activities] = useState(initialActivities)
+  const [activities, setActivities] = useState(initialActivities)
   const [currentTracks, setCurrentTracks] = useState(tracks)
-  
-  // Aktivní pohled v centrální části: 'home' | 'velodromes'
   const [currentView, setCurrentView] = useState('home')
+  
+  // Stav pro otevření okna na nahrání workoutu
+  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -35,16 +36,24 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     if (data) setCurrentTracks(data)
   }
 
+  const reloadActivities = async () => {
+    const { data } = await supabase
+      .from('activities')
+      .select('*, tracks(*)')
+      .order('activity_date', { ascending: false })
+    if (data) setActivities(data)
+  }
+
   const latestActivity = activities[0] || null
 
   return (
     <div className="flex min-h-screen bg-slate-100 dark:bg-surface-dark transition-colors duration-300">
-      {/* 1. Levý Sidebar s přepínačem pohledů */}
+      {/* 1. Levý Sidebar */}
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
 
-      {/* 2. Centrální dynamická část */}
+      {/* 2. Centrální pracovní plocha */}
       <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto max-w-5xl">
-        {/* Společná horní ovládací lišta */}
+        {/* Horní vyhledávací lišta */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-200 dark:border-surface-darkBorder">
           <div className="w-full md:w-96">
             <input
@@ -60,10 +69,9 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           </div>
         </div>
 
-        {/* PŘEPÍNAČ: Podle volby v Sidebar zobrazíme buď Home Telemetrii, nebo Velodromy */}
         {currentView === 'home' ? (
           <>
-            {/* Telemetrie & Live Laps */}
+            {/* Titulek */}
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
@@ -75,23 +83,30 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
               </div>
             </div>
 
+            {/* Metriky a live laps */}
             <TelemetryCards lastActivity={latestActivity} />
 
-            <FitUploader tracks={currentTracks} currentUser={user} />
-
-            {/* Recent Sessions */}
+            {/* Výpis posledních tréninků */}
             <section className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                Recent Velodrome Sessions
-              </h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Recent Velodrome Sessions
+                </h2>
+                <button
+                  onClick={() => setIsWorkoutModalOpen(true)}
+                  className="text-xs font-bold text-emerald-600 dark:text-brand-neon hover:underline"
+                >
+                  + Upload .FIT
+                </button>
+              </div>
 
               {activities.length === 0 ? (
                 <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 text-sm">
-                  No sessions found. Drop a .FIT file above to analyze telemetry.
+                  No sessions found. Click "+ Add Workout" to upload your first .FIT session.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {activities.slice(0, 5).map((act) => (
+                  {activities.slice(0, 8).map((act) => (
                     <div
                       key={act.id}
                       className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between"
@@ -128,15 +143,31 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
             </section>
           </>
         ) : (
-          /* Zobrazení katalogu Velodromů přímo v centrální části */
           <VelodromesView tracks={currentTracks} onRefreshTracks={reloadTracks} />
         )}
       </main>
 
-      {/* 3. Pravý sloupec: Roster */}
+      {/* 3. Pravý panel Roster (s tlačítkem napojeným na otevření okna) */}
       <div className="hidden xl:block p-6 border-l border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard/40">
-        <RosterPanel />
+        <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
+
+      {/* Vyskakovací modální okno pro nahrání souboru */}
+      {isWorkoutModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <FitUploader
+              tracks={currentTracks}
+              currentUser={user}
+              onClose={() => setIsWorkoutModalOpen(false)}
+              onSaved={() => {
+                setIsWorkoutModalOpen(false)
+                reloadActivities()
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

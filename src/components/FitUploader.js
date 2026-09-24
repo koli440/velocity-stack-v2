@@ -12,7 +12,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 
-export default function FitUploader({ tracks = [], currentUser = null }) {
+export default function FitUploader({ tracks = [], currentUser = null, onClose, onSaved }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -119,9 +119,8 @@ export default function FitUploader({ tracks = [], currentUser = null }) {
       if (res.ok && result.success) {
         alert('🎉 Session successfully stored in your Track Feed!')
         setAnalysis(null)
-        router.refresh()
-      } else {
-        alert('Save failed: ' + (result.error || 'Unknown error'))
+        if (onSaved) onSaved()
+        else router.refresh()
       }
     } catch (err) {
       alert('Error saving activity: ' + err.message)
@@ -141,8 +140,15 @@ export default function FitUploader({ tracks = [], currentUser = null }) {
   const currentStroke = metricColors[activeMetric]?.stroke || '#F97316'
 
   return (
-    <div className="bg-nordic-card backdrop-blur-md p-6 md:p-8 rounded-2xl border border-nordic-border shadow-nordic-card mb-8">
-      {/* Horní hlavička uploaderu */}
+  <div className="bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl relative">
+    {onClose && (
+      <button
+        onClick={onClose}
+        className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg"
+      >
+        ✕
+      </button>
+    )}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
