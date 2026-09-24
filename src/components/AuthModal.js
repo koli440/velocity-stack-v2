@@ -15,37 +15,52 @@ export default function AuthModal({ user, onAuthChange }) {
     setLoading(true)
     setErrorMsg('')
 
-    
-
     try {
       if (isRegister) {
+        // Registrace nového uživatele
         const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
+          email: email.trim(),
+          password: password,
         })
         if (error) throw error
 
-        // Pokud je vyžadováno potvrzení e-mailu, session je null
-        if (data?.user && !data?.session) {
-          alert('📨 Registration successful! Please check your email and click the confirmation link before logging in.')
-          setIsRegister(false) // Přepnout na login formulář
-          return
+        if (data?.user) {
+          onAuthChange(data.user)
+          setEmail('')
+          setPassword('')
         }
+      } else {
+        // Přihlášení stávajícího uživatele
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        })
+        if (error) throw error
 
         if (data?.user) {
           onAuthChange(data.user)
+          setEmail('')
+          setPassword('')
         }
       }
     } catch (err) {
-      setErrorMsg(err.message)
+      console.error('Auth error:', err)
+      setErrorMsg(err.message || 'Authentication failed')
     } finally {
       setLoading(false)
     }
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    onAuthChange(null)
+    try {
+      setLoading(true)
+      await supabase.auth.signOut()
+      onAuthChange(null)
+    } catch (err) {
+      console.error('Logout error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (user) {
@@ -56,16 +71,17 @@ export default function AuthModal({ user, onAuthChange }) {
         </span>
         <button
           onClick={handleLogout}
+          disabled={loading}
           className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-1.5 px-3 rounded border border-slate-700 transition"
         >
-          Sign Out
+          {loading ? '...' : 'Sign Out'}
         </button>
       </div>
     )
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+    <div className="bg-slate-900 border border-slate-800 p-3 rounded-lg">
       <form onSubmit={handleAuth} className="flex flex-wrap items-center gap-2">
         <input
           type="email"
@@ -88,7 +104,7 @@ export default function AuthModal({ user, onAuthChange }) {
           disabled={loading}
           className="bg-track-orange hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded text-sm transition"
         >
-          {loading ? '...' : isRegister ? 'Register' : 'Log In'}
+          {loading ? 'Please wait...' : isRegister ? 'Register' : 'Log In'}
         </button>
         <button
           type="button"
@@ -98,11 +114,12 @@ export default function AuthModal({ user, onAuthChange }) {
           }}
           className="text-xs text-slate-400 hover:text-slate-200 underline ml-2"
         >
-          {isRegister ? 'Already have account? Log In' : 'Need account? Sign Up'}
+          {isRegister ? 'Already registered? Log In' : 'Need account? Sign Up'}
         </button>
       </form>
+
       {errorMsg && (
-        <div className="text-xs text-rose-400 mt-2 font-medium">
+        <div className="text-xs text-rose-400 mt-2 font-medium bg-rose-950/40 p-1.5 rounded border border-rose-900">
           ⚠️ {errorMsg}
         </div>
       )}
