@@ -6,6 +6,7 @@ export async function POST(request) {
     const body = await request.json()
     const {
       title,
+      user_id,
       track_id,
       chainring,
       cog,
@@ -13,22 +14,6 @@ export async function POST(request) {
       summary,
       curves
     } = body
-
-    // 1. Prozatímní uživatel (než zapneme plný login / auth)
-    // Zjistíme, zda v profiles už existuje profil, případně vytvoříme demo profil
-    let { data: profile } = await supabase.from('profiles').select('id').limit(1).single()
-
-    let userId = profile?.id
-    if (!userId) {
-      // Pokud profil ještě neexistuje, vytvoříme demo profil pro testování
-      const demoId = '00000000-0000-0000-0000-000000000001'
-      await supabase.from('profiles').upsert({
-        id: demoId,
-        username: 'track_rider_1',
-        full_name: 'Track Cyclist'
-      })
-      userId = demoId
-    }
 
     // 2. Vložení záznamu do tabulky activities
     const { data: activity, error: actError } = await supabase
