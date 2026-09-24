@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { supabase } from '../lib/supabase'
 import Sidebar from './Sidebar'
@@ -9,27 +10,22 @@ import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
 import VelodromesView from './VelodromesView'
 import ThemeToggle from './ThemeToggle'
-import AuthModal from './AuthModal'
 import ProfileSettingsModal from './ProfileSettingsModal'
 
 export default function Dashboard({ tracks = [], initialActivities = [] }) {
+  const router = useRouter()
   const { setTheme } = useTheme()
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
   const [activities, setActivities] = useState(initialActivities)
   const [currentTracks, setCurrentTracks] = useState(tracks)
-  
-  // Zobrazení a modální okna
   const [currentView, setCurrentView] = useState('home')
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
 
-  // Načtení profilu uživatele z DB včetně tématu
   const fetchUserProfile = async (userId) => {
-    if (!userId) {
-      setProfile(null)
-      return
-    }
     const { data } = await supabase
       .from('profiles')
       .select('*')
@@ -46,21 +42,33 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      if (currentUser) fetchUserProfile(currentUser.id)
+      if (!session?.user) {
+        router.push('/login')
+      } else {
+        setUser(session.user)
+        fetchUserProfile(session.user.id)
+        setCheckingAuth(false)
+      }
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      if (currentUser) fetchUserProfile(currentUser.id)
+      if (!session?.user) {
+        router.push('/login')
+      } else {
+        setUser(session.user)
+        fetchUserProfile(session.user.id)
+      }
     })
 
     return () => subscription.unsubscribe()
-  }, [setTheme])
+  }, [router, setTheme])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   const reloadTracks = async () => {
     const { data } = await supabase.from('tracks').select('*').order('name')
@@ -75,26 +83,27 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     if (data) setActivities(data)
   }
 
+  // Zobrazit loader při ověřování přihlášení
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-surface-dark text-slate-500 font-bold text-xs uppercase tracking-widest">
+        Verifying athlete credentials...
+      </div>
+    )
+  }
+
   const latestActivity = activities[0] || null
 
   return (
     <div className="flex min-h-screen bg-slate-100 dark:bg-surface-dark transition-colors duration-300">
-      {/* 1. Levý Sidebar s navigací a tlačítkem Settings */}
       <Sidebar
         currentView={currentView}
         onViewChange={setCurrentView}
-        onOpenSettings={() => {
-          if (!user) {
-            alert('Pro přístup k nastavení profilu se nejprve přihlaste.')
-            return
-          }
-          setIsSettingsModalOpen(true)
-        }}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
       />
 
-      {/* 2. Hlavní plocha Cockpitu */}
       <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto max-w-5xl">
-        {/* Horní lišta */}
+        {/* Horní lišta s profilem a odhlášením */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-200 dark:border-surface-darkBorder">
           <div className="w-full md:w-96">
             <input
@@ -105,40 +114,39 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Tlačítko na profil, pokud je přihlášen */}
-            {user && (
-              <button
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition shadow-sm"
-              >
-                <span>👤</span>
-                <span>{profile?.nickname || profile?.first_name || 'Profile'}</span>
-              </button>
-            )}
+            <button
+              onClick={() => setIsSettingsModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition shadow-sm"
+            >
+              <span>👤</span>
+              <span>{profile?.nickname || profile?.first_name || user?.email?.split('@')[0]}</span>
+            </button>
 
             <ThemeToggle currentUser={user} />
-            <AuthModal user={user} onAuthChange={setUser} />
+
+            <button
+              onClick={handleSignOut}
+              className="py-1.5 px-3 rounded-xl bg-slate-200/80 hover:bg-rose-500 hover:text-white dark:bg-slate-800 dark:hover:bg-rose-600 text-slate-700 dark:text-slate-300 text-xs font-bold transition shadow-sm"
+              title="Sign Out"
+            >
+              Log Out
+            </button>
           </div>
         </div>
 
-        {/* Dynamické přepínání: Home vs. Velodromes */}
         {currentView === 'home' ? (
           <>
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
-                  Ride Telemetry
-                </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Live tracking & neuromuscular session analysis
-                </p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
+                Ride Telemetry
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Live tracking & neuromuscular session analysis
+              </p>
             </div>
 
-            {/* Metriky a Lap Telemetry */}
             <TelemetryCards lastActivity={latestActivity} />
 
-            {/* Seznam posledních jízd */}
             <section className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-base font-bold text-slate-900 dark:text-white">
@@ -200,12 +208,10 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         )}
       </main>
 
-      {/* 3. Pravý panel s Rosterem a tlačítkem Workoutu */}
       <div className="hidden xl:block p-6 border-l border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard/40">
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
 
-      {/* Modální okno pro nahrání .FIT souboru */}
       {isWorkoutModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
           <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -222,7 +228,6 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         </div>
       )}
 
-      {/* Modální okno pro nastavení profilu jezdce */}
       <ProfileSettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => {
