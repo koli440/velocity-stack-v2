@@ -1,22 +1,16 @@
 import { Plus_Jakarta_Sans } from 'next/font/google'
+import { ThemeProvider } from '../components/ThemeProvider'
 import './globals.css'
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-jakarta',
-})
-
-export const metadata = {
-  title: 'Velocity Stack | Track Cycling Platform',
-  description: 'Precision track cycling telemetry, durational curves and velodrome catalog',
-}
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'] })
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${jakarta.variable} font-sans bg-nordic-bg text-nordic-text antialiased`}>
-      <body className="min-h-screen selection:bg-nordic-orange selection:text-white">
-        {children}
+    <html lang="en" suppressHydrationWarning className={jakarta.className}>
+      <body className="bg-surface-light dark:bg-surface-dark text-slate-800 dark:text-slate-100 transition-colors duration-300">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )
