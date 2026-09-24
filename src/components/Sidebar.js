@@ -56,9 +56,9 @@ export default function Sidebar({
 
             {ridesOpen && (
               <div className="ml-8 mt-1 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 pl-3">
-                <div className="block px-4 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed">
+                <span className="block px-4 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed">
                   Road (Soon)
-                </div>
+                </span>
               </div>
             )}
           </div>
