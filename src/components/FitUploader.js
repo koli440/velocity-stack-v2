@@ -49,7 +49,7 @@ export default function FitUploader({ tracks = [] }) {
     setSaving(true)
 
     try {
-      const res = await fetch('/api/activities/save', {
+      const res = await fetch('/api/activities/save/ride', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,7 +62,7 @@ export default function FitUploader({ tracks = [] }) {
           curves: analysis.curves
         })
       })
-
+      
       const result = await res.json()
       if (res.ok) {
         alert('🎉 Activity successfully saved to your Track Feed!')
