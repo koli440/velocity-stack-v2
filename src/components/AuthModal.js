@@ -15,24 +15,23 @@ export default function AuthModal({ user, onAuthChange }) {
     setLoading(true)
     setErrorMsg('')
 
+    
+
     try {
       if (isRegister) {
-        // Registrace nového uživatele (bez čekání na potvrzení)
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
         })
         if (error) throw error
-        if (data?.user) {
-          onAuthChange(data.user)
+
+        // Pokud je vyžadováno potvrzení e-mailu, session je null
+        if (data?.user && !data?.session) {
+          alert('📨 Registration successful! Please check your email and click the confirmation link before logging in.')
+          setIsRegister(false) // Přepnout na login formulář
+          return
         }
-      } else {
-        // Přihlášení
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        if (error) throw error
+
         if (data?.user) {
           onAuthChange(data.user)
         }
