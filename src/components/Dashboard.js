@@ -11,6 +11,7 @@ import FitUploader from './FitUploader'
 import VelodromesView from './VelodromesView'
 import ThemeToggle from './ThemeToggle'
 import ProfileSettingsModal from './ProfileSettingsModal'
+import ActivityFeed from './ActivityFeed'
 
 export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const router = useRouter()
@@ -161,8 +162,8 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
             </div>
 
             <TelemetryCards lastActivity={latestActivity} />
-            <ActivityFeed currentUser={user} />
-            
+            <ActivityFeed activities={activities} onAddWorkout={() => setIsWorkoutModalOpen(true)} />
+
           </>
         ) : (
           <VelodromesView tracks={currentTracks} onRefreshTracks={reloadTracks} />
