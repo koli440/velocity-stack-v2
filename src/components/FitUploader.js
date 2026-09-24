@@ -91,7 +91,7 @@ export default function FitUploader({ tracks = [], currentUser = null }) {
     setSaving(true)
 
     try {
-      const res = await fetch('/api/activities/ride', {
+      const res = await fetch('/api/activities/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
