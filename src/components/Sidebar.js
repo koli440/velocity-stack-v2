@@ -56,15 +56,9 @@ export default function Sidebar({
 
             {ridesOpen && (
               <div className="ml-8 mt-1 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 pl-3">
-                <button
-                  onClick={() => onViewChange && onViewChange('velodromes')}
-                  className={navItemClass(currentView === 'velodromes')}
-                >
-                  Velodrome
-                </button>
-                <span className="block px-4 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed">
+                <div className="block px-4 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed">
                   Road (Soon)
-                </span>
+                </div>
               </div>
             )}
           </div>
@@ -78,6 +72,9 @@ export default function Sidebar({
           <button className={navItemClass(false)}>
             <span>👥</span> Team
           </button>
+          <button onClick={() => onViewChange && onViewChange('velodromes')} className={navItemClass(currentView === 'velodromes')}>
+                  Velodromes
+            </button>
           
           {/* Tlačítko Settings otevírající nastavení profilu */}
           <button
