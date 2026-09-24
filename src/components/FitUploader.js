@@ -1,12 +1,21 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
-export default function FitUploader() {
+export default function FitUploader({ tracks = [] }) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [analysis, setAnalysis] = useState(null)
   const [activeMetric, setActiveMetric] = useState('Cadence')
+
+  // Metadata k uložení
+  const [title, setTitle] = useState('Velodrome Flying Laps')
+  const [selectedTrack, setSelectedTrack] = useState(tracks[0]?.id || '')
+  const [chainring, setChainring] = useState('58')
+  const [cog, setCog] = useState('14')
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0]
@@ -35,7 +44,40 @@ export default function FitUploader() {
     }
   }
 
-  // Příprava dat pro Recharts graf
+  const handleSave = async () => {
+    if (!analysis) return
+    setSaving(true)
+
+    try {
+      const res = await fetch('/api/activities/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          track_id: selectedTrack || null,
+          chainring,
+          cog,
+          crank_length_mm: 165.0,
+          summary: analysis.summary,
+          curves: analysis.curves
+        })
+      })
+
+      const result = await res.json()
+      if (res.ok) {
+        alert('🎉 Activity successfully saved to your Track Feed!')
+        setAnalysis(null) // vyčistit formulář
+        router.refresh()  // obnovit data na stránce
+      } else {
+        alert('Save failed: ' + result.error)
+      }
+    } catch (err) {
+      alert('Error saving activity: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const chartData = analysis?.curves?.[activeMetric]
     ? Object.entries(analysis.curves[activeMetric]).map(([label, value]) => ({
         interval: label,
@@ -120,6 +162,67 @@ export default function FitUploader() {
                 />
               </LineChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Dráhový panel pro uložení do databáze */}
+          <div className="p-4 bg-slate-900 border border-slate-700 rounded-lg">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">
+              🏁 Tag & Save to Track Feed
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Session Title</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm text-white focus:outline-none focus:border-track-orange"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Velodrome</label>
+                <select
+                  value={selectedTrack}
+                  onChange={(e) => setSelectedTrack(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm text-white focus:outline-none focus:border-track-orange"
+                >
+                  <option value="">-- Select Velodrome --</option>
+                  {tracks.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.length_m}m)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Chainring (Teeth)</label>
+                <input
+                  type="number"
+                  value={chainring}
+                  onChange={(e) => setChainring(e.target.value)}
+                  placeholder="58"
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm text-white focus:outline-none focus:border-track-orange"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Cog (Teeth)</label>
+                <input
+                  type="number"
+                  value={cog}
+                  onChange={(e) => setCog(e.target.value)}
+                  placeholder="14"
+                  className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm text-white focus:outline-none focus:border-track-orange"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded transition text-sm"
+            >
+              {saving ? 'Saving to Database...' : '💾 Save Workout to Track Vault'}
+            </button>
           </div>
         </div>
       )}
