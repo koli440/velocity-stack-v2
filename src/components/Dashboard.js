@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTheme } from 'next-themes'
 import { supabase } from '../lib/supabase'
 import Sidebar from './Sidebar'
 import RosterPanel from './RosterPanel'
@@ -9,27 +10,57 @@ import FitUploader from './FitUploader'
 import VelodromesView from './VelodromesView'
 import ThemeToggle from './ThemeToggle'
 import AuthModal from './AuthModal'
+import ProfileSettingsModal from './ProfileSettingsModal'
 
 export default function Dashboard({ tracks = [], initialActivities = [] }) {
+  const { setTheme } = useTheme()
   const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [activities, setActivities] = useState(initialActivities)
   const [currentTracks, setCurrentTracks] = useState(tracks)
-  const [currentView, setCurrentView] = useState('home')
   
-  // Stav pro otevření okna na nahrání workoutu
+  // Zobrazení a modální okna
+  const [currentView, setCurrentView] = useState('home')
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false)
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+
+  // Načtení profilu uživatele z DB včetně tématu
+  const fetchUserProfile = async (userId) => {
+    if (!userId) {
+      setProfile(null)
+      return
+    }
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (data) {
+      setProfile(data)
+      if (data.theme_preference) {
+        setTheme(data.theme_preference)
+      }
+    }
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      if (currentUser) fetchUserProfile(currentUser.id)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      if (currentUser) fetchUserProfile(currentUser.id)
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [setTheme])
 
   const reloadTracks = async () => {
     const { data } = await supabase.from('tracks').select('*').order('name')
@@ -48,12 +79,22 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
 
   return (
     <div className="flex min-h-screen bg-slate-100 dark:bg-surface-dark transition-colors duration-300">
-      {/* 1. Levý Sidebar */}
-      <Sidebar currentView={currentView} onViewChange={setCurrentView} />
+      {/* 1. Levý Sidebar s navigací a tlačítkem Settings */}
+      <Sidebar
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        onOpenSettings={() => {
+          if (!user) {
+            alert('Pro přístup k nastavení profilu se nejprve přihlaste.')
+            return
+          }
+          setIsSettingsModalOpen(true)
+        }}
+      />
 
-      {/* 2. Centrální pracovní plocha */}
+      {/* 2. Hlavní plocha Cockpitu */}
       <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto max-w-5xl">
-        {/* Horní vyhledávací lišta */}
+        {/* Horní lišta */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-200 dark:border-surface-darkBorder">
           <div className="w-full md:w-96">
             <input
@@ -64,14 +105,25 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <ThemeToggle />
+            {/* Tlačítko na profil, pokud je přihlášen */}
+            {user && (
+              <button
+                onClick={() => setIsSettingsModalOpen(true)}
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition shadow-sm"
+              >
+                <span>👤</span>
+                <span>{profile?.nickname || profile?.first_name || 'Profile'}</span>
+              </button>
+            )}
+
+            <ThemeToggle currentUser={user} />
             <AuthModal user={user} onAuthChange={setUser} />
           </div>
         </div>
 
+        {/* Dynamické přepínání: Home vs. Velodromes */}
         {currentView === 'home' ? (
           <>
-            {/* Titulek */}
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
@@ -83,10 +135,10 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
               </div>
             </div>
 
-            {/* Metriky a live laps */}
+            {/* Metriky a Lap Telemetry */}
             <TelemetryCards lastActivity={latestActivity} />
 
-            {/* Výpis posledních tréninků */}
+            {/* Seznam posledních jízd */}
             <section className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-base font-bold text-slate-900 dark:text-white">
@@ -116,7 +168,8 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
                           {act.title}
                         </div>
                         <div className="text-xs text-slate-400 mt-0.5">
-                          {act.tracks?.name || 'Track Oval'} • {new Date(act.activity_date).toLocaleDateString()}
+                          {act.tracks?.name || 'Track Oval'} •{' '}
+                          {new Date(act.activity_date).toLocaleDateString()}
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-xs font-mono font-bold">
@@ -147,12 +200,12 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         )}
       </main>
 
-      {/* 3. Pravý panel Roster (s tlačítkem napojeným na otevření okna) */}
+      {/* 3. Pravý panel s Rosterem a tlačítkem Workoutu */}
       <div className="hidden xl:block p-6 border-l border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard/40">
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
 
-      {/* Vyskakovací modální okno pro nahrání souboru */}
+      {/* Modální okno pro nahrání .FIT souboru */}
       {isWorkoutModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
           <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -168,6 +221,17 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           </div>
         </div>
       )}
+
+      {/* Modální okno pro nastavení profilu jezdce */}
+      <ProfileSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => {
+          setIsSettingsModalOpen(false)
+          if (user?.id) fetchUserProfile(user.id)
+        }}
+        user={user}
+        tracks={currentTracks}
+      />
     </div>
   )
 }
