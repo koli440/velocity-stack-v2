@@ -12,7 +12,12 @@ import {
   CartesianGrid,
 } from 'recharts'
 
-export default function FitUploader({ tracks = [], currentUser = null, onClose, onSaved }) {
+export default function FitUploader({
+  tracks = [],
+  currentUser = null,
+  onClose,
+  onSaved,
+}) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -25,7 +30,7 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
   const [chainring, setChainring] = useState('58')
   const [cog, setCog] = useState('14')
 
-  // Barevná mapa pro severský styl (Nordic Track)
+  // Barevná mapa pro Nordic Track styl
   const metricColors = {
     Cadence: {
       stroke: '#F97316', // Nordic Orange
@@ -71,7 +76,6 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
       const data = await res.json()
       if (res.ok) {
         setAnalysis(data)
-        // Pokud přišla data a aktivní metrika v nich není, nastavíme první dostupnou
         if (data.curves && !data.curves[activeMetric]) {
           const firstKey = Object.keys(data.curves)[0]
           if (firstKey) setActiveMetric(firstKey)
@@ -119,8 +123,13 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
       if (res.ok && result.success) {
         alert('🎉 Session successfully stored in your Track Feed!')
         setAnalysis(null)
-        if (onSaved) onSaved()
-        else router.refresh()
+        if (onSaved) {
+          onSaved()
+        } else {
+          router.refresh()
+        }
+      } else {
+        alert('Save failed: ' + (result.error || 'Unknown error'))
       }
     } catch (err) {
       alert('Error saving activity: ' + err.message)
@@ -140,32 +149,36 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
   const currentStroke = metricColors[activeMetric]?.stroke || '#F97316'
 
   return (
-  <div className="bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl relative">
-    {onClose && (
-      <button
-        onClick={onClose}
-        className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg"
-      >
-        ✕
-      </button>
-    )}
+    <div className="bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl relative">
+      {/* Zavírací tlačítko v modálu */}
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
+        >
+          ✕
+        </button>
+      )}
+
+      {/* Horní hlavička uploaderu */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xl">⚡</span>
-            <h2 className="text-xl font-bold tracking-tight text-white">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               Track Telemetry Analyzer
             </h2>
           </div>
-          <p className="text-nordic-muted text-xs md:text-sm mt-0.5">
+          <p className="text-slate-500 dark:text-nordic-muted text-xs md:text-sm mt-0.5">
             Process raw .FIT telemetry files directly to generate pure durational curves.
           </p>
         </div>
 
-        <label className="relative inline-flex items-center justify-center bg-nordic-orange hover:bg-orange-600 text-white font-bold text-xs uppercase tracking-wider py-3 px-6 rounded-xl cursor-pointer transition shadow-nordic-glow">
+        <label className="relative inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider py-3 px-6 rounded-xl cursor-pointer transition shadow-md">
           {loading ? (
             <span className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+              <span className="h-3 w-3 rounded-full border-2 border-white dark:border-slate-950 border-t-transparent animate-spin"></span>
               Analyzing FIT...
             </span>
           ) : (
@@ -185,57 +198,63 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
         <div className="space-y-6 pt-2">
           {/* KPI karty z analýzy */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800/80">
-              <div className="text-[11px] uppercase tracking-wider text-nordic-muted">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/80">
+              <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-nordic-muted font-semibold">
                 Peak Cadence
               </div>
               <div className="text-2xl font-extrabold text-nordic-orange mt-1">
-                {analysis.summary.max_cadence ?? '-'} <span className="text-xs font-normal text-slate-400">RPM</span>
+                {analysis.summary.max_cadence ?? '-'}{' '}
+                <span className="text-xs font-normal text-slate-400">RPM</span>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800/80">
-              <div className="text-[11px] uppercase tracking-wider text-nordic-muted">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/80">
+              <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-nordic-muted font-semibold">
                 Max Speed
               </div>
               <div className="text-2xl font-extrabold text-nordic-cyan mt-1">
-                {analysis.summary.max_speed_kmh ?? '-'} <span className="text-xs font-normal text-slate-400">km/h</span>
+                {analysis.summary.max_speed_kmh ?? '-'}{' '}
+                <span className="text-xs font-normal text-slate-400">km/h</span>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800/80">
-              <div className="text-[11px] uppercase tracking-wider text-nordic-muted">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/80">
+              <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-nordic-muted font-semibold">
                 Max Power
               </div>
               <div className="text-2xl font-extrabold text-nordic-purple mt-1">
-                {analysis.summary.max_power_w ?? '-'} <span className="text-xs font-normal text-slate-400">W</span>
+                {analysis.summary.max_power_w ?? '-'}{' '}
+                <span className="text-xs font-normal text-slate-400">W</span>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800/80">
-              <div className="text-[11px] uppercase tracking-wider text-nordic-muted">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/80">
+              <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-nordic-muted font-semibold">
                 Peak Torque
               </div>
               <div className="text-2xl font-extrabold text-nordic-emerald mt-1">
-                {analysis.summary.peak_torque_nm ?? '-'} <span className="text-xs font-normal text-slate-400">Nm</span>
+                {analysis.summary.peak_torque_nm ?? '-'}{' '}
+                <span className="text-xs font-normal text-slate-400">Nm</span>
               </div>
             </div>
           </div>
 
           {/* Přepínač křivek v pill stylu */}
-          <div className="flex flex-wrap gap-2 border-b border-nordic-border pb-3 pt-2">
+          <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-nordic-border pb-3 pt-2">
             {Object.keys(analysis.curves).map((metric) => {
               const isActive = activeMetric === metric
-              const tabStyle = metricColors[metric]?.activeTab || 'bg-nordic-orange text-white'
+              const tabStyle =
+                metricColors[metric]?.activeTab || 'bg-nordic-orange text-white'
 
               return (
                 <button
                   key={metric}
+                  type="button"
                   onClick={() => setActiveMetric(metric)}
                   className={`py-1.5 px-4 rounded-full text-xs font-semibold tracking-wide transition ${
                     isActive
                       ? `${tabStyle} shadow-sm`
-                      : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+                      : 'bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
                   }`}
                 >
                   {metric} Curve
@@ -247,10 +266,25 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
           {/* Graf křivek Recharts */}
           <div className="h-72 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
-                <XAxis dataKey="interval" stroke="#94A3B8" tick={{ fontSize: 12 }} />
-                <YAxis stroke="#94A3B8" domain={['auto', 'auto']} tick={{ fontSize: 12 }} />
+              <LineChart
+                data={chartData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#334155"
+                  opacity={0.3}
+                />
+                <XAxis
+                  dataKey="interval"
+                  stroke="#94A3B8"
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis
+                  stroke="#94A3B8"
+                  domain={['auto', 'auto']}
+                  tick={{ fontSize: 12 }}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -274,43 +308,43 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
           </div>
 
           {/* Panel pro uložení do databáze */}
-          <div className="p-5 bg-slate-900/70 border border-nordic-border rounded-xl mt-6 space-y-4">
+          <div className="p-5 bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-nordic-border rounded-xl mt-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-2">
                 <span>💾</span> Tag & Save Workout to Feed
               </h3>
               {currentUser ? (
-                <span className="text-xs text-nordic-emerald font-mono">
+                <span className="text-xs text-emerald-600 dark:text-nordic-emerald font-mono">
                   ✓ Ready as {currentUser.email}
                 </span>
               ) : (
-                <span className="text-xs text-amber-400/90 font-mono">
-                  ⚠️ Guest session (login to store under your profile)
+                <span className="text-xs text-amber-500 font-mono">
+                  ⚠️ Guest session
                 </span>
               )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-nordic-muted mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-nordic-muted mb-1">
                   Session Title
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-slate-800/80 border border-slate-700/80 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-nordic-orange"
+                  className="w-full bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-nordic-muted mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-nordic-muted mb-1">
                   Velodrome
                 </label>
                 <select
                   value={selectedTrack}
                   onChange={(e) => setSelectedTrack(e.target.value)}
-                  className="w-full bg-slate-800/80 border border-slate-700/80 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-nordic-orange"
+                  className="w-full bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                 >
                   <option value="">-- Select Velodrome --</option>
                   {tracks.map((t) => (
@@ -322,7 +356,7 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-nordic-muted mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-nordic-muted mb-1">
                   Chainring (T)
                 </label>
                 <input
@@ -330,12 +364,12 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
                   value={chainring}
                   onChange={(e) => setChainring(e.target.value)}
                   placeholder="58"
-                  className="w-full bg-slate-800/80 border border-slate-700/80 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-nordic-orange"
+                  className="w-full bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-nordic-muted mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-nordic-muted mb-1">
                   Cog (T)
                 </label>
                 <input
@@ -343,15 +377,16 @@ export default function FitUploader({ tracks = [], currentUser = null, onClose, 
                   value={cog}
                   onChange={(e) => setCog(e.target.value)}
                   placeholder="14"
-                  className="w-full bg-slate-800/80 border border-slate-700/80 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-nordic-orange"
+                  className="w-full bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
             </div>
 
             <button
+              type="button"
               onClick={handleSave}
               disabled={saving}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition text-xs uppercase tracking-wider shadow-sm"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition text-xs uppercase tracking-wider shadow-sm disabled:opacity-50"
             >
               {saving ? 'Writing Telemetry to Vault...' : 'Save Workout to Track Vault'}
             </button>

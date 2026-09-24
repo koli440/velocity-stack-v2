@@ -45,8 +45,10 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
       if (!session?.user) {
         router.push('/login')
       } else {
-        setUser(session.user)
-        fetchUserProfile(session.user.id)
+        const currentUser = session.user
+        setUser(currentUser)
+        fetchUserProfile(currentUser.id)
+        reloadActivities(currentUser.id) // <--- Načíst aktivity konkrétního jezdce
         setCheckingAuth(false)
       }
     })
@@ -57,8 +59,10 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
       if (!session?.user) {
         router.push('/login')
       } else {
-        setUser(session.user)
-        fetchUserProfile(session.user.id)
+        const currentUser = session.user
+        setUser(currentUser)
+        fetchUserProfile(currentUser.id)
+        reloadActivities(currentUser.id) // <--- Obnovit při přepnutí účtu
       }
     })
 
@@ -75,12 +79,23 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     if (data) setCurrentTracks(data)
   }
 
-  const reloadActivities = async () => {
-    const { data } = await supabase
+  // Načítání aktivit pouze pro aktuálně přihlášeného jezdce
+  const reloadActivities = async (userId) => {
+    const targetId = userId || user?.id
+    if (!targetId) {
+      setActivities([])
+      return
+    }
+
+    const { data, error } = await supabase
       .from('activities')
       .select('*, tracks(*)')
+      .eq('user_id', targetId)
       .order('activity_date', { ascending: false })
-    if (data) setActivities(data)
+
+    if (!error && data) {
+      setActivities(data)
+    }
   }
 
   // Zobrazit loader při ověřování přihlášení
