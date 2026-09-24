@@ -25,36 +25,35 @@ export default function FitUploader({
   const [analysis, setAnalysis] = useState(null)
   const [activeMetric, setActiveMetric] = useState('Cadence')
 
-  // Metadata pro uložení jízdy
+  // Metadata aktivity
   const [title, setTitle] = useState('Velodrome Flying Laps')
   const [selectedTrack, setSelectedTrack] = useState(tracks[0]?.id || '')
   const [chainring, setChainring] = useState('58')
   const [cog, setCog] = useState('14')
 
-  // Barevná mapa pro Nordic Track styl
   const metricColors = {
     Cadence: {
-      stroke: '#F97316', // Nordic Orange
+      stroke: '#F97316',
       badge: 'text-nordic-orange bg-orange-500/10 border-orange-500/30',
       activeTab: 'bg-nordic-orange text-white',
     },
     Speed: {
-      stroke: '#38BDF8', // Nordic Cyan
+      stroke: '#38BDF8',
       badge: 'text-nordic-cyan bg-sky-500/10 border-sky-500/30',
       activeTab: 'bg-nordic-cyan text-slate-900',
     },
     Power: {
-      stroke: '#A78BFA', // Nordic Purple
+      stroke: '#A78BFA',
       badge: 'text-nordic-purple bg-purple-500/10 border-purple-500/30',
       activeTab: 'bg-nordic-purple text-white',
     },
     Torque: {
-      stroke: '#34D399', // Nordic Emerald
+      stroke: '#34D399',
       badge: 'text-nordic-emerald bg-emerald-500/10 border-emerald-500/30',
       activeTab: 'bg-nordic-emerald text-slate-900',
     },
     HeartRate: {
-      stroke: '#FB7185', // Rose / Red
+      stroke: '#FB7185',
       badge: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
       activeTab: 'bg-rose-500 text-white',
     },
@@ -99,8 +98,8 @@ export default function FitUploader({
     setSaving(true)
 
     try {
-      // Zápis přímo přes klientského Supabase klienta s aktivním JWT tokenem
-      const { data, error } = await supabase
+      // 1. Zápis do tabulky activities
+      const { data: activity, error: actError } = await supabase
         .from('activities')
         .insert({
           title,
@@ -113,31 +112,44 @@ export default function FitUploader({
           max_speed_kmh: analysis.summary.max_speed_kmh ?? null,
           max_power_w: analysis.summary.max_power_w ?? null,
           peak_torque_nm: analysis.summary.peak_torque_nm ?? null,
-          data: analysis.curves ?? {},
           activity_date: new Date().toISOString(),
         })
         .select()
         .single()
 
-      if (error) {
-        alert('Save failed: ' + error.message)
+      if (actError) throw actError
+
+      // 2. Zápis do existující tabulky activity_curves (sloupec 'data')
+      if (analysis.curves && Object.keys(analysis.curves).length > 0) {
+        const curveRows = Object.entries(analysis.curves).map(
+          ([metricType, metricData]) => ({
+            activity_id: activity.id,
+            curve_type: metricType,
+            data: metricData, // Název sloupce v DB podle screenshotu
+          })
+        )
+
+        const { error: curvesError } = await supabase
+          .from('activity_curves')
+          .insert(curveRows)
+
+        if (curvesError) throw curvesError
+      }
+
+      alert('🎉 Session and durational curves successfully stored!')
+      setAnalysis(null)
+      if (onSaved) {
+        onSaved()
       } else {
-        alert('🎉 Session successfully stored in your Track Feed!')
-        setAnalysis(null)
-        if (onSaved) {
-          onSaved()
-        } else {
-          router.refresh()
-        }
+        router.refresh()
       }
     } catch (err) {
-      alert('Error saving activity: ' + err.message)
+      alert('Save failed: ' + err.message)
     } finally {
       setSaving(false)
     }
   }
 
-  // Příprava dat křivky pro Recharts
   const chartData = analysis?.curves?.[activeMetric]
     ? Object.entries(analysis.curves[activeMetric]).map(([label, value]) => ({
         interval: label,
@@ -149,7 +161,6 @@ export default function FitUploader({
 
   return (
     <div className="bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl relative">
-      {/* Zavírací tlačítko v modálu */}
       {onClose && (
         <button
           type="button"
@@ -160,7 +171,7 @@ export default function FitUploader({
         </button>
       )}
 
-      {/* Horní hlavička uploaderu */}
+      {/* Horní hlavička */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
@@ -195,7 +206,7 @@ export default function FitUploader({
 
       {analysis && (
         <div className="space-y-6 pt-2">
-          {/* KPI karty z analýzy */}
+          {/* KPI karty */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/80">
               <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-nordic-muted font-semibold">
@@ -238,7 +249,7 @@ export default function FitUploader({
             </div>
           </div>
 
-          {/* Přepínač křivek v pill stylu */}
+          {/* Přepínač křivek */}
           <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-nordic-border pb-3 pt-2">
             {Object.keys(analysis.curves).map((metric) => {
               const isActive = activeMetric === metric
@@ -262,7 +273,7 @@ export default function FitUploader({
             })}
           </div>
 
-          {/* Graf křivek Recharts */}
+          {/* Graf křivek */}
           <div className="h-72 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
@@ -306,7 +317,7 @@ export default function FitUploader({
             </ResponsiveContainer>
           </div>
 
-          {/* Panel pro uložení do databáze */}
+          {/* Formulář pro uložení */}
           <div className="p-5 bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-nordic-border rounded-xl mt-6 space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-2">
