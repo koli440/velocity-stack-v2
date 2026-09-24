@@ -1,16 +1,13 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-export default function Sidebar() {
-  const pathname = usePathname()
+export default function Sidebar({ currentView = 'home', onViewChange }) {
   const [ridesOpen, setRidesOpen] = useState(true)
   const [isCoach, setIsCoach] = useState(true)
 
   const navItemClass = (active) =>
-    `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+    `w-full text-left flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
       active
         ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-brand-neon'
         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'
@@ -19,8 +16,11 @@ export default function Sidebar() {
   return (
     <aside className="w-64 shrink-0 flex flex-col justify-between p-5 bg-white dark:bg-surface-darkCard border-r border-slate-200 dark:border-surface-darkBorder min-h-screen">
       <div className="space-y-6">
-        {/* Logo značky */}
-        <div className="flex items-center gap-2.5 px-2">
+        {/* Logo */}
+        <div 
+          onClick={() => onViewChange('home')}
+          className="flex items-center gap-2.5 px-2 cursor-pointer"
+        >
           <div className="h-7 w-7 rounded-lg bg-emerald-500 dark:bg-brand-neon flex items-center justify-center font-black text-white dark:text-slate-950 text-base shadow-sm">
             V
           </div>
@@ -29,11 +29,14 @@ export default function Sidebar() {
           </span>
         </div>
 
-        {/* Hlavní navigace */}
+        {/* Navigace */}
         <nav className="space-y-1">
-          <Link href="/" className={navItemClass(pathname === '/')}>
+          <button
+            onClick={() => onViewChange('home')}
+            className={navItemClass(currentView === 'home')}
+          >
             <span>🏠</span> Home
-          </Link>
+          </button>
 
           {/* Rozbalovací sekce Rides */}
           <div>
@@ -49,12 +52,12 @@ export default function Sidebar() {
 
             {ridesOpen && (
               <div className="ml-8 mt-1 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 pl-3">
-                <Link
-                  href="/velodromes"
-                  className={navItemClass(pathname === '/velodromes')}
+                <button
+                  onClick={() => onViewChange('velodromes')}
+                  className={navItemClass(currentView === 'velodromes')}
                 >
                   Velodrome
-                </Link>
+                </button>
                 <span className="block px-4 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed">
                   Road (Soon)
                 </span>
@@ -62,22 +65,22 @@ export default function Sidebar() {
             )}
           </div>
 
-          <Link href="#" className={navItemClass(false)}>
+          <button className={navItemClass(false)}>
             <span>🏋️</span> Gym
-          </Link>
-          <Link href="#" className={navItemClass(false)}>
+          </button>
+          <button className={navItemClass(false)}>
             <span>📈</span> Analytics
-          </Link>
-          <Link href="#" className={navItemClass(false)}>
+          </button>
+          <button className={navItemClass(false)}>
             <span>👥</span> Team
-          </Link>
-          <Link href="#" className={navItemClass(false)}>
+          </button>
+          <button className={navItemClass(false)}>
             <span>⚙️</span> Settings
-          </Link>
+          </button>
         </nav>
       </div>
 
-      {/* Přepínač Rider / Coach dole */}
+      {/* Přepínač Coach / Rider */}
       <div className="pt-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between px-2">
         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
           {isCoach ? 'Coach View' : 'Rider View'}
