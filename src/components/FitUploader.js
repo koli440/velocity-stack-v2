@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
-export default function FitUploader({ tracks = [] }) {
+export default function FitUploader({ tracks = [], currentUser = null }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -54,6 +54,7 @@ export default function FitUploader({ tracks = [] }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
+          user_id: currentUser?.id || null,
           track_id: selectedTrack || null,
           chainring,
           cog,
