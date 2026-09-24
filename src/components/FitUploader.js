@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts'
+import { supabase } from '../lib/supabase'
 
 export default function FitUploader({
   tracks = [],
@@ -91,36 +92,36 @@ export default function FitUploader({
   }
 
   const handleSave = async () => {
-    if (!analysis) return
+    if (!analysis || !currentUser) {
+      alert('Pro uložení tréninku musíte být přihlášeni.')
+      return
+    }
     setSaving(true)
 
     try {
-      const res = await fetch('/api/activities/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Zápis přímo přes klientského Supabase klienta s aktivním JWT tokenem
+      const { data, error } = await supabase
+        .from('activities')
+        .insert({
           title,
-          user_id: currentUser?.id || null,
+          user_id: currentUser.id,
           track_id: selectedTrack || null,
-          chainring,
-          cog,
+          chainring: chainring ? parseInt(chainring) : null,
+          cog: cog ? parseInt(cog) : null,
           crank_length_mm: 165.0,
-          summary: analysis.summary,
-          curves: analysis.curves,
-        }),
-      })
+          max_cadence_rpm: analysis.summary.max_cadence ?? null,
+          max_speed_kmh: analysis.summary.max_speed_kmh ?? null,
+          max_power_w: analysis.summary.max_power_w ?? null,
+          peak_torque_nm: analysis.summary.peak_torque_nm ?? null,
+          curves_data: analysis.curves ?? {},
+          activity_date: new Date().toISOString(),
+        })
+        .select()
+        .single()
 
-      const text = await res.text()
-      let result
-      try {
-        result = JSON.parse(text)
-      } catch (parseErr) {
-        throw new Error(
-          `Server returned status ${res.status}: ${text.substring(0, 100)}`
-        )
-      }
-
-      if (res.ok && result.success) {
+      if (error) {
+        alert('Save failed: ' + error.message)
+      } else {
         alert('🎉 Session successfully stored in your Track Feed!')
         setAnalysis(null)
         if (onSaved) {
@@ -128,8 +129,6 @@ export default function FitUploader({
         } else {
           router.refresh()
         }
-      } else {
-        alert('Save failed: ' + (result.error || 'Unknown error'))
       }
     } catch (err) {
       alert('Error saving activity: ' + err.message)
