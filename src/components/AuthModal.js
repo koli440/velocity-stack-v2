@@ -66,9 +66,6 @@ export default function AuthModal({ user, onAuthChange }) {
   if (user) {
     return (
       <div className="flex items-center gap-3">
-        <span className="text-sm text-slate-300 font-mono">
-          👤 {user.email}
-        </span>
         <button
           onClick={handleLogout}
           disabled={loading}
