@@ -15,8 +15,7 @@ export default function ActivityWizardModal({
 }) {
   const [currentStep, setCurrentStep] = useState(1)
   const [saving, setSaving] = useState(false)
-  const [loadingStreams, setLoadingStreams] = useState(false)
-  const [streams, setStreams] = useState({})
+  const [activeTimeSeries, setActiveTimeSeries] = useState({})
 
   const [formData, setFormData] = useState({
     sport_type: 'track',
@@ -34,7 +33,6 @@ export default function ActivityWizardModal({
     detected_efforts: [],
   })
 
-  // Načtení stávajících dat aktivity a streamů
   useEffect(() => {
     if (!activity || !isOpen) return
 
@@ -42,7 +40,7 @@ export default function ActivityWizardModal({
     setFormData({
       sport_type: activity.sport_type || 'track',
       session_mode: activity.session_mode || 'workout',
-      discipline: activity.discipline || 'f200',
+      discipline: activity.discipline || 'individual_pursuit',
       track_id: activity.track_id || null,
       perceived_exertion: activity.perceived_exertion || 7,
       chainring: activity.chainring || 58,
@@ -55,25 +53,24 @@ export default function ActivityWizardModal({
       detected_efforts: activity.detected_efforts || [],
     })
 
-    // Načteme křivky / streamy pro krok 3, pokud jsou k dispozici
-    const loadStreams = async () => {
-      setLoadingStreams(true)
-      const { data } = await supabase
-        .from('activity_curves')
-        .select('curve_type, data')
-        .eq('activity_id', activity.id)
+    // Načteme time_series přímo z DB pro případ, že v prop activity chybí
+    const fetchTimeSeries = async () => {
+      if (activity.time_series && Object.keys(activity.time_series).length > 0) {
+        setActiveTimeSeries(activity.time_series)
+      } else {
+        const { data } = await supabase
+          .from('activities')
+          .select('time_series')
+          .eq('id', activity.id)
+          .single()
 
-      if (data) {
-        const streamMap = {}
-        data.forEach((row) => {
-          streamMap[row.curve_type.toLowerCase()] = row.data
-        })
-        setStreams(streamMap)
+        if (data?.time_series) {
+          setActiveTimeSeries(data.time_series)
+        }
       }
-      setLoadingStreams(false)
     }
 
-    loadStreams()
+    fetchTimeSeries()
   }, [activity, isOpen])
 
   if (!isOpen || !activity) return null
@@ -95,7 +92,6 @@ export default function ActivityWizardModal({
       helmet: formData.helmet || null,
       detected_efforts: formData.detected_efforts || [],
       wizard_completed: true,
-      updated_at: new Date().toISOString(),
     }
 
     const { data, error } = await supabase
@@ -143,7 +139,6 @@ export default function ActivityWizardModal({
             {activity.title || 'Session Analysis'}
           </h2>
 
-          {/* Indikátor kroků 1-2-3 */}
           <div className="grid grid-cols-3 gap-2 mt-4">
             <div
               onClick={() => setCurrentStep(1)}
@@ -204,13 +199,12 @@ export default function ActivityWizardModal({
             <WizardStep3Segmentation
               formData={formData}
               setFormData={setFormData}
-              streams={streams}
-              laps={activity.laps || []}
+              activity={{ ...activity, time_series: activeTimeSeries }}
             />
           )}
         </div>
 
-        {/* Spodní akční tlačítka */}
+        {/* Spodní lišta */}
         <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/40">
           {currentStep > 1 ? (
             <button
