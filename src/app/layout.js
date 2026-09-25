@@ -1,15 +1,18 @@
-import { Plus_Jakarta_Sans } from 'next/font/google'
-import { ThemeProvider } from '../components/ThemeProvider'
 import './globals.css'
+import { ThemeProvider } from '../components/ThemeProvider' // Tvůj existující theme provider
+import AppShell from '../components/AppShell'
 
-const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'] })
+export const metadata = {
+  title: 'VelocityStack | Velodrome Telemetry Platform',
+  description: 'Pure speed, cadence & power durational analysis for track cyclists',
+}
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning className={jakarta.className}>
-      <body className="bg-surface-light dark:bg-surface-dark text-slate-800 dark:text-slate-100 transition-colors duration-300">
+    <html lang="cs" suppressHydrationWarning>
+      <body className="antialiased font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          {children}
+          <AppShell>{children}</AppShell>
         </ThemeProvider>
       </body>
     </html>
