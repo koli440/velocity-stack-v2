@@ -45,8 +45,12 @@ export async function POST(req) {
 
     // 1. Akce: Načtení seznamu nedávných jízd
     if (action === 'list') {
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        const oldestDateStr = thirtyDaysAgo.toISOString().split('T')[0]
+
       const res = await fetch(
-        `https://intervals.icu/api/v1/athlete/${athleteId}/activities?limit=15`,
+        `https://intervals.icu/api/v1/athlete/${athleteId}/activities?oldest=${oldestDateStr}`,
         {
           headers: { Authorization: authHeader },
           cache: 'no-store',
