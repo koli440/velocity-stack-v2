@@ -92,8 +92,9 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Missing activityId' }, { status: 400 })
       }
 
-      const streamTypes = 'time,cadence,watts,velocity_smooth,heartrate'
-      const streamsUrl = `https://intervals.icu/api/v1/athlete/${athleteId}/activities/${activityId}/streams?types=${streamTypes}`
+      // Voláme endpoint BEZ restriktivního parametru ?types=...
+      // Intervals.icu tak vrátí pouze streamy, které jízda skutečně má (i kdyby to byl jen time a speed/cadence)
+      const streamsUrl = `https://intervals.icu/api/v1/athlete/${athleteId}/activities/${activityId}/streams`
 
       const streamsRes = await fetch(streamsUrl, {
         headers: { Authorization: authHeader },
@@ -102,11 +103,11 @@ export async function POST(req) {
 
       if (!streamsRes.ok) {
         const errText = await streamsRes.text()
-        let message = `Intervals.icu streams error (${streamsRes.status}): ${errText}`
-        if (streamsRes.status === 403 || streamsRes.status === 404) {
-          message = `Intervals.icu odmítlo vydat data (status ${streamsRes.status}). Pokud tato aktivita pochází ze Stravy, Intervals.icu její streamy blokuje. Synchronizujte prosím jízdu nahranou přímo z Garminu nebo Wahoo.`
-        }
-        return NextResponse.json({ error: message }, { status: streamsRes.status })
+        console.error(`Intervals streams error (${streamsRes.status}):`, errText)
+        return NextResponse.json(
+          { error: `Intervals.icu streams error (${streamsRes.status}): ${errText}` },
+          { status: streamsRes.status }
+        )
       }
 
       const streamsData = await streamsRes.json()
@@ -117,6 +118,72 @@ export async function POST(req) {
           { status: 400 }
         )
       }
+
+      // Namapujeme existující streamy
+      const streamsMap = {}
+      streamsData.forEach((s) => {
+        if (s && s.type && Array.isArray(s.data)) {
+          streamsMap[s.type] = s.data
+        }
+      })
+
+      // Převod rychlosti z m/s na km/h (* 3.6), pokud existuje
+      const speedKmhStream = streamsMap.velocity_smooth
+        ? streamsMap.velocity_smooth.map((v) => (v != null ? Math.round(v * 3.6 * 10) / 10 : 0))
+        : null
+
+      // Výpočet Torque (Nm) POUZE pokud existují watty i kadence
+      let torqueStream = null
+      if (streamsMap.watts && streamsMap.cadence) {
+        torqueStream = streamsMap.watts.map((w, idx) => {
+          const cad = streamsMap.cadence[idx]
+          if (!cad || cad <= 0 || !w) return 0
+          return Math.round(((w * 60) / (2 * Math.PI * cad)) * 10) / 10
+        })
+      }
+
+      // Výpočet křivek pouze z těch senzorů, které jsou přítomny
+      const curves = {}
+      if (streamsMap.cadence && streamsMap.cadence.length > 0) {
+        const c = computeDurationalCurve(streamsMap.cadence)
+        if (c) curves.Cadence = c
+      }
+      if (speedKmhStream && speedKmhStream.length > 0) {
+        const c = computeDurationalCurve(speedKmhStream)
+        if (c) curves.Speed = c
+      }
+      if (streamsMap.watts && streamsMap.watts.length > 0) {
+        const c = computeDurationalCurve(streamsMap.watts)
+        if (c) curves.Power = c
+      }
+      if (torqueStream && torqueStream.length > 0) {
+        const c = computeDurationalCurve(torqueStream)
+        if (c) curves.Torque = c
+      }
+      if (streamsMap.heartrate && streamsMap.heartrate.length > 0) {
+        const c = computeDurationalCurve(streamsMap.heartrate)
+        if (c) curves.HeartRate = c
+      }
+
+      const getMax = (arr) => {
+        if (!arr || !Array.isArray(arr) || arr.length === 0) return null
+        const valid = arr.filter((v) => typeof v === 'number' && !isNaN(v))
+        return valid.length > 0 ? Math.max(...valid) : null
+      }
+
+      const summary = {
+        max_cadence: getMax(streamsMap.cadence),
+        max_speed_kmh: getMax(speedKmhStream),
+        max_power_w: getMax(streamsMap.watts),
+        peak_torque_nm: getMax(torqueStream),
+      }
+
+      return NextResponse.json({
+        success: true,
+        summary,
+        curves,
+      })
+    }
 
       const streamsMap = {}
       streamsData.forEach((s) => {
