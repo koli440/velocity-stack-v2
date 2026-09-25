@@ -1,35 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState, use } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from 'recharts'
+import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 
-export default function ActivityDetailPage() {
-  const params = useParams()
+export default function ActivityDetailPage({ params }) {
   const router = useRouter()
-  const activityId = params?.id
+  // React 19 / Next.js unwrapping params Promise
+  const resolvedParams = use(params)
+  const activityId = resolvedParams.id
 
-  const [activity, setActivity] = useState(null)
-  const [curves, setCurves] = useState({})
-  const [activeMetric, setActiveMetric] = useState('Cadence')
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [activity, setActivity] = useState(null)
+  const [tracks, setTracks] = useState([])
+  const [curvesMap, setCurvesMap] = useState({})
 
-  const metricColors = {
-    Cadence: { stroke: '#F97316', activeTab: 'bg-orange-500 text-white', unit: 'RPM' },
-    Speed: { stroke: '#38BDF8', activeTab: 'bg-sky-500 text-slate-900', unit: 'km/h' },
-    Power: { stroke: '#A78BFA', activeTab: 'bg-purple-500 text-white', unit: 'W' },
-    Torque: { stroke: '#34D399', activeTab: 'bg-emerald-500 text-slate-900', unit: 'Nm' },
-    HeartRate: { stroke: '#FB7185', activeTab: 'bg-rose-500 text-white', unit: 'BPM' },
-  }
+  // Editační stav pro převod a trať
+  const [chainring, setChainring] = useState('58')
+  const [cog, setCog] = useState('14')
+  const [trackId, setTrackId] = useState('')
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   useEffect(() => {
     if (!activityId) return
@@ -37,37 +30,41 @@ export default function ActivityDetailPage() {
     const loadData = async () => {
       setLoading(true)
 
-      // 1. Načtení detailu jízdy
-      const { data: actData, error: actErr } = await supabase
-        .from('activities')
-        .select('*, tracks(*)')
-        .eq('id', activityId)
-        .maybeSingle()
+      // 1. Načtení detailu aktivity a tratí
+      const [actRes, tracksRes, curvesRes] = await Promise.all([
+        supabase
+          .from('activities')
+          .select('*, tracks(*)')
+          .eq('id', activityId)
+          .maybeSingle(),
+        supabase.from('tracks').select('*').order('name'),
+        supabase
+          .from('activity_curves')
+          .select('curve_type, data')
+          .eq('activity_id', activityId),
+      ])
 
-      if (actErr || !actData) {
-        setLoading(false)
-        return
+      if (actRes.data) {
+        const act = actRes.data
+        setActivity(act)
+        setChainring(act.chainring ? String(act.chainring) : '58')
+        setCog(act.cog ? String(act.cog) : '14')
+        setTrackId(act.track_id || '')
       }
 
-      setActivity(actData)
+      if (tracksRes.data) {
+        setTracks(tracksRes.data)
+      }
 
-      // 2. Načtení křivek z tabulky activity_curves
-      const { data: curvesData } = await supabase
-        .from('activity_curves')
-        .select('*')
-        .eq('activity_id', activityId)
-
-      if (curvesData && curvesData.length > 0) {
-        const map = {}
-        curvesData.forEach((row) => {
-          map[row.curve_type] = row.data
+      // 2. Převod pole křivek ze Supabase na objekt: { Cadence: {...}, Speed: {...}, ... }
+      if (curvesRes.data) {
+        const mapped = {}
+        curvesRes.data.forEach((row) => {
+          if (row.curve_type && row.data) {
+            mapped[row.curve_type] = row.data
+          }
         })
-        setCurves(map)
-
-        const keys = Object.keys(map)
-        if (keys.length > 0 && !map[activeMetric]) {
-          setActiveMetric(keys[0])
-        }
+        setCurvesMap(mapped)
       }
 
       setLoading(false)
@@ -76,194 +73,215 @@ export default function ActivityDetailPage() {
     loadData()
   }, [activityId])
 
-  const chartData = curves[activeMetric]
-    ? Object.entries(curves[activeMetric]).map(([label, value]) => ({
-        interval: label,
-        value: value,
-      }))
-    : []
+  // Uložení upraveného převodu a tratě
+  const handleUpdateGear = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveSuccess(false)
 
-  const currentStroke = metricColors[activeMetric]?.stroke || '#F97316'
-  const availableMetricKeys = Object.keys(curves)
+    const updates = {
+      chainring: parseInt(chainring) || null,
+      cog: parseInt(cog) || null,
+      track_id: trackId || null,
+    }
+
+    const { error } = await supabase
+      .from('activities')
+      .update(updates)
+      .eq('id', activityId)
+
+    setSaving(false)
+    if (!error) {
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 2500)
+    } else {
+      alert('Chyba při ukládání: ' + error.message)
+    }
+  }
+
+  // Výpočet převodového poměru a vývinu (Gear Inches / Development)
+  const calcGearInches = () => {
+    const ring = parseFloat(chainring)
+    const sprocket = parseFloat(cog)
+    if (!ring || !sprocket) return 0
+    return Math.round((ring / sprocket) * 27 * 10) / 10
+  }
 
   if (loading) {
     return (
-      <div className="py-24 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
-        Loading Telemetry Vault...
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-xs uppercase font-bold tracking-wider text-slate-400 animate-pulse">
+          Načítám telemetrii aktivity...
+        </div>
       </div>
     )
   }
 
   if (!activity) {
     return (
-      <div className="space-y-4">
-        <button
-          onClick={() => router.push('/')}
-          className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white"
+      <div className="text-center py-16 space-y-4">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          Aktivita nebyla nalezena
+        </h2>
+        <Link
+          href="/"
+          className="inline-block py-2 px-4 rounded-xl bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 font-bold text-xs uppercase"
         >
-          ← Back to Cockpit
-        </button>
-        <div className="p-8 text-center bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-slate-500">
-          Activity not found.
-        </div>
+          ← Zpět do Cockpitu
+        </Link>
       </div>
     )
   }
 
+  const actDate = new Date(activity.activity_date || activity.created_at).toLocaleDateString('cs-CZ', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
   return (
-    <div className="space-y-6">
-      {/* Tlačítko zpět & identifikátor jízdy */}
-      <div className="flex justify-between items-center">
-        <button
-          onClick={() => router.push('/')}
-          className="flex items-center gap-2 py-2 px-3.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition shadow-xs"
-        >
-          <span>←</span> Back to Cockpit
-        </button>
-
-        <span className="text-xs text-slate-400 font-mono">
-          ID: {activity.id.slice(0, 8)}...
-        </span>
-      </div>
-
-      {/* 1. Karta s hlavičkou jízdy */}
-      <div className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-            {activity.title}
+    <div className="max-w-6xl mx-auto space-y-6 pb-12">
+      {/* Horní navigační pruh */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <Link
+            href="/"
+            className="text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-white transition flex items-center gap-1.5"
+          >
+            ← Cockpit Telemetry
+          </Link>
+          <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+            {activity.title || 'Velodrome Session'}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            📍 {activity.tracks?.name || 'Track Oval'} •{' '}
-            {new Date(activity.activity_date).toLocaleString('cs-CZ')}
-          </p>
+          <p className="text-xs font-semibold text-slate-400">{actDate}</p>
         </div>
 
-        {/* Převod a poměr */}
-        {activity.chainring && activity.cog && (
-          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-            <span className="text-lg">⚙️</span>
+        {/* Zvolený Velodrom */}
+        {activity.tracks && (
+          <div className="flex items-center gap-2 py-2 px-3 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <span className="text-sm">🏟️</span>
             <div>
-              <div className="text-sm font-black text-slate-900 dark:text-white font-mono">
-                {activity.chainring} × {activity.cog}
-              </div>
-              <div className="text-[10px] text-slate-400 uppercase font-semibold">
-                Ratio ({(activity.chainring / activity.cog).toFixed(2)})
+              <div className="text-[10px] uppercase font-bold text-slate-400">Velodrome</div>
+              <div className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
+                {activity.tracks.name} ({activity.tracks.length_m} m)
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* 2. KPI dlaždice maximálních hodnot */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="p-4 bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-          <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
-            Max Cadence
-          </div>
-          <div className="text-3xl font-black text-orange-500 mt-1 font-mono">
-            {activity.max_cadence_rpm ?? '-'}{' '}
-            <span className="text-xs font-normal text-slate-400">RPM</span>
+      {/* Rychlé telemetrické karty */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder">
+          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Peak Cadence</div>
+          <div className="text-2xl font-black text-orange-500 mt-1">
+            {activity.max_cadence_rpm != null ? `${activity.max_cadence_rpm} RPM` : '—'}
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-          <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
-            Max Speed
-          </div>
-          <div className="text-3xl font-black text-sky-500 mt-1 font-mono">
-            {activity.max_speed_kmh ?? '-'}{' '}
-            <span className="text-xs font-normal text-slate-400">km/h</span>
+        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder">
+          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Max Speed</div>
+          <div className="text-2xl font-black text-sky-400 mt-1">
+            {activity.max_speed_kmh != null ? `${activity.max_speed_kmh} km/h` : '—'}
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-          <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
-            Max Power
-          </div>
-          <div className="text-3xl font-black text-purple-500 mt-1 font-mono">
-            {activity.max_power_w ?? '-'}{' '}
-            <span className="text-xs font-normal text-slate-400">W</span>
+        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder">
+          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Max Power</div>
+          <div className="text-2xl font-black text-purple-400 mt-1">
+            {activity.max_power_w != null ? `${activity.max_power_w} W` : '—'}
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-          <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
-            Peak Torque
-          </div>
-          <div className="text-3xl font-black text-emerald-500 mt-1 font-mono">
-            {activity.peak_torque_nm ?? '-'}{' '}
-            <span className="text-xs font-normal text-slate-400">Nm</span>
+        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder">
+          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Peak Torque</div>
+          <div className="text-2xl font-black text-amber-400 mt-1">
+            {activity.peak_torque_nm != null ? `${activity.peak_torque_nm} Nm` : '—'}
           </div>
         </div>
       </div>
 
-      {/* 3. Křivky (Durational Curves) */}
-      <section className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-tight">
-            Durational Curves
-          </h2>
+      {/* Nová komponenta s Durational Curves */}
+      <DurationalCurvesChart curves={curvesMap} />
 
-          {/* Přepínače křivek */}
-          <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-            {availableMetricKeys.map((metric) => {
-              const isActive = activeMetric === metric
-              const tabStyle = metricColors[metric]?.activeTab || 'bg-orange-500 text-white'
-              return (
-                <button
-                  key={metric}
-                  onClick={() => setActiveMetric(metric)}
-                  className={`py-1 px-3 rounded-lg text-xs font-bold transition ${
-                    isActive
-                      ? `${tabStyle} shadow-xs`
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {metric}
-                </button>
-              )
-            })}
+      {/* Spodní panel: Editace dráhy a převodů pro danou jízdu */}
+      <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <span>⚙️</span> Track & Gearing Setup for this Ride
+        </h3>
+
+        <form onSubmit={handleUpdateGear} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+          <div>
+            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+              Velodrome
+            </label>
+            <select
+              value={trackId}
+              onChange={(e) => setTrackId(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            >
+              <option value="">-- No Track Selected --</option>
+              {tracks.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.length_m} m)
+                </option>
+              ))}
+            </select>
           </div>
+
+          <div>
+            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+              Chainring
+            </label>
+            <input
+              type="number"
+              value={chainring}
+              onChange={(e) => setChainring(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+              Cog
+            </label>
+            <input
+              type="number"
+              value={cog}
+              onChange={(e) => setCog(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
+            >
+              {saving ? 'Ukládám...' : 'Update Setup'}
+            </button>
+          </div>
+        </form>
+
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs">
+          <div className="text-slate-400">
+            Calculated Gear:{' '}
+            <span className="font-extrabold text-slate-800 dark:text-slate-200">
+              {calcGearInches()}"
+            </span>{' '}
+            ({chainring} × {cog})
+          </div>
+
+          {saveSuccess && (
+            <span className="font-bold text-emerald-500 animate-fade-in">
+              ✓ Nastavení uloženo
+            </span>
+          )}
         </div>
-
-        {/* Graf Recharts */}
-        {chartData.length > 0 ? (
-          <div className="h-80 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 10, right: 15, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
-                <XAxis dataKey="interval" stroke="#94A3B8" tick={{ fontSize: 12 }} />
-                <YAxis stroke="#94A3B8" domain={['auto', 'auto']} tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                    borderColor: 'rgba(51, 65, 85, 0.8)',
-                    borderRadius: '0.75rem',
-                    color: '#F8FAFC',
-                    fontSize: '12px',
-                  }}
-                  formatter={(val) => [
-                    `${val} ${metricColors[activeMetric]?.unit || ''}`,
-                    activeMetric,
-                  ]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke={currentStroke}
-                  strokeWidth={3}
-                  dot={{ fill: currentStroke, r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <div className="py-12 text-center text-xs text-slate-400">
-            No curve data available for this metric.
-          </div>
-        )}
-      </section>
+      </div>
     </div>
   )
 }
