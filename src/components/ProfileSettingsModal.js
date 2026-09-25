@@ -10,7 +10,6 @@ export default function ProfileSettingsModal({
   tracks = [],
 }) {
   const [loading, setLoading] = useState(false)
-  const [registeringWebhook, setRegisteringWebhook] = useState(false)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [nickname, setNickname] = useState('')
@@ -23,7 +22,6 @@ export default function ProfileSettingsModal({
   // Intervals.icu údaje
   const [intervalsAthleteId, setIntervalsAthleteId] = useState('')
   const [intervalsApiKey, setIntervalsApiKey] = useState('')
-  const [webhookStatus, setWebhookStatus] = useState(null)
 
   useEffect(() => {
     if (!user?.id || !isOpen) return
@@ -54,38 +52,11 @@ export default function ProfileSettingsModal({
     loadProfile()
   }, [user, isOpen])
 
-  // Pomocná funkce pro registraci webhooku u Intervals.icu
-  const registerAthleteWebhook = async (athId, key) => {
-    try {
-      const res = await fetch('/api/webhooks/intervals/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          athleteId: athId.trim(),
-          apiKey: key.trim(),
-        }),
-      })
-
-      const data = await res.json()
-      if (res.ok && data.success) {
-        return { ok: true, msg: 'Webhook aktivní na Intervals.icu' }
-      } else {
-        return { ok: false, msg: data.error || 'Registrace webhooku selhala' }
-      }
-    } catch (err) {
-      return { ok: false, msg: err.message }
-    }
-  }
-
-  // Uložení profilu + automatická registrace webhooku
   const handleSave = async (e) => {
     e.preventDefault()
     if (!user?.id) return
 
     setLoading(true)
-    const athId = intervalsAthleteId.trim()
-    const apiKey = intervalsApiKey.trim()
-
     const updates = {
       id: user.id,
       first_name: firstName.trim() || null,
@@ -96,45 +67,19 @@ export default function ProfileSettingsModal({
       default_cog: defaultCog ? parseInt(defaultCog) : null,
       crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
       theme_preference: themePref,
-      intervals_athlete_id: athId || null,
-      intervals_api_key: apiKey || null,
+      intervals_athlete_id: intervalsAthleteId.trim() || null,
+      intervals_api_key: intervalsApiKey.trim() || null,
       updated_at: new Date().toISOString(),
     }
 
     const { error } = await supabase.from('profiles').upsert(updates)
+    setLoading(false)
 
     if (error) {
-      setLoading(false)
       alert('Chyba při ukládání profilu: ' + error.message)
-      return
+    } else {
+      onClose()
     }
-
-    // Pokud uživatel zadal ID i klíč, automaticky aktivujeme Webhook
-    if (athId && apiKey) {
-      const result = await registerAthleteWebhook(athId, apiKey)
-      setWebhookStatus(result)
-      if (!result.ok) {
-        alert('Profil byl uložen, ale nepodařilo se zaregistrovat Webhook: ' + result.msg)
-      }
-    }
-
-    setLoading(false)
-    onClose()
-  }
-
-  // Ruční spuštění registrace Webhooku
-  const handleManualRegisterWebhook = async () => {
-    if (!intervalsAthleteId || !intervalsApiKey) {
-      alert('Nejprve vyplňte Athlete ID a API Key.')
-      return
-    }
-
-    setRegisteringWebhook(true)
-    setWebhookStatus(null)
-
-    const result = await registerAthleteWebhook(intervalsAthleteId, intervalsApiKey)
-    setWebhookStatus(result)
-    setRegisteringWebhook(false)
   }
 
   if (!isOpen) return null
@@ -253,11 +198,11 @@ export default function ProfileSettingsModal({
             <div className="flex items-center gap-2">
               <span className="text-base">🔄</span>
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                Intervals.icu Sync Credentials
+                Intervals.icu API Credentials
               </h3>
             </div>
             <p className="text-[11px] text-slate-400">
-              Při uložení se automaticky zaregistruje webhook pro stahování jízd z Garmin & Wahoo.
+              Přihlašovací údaje pro manuální import tréninků ze zařízení Garmin & Wahoo.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -287,27 +232,6 @@ export default function ProfileSettingsModal({
                 />
               </div>
             </div>
-
-            <div className="flex items-center justify-between pt-1">
-              <button
-                type="button"
-                onClick={handleManualRegisterWebhook}
-                disabled={registeringWebhook || !intervalsAthleteId || !intervalsApiKey}
-                className="py-1.5 px-3 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30 text-[11px] font-bold transition disabled:opacity-40"
-              >
-                {registeringWebhook ? 'Ověřuji...' : '🔗 Testovat registraci Webhooku'}
-              </button>
-
-              {webhookStatus && (
-                <span
-                  className={`text-[11px] font-bold ${
-                    webhookStatus.ok ? 'text-emerald-500' : 'text-rose-500'
-                  }`}
-                >
-                  {webhookStatus.msg}
-                </span>
-              )}
-            </div>
           </div>
 
           <button
@@ -315,7 +239,7 @@ export default function ProfileSettingsModal({
             disabled={loading}
             className="w-full mt-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50"
           >
-            {loading ? 'Ukládám profil a registruji webhook...' : 'Save Changes'}
+            {loading ? 'Ukládám profil...' : 'Save Changes'}
           </button>
         </form>
       </div>

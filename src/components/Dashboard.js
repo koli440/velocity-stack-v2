@@ -7,6 +7,7 @@ import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
 import ActivityFeed from './ActivityFeed'
+import IntervalsSyncModal from './IntervalsSyncModal'
 
 export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const router = useRouter()
@@ -14,6 +15,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const [activities, setActivities] = useState(initialActivities)
   const [currentTracks, setCurrentTracks] = useState(tracks)
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false)
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false)
 
   const reloadActivities = async (userId) => {
     const targetId = userId || user?.id
@@ -57,7 +59,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
 
   return (
     <div className="flex flex-col xl:flex-row gap-6 items-start">
-      {/* 1. Hlavní plocha Cockpitu */}
+      {/* Hlavní Cockpit */}
       <div className="flex-1 w-full space-y-6">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
@@ -68,22 +70,29 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           </p>
         </div>
 
-        {/* KPI dlaždice a telemetrie */}
+        {/* Telemetrické dlaždice */}
         <TelemetryCards lastActivity={latestActivity} />
 
-        {/* Seznam jízd přihlášeného jezdce */}
+        {/* Seznam aktivit */}
         <ActivityFeed
           activities={activities}
           onAddWorkout={() => setIsWorkoutModalOpen(true)}
         />
       </div>
 
-      {/* 2. Pravý panel s Rosterem */}
-      <div className="w-full xl:w-80 shrink-0">
+      {/* Pravý panel */}
+      <div className="w-full xl:w-80 shrink-0 space-y-3">
+        <button
+          onClick={() => setIsSyncModalOpen(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold transition border border-purple-500/30 shadow-xs"
+        >
+          <span>🔄</span> Sync Intervals.icu
+        </button>
+
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
 
-      {/* 3. Modál pro manuální nahrání .FIT souboru */}
+      {/* Modál pro manuální nahrání .FIT souboru */}
       {isWorkoutModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
           <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -103,6 +112,22 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           </div>
         </div>
       )}
+
+      {/* Modál pro výběr a import z Intervals.icu */}
+      <IntervalsSyncModal
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        currentUser={user}
+        tracks={currentTracks}
+        onImportSuccess={(newActivityId) => {
+          setIsSyncModalOpen(false)
+          if (newActivityId) {
+            router.push(`/activities/${newActivityId}`)
+          } else if (user?.id) {
+            reloadActivities(user.id)
+          }
+        }}
+      />
     </div>
   )
 }
