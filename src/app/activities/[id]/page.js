@@ -103,66 +103,6 @@ export default function ActivityDetailPage() {
 
   return (
     <div className="flex min-h-screen bg-slate-100 dark:bg-surface-dark transition-colors duration-300">
-      <Sidebar
-        currentView="rides"
-        onViewChange={(view) => {
-          if (view === 'home') router.push('/')
-          if (view === 'velodromes') router.push('/?view=velodromes')
-        }}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
-      />
-
-      <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto max-w-5xl">
-        <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-surface-darkBorder">
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 py-2 px-3.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition shadow-sm"
-          >
-            <span>←</span> Back to Cockpit
-          </button>
-
-          <div className="flex items-center gap-3">
-            <ThemeToggle currentUser={user} />
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="py-20 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Loading Telemetry Vault...
-          </div>
-        ) : !activity ? (
-          <div className="p-8 text-center bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-slate-500">
-            Activity not found.
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Hlavička jízdy */}
-            <div className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                  {activity.title}
-                </h1>
-                <p className="text-xs text-slate-400 mt-1">
-                  📍 {activity.tracks?.name || 'Track Oval'} •{' '}
-                  {new Date(activity.activity_date).toLocaleString('cs-CZ')}
-                </p>
-              </div>
-
-              {activity.chainring && activity.cog && (
-                <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                  <span className="text-lg">⚙️</span>
-                  <div>
-                    <div className="text-sm font-black text-slate-900 dark:text-white font-mono">
-                      {activity.chainring} × {activity.cog}
-                    </div>
-                    <div className="text-[10px] text-slate-400 uppercase font-semibold">
-                      Ratio ({(activity.chainring / activity.cog).toFixed(2)})
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Metriky */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="p-4 bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
@@ -272,15 +212,8 @@ export default function ActivityDetailPage() {
               )}
             </section>
           </div>
-        )}
+        
       </main>
-
-      <ProfileSettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        user={user}
-        tracks={[]}
-      />
     </div>
   )
 }
