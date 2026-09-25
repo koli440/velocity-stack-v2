@@ -1,0 +1,34 @@
+[ Synchronizována nová jízda ]
+             │
+             ▼
+┌──────────────────────────────────────────────┐
+│ KROK 1: Základní kontext                    │
+│ • Prostředí: [ Dráha ▼ ]                    │
+│ • Velodrom:  [ Motol (250m dřevo) ▼ ]        │
+│ • Typ jízdy: [ Trénink / Závod / Test ]      │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│ KROK 2: Setup & Převody                      │
+│ • Kolo:      [ Look T20 / Argon18 ▼ ]        │
+│ • Převod:    [ 58 ] × [ 14 ] (111.9")        │
+│ • Kliky:     [ 165 mm ]                      │
+│ • řídítka:   [ Vision Metron 4 ]             │
+│ • Helma:     [ POC Ventral ]                 │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│ KROK 3: Segmentace / Disciplína              │
+│ • Co se jelo: [ F200m Letmý / Úseky / Balík ]│
+│ • Detekce úseků: Automaticky / podle Lap tlačítka│
+│   nebo detekce akcelerací (kadence > 125 RPM)│
+| nebo detekce na základě torque.              |
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+             [ Uložit a Vyhodnotit ]
+                       |
+                       ▼
+             [Zobrazit porovnání proti průměrným / maximálním hodnotám za poslední x dní, tuto sezonu, all time atd.]
