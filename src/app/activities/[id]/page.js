@@ -1,16 +1,15 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 
-export default function ActivityDetailPage({ params }) {
+export default function ActivityDetailPage() {
   const router = useRouter()
-  // React 19 / Next.js unwrapping params Promise
-  const resolvedParams = use(params)
-  const activityId = resolvedParams.id
+  const params = useParams()
+  const activityId = params?.id
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -99,7 +98,7 @@ export default function ActivityDetailPage({ params }) {
     }
   }
 
-  // Výpočet převodového poměru a vývinu (Gear Inches / Development)
+  // Výpočet převodového poměru a vývinu (Gear Inches)
   const calcGearInches = () => {
     const ring = parseFloat(chainring)
     const sprocket = parseFloat(cog)
@@ -172,7 +171,7 @@ export default function ActivityDetailPage({ params }) {
         )}
       </div>
 
-      {/* Rychlé telemetrické karty */}
+      {/* Telemetrické karty */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder">
           <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Peak Cadence</div>
@@ -203,10 +202,10 @@ export default function ActivityDetailPage({ params }) {
         </div>
       </div>
 
-      {/* Nová komponenta s Durational Curves */}
+      {/* Komponenta s Durational Curves */}
       <DurationalCurvesChart curves={curvesMap} />
 
-      {/* Spodní panel: Editace dráhy a převodů pro danou jízdu */}
+      {/* Spodní panel: Nastavení dráhy a převodů */}
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <span>⚙️</span> Track & Gearing Setup for this Ride
