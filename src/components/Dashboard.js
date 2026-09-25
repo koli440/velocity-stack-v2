@@ -87,7 +87,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
             />
           </>
         ) : (
-          <div>Nothing to see here ...</dov>
+          <div>Nothing to see here ...</div>
         )}
       </div>
 
