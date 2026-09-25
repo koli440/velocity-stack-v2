@@ -91,13 +91,10 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Missing activityId' }, { status: 400 })
       }
 
-      // ID aktivity bez případného 'i'
-      const cleanActivityId = String(activityId).replace(/^i/, '')
-
       // Pokus A: Nejprve zkusíme načíst metadata aktivity přímo z Intervals detailu
       // Tento endpoint vrátí i případné předpočítané křivky a dostupnost streamů
       const activityDetailRes = await fetch(
-        `https://intervals.icu/api/v1/activity/${cleanActivityId}`,
+        `https://intervals.icu/api/v1/activity/${activityId}`,
         {
           headers: { Authorization: authHeader },
           cache: 'no-store',
@@ -109,7 +106,7 @@ export async function POST(req) {
       if (activityDetailRes.ok) {
         // Pokud aktivita existuje, zkusíme stáhnout její streamy
         const streamsRes = await fetch(
-          `https://intervals.icu/api/v1/activity/${cleanActivityId}/streams`,
+          `https://intervals.icu/api/v1/activity/${activityId}/streams`,
           {
             headers: { Authorization: authHeader },
             cache: 'no-store',
@@ -124,7 +121,7 @@ export async function POST(req) {
       // Pokud streamy selhaly (404), zkusíme Pokus B: stáhnout originální FIT soubor
       if (!streamsData || !Array.isArray(streamsData) || streamsData.length === 0) {
         const fileRes = await fetch(
-          `https://intervals.icu/api/v1/activity/${cleanActivityId}/file`,
+          `https://intervals.icu/api/v1/activity/${activityId}/file`,
           {
             headers: { Authorization: authHeader },
             cache: 'no-store',
@@ -135,7 +132,7 @@ export async function POST(req) {
           // Předáme stažený .fit soubor našemu internímu parseru /api/analyze
           const fitBlob = await fileRes.blob()
           const formData = new FormData()
-          formData.append('file', fitBlob, `${cleanActivityId}.fit`)
+          formData.append('file', fitBlob, `${activityId}.fit`)
 
           const analyzeRes = await fetch(
             new URL('/api/analyze', req.url).toString(),
@@ -157,7 +154,7 @@ export async function POST(req) {
 
         return NextResponse.json(
           {
-            error: `Aktivita ${cleanActivityId} nemá v Intervals.icu k dispozici žádné sekundové streamy ani stažitelný soubor.`,
+            error: `Aktivita ${activityId} nemá v Intervals.icu k dispozici žádné sekundové streamy ani stažitelný soubor.`,
           },
           { status: 404 }
         )
