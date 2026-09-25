@@ -1,70 +1,109 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import Link from 'next/link'
+import ActivityWizardModal from './wizard/ActivityWizardModal'
 
-export default function ActivityFeed({ activities = [], onAddWorkout }) {
-  const router = useRouter()
+export default function ActivityFeed({ activities = [], onAddWorkout, onActivityUpdated }) {
+  const [selectedActivityForWizard, setSelectedActivityForWizard] = useState(null)
 
   return (
-    <section className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-base font-bold text-slate-900 dark:text-white">
-          Recent Velodrome Sessions
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">
+          Recent Sessions
         </h2>
         {onAddWorkout && (
           <button
-            type="button"
             onClick={onAddWorkout}
-            className="text-xs font-bold text-emerald-600 dark:text-brand-neon hover:underline"
+            className="text-xs font-bold text-orange-500 hover:text-orange-600 transition"
           >
-            + Upload .FIT
+            + Manual Upload
           </button>
         )}
       </div>
 
-      {activities.length === 0 ? (
-        <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 text-sm">
-          No sessions found. Click &quot;+ Add Workout&quot; to upload your first .FIT session.
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {activities.slice(0, 10).map((act) => (
+      <div className="space-y-3">
+        {activities.map((act) => {
+          const isWizardDone = act.wizard_completed
+
+          return (
             <div
               key={act.id}
-              onClick={() => router.push(`/activities/${act.id}`)}
-              className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 hover:scale-[1.005] transition shadow-xs"
+              className={`p-4 rounded-2xl border transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                !isWizardDone
+                  ? 'bg-orange-500/[0.03] border-orange-500/30 dark:border-orange-500/20'
+                  : 'bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder'
+              }`}
             >
-              <div>
-                <div className="font-bold text-slate-900 dark:text-white text-sm">
-                  {act.title}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/activities/${act.id}`}
+                    className="text-sm font-black text-slate-900 dark:text-white hover:text-orange-500 transition"
+                  >
+                    {act.title || 'Velodrome Session'}
+                  </Link>
+
+                  {/* Odznak statusu Wizardu */}
+                  {!isWizardDone ? (
+                    <span className="text-[10px] font-black uppercase tracking-wider py-0.5 px-2 rounded-full bg-orange-500/10 text-orange-500 border border-orange-500/20 animate-pulse">
+                      Nekategorizováno
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold py-0.5 px-2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                      {act.sport_type?.toUpperCase()} • {act.discipline}
+                    </span>
+                  )}
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5">
-                  {act.tracks?.name || 'Track Oval'} •{' '}
-                  {new Date(act.activity_date).toLocaleDateString('cs-CZ')}
+
+                <div className="text-xs text-slate-400 flex items-center gap-3">
+                  <span>{new Date(act.activity_date || act.created_at).toLocaleDateString('cs-CZ')}</span>
+                  {act.chainring && act.cog && (
+                    <span>• Převod {act.chainring}×{act.cog}</span>
+                  )}
+                  {act.tracks?.name && <span>• {act.tracks.name}</span>}
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-xs font-mono font-bold">
-                {act.max_power_w && (
-                  <span className="text-emerald-500 dark:text-brand-neon">
-                    {act.max_power_w} W
-                  </span>
-                )}
-                {act.max_cadence_rpm && (
-                  <span className="text-orange-500">
-                    {act.max_cadence_rpm} RPM
-                  </span>
-                )}
-                {act.chainring && act.cog && (
-                  <span className="bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded text-slate-700 dark:text-slate-300">
-                    {act.chainring}×{act.cog}
-                  </span>
-                )}
-                <span className="text-slate-400 text-xs">→</span>
+
+              {/* Tlačítka akcí */}
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectedActivityForWizard(act)}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                    !isWizardDone
+                      ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  <span>⚙️</span>
+                  <span>{isWizardDone ? 'Edit Wizard' : 'Spustit Wizard'}</span>
+                </button>
+
+                <Link
+                  href={`/activities/${act.id}`}
+                  className="py-2 px-3 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 transition"
+                >
+                  Detail →
+                </Link>
               </div>
             </div>
-          ))}
-        </div>
+          )
+        })}
+      </div>
+
+      {/* Modál průvodce */}
+      {selectedActivityForWizard && (
+        <ActivityWizardModal
+          isOpen={!!selectedActivityForWizard}
+          activity={selectedActivityForWizard}
+          onClose={() => setSelectedActivityForWizard(null)}
+          onCompleted={(updatedAct) => {
+            if (onActivityUpdated) onActivityUpdated(updatedAct)
+          }}
+        />
       )}
-    </section>
+    </div>
   )
 }
