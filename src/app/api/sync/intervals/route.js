@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 
-// Pomocná funkce pro výpočet durational curves z vteřinových streamů
-function computeDurationalCurve(stream, intervals = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 1200, 1800, 3600]) {
+// Pomocná funkce pro výpočet durational curves (klouzavé průměry)
+function computeDurationalCurve(
+  stream,
+  intervals = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 1200, 1800, 3600]
+) {
   if (!stream || stream.length === 0) return null
 
   const curve = {}
@@ -36,18 +39,19 @@ export async function POST(req) {
 
     if (!athleteId || !apiKey) {
       return NextResponse.json(
-        { error: 'Missing Intervals Athlete ID or API Key' },
+        { error: 'Chybí Intervals Athlete ID nebo API Key' },
         { status: 400 }
       )
     }
 
+    // Basic Auth autorizace pro Intervals.icu API
     const authHeader = `Basic ${Buffer.from(`API_KEY:${apiKey}`).toString('base64')}`
 
-    // 1. Akce: Načtení seznamu nedávných jízd
+    // 1. Akce: Načtení seznamu nedávných jízd (posledních 30 dní)
     if (action === 'list') {
-        const thirtyDaysAgo = new Date()
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-        const oldestDateStr = thirtyDaysAgo.toISOString().split('T')[0]
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const oldestDateStr = thirtyDaysAgo.toISOString().split('T')[0]
 
       const res = await fetch(
         `https://intervals.icu/api/v1/athlete/${athleteId}/activities?oldest=${oldestDateStr}`,
@@ -66,7 +70,6 @@ export async function POST(req) {
       }
 
       const activities = await res.json()
-      // Filtrujeme na cyklistické jízdy (Ride, VirtualRide)
       const rides = activities
         .filter((a) => a.type === 'Ride' || a.type === 'VirtualRide')
         .map((a) => ({
@@ -83,40 +86,51 @@ export async function POST(req) {
       return NextResponse.json({ success: true, activities: rides })
     }
 
-    // 2. Akce: Stažení vteřinových streamů a výpočet křivek pro vybranou aktivitu
+    // 2. Akce: Stažení vteřinových streamů a výpočet křivek
     if (action === 'import') {
       if (!activityId) {
         return NextResponse.json({ error: 'Missing activityId' }, { status: 400 })
       }
 
-      // Stažení streamů: cadence, watts, velocity_smooth, heartrate
-      const streamsRes = await fetch(
-        `https://intervals.icu/api/v1/athlete/${athleteId}/activities/${activityId}/streams`,
-        {
-          headers: { Authorization: authHeader },
-          cache: 'no-store',
-        }
-      )
+      const streamTypes = 'time,cadence,watts,velocity_smooth,heartrate'
+      const streamsUrl = `https://intervals.icu/api/v1/athlete/${athleteId}/activities/${activityId}/streams?types=${streamTypes}`
+
+      const streamsRes = await fetch(streamsUrl, {
+        headers: { Authorization: authHeader },
+        cache: 'no-store',
+      })
 
       if (!streamsRes.ok) {
-        return NextResponse.json(
-          { error: `Failed to fetch activity streams from Intervals.icu` },
-          { status: streamsRes.status }
-        )
+        const errText = await streamsRes.text()
+        let message = `Intervals.icu streams error (${streamsRes.status}): ${errText}`
+        if (streamsRes.status === 403 || streamsRes.status === 404) {
+          message = `Intervals.icu odmítlo vydat data (status ${streamsRes.status}). Pokud tato aktivita pochází ze Stravy, Intervals.icu její streamy blokuje. Synchronizujte prosím jízdu nahranou přímo z Garminu nebo Wahoo.`
+        }
+        return NextResponse.json({ error: message }, { status: streamsRes.status })
       }
 
       const streamsData = await streamsRes.json()
+
+      if (!Array.isArray(streamsData) || streamsData.length === 0) {
+        return NextResponse.json(
+          { error: 'Pro tuto jízdu nejsou v Intervals.icu k dispozici žádné sekundové streamy.' },
+          { status: 400 }
+        )
+      }
+
       const streamsMap = {}
       streamsData.forEach((s) => {
-        streamsMap[s.type] = s.data
+        if (s && s.type && Array.isArray(s.data)) {
+          streamsMap[s.type] = s.data
+        }
       })
 
-      // Převod velocity_smooth z m/s na km/h (* 3.6)
+      // Převod m/s na km/h (* 3.6)
       const speedKmhStream = streamsMap.velocity_smooth
-        ? streamsMap.velocity_smooth.map((v) => (v ? Math.round(v * 3.6 * 10) / 10 : 0))
+        ? streamsMap.velocity_smooth.map((v) => (v != null ? Math.round(v * 3.6 * 10) / 10 : 0))
         : null
 
-      // Výpočet Torque z watts a cadence: Torque (Nm) = (watts * 60) / (2 * PI * cadence)
+      // Výpočet Torque (Nm): (watts * 60) / (2 * PI * cadence)
       let torqueStream = null
       if (streamsMap.watts && streamsMap.cadence) {
         torqueStream = streamsMap.watts.map((w, idx) => {
@@ -126,7 +140,6 @@ export async function POST(req) {
         })
       }
 
-      // Výpočet křivek (Durational Curves)
       const curves = {}
       if (streamsMap.cadence) curves.Cadence = computeDurationalCurve(streamsMap.cadence)
       if (speedKmhStream) curves.Speed = computeDurationalCurve(speedKmhStream)
@@ -134,12 +147,16 @@ export async function POST(req) {
       if (torqueStream) curves.Torque = computeDurationalCurve(torqueStream)
       if (streamsMap.heartrate) curves.HeartRate = computeDurationalCurve(streamsMap.heartrate)
 
-      // Výpočet souhrnných KPI
+      const getMax = (arr) =>
+        arr && arr.length > 0
+          ? Math.max(...arr.filter((v) => typeof v === 'number' && !isNaN(v)))
+          : null
+
       const summary = {
-        max_cadence: streamsMap.cadence ? Math.max(...streamsMap.cadence) : null,
-        max_speed_kmh: speedKmhStream ? Math.max(...speedKmhStream) : null,
-        max_power_w: streamsMap.watts ? Math.max(...streamsMap.watts) : null,
-        peak_torque_nm: torqueStream ? Math.max(...torqueStream) : null,
+        max_cadence: getMax(streamsMap.cadence),
+        max_speed_kmh: getMax(speedKmhStream),
+        max_power_w: getMax(streamsMap.watts),
+        peak_torque_nm: getMax(torqueStream),
       }
 
       return NextResponse.json({
