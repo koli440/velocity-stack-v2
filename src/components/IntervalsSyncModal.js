@@ -10,329 +10,297 @@ export default function IntervalsSyncModal({
   tracks = [],
   onImportSuccess,
 }) {
-  const [athleteId, setAthleteId] = useState('')
-  const [apiKey, setApiKey] = useState('')
   const [loading, setLoading] = useState(false)
-  const [savingKeys, setSavingKeys] = useState(false)
-  const [activities, setActivities] = useState([])
-  const [selectedActivity, setSelectedActivity] = useState(null)
+  const [importingId, setImportingId] = useState(null)
+  const [errorMsg, setErrorMsg] = useState(null)
+  const [activitiesList, setActivitiesList] = useState([])
+  const [selectedTrackId, setSelectedTrackId] = useState('')
+  const [hasCredentials, setHasCredentials] = useState(true)
 
-  // Parametry dráhového kola
-  const [selectedTrack, setSelectedTrack] = useState(tracks[0]?.id || '')
-  const [chainring, setChainring] = useState('58')
-  const [cog, setCog] = useState('14')
-  const [importing, setImporting] = useState(false)
-
-  // 1. Načtení uložených klíčů z profilu
+  // Načtení jízd z Intervals.icu při otevření modálu
   useEffect(() => {
-    if (!currentUser?.id) return
-    supabase
-      .from('profiles')
-      .select('intervals_athlete_id, intervals_api_key')
-      .eq('id', currentUser.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          if (data.intervals_athlete_id) setAthleteId(data.intervals_athlete_id)
-          if (data.intervals_api_key) setApiKey(data.intervals_api_key)
+    if (!isOpen || !currentUser?.id) return
+
+    const fetchIntervalsList = async () => {
+      setLoading(true)
+      setErrorMsg(null)
+
+      try {
+        // 1. Získání přihlašovacích údajů z profilu
+        const { data: profile, error: profileErr } = await supabase
+          .from('profiles')
+          .select('intervals_athlete_id, intervals_api_key, home_track_id')
+          .eq('id', currentUser.id)
+          .maybeSingle()
+
+        if (profileErr || !profile?.intervals_athlete_id || !profile?.intervals_api_key) {
+          setHasCredentials(false)
+          setLoading(false)
+          return
         }
-      })
-  }, [currentUser])
 
-  // 2. Uložení klíčů do profilu
-  const handleSaveCredentials = async () => {
-    if (!currentUser?.id) return
-    setSavingKeys(true)
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        intervals_athlete_id: athleteId.trim(),
-        intervals_api_key: apiKey.trim(),
-      })
-      .eq('id', currentUser.id)
+        setHasCredentials(true)
+        if (profile.home_track_id) {
+          setSelectedTrackId(profile.home_track_id)
+        }
 
-    setSavingKeys(false)
-    if (error) {
-      alert('Chyba při ukládání klíčů: ' + error.message)
-    } else {
-      alert('Klíče Intervals.icu uloženy!')
-      fetchActivities()
-    }
-  }
+        // 2. Volání API route pro seznam jízd
+        const res = await fetch('/api/sync/intervals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'list',
+            athleteId: profile.intervals_athlete_id,
+            apiKey: profile.intervals_api_key,
+          }),
+        })
 
-  // 3. Načtení seznamu jízd z Intervals.icu
-  const fetchActivities = async () => {
-    if (!athleteId || !apiKey) {
-      alert('Nejprve vyplňte Athlete ID a API Key.')
-      return
-    }
+        const data = await res.json()
+        if (!res.ok) {
+          throw new Error(data.error || 'Nepodařilo se načíst jízdy z Intervals.icu.')
+        }
 
-    setLoading(true)
-    try {
-      const res = await fetch('/api/sync/intervals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'list',
-          athleteId: athleteId.trim(),
-          apiKey: apiKey.trim(),
-        }),
-      })
-
-      const data = await res.json()
-      if (res.ok && data.success) {
-        setActivities(data.activities || [])
-      } else {
-        alert(data.error || 'Nepodařilo se načíst jízdy z Intervals.icu')
+        setActivitiesList(data.activities || [])
+      } catch (err) {
+        setErrorMsg(err.message)
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      alert('Chyba spojení: ' + err.message)
-    } finally {
-      setLoading(false)
     }
-  }
 
-  // 4. Import konkrétní jízdy a uložení do VelocityStack DB
-  const handleImportActivity = async (act) => {
-    setSelectedActivity(act)
-    setImporting(true)
+    fetchIntervalsList()
+  }, [isOpen, currentUser])
+
+  if (!isOpen) return null
+
+  // Import konkrétní vybrané jízdy
+  const handleImportSelected = async (selectedRide) => {
+    if (!currentUser?.id) return
+    setImportingId(selectedRide.id)
+    setErrorMsg(null)
 
     try {
-      // Zavoláme backend pro stažení streamů a výpočet křivek
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('intervals_athlete_id, intervals_api_key, default_chainring, default_cog, crank_length_mm')
+        .eq('id', currentUser.id)
+        .single()
+
+      // 1. Zavolání API route pro import streamů a křivek (předáváme celé ID jízdy)
       const res = await fetch('/api/sync/intervals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'import',
-          athleteId: athleteId.trim(),
-          apiKey: apiKey.trim(),
-          activityId: act.id,
+          athleteId: profile.intervals_athlete_id,
+          apiKey: profile.intervals_api_key,
+          activityId: selectedRide.id,
         }),
       })
 
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Chyba při zpracování streamů')
+      const result = await res.json()
+      if (!res.ok) {
+        throw new Error(result.error || 'Import selhal.')
       }
 
-      // 1. Zápis do activities
-      const { data: activityRow, error: actError } = await supabase
+      const { summary = {}, curves = {}, time_series = {} } = result
+
+      // 2. Vložení do tabulky activities včetně time_series
+      const newActivity = {
+        user_id: currentUser.id,
+        title: selectedRide.name || 'Intervals.icu Sync',
+        activity_date: selectedRide.start_date_local,
+        distance_m: selectedRide.distance_m || 0,
+        moving_time_s: selectedRide.moving_time_s || 0,
+        track_id: selectedTrackId || null,
+        chainring: profile.default_chainring || 58,
+        cog: profile.default_cog || 14,
+        crank_length_mm: profile.crank_length_mm || 165.0,
+        max_cadence_rpm: summary.max_cadence || null,
+        max_speed_kmh: summary.max_speed_kmh || null,
+        max_power_w: summary.max_power_w || null,
+        peak_torque_nm: summary.peak_torque_nm || null,
+        time_series: time_series || {}, // Ukládáme sekundové streamy pro detekci úseků
+        wizard_completed: false,
+      }
+
+      const { data: actData, error: actErr } = await supabase
         .from('activities')
-        .insert({
-          title: act.name || 'Velodrome Track Session',
-          user_id: currentUser.id,
-          track_id: selectedTrack || null,
-          chainring: chainring ? parseInt(chainring) : null,
-          cog: cog ? parseInt(cog) : null,
-          crank_length_mm: 165.0,
-          max_cadence_rpm: data.summary.max_cadence,
-          max_speed_kmh: data.summary.max_speed_kmh,
-          max_power_w: data.summary.max_power_w,
-          peak_torque_nm: data.summary.peak_torque_nm,
-          activity_date: new Date(act.start_date_local).toISOString(),
-        })
+        .insert([newActivity])
         .select()
         .single()
 
-      if (actError) throw actError
+      if (actErr) throw actErr
 
-      // 2. Zápis do activity_curves
-      if (data.curves && Object.keys(data.curves).length > 0) {
-        const curveRows = Object.entries(data.curves).map(
-          ([metricType, metricData]) => ({
-            activity_id: activityRow.id,
-            curve_type: metricType,
-            data: metricData,
-          })
-        )
+      // 3. Vložení zátěžových křivek do activity_curves
+      const curveInserts = Object.entries(curves).map(([curveType, curveData]) => ({
+        activity_id: actData.id,
+        curve_type: curveType,
+        data: curveData,
+      }))
 
-        const { error: curvesError } = await supabase
-          .from('activity_curves')
-          .insert(curveRows)
-
-        if (curvesError) throw curvesError
+      if (curveInserts.length > 0) {
+        await supabase.from('activity_curves').insert(curveInserts)
       }
 
-      alert('🎉 Jízda byla úspěšně synchronizována a zapsána do Vaultu!')
+      // 4. Úspěšné dokončení a přesměrování
       if (onImportSuccess) {
-        onImportSuccess(activityRow.id)
+        onImportSuccess(actData.id)
       }
-      onClose()
     } catch (err) {
-      alert('Import selhal: ' + err.message)
-    } finally {
-      setImporting(false)
+      setErrorMsg(err.message)
+      setImportingId(null)
     }
   }
 
-  if (!isOpen) return null
+  const formatMovingTime = (sec) => {
+    if (!sec) return '—'
+    const m = Math.floor(sec / 60)
+    const s = sec % 60
+    return `${m}m ${s < 10 ? '0' : ''}${s}s`
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl space-y-6">
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg"
-        >
-          ✕
-        </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-surface-darkCard rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl overflow-hidden">
+        
+        {/* Hlavička */}
+        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800">
+          <button
+            onClick={onClose}
+            className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
+          >
+            ✕
+          </button>
 
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🔄</span>
-            <h2 className="text-xl font-black uppercase text-slate-900 dark:text-white">
-              Intervals.icu Sync Bridge
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-base">🔄</span>
+            <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white">
+              Sync from Intervals.icu
             </h2>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Automatický import dráhových tréninků ze zařízení Garmin & Wahoo napojených na Intervals.icu.
+          <p className="text-xs text-slate-400">
+            Vyberte jízdu ze zařízení Garmin nebo Wahoo pro import sekundové telemetrie a spuštění analýzy.
           </p>
-        </div>
 
-        {/* 1. Nastavení klíčů */}
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3">
-          <div className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-            API Credentials
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                Athlete ID (např. i12345)
-              </label>
-              <input
-                type="text"
-                value={athleteId}
-                onChange={(e) => setAthleteId(e.target.value)}
-                placeholder="iXXXXX"
-                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                API Key
-              </label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Z profilu Intervals.icu"
-                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              onClick={handleSaveCredentials}
-              disabled={savingKeys}
-              className="py-1.5 px-3 rounded-lg bg-slate-200 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-white hover:bg-slate-700 transition"
-            >
-              {savingKeys ? 'Ukládám...' : 'Save Keys'}
-            </button>
-            <button
-              onClick={fetchActivities}
-              disabled={loading}
-              className="py-1.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-sm"
-            >
-              {loading ? 'Načítám...' : 'Fetch Activities'}
-            </button>
-          </div>
-        </div>
-
-        {/* 2. Nastavení převodu pro importované jízdy */}
-        <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800">
-          <div>
+          {/* Volba velodromu pro importovanou jízdu */}
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80">
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Velodrom
+              Přiřadit k velodromu (výchozí):
             </label>
             <select
-              value={selectedTrack}
-              onChange={(e) => setSelectedTrack(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs text-slate-900 dark:text-white"
+              value={selectedTrackId}
+              onChange={(e) => setSelectedTrackId(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500 font-semibold"
             >
-              <option value="">-- Oval --</option>
+              <option value="">-- Bez určení velodromu --</option>
               {tracks.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name}
+                  {t.name} ({t.length_m} m, {t.surface})
                 </option>
               ))}
             </select>
           </div>
-
-          <div>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Převodník (T)
-            </label>
-            <input
-              type="number"
-              value={chainring}
-              onChange={(e) => setChainring(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs text-slate-900 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Pastorek (T)
-            </label>
-            <input
-              type="number"
-              value={cog}
-              onChange={(e) => setCog(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs text-slate-900 dark:text-white"
-            />
-          </div>
         </div>
 
-        {/* 3. Seznam aktivit připravených k importu */}
-        <div className="space-y-3">
-          <div className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-            Recent Workouts ({activities.length})
-          </div>
-
-          {activities.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-              Žádné jízdy nenačteny. Klikněte na &quot;Fetch Activities&quot;.
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {activities.map((act) => (
-                <div
-                  key={act.id}
-                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 hover:border-emerald-500 transition"
-                >
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">
-                      {act.name}
-                    </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">
-                      {new Date(act.start_date_local).toLocaleString('cs-CZ')} •{' '}
-                      {(act.distance_m / 1000).toFixed(1)} km
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    {act.average_watts && (
-                      <span className="text-xs font-mono font-bold text-purple-400">
-                        {Math.round(act.average_watts)} W
-                      </span>
-                    )}
-
-                    <button
-                      onClick={() => handleImportActivity(act)}
-                      disabled={importing}
-                      className="py-1.5 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
-                    >
-                      {importing && selectedActivity?.id === act.id
-                        ? 'Importing...'
-                        : 'Sync Ride'}
-                    </button>
-                  </div>
-                </div>
-              ))}
+        {/* Tělo modálu */}
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3">
+          {errorMsg && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold">
+              ⚠️ {errorMsg}
             </div>
           )}
+
+          {!hasCredentials && (
+            <div className="text-center py-8 space-y-2">
+              <span className="text-3xl">🔑</span>
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                Chybí přihlašovací údaje pro Intervals.icu
+              </div>
+              <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                Otevřete svůj profil jezdce a zadejte Intervals Athlete ID a API Key.
+              </p>
+            </div>
+          )}
+
+          {loading && (
+            <div className="text-center py-12 text-xs font-bold uppercase tracking-wider text-slate-400 animate-pulse">
+              Načítám poslední jízdy z Intervals.icu...
+            </div>
+          )}
+
+          {!loading && hasCredentials && activitiesList.length === 0 && !errorMsg && (
+            <div className="text-center py-10 text-xs text-slate-400">
+              Za posledních 30 dní nebyly na Intervals.icu nalezeny žádné jízdy na kole.
+            </div>
+          )}
+
+          {!loading && activitiesList.length > 0 && (
+            <div className="space-y-2">
+              {activitiesList.map((ride) => {
+                const isImporting = importingId === ride.id
+                const rideDate = new Date(ride.start_date_local).toLocaleDateString('cs-CZ', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+
+                return (
+                  <div
+                    key={ride.id}
+                    className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-3 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                  >
+                    <div className="space-y-1">
+                      <div className="text-xs font-black text-slate-900 dark:text-white">
+                        {ride.name || 'Jízda na kole'}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-2">
+                        <span>{rideDate}</span>
+                        <span>•</span>
+                        <span>{formatMovingTime(ride.moving_time_s)}</span>
+                        {ride.average_watts && (
+                          <>
+                            <span>•</span>
+                            <span className="font-bold text-slate-700 dark:text-slate-300">
+                              {Math.round(ride.average_watts)} W avg
+                            </span>
+                          </>
+                        )}
+                        {ride.average_cadence && (
+                          <>
+                            <span>•</span>
+                            <span>{Math.round(ride.average_cadence)} RPM</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={importingId !== null}
+                      onClick={() => handleImportSelected(ride)}
+                      className="py-2 px-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-wider transition shadow-xs disabled:opacity-50 shrink-0"
+                    >
+                      {isImporting ? 'Importuji...' : 'Importovat'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Patička */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end bg-slate-50 dark:bg-slate-900/40">
+          <button
+            type="button"
+            onClick={onClose}
+            className="py-2 px-4 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white transition"
+          >
+            Zavřít
+          </button>
         </div>
       </div>
     </div>

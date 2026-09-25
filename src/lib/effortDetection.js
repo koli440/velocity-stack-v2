@@ -1,79 +1,107 @@
+// src/lib/effortDetection.js
+
 /**
- * Pomocné funkce pro detekci úseků z vteřinových dat
+ * Detekce souvislého bloku stíhacího závodu (Individual Pursuit)
+ * @param {number[]} wattsStream - pole wattů po sekundách
+ * @param {number[]} cadenceStream - pole kadence po sekundách
  */
+export function detectPursuitEffort(wattsStream = [], cadenceStream = []) {
+  if (!wattsStream || wattsStream.length === 0) return null
 
-export function detectEffortsByCadence(cadenceStream, powerStream, speedStream, minRpm = 125, minDurationSec = 5) {
-  if (!cadenceStream || cadenceStream.length === 0) return []
+  // 1. Zjistíme zátěžový práh: stíhačka je na velodromu nejtvrdší souvislý blok v jízdě.
+  // Odhadneme FTP/práh z 95% průměru horní třetiny aktivních wattů.
+  const activeWatts = wattsStream.filter((w) => w > 100)
+  if (activeWatts.length < 60) return null
 
-  const efforts = []
-  let inEffort = false
-  let startIndex = 0
+  const sortedWatts = [...activeWatts].sort((a, b) => b - a)
+  // Horních 20 % hodnot udává závodní tempo
+  const topThreshold = sortedWatts[Math.floor(sortedWatts.length * 0.2)] * 0.75
 
-  for (let i = 0; i < cadenceStream.length; i++) {
-    const rpm = cadenceStream[i] || 0
+  let inBlock = false
+  let startIdx = 0
+  let dropCounter = 0
+  const maxAllowedDropSec = 3 // tolerance na výpadek/zakolísání
+  let blocks = []
 
-    if (!inEffort && rpm >= minRpm) {
-      inEffort = true
-      startIndex = i
-    } else if (inEffort && (rpm < minRpm || i === cadenceStream.length - 1)) {
-      const duration = i - startIndex
-      if (duration >= minDurationSec) {
-        const segCadence = cadenceStream.slice(startIndex, i)
-        const segPower = powerStream ? powerStream.slice(startIndex, i) : []
-        const segSpeed = speedStream ? speedStream.slice(startIndex, i) : []
+  for (let i = 0; i < wattsStream.length; i++) {
+    const w = wattsStream[i] || 0
 
-        efforts.push({
-          id: `cad_${startIndex}`,
-          start_sec: startIndex,
-          end_sec: i,
-          duration_sec: duration,
-          max_cadence: Math.max(...segCadence),
-          avg_cadence: Math.round(segCadence.reduce((a, b) => a + b, 0) / duration),
-          max_power: segPower.length ? Math.max(...segPower) : null,
-          max_speed: segSpeed.length ? Math.max(...segSpeed) : null,
-          type: 'Sprint / High Cadence',
-        })
+    if (!inBlock) {
+      if (w >= topThreshold) {
+        inBlock = true
+        startIdx = i
+        dropCounter = 0
       }
-      inEffort = false
+    } else {
+      if (w < topThreshold) {
+        dropCounter++
+        if (dropCounter > maxAllowedDropSec || i === wattsStream.length - 1) {
+          const endIdx = i - dropCounter
+          const duration = endIdx - startIdx
+          // Stíhačka na dráze trvá typicky mezi 70 s (1 km) až 330 s (4 km)
+          if (duration >= 60 && duration <= 360) {
+            blocks.push({ startIdx, endIdx, duration })
+          }
+          inBlock = false
+        }
+      } else {
+        dropCounter = 0
+      }
     }
   }
 
-  return efforts
-}
+  if (blocks.length === 0) return null
 
-export function detectEffortsByTorque(torqueStream, cadenceStream, minTorque = 65, minDurationSec = 3) {
-  if (!torqueStream || torqueStream.length === 0) return []
+  // Vybereme nejdominantnější blok (nejvyšší průměrný výkon x čas)
+  let bestBlock = null
+  let maxScore = 0
 
-  const efforts = []
-  let inEffort = false
-  let startIndex = 0
-
-  for (let i = 0; i < torqueStream.length; i++) {
-    const t = torqueStream[i] || 0
-
-    if (!inEffort && t >= minTorque) {
-      inEffort = true
-      startIndex = i
-    } else if (inEffort && (t < minTorque || i === torqueStream.length - 1)) {
-      const duration = i - startIndex
-      if (duration >= minDurationSec) {
-        const segTorque = torqueStream.slice(startIndex, i)
-        const segCadence = cadenceStream ? cadenceStream.slice(startIndex, i) : []
-
-        efforts.push({
-          id: `trq_${startIndex}`,
-          start_sec: startIndex,
-          end_sec: i,
-          duration_sec: duration,
-          peak_torque: Math.max(...segTorque),
-          avg_torque: Math.round((segTorque.reduce((a, b) => a + b, 0) / duration) * 10) / 10,
-          max_cadence: segCadence.length ? Math.max(...segCadence) : null,
-          type: 'Standing Start / High Torque',
-        })
-      }
-      inEffort = false
+  blocks.forEach((b) => {
+    const segWatts = wattsStream.slice(b.startIdx, b.endIdx)
+    const avgW = segWatts.reduce((acc, val) => acc + val, 0) / b.duration
+    const score = avgW * Math.sqrt(b.duration)
+    if (score > maxScore) {
+      maxScore = score
+      bestBlock = { ...b, avgW }
     }
+  })
+
+  if (!bestBlock) return null
+
+  const segWatts = wattsStream.slice(bestBlock.startIdx, bestBlock.endIdx)
+  const segCad = cadenceStream.slice(bestBlock.startIdx, bestBlock.endIdx)
+
+  // 2. Návrh vzdálenosti podle času (typické časy v dráhové cyklistice)
+  const dur = bestBlock.duration
+  let suggestedDist = 3000 // výchozí pro Masters
+  let label = '3 km Stíhačka (Masters)'
+
+  if (dur < 95) {
+    suggestedDist = 1000
+    label = '1 km Pevný start'
+  } else if (dur < 175) {
+    suggestedDist = 2000
+    label = '2 km Stíhačka'
+  } else if (dur >= 175 && dur <= 250) {
+    suggestedDist = 3000
+    label = '3 km Stíhačka (Masters)'
+  } else {
+    suggestedDist = 4000
+    label = '4 km Stíhačka (Elite)'
   }
 
-  return efforts
+  return {
+    id: `pursuit_${bestBlock.startIdx}`,
+    start_sec: bestBlock.startIdx,
+    end_sec: bestBlock.endIdx,
+    duration_sec: dur,
+    suggested_distance_m: suggestedDist,
+    discipline_label: label,
+    avg_power: Math.round(bestBlock.avgW),
+    max_power: Math.max(...segWatts),
+    avg_cadence: segCad.length ? Math.round(segCad.reduce((a, b) => a + b, 0) / dur) : null,
+    max_cadence: segCad.length ? Math.max(...segCad) : null,
+    // Výpočet průměrné rychlosti čistě z času a navržené vzdálenosti: (metry / sekundy) * 3.6
+    calculated_avg_speed_kmh: Math.round(((suggestedDist / dur) * 3.6) * 10) / 10,
+  }
 }

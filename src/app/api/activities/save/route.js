@@ -73,8 +73,18 @@ export async function POST(req) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ success: true, activity: data })
+    return NextResponse.json({
+  success: true,
+  summary,
+  curves,
+  time_series: {
+    watts: streamsMap.watts || [],
+    cadence: streamsMap.cadence || [],
+    torque: torqueStream || [],
+  }
+})
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+

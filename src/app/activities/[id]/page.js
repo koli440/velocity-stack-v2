@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
+import BenchmarkCards from '../../../components/BenchmarkCards'
 import ActivityWizardModal from '../../../components/wizard/ActivityWizardModal'
 
 export default function ActivityDetailPage() {
@@ -17,6 +18,7 @@ export default function ActivityDetailPage() {
   const [activity, setActivity] = useState(null)
   const [tracks, setTracks] = useState([])
   const [curvesMap, setCurvesMap] = useState({})
+  const [masterCurves, setMasterCurves] = useState(null)
   const [isWizardOpen, setIsWizardOpen] = useState(false)
 
   // Rychlý editační stav pro převod a dráhu ve spodním panelu
@@ -31,6 +33,7 @@ export default function ActivityDetailPage() {
     const loadData = async () => {
       setLoading(true)
 
+      // 1. Paralelní načtení detailu jízdy, tratí a křivek této aktivity
       const [actRes, tracksRes, curvesRes] = await Promise.all([
         supabase
           .from('activities')
@@ -50,6 +53,18 @@ export default function ActivityDetailPage() {
         setChainring(act.chainring ? String(act.chainring) : '58')
         setCog(act.cog ? String(act.cog) : '14')
         setTrackId(act.track_id || '')
+
+        // 2. Načtení historických maxim jezdce pro srovnání (Master Curves)
+        if (act.user_id) {
+          try {
+            const { data: masterData } = await supabase.rpc('get_athlete_master_curves', {
+              p_user_id: act.user_id,
+            })
+            if (masterData) setMasterCurves(masterData)
+          } catch (err) {
+            console.warn('Master curves RPC nebyla nalezena nebo selhala:', err)
+          }
+        }
       }
 
       if (tracksRes.data) {
@@ -103,7 +118,7 @@ export default function ActivityDetailPage() {
     }
   }
 
-  // Výpočet převodového vývinu (Gear Inches & Rollout)
+  // Výpočet převodového vývinu (Gear Inches)
   const calcGearInches = () => {
     const ring = parseFloat(chainring)
     const sprocket = parseFloat(cog)
@@ -113,7 +128,7 @@ export default function ActivityDetailPage() {
 
   const formatEffortTime = (sec) => {
     const m = Math.floor(sec / 60)
-    const s = sec % 60
+    const s = Math.round(sec % 60)
     return `${m}:${s < 10 ? '0' : ''}${s}`
   }
 
@@ -121,7 +136,7 @@ export default function ActivityDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-xs uppercase font-bold tracking-wider text-slate-400 animate-pulse">
-          Načítám telemetrii aktivity...
+          Načítám telemetrii aktivity a historická maxima...
         </div>
       </div>
     )
@@ -198,8 +213,8 @@ export default function ActivityDetailPage() {
         </div>
       </div>
 
-      {/* 2. Kontextové štítky vybavení (pokud už bylo ve Wizardu vyplněno) */}
-      {(activity.bike_model || activity.handlebar_setup || activity.helmet || activity.tracks) && (
+      {/* 2. Kontextové štítky vybavení a nastavení */}
+      {(activity.bike_model || activity.handlebar_setup || activity.helmet || activity.tracks || activity.perceived_exertion) && (
         <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
           {activity.tracks && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -236,39 +251,11 @@ export default function ActivityDetailPage() {
         </div>
       )}
 
-      {/* 3. Telemetrické karty */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Peak Cadence</div>
-          <div className="text-2xl font-black text-orange-500 mt-1">
-            {activity.max_cadence_rpm != null ? `${activity.max_cadence_rpm} RPM` : '—'}
-          </div>
-        </div>
+      {/* 3. Benchmarkové karty porovnání výkonu */}
+      <BenchmarkCards currentActivity={activity} masterCurves={masterCurves || {}} />
 
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Max Speed</div>
-          <div className="text-2xl font-black text-sky-400 mt-1">
-            {activity.max_speed_kmh != null ? `${activity.max_speed_kmh} km/h` : '—'}
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Max Power</div>
-          <div className="text-2xl font-black text-purple-400 mt-1">
-            {activity.max_power_w != null ? `${activity.max_power_w} W` : '—'}
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Peak Torque</div>
-          <div className="text-2xl font-black text-amber-400 mt-1">
-            {activity.peak_torque_nm != null ? `${activity.peak_torque_nm} Nm` : '—'}
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Durational Curves Chart */}
-      <DurationalCurvesChart curves={curvesMap} />
+      {/* 4. Durational Curves Chart se zobrazením All-time PB linky */}
+      <DurationalCurvesChart curves={curvesMap} masterCurves={masterCurves} />
 
       {/* 5. Detekované ostré úseky (Efforts) z Wizardu */}
       {detectedEfforts.length > 0 && (
@@ -293,7 +280,7 @@ export default function ActivityDetailPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-slate-900 dark:text-white">
-                    #{idx + 1} {effort.type || 'Effort'}
+                    #{idx + 1} {effort.discipline_label || effort.type || 'Effort'}
                   </span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-mono">
                     {effort.duration_sec}s
@@ -317,10 +304,10 @@ export default function ActivityDetailPage() {
                       <div className="text-xs font-black text-amber-400">{effort.peak_torque} Nm</div>
                     </div>
                   )}
-                  {effort.max_power && (
+                  {(effort.avg_power || effort.max_power) && (
                     <div>
-                      <div className="text-[8px] uppercase font-bold text-slate-400">Power</div>
-                      <div className="text-xs font-black text-purple-400">{effort.max_power} W</div>
+                      <div className="text-[8px] uppercase font-bold text-slate-400">Watty</div>
+                      <div className="text-xs font-black text-purple-400">{effort.avg_power || effort.max_power} W</div>
                     </div>
                   )}
                 </div>

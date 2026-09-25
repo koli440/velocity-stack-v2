@@ -91,10 +91,9 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Missing activityId' }, { status: 400 })
       }
 
-      // Ponecháváme nezkrácené ActivityID přesně tak, jak přišlo (např. "i190168699")
       const actId = String(activityId)
 
-      // Pokus A: Stažení vteřinových streamů
+      // Pokus A: Vteřinové streamy
       const streamsRes = await fetch(
         `https://intervals.icu/api/v1/activity/${actId}/streams`,
         {
@@ -108,7 +107,7 @@ export async function POST(req) {
         streamsData = await streamsRes.json()
       }
 
-      // Pokus B: Fallback na stažení souboru .fit, pokud streamy vrátily 404
+      // Pokus B: Fallback na .FIT soubor
       if (!streamsData || !Array.isArray(streamsData) || streamsData.length === 0) {
         const fileRes = await fetch(
           `https://intervals.icu/api/v1/activity/${actId}/file`,
@@ -137,17 +136,18 @@ export async function POST(req) {
               success: true,
               summary: parsedData.summary,
               curves: parsedData.curves,
+              time_series: parsedData.time_series || {},
             })
           }
         }
 
         return NextResponse.json(
-          { error: `Pro jízdu ${actId} nejsou v Intervals.icu dostupná žádná data ani streamy.` },
+          { error: `Pro jízdu ${actId} nejsou v Intervals.icu dostupná žádná data.` },
           { status: 404 }
         )
       }
 
-      // Zpracování streamů z Pokusu A
+      // Namapování streamů do přehledného slovníku
       const streamsMap = {}
       streamsData.forEach((s) => {
         if (s?.type && Array.isArray(s.data)) {
@@ -168,6 +168,7 @@ export async function POST(req) {
         })
       }
 
+      // Výpočet zátěžových křivek
       const curves = {}
       if (streamsMap.cadence?.length) curves.Cadence = computeDurationalCurve(streamsMap.cadence)
       if (speedKmhStream?.length) curves.Speed = computeDurationalCurve(speedKmhStream)
@@ -188,10 +189,19 @@ export async function POST(req) {
         peak_torque_nm: getMax(torqueStream),
       }
 
+      // Časová řada vteřinu po vteřině
+      const timeSeries = {
+        watts: streamsMap.watts || [],
+        cadence: streamsMap.cadence || [],
+        torque: torqueStream || [],
+        speed: speedKmhStream || [],
+      }
+
       return NextResponse.json({
         success: true,
         summary,
         curves,
+        time_series: timeSeries,
       })
     }
 
