@@ -8,6 +8,7 @@ import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
 import VelodromesView from './VelodromesView'
 import ActivityFeed from './ActivityFeed'
+import IntervalsSyncModal from './IntervalsSyncModal'
 
 export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const [currentTracks, setCurrentTracks] = useState(tracks)
   const [currentView, setCurrentView] = useState('home')
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false)
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false)
 
   const reloadActivities = async (userId) => {
     const targetId = userId || user?.id
@@ -93,6 +95,9 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
 
       {/* 2. Pravý panel s Rosterem (Active Riders & Add Workout) */}
       <div className="w-full xl:w-80 shrink-0">
+        <button onClick={() => setIsSyncModalOpen(true)} className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold transition border border-purple-500/20">
+          <span>🔄</span> Sync Intervals.icu
+        </button>
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
 
@@ -115,6 +120,15 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
             />
           </div>
         </div>
+        <IntervalsSyncModal isOpen={isSyncModalOpen} onClose={() => setIsSyncModalOpen(false)} currentUser={user} tracks={currentTracks}
+          onImportSuccess={(newActivityId) => {
+            if (newActivityId) {
+              router.push(`/activities/${newActivityId}`)
+            } else if (user?.id) {
+              reloadActivities(user.id)
+            }
+          }}
+        />
       )}
     </div>
   )
