@@ -1,6 +1,10 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+
 export default function ActivityFeed({ activities = [], onAddWorkout }) {
+  const router = useRouter()
+
   return (
     <section className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
       <div className="flex justify-between items-center">
@@ -23,11 +27,12 @@ export default function ActivityFeed({ activities = [], onAddWorkout }) {
           No sessions found. Click &quot;+ Add Workout&quot; to upload your first .FIT session.
         </div>
       ) : (
-        <div className="space-y-3">
-          {activities.slice(0, 8).map((act) => (
+        <div className="space-y-2.5">
+          {activities.slice(0, 10).map((act) => (
             <div
               key={act.id}
-              className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between"
+              onClick={() => router.push(`/activities/${act.id}`)}
+              className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 flex items-center justify-between cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 hover:scale-[1.005] transition shadow-xs"
             >
               <div>
                 <div className="font-bold text-slate-900 dark:text-white text-sm">
@@ -35,7 +40,7 @@ export default function ActivityFeed({ activities = [], onAddWorkout }) {
                 </div>
                 <div className="text-xs text-slate-400 mt-0.5">
                   {act.tracks?.name || 'Track Oval'} •{' '}
-                  {new Date(act.activity_date).toLocaleDateString()}
+                  {new Date(act.activity_date).toLocaleDateString('cs-CZ')}
                 </div>
               </div>
               <div className="flex items-center gap-4 text-xs font-mono font-bold">
@@ -54,6 +59,7 @@ export default function ActivityFeed({ activities = [], onAddWorkout }) {
                     {act.chainring}×{act.cog}
                   </span>
                 )}
+                <span className="text-slate-400 text-xs">→</span>
               </div>
             </div>
           ))}

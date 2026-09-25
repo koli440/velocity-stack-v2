@@ -181,10 +181,14 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
               tracks={currentTracks}
               currentUser={user}
               onClose={() => setIsWorkoutModalOpen(false)}
-              onSaved={() => {
-                setIsWorkoutModalOpen(false)
-                reloadActivities()
-              }}
+              onSaved={(newActivityId) => {
+          setIsWorkoutModalOpen(false)
+          if (newActivityId) {
+            router.push(`/activities/${newActivityId}`)
+          } else {
+            reloadActivities(user.id)
+          }
+        }}
             />
           </div>
         </div>
