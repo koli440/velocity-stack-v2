@@ -87,7 +87,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
             />
           </>
         ) : (
-          <VelodromesView tracks={currentTracks} onRefreshTracks={reloadTracks} />
+          <div>Nothing to see here ...</dov>
         )}
       </div>
 
