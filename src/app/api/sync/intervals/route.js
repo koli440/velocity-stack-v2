@@ -92,9 +92,8 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Missing activityId' }, { status: 400 })
       }
 
-      // Voláme endpoint BEZ restriktivního parametru ?types=...
-      // Intervals.icu tak vrátí pouze streamy, které aktivita reálně má (nepadá na 404 při absenci wattmetru či HR)
-      const streamsUrl = `https://intervals.icu/api/v1/athlete/${athleteId}/activities/${activityId}/streams`
+      const cleanActivityId = String(activityId).replace(/^i/, '')
+      const streamsUrl = `https://intervals.icu/api/v1/activity/${cleanActivityId}/streams`
 
       const streamsRes = await fetch(streamsUrl, {
         headers: { Authorization: authHeader },
