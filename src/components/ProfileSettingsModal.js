@@ -2,217 +2,246 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { useTheme } from 'next-themes'
 
-export default function ProfileSettingsModal({ isOpen, onClose, user, tracks = [] }) {
-  const { setTheme } = useTheme()
+export default function ProfileSettingsModal({
+  isOpen,
+  onClose,
+  user,
+  tracks = [],
+}) {
   const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [nickname, setNickname] = useState('')
+  const [homeTrackId, setHomeTrackId] = useState('')
+  const [defaultChainring, setDefaultChainring] = useState('58')
+  const [defaultCog, setDefaultCog] = useState('14')
+  const [crankLength, setCrankLength] = useState('165.0')
+  const [themePref, setThemePref] = useState('dark')
 
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    nickname: '',
-    weight_kg: '',
-    height_cm: '',
-    home_track_id: '',
-    theme_preference: 'dark',
-  })
+  // Intervals.icu synchronizační údaje
+  const [intervalsAthleteId, setIntervalsAthleteId] = useState('')
+  const [intervalsApiKey, setIntervalsApiKey] = useState('')
 
-  // Načtení profilu při otevření
   useEffect(() => {
-    if (!isOpen || !user?.id) return
+    if (!user?.id || !isOpen) return
 
     const loadProfile = async () => {
       setLoading(true)
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle()
 
       if (data) {
-        setFormData({
-          first_name: data.first_name || '',
-          last_name: data.last_name || '',
-          nickname: data.nickname || '',
-          weight_kg: data.weight_kg ?? '',
-          height_cm: data.height_cm ?? '',
-          home_track_id: data.home_track_id || '',
-          theme_preference: data.theme_preference || 'dark',
-        })
+        setFirstName(data.first_name || '')
+        setLastName(data.last_name || '')
+        setNickname(data.nickname || '')
+        setHomeTrackId(data.home_track_id || '')
+        setDefaultChainring(data.default_chainring ? String(data.default_chainring) : '58')
+        setDefaultCog(data.default_cog ? String(data.default_cog) : '14')
+        setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
+        setThemePref(data.theme_preference || 'dark')
+        setIntervalsAthleteId(data.intervals_athlete_id || '')
+        setIntervalsApiKey(data.intervals_api_key || '')
       }
       setLoading(false)
     }
 
     loadProfile()
-  }, [isOpen, user])
+  }, [user, isOpen])
 
   const handleSave = async (e) => {
     e.preventDefault()
     if (!user?.id) return
-    setSaving(true)
 
-    const payload = {
+    setLoading(true)
+    const updates = {
       id: user.id,
-      first_name: formData.first_name.trim() || null,
-      last_name: formData.last_name.trim() || null,
-      nickname: formData.nickname.trim() || null,
-      weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
-      height_cm: formData.height_cm ? parseFloat(formData.height_cm) : null,
-      home_track_id: formData.home_track_id || null,
-      theme_preference: formData.theme_preference,
+      first_name: firstName.trim() || null,
+      last_name: lastName.trim() || null,
+      nickname: nickname.trim() || null,
+      home_track_id: homeTrackId || null,
+      default_chainring: defaultChainring ? parseInt(defaultChainring) : null,
+      default_cog: defaultCog ? parseInt(defaultCog) : null,
+      crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
+      theme_preference: themePref,
+      intervals_athlete_id: intervalsAthleteId.trim() || null,
+      intervals_api_key: intervalsApiKey.trim() || null,
       updated_at: new Date().toISOString(),
     }
 
-    const { error } = await supabase.from('profiles').upsert(payload)
+    const { error } = await supabase.from('profiles').upsert(updates)
+    setLoading(false)
 
     if (error) {
       alert('Chyba při ukládání profilu: ' + error.message)
     } else {
-      // Okamžitá aplikace nového tématu
-      setTheme(formData.theme_preference)
-      alert('✓ Profil byl úspěšně uložen.')
       onClose()
     }
-    setSaving(false)
   }
 
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-2xl w-full max-w-lg p-6 md:p-8 shadow-2xl relative">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold"
+          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
         >
           ✕
         </button>
 
-        <div className="mb-6">
-          <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-            Nastavení Profilu Jezdce
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Biometrická data a preference pro účet {user?.email}
-          </p>
-        </div>
+        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-4">
+          Athlete Profile & Gear
+        </h2>
 
-        {loading ? (
-          <div className="py-12 text-center text-sm text-slate-400">Načítám profil...</div>
-        ) : (
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Jméno
-                </label>
-                <input
-                  type="text"
-                  placeholder="Jan"
-                  value={formData.first_name}
-                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Příjmení
-                </label>
-                <input
-                  type="text"
-                  placeholder="Novák"
-                  value={formData.last_name}
-                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-            </div>
-
+        <form onSubmit={handleSave} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                Přezdívka / Track Alias
+              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                First Name
               </label>
               <input
                 type="text"
-                placeholder="Rocket"
-                value={formData.nickname}
-                onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                Last Name
+              </label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+              Nickname / Roster Display
+            </label>
+            <input
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+              Home Velodrome
+            </label>
+            <select
+              value={homeTrackId}
+              onChange={(e) => setHomeTrackId(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            >
+              <option value="">-- No Home Track --</option>
+              {tracks.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                Default Chainring
+              </label>
+              <input
+                type="number"
+                value={defaultChainring}
+                onChange={(e) => setDefaultChainring(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Váha (kg)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="82.5"
-                  value={formData.weight_kg}
-                  onChange={(e) => setFormData({ ...formData, weight_kg: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Výška (cm)
-                </label>
-                <input
-                  type="number"
-                  step="0.5"
-                  placeholder="184"
-                  value={formData.height_cm}
-                  onChange={(e) => setFormData({ ...formData, height_cm: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                Default Cog
+              </label>
+              <input
+                type="number"
+                value={defaultCog}
+                onChange={(e) => setDefaultCog(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                Domovský velodrom (Home Track)
+              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                Crank (mm)
               </label>
-              <select
-                value={formData.home_track_id}
-                onChange={(e) => setFormData({ ...formData, home_track_id: e.target.value })}
+              <input
+                type="number"
+                step="0.5"
+                value={crankLength}
+                onChange={(e) => setCrankLength(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              >
-                <option value="">-- Nevybráno --</option>
-                {tracks.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.country_code || '---'}, {t.length_m} m)
-                  </option>
-                ))}
-              </select>
+              />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                Výchozí téma rozhraní
-              </label>
-              <select
-                value={formData.theme_preference}
-                onChange={(e) => setFormData({ ...formData, theme_preference: e.target.value })}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              >
-                <option value="dark">🌙 Dark (Tmavý Nordic OLED)</option>
-                <option value="light">☀️ Light (Světlý laboratorní)</option>
-              </select>
+          {/* Sekce pro Intervals.icu Webhook & Sync */}
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🔄</span>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                Intervals.icu Sync Credentials
+              </h3>
             </div>
+            <p className="text-[11px] text-slate-400">
+              Pro automatickou synchronizaci jízd z Garmin & Wahoo přes webhook.
+            </p>
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full mt-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition"
-            >
-              {saving ? 'Ukládám do Supabase...' : 'Uložit nastavení profilu'}
-            </button>
-          </form>
-        )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                  Athlete ID (např. i228280)
+                </label>
+                <input
+                  type="text"
+                  value={intervalsAthleteId}
+                  onChange={(e) => setIntervalsAthleteId(e.target.value)}
+                  placeholder="iXXXXX"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                  API Key
+                </label>
+                <input
+                  type="password"
+                  value={intervalsApiKey}
+                  onChange={(e) => setIntervalsApiKey(e.target.value)}
+                  placeholder="Z nastavení intervals.icu"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full mt-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50"
+          >
+            {loading ? 'Ukládám profil...' : 'Save Changes'}
+          </button>
+        </form>
       </div>
     </div>
   )

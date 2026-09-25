@@ -7,7 +7,6 @@ import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
 import ActivityFeed from './ActivityFeed'
-import IntervalsSyncModal from './IntervalsSyncModal'
 
 export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const router = useRouter()
@@ -15,7 +14,6 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const [activities, setActivities] = useState(initialActivities)
   const [currentTracks, setCurrentTracks] = useState(tracks)
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false)
-  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false)
 
   const reloadActivities = async (userId) => {
     const targetId = userId || user?.id
@@ -80,15 +78,8 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         />
       </div>
 
-      {/* 2. Pravý panel s tlačítkem syncu a Rosterem */}
-      <div className="w-full xl:w-80 shrink-0 space-y-3">
-        <button
-          onClick={() => setIsSyncModalOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold transition border border-purple-500/30 shadow-xs"
-        >
-          <span>🔄</span> Sync Intervals.icu
-        </button>
-
+      {/* 2. Pravý panel s Rosterem */}
+      <div className="w-full xl:w-80 shrink-0">
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
 
@@ -112,22 +103,6 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           </div>
         </div>
       )}
-
-      {/* 4. Modál pro synchronizaci z Intervals.icu */}
-      <IntervalsSyncModal
-        isOpen={isSyncModalOpen}
-        onClose={() => setIsSyncModalOpen(false)}
-        currentUser={user}
-        tracks={currentTracks}
-        onImportSuccess={(newActivityId) => {
-          setIsSyncModalOpen(false)
-          if (newActivityId) {
-            router.push(`/activities/${newActivityId}`)
-          } else if (user?.id) {
-            reloadActivities(user.id)
-          }
-        }}
-      />
     </div>
   )
 }
