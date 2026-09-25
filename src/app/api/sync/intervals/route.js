@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-// Pomocná funkce pro výpočet durational curves (klouzavé průměry)
+// Pomocná funkce pro výpočet durational curves
 function computeDurationalCurve(
   stream,
   intervals = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 1200, 1800, 3600]
@@ -44,10 +44,9 @@ export async function POST(req) {
       )
     }
 
-    // Basic Auth autorizace pro Intervals.icu API
     const authHeader = `Basic ${Buffer.from(`API_KEY:${apiKey}`).toString('base64')}`
 
-    // 1. Akce: Načtení seznamu nedávných jízd (za posledních 30 dní)
+    // 1. Akce: Seznam nedávných jízd
     if (action === 'list') {
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -86,39 +85,85 @@ export async function POST(req) {
       return NextResponse.json({ success: true, activities: rides })
     }
 
-    // 2. Akce: Stažení vteřinových streamů a výpočet křivek
+    // 2. Akce: Stažení dat jízdy
     if (action === 'import') {
       if (!activityId) {
         return NextResponse.json({ error: 'Missing activityId' }, { status: 400 })
       }
 
+      // ID aktivity bez případného 'i'
       const cleanActivityId = String(activityId).replace(/^i/, '')
-      const streamsUrl = `https://intervals.icu/api/v1/activity/${cleanActivityId}/streams`
 
-      const streamsRes = await fetch(streamsUrl, {
-        headers: { Authorization: authHeader },
-        cache: 'no-store',
-      })
+      // Pokus A: Nejprve zkusíme načíst metadata aktivity přímo z Intervals detailu
+      // Tento endpoint vrátí i případné předpočítané křivky a dostupnost streamů
+      const activityDetailRes = await fetch(
+        `https://intervals.icu/api/v1/activity/${cleanActivityId}`,
+        {
+          headers: { Authorization: authHeader },
+          cache: 'no-store',
+        }
+      )
 
-      if (!streamsRes.ok) {
-        const errText = await streamsRes.text()
-        console.error(`Intervals streams error (${streamsRes.status}):`, errText)
+      let streamsData = null
+
+      if (activityDetailRes.ok) {
+        // Pokud aktivita existuje, zkusíme stáhnout její streamy
+        const streamsRes = await fetch(
+          `https://intervals.icu/api/v1/activity/${cleanActivityId}/streams`,
+          {
+            headers: { Authorization: authHeader },
+            cache: 'no-store',
+          }
+        )
+
+        if (streamsRes.ok) {
+          streamsData = await streamsRes.json()
+        }
+      }
+
+      // Pokud streamy selhaly (404), zkusíme Pokus B: stáhnout originální FIT soubor
+      if (!streamsData || !Array.isArray(streamsData) || streamsData.length === 0) {
+        const fileRes = await fetch(
+          `https://intervals.icu/api/v1/activity/${cleanActivityId}/file`,
+          {
+            headers: { Authorization: authHeader },
+            cache: 'no-store',
+          }
+        )
+
+        if (fileRes.ok) {
+          // Předáme stažený .fit soubor našemu internímu parseru /api/analyze
+          const fitBlob = await fileRes.blob()
+          const formData = new FormData()
+          formData.append('file', fitBlob, `${cleanActivityId}.fit`)
+
+          const analyzeRes = await fetch(
+            new URL('/api/analyze', req.url).toString(),
+            {
+              method: 'POST',
+              body: formData,
+            }
+          )
+
+          if (analyzeRes.ok) {
+            const parsedData = await analyzeRes.json()
+            return NextResponse.json({
+              success: true,
+              summary: parsedData.summary,
+              curves: parsedData.curves,
+            })
+          }
+        }
+
         return NextResponse.json(
-          { error: `Intervals.icu streams error (${streamsRes.status}): ${errText}` },
-          { status: streamsRes.status }
+          {
+            error: `Aktivita ${cleanActivityId} nemá v Intervals.icu k dispozici žádné sekundové streamy ani stažitelný soubor.`,
+          },
+          { status: 404 }
         )
       }
 
-      const streamsData = await streamsRes.json()
-
-      if (!Array.isArray(streamsData) || streamsData.length === 0) {
-        return NextResponse.json(
-          { error: 'Pro tuto jízdu nejsou v Intervals.icu k dispozici žádné sekundové streamy.' },
-          { status: 400 }
-        )
-      }
-
-      // Namapování dostupných streamů
+      // Zpracování nalezených streamů z Pokusu A
       const streamsMap = {}
       streamsData.forEach((s) => {
         if (s && s.type && Array.isArray(s.data)) {
@@ -126,12 +171,10 @@ export async function POST(req) {
         }
       })
 
-      // Převod rychlosti z m/s na km/h (* 3.6), pokud je přítomna
       const speedKmhStream = streamsMap.velocity_smooth
         ? streamsMap.velocity_smooth.map((v) => (v != null ? Math.round(v * 3.6 * 10) / 10 : 0))
         : null
 
-      // Výpočet Torque (Nm) POUZE pokud existují watty i kadence
       let torqueStream = null
       if (streamsMap.watts && streamsMap.cadence) {
         torqueStream = streamsMap.watts.map((w, idx) => {
@@ -141,7 +184,6 @@ export async function POST(req) {
         })
       }
 
-      // Výpočet křivek pouze pro existující senzory
       const curves = {}
       if (streamsMap.cadence && streamsMap.cadence.length > 0) {
         const c = computeDurationalCurve(streamsMap.cadence)
