@@ -47,7 +47,7 @@ export async function POST(req) {
     // Basic Auth autorizace pro Intervals.icu API
     const authHeader = `Basic ${Buffer.from(`API_KEY:${apiKey}`).toString('base64')}`
 
-    // 1. Akce: Načtení seznamu nedávných jízd (posledních 30 dní)
+    // 1. Akce: Načtení seznamu nedávných jízd (za posledních 30 dní)
     if (action === 'list') {
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -93,7 +93,7 @@ export async function POST(req) {
       }
 
       // Voláme endpoint BEZ restriktivního parametru ?types=...
-      // Intervals.icu tak vrátí pouze streamy, které jízda skutečně má (i kdyby to byl jen time a speed/cadence)
+      // Intervals.icu tak vrátí pouze streamy, které aktivita reálně má (nepadá na 404 při absenci wattmetru či HR)
       const streamsUrl = `https://intervals.icu/api/v1/athlete/${athleteId}/activities/${activityId}/streams`
 
       const streamsRes = await fetch(streamsUrl, {
@@ -119,7 +119,7 @@ export async function POST(req) {
         )
       }
 
-      // Namapujeme existující streamy
+      // Namapování dostupných streamů
       const streamsMap = {}
       streamsData.forEach((s) => {
         if (s && s.type && Array.isArray(s.data)) {
@@ -127,7 +127,7 @@ export async function POST(req) {
         }
       })
 
-      // Převod rychlosti z m/s na km/h (* 3.6), pokud existuje
+      // Převod rychlosti z m/s na km/h (* 3.6), pokud je přítomna
       const speedKmhStream = streamsMap.velocity_smooth
         ? streamsMap.velocity_smooth.map((v) => (v != null ? Math.round(v * 3.6 * 10) / 10 : 0))
         : null
@@ -142,7 +142,7 @@ export async function POST(req) {
         })
       }
 
-      // Výpočet křivek pouze z těch senzorů, které jsou přítomny
+      // Výpočet křivek pouze pro existující senzory
       const curves = {}
       if (streamsMap.cadence && streamsMap.cadence.length > 0) {
         const c = computeDurationalCurve(streamsMap.cadence)
@@ -170,54 +170,6 @@ export async function POST(req) {
         const valid = arr.filter((v) => typeof v === 'number' && !isNaN(v))
         return valid.length > 0 ? Math.max(...valid) : null
       }
-
-      const summary = {
-        max_cadence: getMax(streamsMap.cadence),
-        max_speed_kmh: getMax(speedKmhStream),
-        max_power_w: getMax(streamsMap.watts),
-        peak_torque_nm: getMax(torqueStream),
-      }
-
-      return NextResponse.json({
-        success: true,
-        summary,
-        curves,
-      })
-    }
-
-      const streamsMap = {}
-      streamsData.forEach((s) => {
-        if (s && s.type && Array.isArray(s.data)) {
-          streamsMap[s.type] = s.data
-        }
-      })
-
-      // Převod m/s na km/h (* 3.6)
-      const speedKmhStream = streamsMap.velocity_smooth
-        ? streamsMap.velocity_smooth.map((v) => (v != null ? Math.round(v * 3.6 * 10) / 10 : 0))
-        : null
-
-      // Výpočet Torque (Nm): (watts * 60) / (2 * PI * cadence)
-      let torqueStream = null
-      if (streamsMap.watts && streamsMap.cadence) {
-        torqueStream = streamsMap.watts.map((w, idx) => {
-          const cad = streamsMap.cadence[idx]
-          if (!cad || cad <= 0 || !w) return 0
-          return Math.round(((w * 60) / (2 * Math.PI * cad)) * 10) / 10
-        })
-      }
-
-      const curves = {}
-      if (streamsMap.cadence) curves.Cadence = computeDurationalCurve(streamsMap.cadence)
-      if (speedKmhStream) curves.Speed = computeDurationalCurve(speedKmhStream)
-      if (streamsMap.watts) curves.Power = computeDurationalCurve(streamsMap.watts)
-      if (torqueStream) curves.Torque = computeDurationalCurve(torqueStream)
-      if (streamsMap.heartrate) curves.HeartRate = computeDurationalCurve(streamsMap.heartrate)
-
-      const getMax = (arr) =>
-        arr && arr.length > 0
-          ? Math.max(...arr.filter((v) => typeof v === 'number' && !isNaN(v)))
-          : null
 
       const summary = {
         max_cadence: getMax(streamsMap.cadence),
