@@ -22,14 +22,12 @@ export default function Footer() {
             About & Docs
           </Link>
 
-          <a
-            href="https://github.com/your-repo/issues/new"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/report-bug"
             className="flex items-center gap-1.5 text-rose-500/90 dark:text-rose-400 hover:text-rose-600 font-semibold transition"
           >
             <span>🐞</span> Report a Bug
-          </a>
+          </Link>
 
           <span className="text-slate-400 font-mono text-[10px]">v0.4.2-beta</span>
         </div>
