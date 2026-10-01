@@ -121,7 +121,6 @@ export default function IntervalsSyncModal({
         max_power_w: summary.max_power_w || null,
         peak_torque_nm: summary.peak_torque_nm || null,
         time_series: time_series || {}, // Ukládáme sekundové streamy pro detekci úseků
-        wizard_completed: false,
       }
 
       const { data: actData, error: actErr } = await supabase

@@ -93,9 +93,10 @@ export async function POST(req) {
 
       const actId = String(activityId)
 
-      // Pokus A: Vteřinové streamy
+      // Pokus A: Vteřinové streamy (explicitně vyžádáme i GPS stream "latlng" a nadmořskou výšku,
+      // intervals.icu je bez query parametru "types" do odpovědi nemusí zahrnout)
       const streamsRes = await fetch(
-        `https://intervals.icu/api/v1/activity/${actId}/streams`,
+        `https://intervals.icu/api/v1/activity/${actId}/streams?types=watts,cadence,heartrate,velocity_smooth,latlng,altitude`,
         {
           headers: { Authorization: authHeader },
           cache: 'no-store',
@@ -148,10 +149,16 @@ export async function POST(req) {
       }
 
       // Namapování streamů do přehledného slovníku
+      // Pozn.: stream "latlng" vrací souřadnice rozdělené do dvou paralelních polí -
+      // "data" (latitude) a "data2" (longitude), nikoliv jedno pole dvojic [lat, lng]
       const streamsMap = {}
+      const streamsMap2 = {}
       streamsData.forEach((s) => {
         if (s?.type && Array.isArray(s.data)) {
           streamsMap[s.type] = s.data
+        }
+        if (s?.type && Array.isArray(s.data2)) {
+          streamsMap2[s.type] = s.data2
         }
       })
 
@@ -166,6 +173,21 @@ export async function POST(req) {
           if (!cad || cad <= 0 || !w) return 0
           return Math.round(((w * 60) / (2 * Math.PI * cad)) * 10) / 10
         })
+      }
+
+      // GPS trasa: latitude je v streamsMap.latlng.data, longitude v data2 (ověřeno dokumentací
+      // Intervals.icu API - ActivityStream má oddělená pole "data"/"data2" pro víceprvkové streamy).
+      // Ponecháváme fallback na starší formát páru [lat, lng] pro jistotu.
+      let latitudeStream = null
+      let longitudeStream = null
+      if (Array.isArray(streamsMap.latlng) && streamsMap.latlng.length > 0) {
+        if (Array.isArray(streamsMap.latlng[0])) {
+          latitudeStream = streamsMap.latlng.map((pair) => (Array.isArray(pair) ? pair[0] : null))
+          longitudeStream = streamsMap.latlng.map((pair) => (Array.isArray(pair) ? pair[1] : null))
+        } else if (Array.isArray(streamsMap2.latlng)) {
+          latitudeStream = streamsMap.latlng
+          longitudeStream = streamsMap2.latlng
+        }
       }
 
       // Výpočet zátěžových křivek
@@ -195,6 +217,9 @@ export async function POST(req) {
         cadence: streamsMap.cadence || [],
         torque: torqueStream || [],
         speed: speedKmhStream || [],
+        latitude: latitudeStream || [],
+        longitude: longitudeStream || [],
+        altitude: streamsMap.altitude || [],
       }
 
       return NextResponse.json({

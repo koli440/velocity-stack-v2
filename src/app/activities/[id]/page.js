@@ -2,11 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import BenchmarkCards from '../../../components/BenchmarkCards'
-import ActivityWizardModal from '../../../components/wizard/ActivityWizardModal'
+import TemplateExecutionCard from '../../../components/TemplateExecutionCard'
+
+// Leaflet vyžaduje window/document -> dynamický import bez SSR
+const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[380px] w-full rounded-2xl bg-slate-100 dark:bg-slate-900/60 animate-pulse" />
+  ),
+})
 
 export default function ActivityDetailPage() {
   const router = useRouter()
@@ -19,7 +28,6 @@ export default function ActivityDetailPage() {
   const [tracks, setTracks] = useState([])
   const [curvesMap, setCurvesMap] = useState({})
   const [masterCurves, setMasterCurves] = useState(null)
-  const [isWizardOpen, setIsWizardOpen] = useState(false)
 
   // Rychlý editační stav pro převod a dráhu ve spodním panelu
   const [chainring, setChainring] = useState('58')
@@ -126,12 +134,6 @@ export default function ActivityDetailPage() {
     return Math.round((ring / sprocket) * 26.8 * 10) / 10
   }
 
-  const formatEffortTime = (sec) => {
-    const m = Math.floor(sec / 60)
-    const s = Math.round(sec % 60)
-    return `${m}:${s < 10 ? '0' : ''}${s}`
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -166,11 +168,9 @@ export default function ActivityDetailPage() {
     minute: '2-digit',
   })
 
-  const detectedEfforts = Array.isArray(activity.detected_efforts) ? activity.detected_efforts : []
-
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* 1. Horní navigační a akční lišta */}
+      {/* 1. Horní navigační lišta */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <Link
@@ -179,37 +179,10 @@ export default function ActivityDetailPage() {
           >
             ← Cockpit Telemetry
           </Link>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-              {activity.title || 'Velodrome Session'}
-            </h1>
-            {activity.wizard_completed ? (
-              <span className="text-[10px] font-bold py-0.5 px-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {activity.sport_type || 'Track'} • {activity.discipline || 'General'}
-              </span>
-            ) : (
-              <span className="text-[10px] font-black uppercase tracking-wider py-0.5 px-2 rounded-full bg-orange-500/10 text-orange-500 border border-orange-500/20 animate-pulse">
-                Nekategorizováno
-              </span>
-            )}
-          </div>
+          <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+            {activity.title || 'Velodrome Session'}
+          </h1>
           <p className="text-xs font-semibold text-slate-400">{actDate}</p>
-        </div>
-
-        {/* Tlačítka vpravo: Spuštění / Úprava Wizardu */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsWizardOpen(true)}
-            className={`py-2.5 px-4 rounded-2xl text-xs font-black uppercase tracking-wider transition flex items-center gap-2 shadow-sm ${
-              !activity.wizard_completed
-                ? 'bg-orange-500 hover:bg-orange-600 text-white animate-bounce'
-                : 'bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/30'
-            }`}
-          >
-            <span>⚙️</span>
-            <span>{activity.wizard_completed ? 'Re-run Wizard' : 'Spustit Wizard'}</span>
-          </button>
         </div>
       </div>
 
@@ -251,73 +224,29 @@ export default function ActivityDetailPage() {
         </div>
       )}
 
+      {/* 2b. GPS mapa trasy (pouze pro aktivity se satelitním záznamem, např. silniční jízdy) */}
+      {Array.isArray(activity.time_series?.latitude) && activity.time_series.latitude.length > 1 && (
+        <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <span>🗺️</span> Route Map
+          </h3>
+          <ActivityMap
+            latitude={activity.time_series.latitude}
+            longitude={activity.time_series.longitude}
+          />
+        </div>
+      )}
+
       {/* 3. Benchmarkové karty porovnání výkonu */}
       <BenchmarkCards currentActivity={activity} masterCurves={masterCurves || {}} />
 
       {/* 4. Durational Curves Chart se zobrazením All-time PB linky */}
       <DurationalCurvesChart curves={curvesMap} masterCurves={masterCurves} />
 
-      {/* 5. Detekované ostré úseky (Efforts) z Wizardu */}
-      {detectedEfforts.length > 0 && (
-        <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-              <span>⚡</span> Detected Efforts & Sprints ({detectedEfforts.length})
-            </h3>
-            <button
-              onClick={() => setIsWizardOpen(true)}
-              className="text-[11px] font-bold text-orange-500 hover:underline"
-            >
-              Upravit detekci úseků →
-            </button>
-          </div>
+      {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
+      <TemplateExecutionCard activityId={activityId} />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {detectedEfforts.map((effort, idx) => (
-              <div
-                key={effort.id || idx}
-                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-900 dark:text-white">
-                    #{idx + 1} {effort.discipline_label || effort.type || 'Effort'}
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-mono">
-                    {effort.duration_sec}s
-                  </span>
-                </div>
-
-                <div className="text-[10px] text-slate-400 font-mono">
-                  Čas: {formatEffortTime(effort.start_sec)} – {formatEffortTime(effort.end_sec)}
-                </div>
-
-                <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-center">
-                  {effort.max_cadence && (
-                    <div>
-                      <div className="text-[8px] uppercase font-bold text-slate-400">RPM</div>
-                      <div className="text-xs font-black text-orange-500">{effort.max_cadence}</div>
-                    </div>
-                  )}
-                  {effort.peak_torque && (
-                    <div>
-                      <div className="text-[8px] uppercase font-bold text-slate-400">Torque</div>
-                      <div className="text-xs font-black text-amber-400">{effort.peak_torque} Nm</div>
-                    </div>
-                  )}
-                  {(effort.avg_power || effort.max_power) && (
-                    <div>
-                      <div className="text-[8px] uppercase font-bold text-slate-400">Watty</div>
-                      <div className="text-xs font-black text-purple-400">{effort.avg_power || effort.max_power} W</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 6. Spodní panel: Rychlé nastavení dráhy a převodů */}
+      {/* 5. Spodní panel: Rychlé nastavení dráhy a převodů */}
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <span>⚙️</span> Track & Gearing Setup for this Ride
@@ -393,24 +322,6 @@ export default function ActivityDetailPage() {
           )}
         </div>
       </div>
-
-      {/* 7. Integrovaný Wizard Modál pro editaci přímo z detailu */}
-      <ActivityWizardModal
-        isOpen={isWizardOpen}
-        activity={activity}
-        tracks={tracks}
-        onClose={() => setIsWizardOpen(false)}
-        onCompleted={(updatedData) => {
-          setActivity((prev) => ({
-            ...prev,
-            ...updatedData,
-            tracks: tracks.find((t) => t.id === updatedData.track_id) || prev.tracks,
-          }))
-          if (updatedData.chainring) setChainring(String(updatedData.chainring))
-          if (updatedData.cog) setCog(String(updatedData.cog))
-          if (updatedData.track_id) setTrackId(updatedData.track_id)
-        }}
-      />
     </div>
   )
 }
