@@ -40,7 +40,13 @@ def analyze_fit_file(file_path):
     cadence_stream = []
     speed_stream = []
     hr_stream = []
-    
+    lat_stream = []
+    lng_stream = []
+    altitude_stream = []
+
+    # FIT ukládá GPS souřadnice v semicircles -> stupně: deg = semicircles * (180 / 2^31)
+    SEMICIRCLE_TO_DEG = 180.0 / (2 ** 31)
+
     for record in fitfile.get_messages('record'):
         vals = record.get_values()
         
@@ -60,6 +66,18 @@ def analyze_fit_file(file_path):
         hr = vals.get('heart_rate')
         if hr is not None:
             hr_stream.append(int(hr))
+
+        # GPS pozice (pokud jízda obsahuje satelitní záznam, např. silniční trénink)
+        lat_raw = vals.get('position_lat')
+        lng_raw = vals.get('position_long')
+        if lat_raw is not None and lng_raw is not None:
+            lat_stream.append(round(lat_raw * SEMICIRCLE_TO_DEG, 6))
+            lng_stream.append(round(lng_raw * SEMICIRCLE_TO_DEG, 6))
+
+        # Nadmořská výška
+        alt = vals.get('altitude') or vals.get('enhanced_altitude')
+        if alt is not None:
+            altitude_stream.append(round(float(alt), 1))
             
     # Dopočet točivého momentu (Torque v Nm) z W a RPM: T = (P * 60) / (2 * pi * RPM)
     torque_stream = []
@@ -81,11 +99,14 @@ def analyze_fit_file(file_path):
     if hr_stream:
         curves['HeartRate'] = compute_durational_curve(hr_stream, intervals)
         
+    has_gps = len(lat_stream) > 1
+
     summary = {
         'max_power_w': int(max(watts_stream)) if watts_stream else None,
         'max_cadence_rpm': int(max(cadence_stream)) if cadence_stream else None,
         'max_speed_kmh': float(max(speed_stream)) if speed_stream else None,
         'peak_torque_nm': float(max(torque_stream)) if torque_stream else None,
+        'has_gps': has_gps,
     }
     
     output = {
@@ -97,7 +118,10 @@ def analyze_fit_file(file_path):
             'cadence': cadence_stream,
             'torque': torque_stream,
             'speed': speed_stream,
-            'heartrate': hr_stream
+            'heartrate': hr_stream,
+            'latitude': lat_stream,
+            'longitude': lng_stream,
+            'altitude': altitude_stream,
         }
     }
     

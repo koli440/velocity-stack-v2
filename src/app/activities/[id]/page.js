@@ -2,12 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import BenchmarkCards from '../../../components/BenchmarkCards'
 import TemplateExecutionCard from '../../../components/TemplateExecutionCard'
 import ActivityWizardModal from '../../../components/wizard/ActivityWizardModal'
+
+// Leaflet vyžaduje window/document -> dynamický import bez SSR
+const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[380px] w-full rounded-2xl bg-slate-100 dark:bg-slate-900/60 animate-pulse" />
+  ),
+})
 
 export default function ActivityDetailPage() {
   const router = useRouter()
@@ -249,6 +258,19 @@ export default function ActivityDetailPage() {
               <span>RPE: {activity.perceived_exertion}/10</span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* 2b. GPS mapa trasy (pouze pro aktivity se satelitním záznamem, např. silniční jízdy) */}
+      {Array.isArray(activity.time_series?.latitude) && activity.time_series.latitude.length > 1 && (
+        <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <span>🗺️</span> Route Map
+          </h3>
+          <ActivityMap
+            latitude={activity.time_series.latitude}
+            longitude={activity.time_series.longitude}
+          />
         </div>
       )}
 
