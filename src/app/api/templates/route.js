@@ -1,32 +1,11 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-
-function getSupabase() {
-  const cookieStore = cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        get(name) {
-          return cookieStore.get(name)?.value
-        },
-        set(name, value, options) {
-          cookieStore.set({ name, value, ...options })
-        },
-        remove(name, options) {
-          cookieStore.set({ name, value: '', ...options })
-        },
-      },
-    }
-  )
-}
+import { getRequestUser } from '../../../lib/supabaseServer'
 
 // GET /api/templates - list all declarative analysis templates (Phase 2 manifests)
-export async function GET() {
+// Publicly readable reference data; no auth required.
+export async function GET(req) {
   try {
-    const supabase = getSupabase()
+    const { supabase } = await getRequestUser(req)
     const { data, error } = await supabase
       .from('analysis_templates')
       .select('*')

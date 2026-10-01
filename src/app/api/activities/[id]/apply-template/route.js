@@ -1,28 +1,6 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getRequestUser } from '../../../../../lib/supabaseServer'
 import { evaluateTemplate } from '../../../../../lib/templateEngine'
-
-function getSupabase() {
-  const cookieStore = cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        get(name) {
-          return cookieStore.get(name)?.value
-        },
-        set(name, value, options) {
-          cookieStore.set({ name, value, ...options })
-        },
-        remove(name, options) {
-          cookieStore.set({ name, value: '', ...options })
-        },
-      },
-    }
-  )
-}
 
 // POST /api/activities/:id/apply-template  { templateId | templateSlug }
 // Runs the template evaluation engine against the activity's stored time_series,
@@ -31,14 +9,9 @@ function getSupabase() {
 export async function POST(req, { params }) {
   try {
     const activityId = params.id
-    const supabase = getSupabase()
+    const { supabase, user } = await getRequestUser(req)
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -107,7 +80,7 @@ export async function POST(req, { params }) {
 export async function GET(req, { params }) {
   try {
     const activityId = params.id
-    const supabase = getSupabase()
+    const { supabase } = await getRequestUser(req)
 
     const { data, error } = await supabase
       .from('template_executions')

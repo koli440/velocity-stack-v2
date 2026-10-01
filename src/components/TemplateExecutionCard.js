@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { getAuthHeader } from '../lib/supabase'
 
 function formatMetric(value, suffix = '') {
   if (value === null || value === undefined) return '—'
@@ -21,7 +22,8 @@ export default function TemplateExecutionCard({ activityId }) {
     const loadTemplates = async () => {
       setLoadingTemplates(true)
       try {
-        const res = await fetch('/api/templates')
+        const authHeader = await getAuthHeader()
+        const res = await fetch('/api/templates', { headers: authHeader })
         const data = await res.json()
         if (res.ok) {
           setTemplates(data.templates || [])
@@ -36,7 +38,10 @@ export default function TemplateExecutionCard({ activityId }) {
 
     const loadLastExecution = async () => {
       if (!activityId) return
-      const res = await fetch(`/api/activities/${activityId}/apply-template`)
+      const authHeader = await getAuthHeader()
+      const res = await fetch(`/api/activities/${activityId}/apply-template`, {
+        headers: authHeader,
+      })
       const data = await res.json()
       if (res.ok && data.executions?.length) {
         setExecution(data.executions[0])
@@ -58,7 +63,10 @@ export default function TemplateExecutionCard({ activityId }) {
         setHistory([])
         return
       }
-      const res = await fetch(`/api/templates/${selectedTemplate.slug}/history`)
+      const authHeader = await getAuthHeader()
+      const res = await fetch(`/api/templates/${selectedTemplate.slug}/history`, {
+        headers: authHeader,
+      })
       const data = await res.json()
       if (res.ok) {
         setHistory((data.executions || []).filter((e) => e.activity_id !== activityId))
@@ -73,9 +81,10 @@ export default function TemplateExecutionCard({ activityId }) {
     setError(null)
 
     try {
+      const authHeader = await getAuthHeader()
       const res = await fetch(`/api/activities/${activityId}/apply-template`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({ templateId: selectedTemplateId }),
       })
       const data = await res.json()

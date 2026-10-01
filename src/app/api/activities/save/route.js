@@ -1,37 +1,12 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getRequestUser } from '../../../../lib/supabaseServer'
 
 export async function POST(req) {
   try {
-    const cookieStore = cookies()
+    // Získáme ověřenou identitu uživatele z Bearer tokenu (nikoliv z body!)
+    const { supabase, user } = await getRequestUser(req)
 
-    // Vytvoříme klienta navázaného na session přihlášeného uživatele
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          get(name) {
-            return cookieStore.get(name)?.value
-          },
-          set(name, value, options) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name, options) {
-            cookieStore.set({ name, value: '', ...options })
-          },
-        },
-      }
-    )
-
-    // Získáme ověřenou identitu uživatele z tokenu (nikoliv z body!)
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized: Neplatná nebo chybějící session.' },
         { status: 401 }
