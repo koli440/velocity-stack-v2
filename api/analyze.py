@@ -1,8 +1,11 @@
 import sys
+import os
 import json
 import math
+import tempfile
 import numpy as np
 from fitparse import FitFile
+from http.server import BaseHTTPRequestHandler
 
 def compute_durational_curve(data_series, intervals):
     """Vypočítá maximální průměry pro zadané časové intervaly (rolling max)."""
@@ -126,6 +129,81 @@ def analyze_fit_file(file_path):
     }
     
     return output
+
+def _parse_multipart(body, boundary):
+    """Minimální parser pro multipart/form-data bez závislosti na cgi modulu
+    (odstraněn v novějších verzích Pythonu). Vrací dict name -> (filename, content_bytes)."""
+    fields = {}
+    delimiter = b'--' + boundary
+    for raw_part in body.split(delimiter):
+        part = raw_part.strip(b'\r\n')
+        if not part or part == b'--':
+            continue
+        if b'\r\n\r\n' not in part:
+            continue
+        headers_raw, content = part.split(b'\r\n\r\n', 1)
+        content = content[:-2] if content.endswith(b'\r\n') else content
+
+        name = None
+        filename = None
+        for line in headers_raw.decode('utf-8', errors='replace').split('\r\n'):
+            if line.lower().startswith('content-disposition'):
+                for segment in line.split(';'):
+                    segment = segment.strip()
+                    if segment.startswith('name='):
+                        name = segment.split('=', 1)[1].strip('"')
+                    elif segment.startswith('filename='):
+                        filename = segment.split('=', 1)[1].strip('"')
+
+        if name:
+            fields[name] = (filename, content)
+
+    return fields
+
+class handler(BaseHTTPRequestHandler):
+    """Vercel Python Function entrypoint: třída musí být přesně pojmenovaná `handler`
+    a dědit z BaseHTTPRequestHandler, jinak Vercel soubor nerozpozná jako funkci."""
+
+    def _send_json(self, payload, status=200):
+        body = json.dumps(payload).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self):
+        tmp_path = None
+        try:
+            content_type = self.headers.get('Content-Type', '')
+            content_length = int(self.headers.get('Content-Length', 0) or 0)
+            body = self.rfile.read(content_length)
+
+            if 'multipart/form-data' not in content_type or 'boundary=' not in content_type:
+                self._send_json({'error': 'Expected multipart/form-data upload with a .fit file'}, 400)
+                return
+
+            boundary = content_type.split('boundary=')[1].split(';')[0].strip().encode()
+            fields = _parse_multipart(body, boundary)
+
+            file_field = fields.get('file')
+            if not file_field:
+                self._send_json({'error': 'Missing "file" field in upload'}, 400)
+                return
+
+            _, file_bytes = file_field
+
+            with tempfile.NamedTemporaryFile(suffix='.fit', delete=False) as tmp:
+                tmp.write(file_bytes)
+                tmp_path = tmp.name
+
+            result = analyze_fit_file(tmp_path)
+            self._send_json(result, 200)
+        except Exception as e:
+            self._send_json({'success': False, 'error': str(e)}, 500)
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
