@@ -1,0 +1,126 @@
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+import { evaluateTemplate } from '../../../../../lib/templateEngine'
+
+function getSupabase() {
+  const cookieStore = cookies()
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        get(name) {
+          return cookieStore.get(name)?.value
+        },
+        set(name, value, options) {
+          cookieStore.set({ name, value, ...options })
+        },
+        remove(name, options) {
+          cookieStore.set({ name, value: '', ...options })
+        },
+      },
+    }
+  )
+}
+
+// POST /api/activities/:id/apply-template  { templateId | templateSlug }
+// Runs the template evaluation engine against the activity's stored time_series,
+// persists the result to template_executions and marks the activity as
+// processing_status = 'template_applied'.
+export async function POST(req, { params }) {
+  try {
+    const activityId = params.id
+    const supabase = getSupabase()
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await req.json()
+    const { templateId, templateSlug } = body
+
+    if (!templateId && !templateSlug) {
+      return NextResponse.json({ error: 'Missing templateId or templateSlug' }, { status: 400 })
+    }
+
+    const { data: activity, error: actError } = await supabase
+      .from('activities')
+      .select('id, user_id, time_series')
+      .eq('id', activityId)
+      .single()
+
+    if (actError || !activity) {
+      return NextResponse.json({ error: 'Activity not found' }, { status: 404 })
+    }
+
+    if (activity.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    let templateQuery = supabase.from('analysis_templates').select('*')
+    templateQuery = templateId
+      ? templateQuery.eq('id', templateId)
+      : templateQuery.eq('slug', templateSlug)
+
+    const { data: template, error: tplError } = await templateQuery.single()
+
+    if (tplError || !template) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+    }
+
+    const result = evaluateTemplate(template, activity.time_series || {})
+
+    const { data: execution, error: execError } = await supabase
+      .from('template_executions')
+      .insert({
+        activity_id: activity.id,
+        template_id: template.id,
+        user_id: user.id,
+        efforts: result.efforts || [],
+        summary: result.summary || {},
+      })
+      .select()
+      .single()
+
+    if (execError) {
+      return NextResponse.json({ error: execError.message }, { status: 400 })
+    }
+
+    await supabase
+      .from('activities')
+      .update({ processing_status: 'template_applied' })
+      .eq('id', activity.id)
+
+    return NextResponse.json({ success: true, execution, template })
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+// GET /api/activities/:id/apply-template - list past executions for this activity
+export async function GET(req, { params }) {
+  try {
+    const activityId = params.id
+    const supabase = getSupabase()
+
+    const { data, error } = await supabase
+      .from('template_executions')
+      .select('*, analysis_templates(slug, name, category)')
+      .eq('activity_id', activityId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    return NextResponse.json({ success: true, executions: data })
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

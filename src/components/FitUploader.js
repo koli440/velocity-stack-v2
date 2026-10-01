@@ -12,6 +12,7 @@ export default function FitUploader({
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [fileSelected, setFileSelected] = useState(null)
+  const [rawFile, setRawFile] = useState(null)
   const [analysis, setAnalysis] = useState(null)
 
   // Parametry tréninku
@@ -25,6 +26,7 @@ export default function FitUploader({
     if (!file) return
 
     setFileSelected(file.name)
+    setRawFile(file)
     setLoading(true)
     const formData = new FormData()
     formData.append('file', file)
@@ -58,6 +60,28 @@ export default function FitUploader({
     setSaving(true)
 
     try {
+      // 0. Archivace nezměněného raw .fit souboru do Supabase Storage (Phase 1)
+      let rawFileUrl = null
+      let fileSha256 = null
+
+      if (rawFile) {
+        const digestBuffer = await crypto.subtle.digest('SHA-256', await rawFile.arrayBuffer())
+        fileSha256 = Array.from(new Uint8Array(digestBuffer))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('')
+
+        const storagePath = `${currentUser.id}/${Date.now()}-${rawFile.name}`
+        const { error: uploadError } = await supabase.storage
+          .from('raw-activity-files')
+          .upload(storagePath, rawFile, { contentType: 'application/octet-stream' })
+
+        if (uploadError) {
+          console.warn('Raw .fit archive upload failed:', uploadError.message)
+        } else {
+          rawFileUrl = storagePath
+        }
+      }
+
       // 1. Zápis aktivity do tabulky activities
       const { data: activity, error: actError } = await supabase
         .from('activities')
@@ -72,6 +96,11 @@ export default function FitUploader({
           max_speed_kmh: analysis.summary.max_speed_kmh ?? null,
           max_power_w: analysis.summary.max_power_w ?? null,
           peak_torque_nm: analysis.summary.peak_torque_nm ?? null,
+          time_series: analysis.time_series ?? {},
+          curves_data: analysis.curves ?? {},
+          raw_file_url: rawFileUrl,
+          file_sha256: fileSha256,
+          processing_status: 'baseline_completed',
           activity_date: new Date().toISOString(),
         })
         .select()

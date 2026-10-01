@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import BenchmarkCards from '../../../components/BenchmarkCards'
+import TemplateExecutionCard from '../../../components/TemplateExecutionCard'
 import ActivityWizardModal from '../../../components/wizard/ActivityWizardModal'
 
 export default function ActivityDetailPage() {
@@ -256,6 +257,9 @@ export default function ActivityDetailPage() {
 
       {/* 4. Durational Curves Chart se zobrazením All-time PB linky */}
       <DurationalCurvesChart curves={curvesMap} masterCurves={masterCurves} />
+
+      {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
+      <TemplateExecutionCard activityId={activityId} />
 
       {/* 5. Detekované ostré úseky (Efforts) z Wizardu */}
       {detectedEfforts.length > 0 && (
