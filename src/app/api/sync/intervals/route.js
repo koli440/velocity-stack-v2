@@ -93,9 +93,10 @@ export async function POST(req) {
 
       const actId = String(activityId)
 
-      // Pokus A: Vteřinové streamy
+      // Pokus A: Vteřinové streamy (explicitně vyžádáme i GPS stream "latlng" a nadmořskou výšku,
+      // intervals.icu je bez query parametru "types" do odpovědi nemusí zahrnout)
       const streamsRes = await fetch(
-        `https://intervals.icu/api/v1/activity/${actId}/streams`,
+        `https://intervals.icu/api/v1/activity/${actId}/streams?types=watts,cadence,heartrate,velocity_smooth,latlng,altitude`,
         {
           headers: { Authorization: authHeader },
           cache: 'no-store',
