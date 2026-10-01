@@ -168,6 +168,14 @@ export async function POST(req) {
         })
       }
 
+      // GPS trasa: Intervals.icu vrací stream "latlng" jako pole dvojic [lat, lng]
+      let latitudeStream = null
+      let longitudeStream = null
+      if (Array.isArray(streamsMap.latlng) && streamsMap.latlng.length > 0) {
+        latitudeStream = streamsMap.latlng.map((pair) => (Array.isArray(pair) ? pair[0] : null))
+        longitudeStream = streamsMap.latlng.map((pair) => (Array.isArray(pair) ? pair[1] : null))
+      }
+
       // Výpočet zátěžových křivek
       const curves = {}
       if (streamsMap.cadence?.length) curves.Cadence = computeDurationalCurve(streamsMap.cadence)
@@ -195,6 +203,9 @@ export async function POST(req) {
         cadence: streamsMap.cadence || [],
         torque: torqueStream || [],
         speed: speedKmhStream || [],
+        latitude: latitudeStream || [],
+        longitude: longitudeStream || [],
+        altitude: streamsMap.altitude || [],
       }
 
       return NextResponse.json({
