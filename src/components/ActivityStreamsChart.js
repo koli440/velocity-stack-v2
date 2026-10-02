@@ -36,7 +36,12 @@ function MetricLane({ metric, data, mode, syncId }) {
                 <stop offset="100%" stopColor={metric.color} stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="x" hide />
+            {/* type="number" + explicit domain so points are placed by their real x value
+                (seconds or meters), not evenly spaced by array index. Without this, Recharts
+                falls back to a category axis and the time/distance switch has no visual effect:
+                stationary stretches (repeated distance values) still take up as much horizontal
+                space as they do in time mode. */}
+            <XAxis dataKey="x" type="number" domain={['dataMin', 'dataMax']} hide />
             <YAxis hide domain={['auto', 'auto']} />
             <Tooltip
               cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '3 3' }}

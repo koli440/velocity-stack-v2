@@ -33,6 +33,15 @@ test('buildStreamSeries integrates cumulative distance from the speed stream', (
   assert.deepEqual(series.map((p) => p.x), [0, 10, 20])
 })
 
+test('buildStreamSeries keeps x flat in distance mode while stationary (issue #22)', () => {
+  // Moving, then stopped for 3 samples (speed 0), then moving again.
+  const series = buildStreamSeries({ speed: [36, 36, 0, 0, 0, 36] }, 'distance')
+  // Distance must not advance while speed is 0 — repeated x values are expected so the
+  // chart (rendered with a numeric X axis) collapses the stop instead of spreading it out
+  // like it would on a time axis.
+  assert.deepEqual(series.map((p) => p.x), [0, 10, 20, 20, 20, 20])
+})
+
 test('buildStreamSeries pads missing samples within the longest stream with null', () => {
   const series = buildStreamSeries({ watts: [100, 200, 300], heartrate: [140] }, 'time')
   assert.equal(series.length, 3)
