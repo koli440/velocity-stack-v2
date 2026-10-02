@@ -9,6 +9,7 @@ import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
 import ActivityFeed from './ActivityFeed'
 import IntervalsSyncModal from './IntervalsSyncModal'
+import BulkImportModal from './BulkImportModal'
 
 export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const [currentTracks, setCurrentTracks] = useState(tracks)
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false)
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false)
+  const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false)
 
   const reloadActivities = async (userId) => {
     const targetId = userId || user?.id
@@ -108,6 +110,13 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           <span>🔄</span> Sync Intervals.icu
         </button>
 
+        <button
+          onClick={() => setIsBulkImportModalOpen(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition border border-emerald-500/30 shadow-xs"
+        >
+          <span>📦</span> Import History
+        </button>
+
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
 
@@ -147,6 +156,19 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           }
         }}
       />
+
+      {/* Modal for bulk-importing a historical .zip/.fit archive (issue #36) */}
+      {isBulkImportModalOpen && (
+        <BulkImportModal
+          isOpen={isBulkImportModalOpen}
+          onClose={() => setIsBulkImportModalOpen(false)}
+          currentUser={user}
+          tracks={currentTracks}
+          onImportComplete={() => {
+            if (user?.id) reloadActivities(user.id)
+          }}
+        />
+      )}
     </div>
   )
 }
