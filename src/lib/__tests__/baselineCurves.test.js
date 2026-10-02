@@ -9,6 +9,12 @@ import {
 
 const NOW = new Date('2026-10-02T12:00:00.000Z')
 
+test('resolvePeriodRange: all_time has no lower bound', () => {
+  const { start, end } = resolvePeriodRange(BASELINE_PERIODS.ALL_TIME, { now: NOW })
+  assert.equal(start.getTime(), 0)
+  assert.equal(end.toISOString(), NOW.toISOString())
+})
+
 test('resolvePeriodRange: 30d / 90d / rolling_year are relative to "now"', () => {
   const r30 = resolvePeriodRange(BASELINE_PERIODS.LAST_30_DAYS, { now: NOW })
   assert.equal(r30.end.toISOString(), NOW.toISOString())
@@ -44,6 +50,31 @@ test('resolvePeriodRange: custom requires both start and end dates', () => {
 
 test('resolvePeriodRange: unknown period throws', () => {
   assert.throws(() => resolvePeriodRange('not-a-period'), /Unknown baseline period/)
+})
+
+test('computeBaselineCurves: all_time includes activities from any date', () => {
+  const activities = [
+    {
+      id: 'ancient',
+      title: 'Very First Ride',
+      activity_date: '2010-01-01T00:00:00.000Z',
+      curves: { Power: { '5s': 1000 } },
+    },
+    {
+      id: 'recent',
+      title: 'Recent Ride',
+      activity_date: '2026-09-28T00:00:00.000Z',
+      curves: { Power: { '5s': 500 } },
+    },
+  ]
+
+  const result = computeBaselineCurves(activities, {
+    period: BASELINE_PERIODS.ALL_TIME,
+    now: NOW,
+  })
+
+  assert.equal(result.curves.Power['5s'].value, 1000)
+  assert.equal(result.curves.Power['5s'].activityId, 'ancient')
 })
 
 test('computeBaselineCurves: picks the max value per metric/duration and attributes it', () => {
