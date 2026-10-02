@@ -21,6 +21,7 @@ export default function Sidebar({
   const isHomeActive = pathname === '/'
   const isVelodromeActive = pathname.startsWith('/velodromes')
   const isGearsActive = pathname.startsWith('/gears')
+  const isPursuitActive = pathname.startsWith('/pursuit')
 
   const navItemClass = (active) =>
     `w-full text-left flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
@@ -104,6 +105,9 @@ export default function Sidebar({
             </button>
             <button onClick={() => handleNavigate('/gears')} className={navItemClass(isGearsActive)}>
               <span>🔧</span> Gear Architect
+            </button>
+            <button onClick={() => handleNavigate('/pursuit')} className={navItemClass(isPursuitActive)}>
+              <span>⏱️</span> Pursuit Strategist
             </button>
             <button className={navItemClass(false)}>
               <span>🏋️</span> Gym
