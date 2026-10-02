@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
+import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 
 export default function FitUploader({
   tracks = [],
@@ -93,16 +94,35 @@ export default function FitUploader({
     setSaving(true)
 
     try {
-      // 0. Archive the unmodified raw .fit file to Supabase Storage (Phase 1)
-      let rawFileUrl = null
+      // 0a. Compute the raw file's hash up front (before uploading/inserting anything) so we
+      // can check for a duplicate (issue #41) without wasting a Storage upload on a ride that
+      // already exists for this athlete.
       let fileSha256 = null
-
       if (rawFile) {
         const digestBuffer = await crypto.subtle.digest('SHA-256', await rawFile.arrayBuffer())
         fileSha256 = Array.from(new Uint8Array(digestBuffer))
           .map((b) => b.toString(16).padStart(2, '0'))
           .join('')
+      }
 
+      const existingFingerprints = await loadExistingActivityFingerprints(supabase, currentUser.id)
+      const duplicate = findDuplicate(
+        {
+          fileSha256,
+          startTime: analysis.summary?.start_time,
+          elapsedTimeS: analysis.summary?.elapsed_time_s,
+        },
+        existingFingerprints
+      )
+      if (duplicate) {
+        alert('This activity appears to already be in your vault (same file or matching start time/duration). Import blocked to avoid a duplicate.')
+        setSaving(false)
+        return
+      }
+
+      // 0b. Archive the unmodified raw .fit file to Supabase Storage (Phase 1)
+      let rawFileUrl = null
+      if (rawFile) {
         const storagePath = `${currentUser.id}/${Date.now()}-${rawFile.name}`
         const { error: uploadError } = await supabase.storage
           .from('raw-activity-files')

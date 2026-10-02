@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
+import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import { parseJsonResponse } from '../lib/httpJson'
 
 export default function IntervalsSyncModal({
@@ -124,6 +125,20 @@ export default function IntervalsSyncModal({
       }
 
       const { summary = {}, curves = {}, time_series = {} } = result
+
+      // 1b. Guard against re-importing a ride that's already in the vault (issue #41) - this
+      // path has no raw .fit file to hash, so duplicates are caught by matching start time +
+      // duration against the athlete's existing activities instead.
+      const existingFingerprints = await loadExistingActivityFingerprints(supabase, currentUser.id)
+      const duplicate = findDuplicate(
+        { startTime: summary.start_time, elapsedTimeS: summary.elapsed_time_s },
+        existingFingerprints
+      )
+      if (duplicate) {
+        throw new Error(
+          'This ride appears to already be in your vault (matching start time/duration). Import blocked to avoid a duplicate.'
+        )
+      }
 
       // 2. Insert into the activities table (same mapping logic as a manual upload, see
       // src/lib/activityRecord.js — both import paths produce an identical set of metrics)
