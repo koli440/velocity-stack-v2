@@ -137,6 +137,13 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
       {/* Right panel */}
       <div className="w-full xl:w-80 shrink-0 space-y-3">
         <button
+          onClick={() => router.push('/gears')}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-bold transition border border-sky-500/30 shadow-xs"
+        >
+          <span>🔧</span> Gear Architect
+        </button>
+
+        <button
           onClick={() => setIsSyncModalOpen(true)}
           className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold transition border border-purple-500/30 shadow-xs"
         >
