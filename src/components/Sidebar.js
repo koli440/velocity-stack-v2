@@ -20,6 +20,7 @@ export default function Sidebar({
 
   const isHomeActive = pathname === '/'
   const isVelodromeActive = pathname.startsWith('/velodromes')
+  const isGearsActive = pathname.startsWith('/gears')
   const isPursuitActive = pathname.startsWith('/pursuit')
 
   const navItemClass = (active) =>
@@ -101,6 +102,9 @@ export default function Sidebar({
             </div>
              <button onClick={() => handleNavigate('/velodromes')} className={navItemClass(isVelodromeActive)}>
               Velodromes
+            </button>
+            <button onClick={() => handleNavigate('/gears')} className={navItemClass(isGearsActive)}>
+              <span>🔧</span> Gear Architect
             </button>
             <button onClick={() => handleNavigate('/pursuit')} className={navItemClass(isPursuitActive)}>
               <span>⏱️</span> Pursuit Strategist

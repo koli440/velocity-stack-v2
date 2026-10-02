@@ -137,6 +137,13 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
       {/* Right panel */}
       <div className="w-full xl:w-80 shrink-0 space-y-3">
         <button
+          onClick={() => router.push('/gears')}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-bold transition border border-sky-500/30 shadow-xs"
+        >
+          <span>🔧</span> Gear Architect
+        </button>
+
+        <button
           onClick={() => router.push('/pursuit')}
           className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold transition border border-amber-500/30 shadow-xs"
         >
