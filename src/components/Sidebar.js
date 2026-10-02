@@ -23,6 +23,7 @@ export default function Sidebar({
   const isGearsActive = pathname.startsWith('/gears')
   const isPursuitActive = pathname.startsWith('/pursuit')
   const isPbVaultActive = pathname.startsWith('/pb-vault')
+  const isAeroLabActive = pathname.startsWith('/aero-lab')
 
   const navItemClass = (active) =>
     `w-full text-left flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
@@ -112,6 +113,9 @@ export default function Sidebar({
             </button>
             <button onClick={() => handleNavigate('/pb-vault')} className={navItemClass(isPbVaultActive)}>
               <span>🏆</span> PB Vault
+            </button>
+            <button onClick={() => handleNavigate('/aero-lab')} className={navItemClass(isAeroLabActive)}>
+              <span>🧪</span> Aero Lab
             </button>
             <button className={navItemClass(false)}>
               <span>🏋️</span> Gym
