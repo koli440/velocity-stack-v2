@@ -84,6 +84,51 @@ export async function POST(req, { params }) {
   }
 }
 
+// DELETE /api/activities/:id/apply-template?templateId=... (or ?executionId=...)
+// Deletes a single template_executions row owned by the requesting user, e.g.
+// to clear a mis-matched run and re-run the template, or to remove a result
+// the user no longer wants surfaced on the activity.
+export async function DELETE(req, { params }) {
+  try {
+    const activityId = params.id
+    const { supabase, user } = await getRequestUser(req)
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(req.url)
+    const executionId = searchParams.get('executionId')
+    const templateId = searchParams.get('templateId')
+
+    if (!executionId && !templateId) {
+      return NextResponse.json({ error: 'Missing executionId or templateId' }, { status: 400 })
+    }
+
+    let deleteQuery = supabase
+      .from('template_executions')
+      .delete()
+      .eq('activity_id', activityId)
+      .eq('user_id', user.id)
+
+    deleteQuery = executionId ? deleteQuery.eq('id', executionId) : deleteQuery.eq('template_id', templateId)
+
+    const { data, error } = await deleteQuery.select()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: 'Execution not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
 // GET /api/activities/:id/apply-template - list past executions for this activity
 export async function GET(req, { params }) {
   try {

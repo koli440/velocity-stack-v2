@@ -141,6 +141,23 @@ export default function TemplateExecutionCard({ activityId, onLatestExecution })
     }
   }
 
+  const handleDeleteExecution = async () => {
+    if (!execution || !selectedTemplateId) return
+    if (!window.confirm('Delete this template result for this activity? This cannot be undone.')) return
+    try {
+      const authHeader = await getAuthHeader()
+      const res = await fetch(
+        `/api/activities/${activityId}/apply-template?templateId=${selectedTemplateId}`,
+        { method: 'DELETE', headers: authHeader }
+      )
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete result')
+      setExecution(null)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const ownsSelectedTemplate = !!(selectedTemplate && currentUserId && selectedTemplate.user_id === currentUserId)
 
   return (
@@ -216,16 +233,25 @@ export default function TemplateExecutionCard({ activityId, onLatestExecution })
 
       {execution && (
         <div className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(execution.summary || {}).map(([key, value]) => (
-              <div
-                key={key}
-                className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center"
-              >
-                <div className="text-[8px] uppercase font-bold text-slate-400">{key.replace(/_/g, ' ')}</div>
-                <div className="text-xs font-black text-orange-500">{formatMetric(value)}</div>
-              </div>
-            ))}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(execution.summary || {}).map(([key, value]) => (
+                <div
+                  key={key}
+                  className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center"
+                >
+                  <div className="text-[8px] uppercase font-bold text-slate-400">{key.replace(/_/g, ' ')}</div>
+                  <div className="text-xs font-black text-orange-500">{formatMetric(value)}</div>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleDeleteExecution}
+              className="shrink-0 py-1.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black text-[10px] uppercase tracking-wider transition whitespace-nowrap"
+            >
+              Delete Result
+            </button>
           </div>
 
           {Array.isArray(execution.efforts) && execution.efforts.length > 0 && (
