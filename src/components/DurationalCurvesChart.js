@@ -28,9 +28,9 @@ const METRICS = [
   { key: 'HeartRate', label: 'HeartRate', unit: 'BPM', color: '#ef4444' },
 ]
 
-// "All-time" keeps using the legacy masterCurves prop (all-time personal best, no period
-// scoping). The other options are the baseline/"history curve" periods from issue #28.
-const ALL_TIME = 'all_time'
+// "All-time" goes through the same period-scoped baseline RPC as every other option
+// (no lower date bound), so it benefits from identical per-point activity attribution.
+const ALL_TIME = BASELINE_PERIODS.ALL_TIME
 
 const PERIOD_OPTIONS = [
   { key: ALL_TIME, label: 'All-time' },
@@ -61,7 +61,7 @@ export default function DurationalCurvesChart({
 
   const handlePeriodChange = (nextPeriod) => {
     setPeriod(nextPeriod)
-    if (!onPeriodChange || nextPeriod === ALL_TIME) return
+    if (!onPeriodChange) return
     if (nextPeriod === BASELINE_PERIODS.CUSTOM) {
       if (customRange.start && customRange.end) {
         onPeriodChange(nextPeriod, customRange)
@@ -79,10 +79,13 @@ export default function DurationalCurvesChart({
     }
   }
 
-  // Normalize the two possible baseline sources (legacy all-time master curve, which is
-  // just plain numbers, vs. a period-scoped baseline, which carries per-point activity
-  // attribution) into a single { value, activityId, activityTitle, activityDate } shape.
+  // Prefer the period-scoped baseline (which carries per-point activity attribution) for
+  // every period, including "All-time". The legacy plain-number masterCurves prop is only
+  // used as a fallback for callers that don't wire up onPeriodChange/baselineCurves at all.
   const baselinePoints = useMemo(() => {
+    if (baselineCurves && baselineCurves.curves) {
+      return baselineCurves.curves[activeMetric] || {}
+    }
     if (isAllTime) {
       const masterCurveRaw = (masterCurves && masterCurves[activeMetric]) || {}
       return Object.fromEntries(
@@ -91,8 +94,8 @@ export default function DurationalCurvesChart({
           .map(([durationKey, value]) => [durationKey, { value: Number(value) }])
       )
     }
-    return (baselineCurves && baselineCurves.curves && baselineCurves.curves[activeMetric]) || {}
-  }, [isAllTime, masterCurves, baselineCurves, activeMetric])
+    return {}
+  }, [baselineCurves, isAllTime, masterCurves, activeMetric])
 
   const baselineLabel = PERIOD_OPTIONS.find((p) => p.key === period)?.label || 'Baseline'
 

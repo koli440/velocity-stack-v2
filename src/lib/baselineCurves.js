@@ -12,6 +12,7 @@
 // `computeBaselineCurves`.
 
 export const BASELINE_PERIODS = Object.freeze({
+  ALL_TIME: 'all_time',
   LAST_30_DAYS: '30d',
   LAST_90_DAYS: '90d',
   CALENDAR_YEAR: 'calendar_year',
@@ -20,12 +21,17 @@ export const BASELINE_PERIODS = Object.freeze({
 })
 
 export const BASELINE_PERIOD_LABELS = Object.freeze({
+  [BASELINE_PERIODS.ALL_TIME]: 'All-time',
   [BASELINE_PERIODS.LAST_30_DAYS]: 'Last 30 Days',
   [BASELINE_PERIODS.LAST_90_DAYS]: 'Last 90 Days',
   [BASELINE_PERIODS.CALENDAR_YEAR]: 'This Year',
   [BASELINE_PERIODS.ROLLING_YEAR]: 'Last 365 Days',
   [BASELINE_PERIODS.CUSTOM]: 'Custom Period',
 })
+
+// Earliest representable date, used as the lower bound for the "All-time" period
+// (i.e. no lower bound at all).
+const EPOCH = new Date(0)
 
 function addDays(date, days) {
   const result = new Date(date.getTime())
@@ -45,6 +51,8 @@ export function resolvePeriodRange(period, { now, customStart, customEnd } = {})
   const end = toDate(now) || new Date()
 
   switch (period) {
+    case BASELINE_PERIODS.ALL_TIME:
+      return { start: EPOCH, end }
     case BASELINE_PERIODS.LAST_30_DAYS:
       return { start: addDays(end, -30), end }
     case BASELINE_PERIODS.LAST_90_DAYS:

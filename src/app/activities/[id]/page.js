@@ -77,6 +77,11 @@ export default function ActivityDetailPage() {
           } catch (err) {
             console.warn('Master curves RPC was not found or failed:', err)
           }
+
+          // 2b. Default baseline/"history curve" (issue #28): All-time, via the
+          // period-scoped RPC so it has the same per-point activity attribution/link
+          // as every other baseline period (the legacy master-curves RPC above does not).
+          await fetchBaselineCurves(act.user_id, 'all_time')
         }
       }
 
@@ -100,14 +105,14 @@ export default function ActivityDetailPage() {
     loadData()
   }, [activityId])
 
-  // Fetch a period-scoped baseline/"history curve" (issue #28): last 30/90 days, this
-  // calendar year, the last floating year, or a custom day-picker range. Always reads
-  // live from the DB, so it automatically reflects every newly uploaded activity.
-  const handleBaselinePeriodChange = async (period, customRange) => {
-    if (!activity?.user_id) return
+  // Fetch a period-scoped baseline/"history curve" (issue #28): all-time, last 30/90
+  // days, this calendar year, the last floating year, or a custom day-picker range.
+  // Always reads live from the DB, so it automatically reflects every newly uploaded
+  // activity without any separate recompute step.
+  const fetchBaselineCurves = async (userId, period, customRange) => {
     setBaselineLoading(true)
     try {
-      const rpcArgs = { p_user_id: activity.user_id, p_period: period }
+      const rpcArgs = { p_user_id: userId, p_period: period }
       if (period === 'custom' && customRange) {
         rpcArgs.p_start_date = customRange.start
         rpcArgs.p_end_date = customRange.end
@@ -121,6 +126,12 @@ export default function ActivityDetailPage() {
     } finally {
       setBaselineLoading(false)
     }
+  }
+
+  // Wired to DurationalCurvesChart's period selector (issue #28).
+  const handleBaselinePeriodChange = (period, customRange) => {
+    if (!activity?.user_id) return
+    fetchBaselineCurves(activity.user_id, period, customRange)
   }
 
   // Quick save of the gear ratio from the bottom bar
