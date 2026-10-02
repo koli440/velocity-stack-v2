@@ -1,6 +1,7 @@
 // Run with: node --test src/lib/__tests__/bulkImport.test.js
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import zlib from 'node:zlib'
 import { expandToFitFiles, importSingleFitFile, importFitFilesBatch, sha256Hex } from '../bulkImport.js'
 
 function makeBlob(text) {
@@ -71,6 +72,19 @@ test('expandToFitFiles keeps only .fit files (case-insensitive) and ignores ever
   assert.deepEqual(
     result.map((f) => f.name),
     ['ride.FIT', 'another.fit']
+  )
+})
+
+test('expandToFitFiles recognizes individually gzip-compressed Garmin exports (<id>.fit.gz)', async () => {
+  const picked = [makeFile('3401761160.fit.gz'), makeFile('notes.txt.gz'), makeFile('ride.fit')]
+  const result = await expandToFitFiles(picked)
+
+  assert.deepEqual(
+    result.map((f) => ({ name: f.name, gzip: !!f.gzip })),
+    [
+      { name: '3401761160.fit', gzip: true },
+      { name: 'ride.fit', gzip: false },
+    ]
   )
 })
 
@@ -155,6 +169,52 @@ test('importSingleFitFile skips a file matching an existing start_time/duration 
   assert.equal(result.status, 'skipped')
   assert.equal(result.reason, 'duplicate')
   assert.equal(supabase.calls.inserted.length, 0)
+})
+
+test('importSingleFitFile decompresses a gzip-compressed Garmin export (.fit.gz) before hashing/analyzing/uploading', async () => {
+  const supabase = createFakeSupabase()
+  const plainBytes = new TextEncoder().encode('garmin-ride-bytes')
+  const gzippedBytes = zlib.gzipSync(Buffer.from(plainBytes))
+  const file = {
+    name: '3401761160.fit',
+    blob: new Blob([gzippedBytes]),
+    gzip: true,
+    lastModified: Date.UTC(2019, 5, 1),
+  }
+
+  let analyzedText = null
+  const analyzeFile = async (blob) => {
+    analyzedText = new TextDecoder().decode(await blob.arrayBuffer())
+    return {
+      summary: { start_time: '2019-06-01T08:00:00.000Z', elapsed_time_s: 1800 },
+      curves: {},
+      time_series: {},
+    }
+  }
+  const existingFingerprints = []
+
+  const result = await importSingleFitFile({ file, analyzeFile, supabase, userId: 'user-1', existingFingerprints })
+
+  assert.equal(result.status, 'success')
+  // /api/analyze and Storage should both see the decompressed .fit bytes, not the gzip envelope.
+  assert.equal(analyzedText, 'garmin-ride-bytes')
+  assert.equal(existingFingerprints[0].file_sha256, await sha256Hex(plainBytes.buffer))
+  assert.equal(supabase.calls.uploads.length, 1)
+})
+
+test('importSingleFitFile reports an error (without throwing) for a corrupt gzip payload', async () => {
+  const supabase = createFakeSupabase()
+  const file = { name: 'broken.fit', blob: new Blob([new Uint8Array([1, 2, 3, 4])]), gzip: true }
+  let analyzeCalled = false
+  const analyzeFile = async () => {
+    analyzeCalled = true
+    return { summary: {}, curves: {}, time_series: {} }
+  }
+
+  const result = await importSingleFitFile({ file, analyzeFile, supabase, userId: 'user-1' })
+
+  assert.equal(result.status, 'error')
+  assert.equal(analyzeCalled, false)
 })
 
 test('importSingleFitFile reports an error (without throwing) when analysis fails', async () => {
