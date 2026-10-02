@@ -5,7 +5,7 @@
 // matching efforts (reusing the universal effort detector) and computes the
 // template-specific benchmark metrics (drop-off %, pacing index, recovery, …).
 
-import { analyzeSessionEfforts } from './effortDetectionEngine'
+import { analyzeSessionEfforts } from './effortDetectionEngine.js'
 
 function avg(arr) {
   if (!arr || arr.length === 0) return null
@@ -198,20 +198,66 @@ function evaluateStandingStart(template, timeSeries, detection) {
   }
 }
 
+/**
+ * User-authorable "custom_intervals" pattern (issue #14): a manifest compiled
+ * from a user's interval DSL (src/lib/intervalDsl.js) rather than a fixed
+ * track-cycling discipline. Reuses the same avg/max/pacingIndex/dropoffPct
+ * helpers as the other evaluators above.
+ */
+function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW) {
+  const { watts = [] } = timeSeries
+  const manifest = template.manifest || {}
+  const repsTarget = manifest.repeat_count || null
+
+  const rawEfforts = detection.efforts || []
+
+  // Group the flat efforts list back into reps: each rep is the (ordered)
+  // run of steps the DSL declares — typically [work] or [work, recovery].
+  const stepsPerRep = (manifest.steps || []).length || 1
+  const reps = []
+  for (let i = 0; i < rawEfforts.length; i += stepsPerRep) {
+    reps.push(rawEfforts.slice(i, i + stepsPerRep))
+  }
+
+  const efforts = reps.flatMap((repEfforts, repIdx) =>
+    repEfforts.map((e) => ({
+      ...e,
+      rep: repIdx + 1,
+      pacing_index: pacingIndex(watts, e.start_sec, e.end_sec),
+    }))
+  )
+
+  const workEfforts = efforts.filter((e) => e.role === 'work')
+  const dropoff = dropoffPct(workEfforts.map((e) => e.avg_power))
+
+  return {
+    efforts,
+    summary: {
+      reps_detected: reps.length,
+      reps_target: repsTarget,
+      dropoff_pct: dropoff,
+      avg_power: workEfforts.length ? Math.round(avg(workEfforts.map((e) => e.avg_power))) : null,
+    },
+  }
+}
+
 const EVALUATORS = {
   repeated_bursts: evaluateRepeatedBursts,
   flying_sprint: evaluateFlyingSprint,
   sustained_tt: evaluateSustainedTT,
   standing_start: evaluateStandingStart,
+  custom_intervals: evaluateCustomIntervals,
 }
 
 /**
  * Evaluate a single analysis_templates row against an activity's time_series.
  * @param {{slug: string, manifest: object}} template
  * @param {object} timeSeries - { watts, cadence, torque, speed, heartrate }
+ * @param {number|null} [ftpAtActivityW] - the activity's own FTP snapshot (issue #14);
+ *   only used by the `custom_intervals` pattern's %FTP-banded steps.
  * @returns {{ efforts: object[], summary: object }}
  */
-export function evaluateTemplate(template, timeSeries = {}) {
+export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null) {
   const manifest = template.manifest || {}
   const pattern = manifest.pattern || 'repeated_bursts'
   const evaluator = EVALUATORS[pattern]
@@ -229,13 +275,21 @@ export function evaluateTemplate(template, timeSeries = {}) {
       ? 'f200'
       : pattern === 'standing_start'
       ? 'standing_start'
+      : pattern === 'custom_intervals'
+      ? 'custom_intervals'
       : 'repeated_bursts'
 
-  const detection = analyzeSessionEfforts({ discipline: disciplineHint, timeSeries })
+  const detection = analyzeSessionEfforts({
+    discipline: disciplineHint,
+    timeSeries,
+    ...(pattern === 'custom_intervals'
+      ? { steps: manifest.steps || [], repeatCount: manifest.repeat_count || 1, ftpAtActivityW }
+      : {}),
+  })
 
   if (!evaluator) {
     return { efforts: detection.efforts || [], summary: {} }
   }
 
-  return evaluator(template, timeSeries, detection)
+  return evaluator(template, timeSeries, detection, ftpAtActivityW)
 }

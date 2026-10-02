@@ -3,6 +3,10 @@
 // Activity stream graphs (issue #12): speed, heart rate, power, cadence and torque, each in its
 // own compact lane, stacked vertically and aligned on a shared X axis that can be switched
 // between elapsed time and distance.
+//
+// `highlightWindows` (issue #14 — Template Creator) lets the activity page overlay the
+// work/recovery intervals matched by the latest template execution directly on these
+// charts, tinted by role and kept in sync across lanes via the shared `syncId`.
 
 import { useMemo, useState } from 'react'
 import {
@@ -12,10 +16,11 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  ReferenceArea,
 } from 'recharts'
 import { STREAM_METRICS, buildStreamSeries, formatAxisTick, formatElapsed } from '../lib/activityStreams'
 
-function MetricLane({ metric, data, mode, syncId }) {
+function MetricLane({ metric, data, mode, syncId, highlightWindows }) {
   const hasData = data.some((d) => d[metric.key] != null)
   if (!hasData) return null
 
@@ -30,6 +35,18 @@ function MetricLane({ metric, data, mode, syncId }) {
       <div className="h-12 flex-1 min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} syncId={syncId} margin={{ top: 2, right: 4, left: 4, bottom: 0 }}>
+            {mode === 'time' &&
+              highlightWindows.map((w, idx) => (
+                <ReferenceArea
+                  key={`${w.role}-${w.start_sec}-${idx}`}
+                  x1={w.start_sec}
+                  x2={w.end_sec}
+                  fill={w.role === 'recovery' ? '#3b82f6' : '#f97316'}
+                  fillOpacity={0.18}
+                  stroke="none"
+                  ifOverflow="visible"
+                />
+              ))}
             <defs>
               <linearGradient id={`fill-${metric.key}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={metric.color} stopOpacity={0.35} />
@@ -76,7 +93,7 @@ function MetricLane({ metric, data, mode, syncId }) {
   )
 }
 
-export default function ActivityStreamsChart({ timeSeries = {} }) {
+export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows = [] }) {
   const [mode, setMode] = useState('time')
 
   const data = useMemo(() => buildStreamSeries(timeSeries, mode), [timeSeries, mode])
@@ -121,7 +138,7 @@ export default function ActivityStreamsChart({ timeSeries = {} }) {
 
       <div className="space-y-1.5">
         {STREAM_METRICS.map((metric) => (
-          <MetricLane key={metric.key} metric={metric} data={data} mode={mode} syncId="activity-streams" />
+          <MetricLane key={metric.key} metric={metric} data={data} mode={mode} syncId="activity-streams" highlightWindows={highlightWindows} />
         ))}
       </div>
 
