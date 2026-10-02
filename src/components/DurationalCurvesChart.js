@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   ResponsiveContainer,
   LineChart,
@@ -11,6 +12,7 @@ import {
   CartesianGrid,
   Legend,
 } from 'recharts'
+import { BASELINE_PERIOD_LABELS, BASELINE_PERIODS } from '../lib/baselineCurves'
 
 const DURATION_ORDER = [
   '1s', '5s', '10s', '15s', '30s',
@@ -26,29 +28,91 @@ const METRICS = [
   { key: 'HeartRate', label: 'HeartRate', unit: 'BPM', color: '#ef4444' },
 ]
 
+// "All-time" keeps using the legacy masterCurves prop (all-time personal best, no period
+// scoping). The other options are the baseline/"history curve" periods from issue #28.
+const ALL_TIME = 'all_time'
+
+const PERIOD_OPTIONS = [
+  { key: ALL_TIME, label: 'All-time' },
+  { key: BASELINE_PERIODS.LAST_30_DAYS, label: BASELINE_PERIOD_LABELS[BASELINE_PERIODS.LAST_30_DAYS] },
+  { key: BASELINE_PERIODS.LAST_90_DAYS, label: BASELINE_PERIOD_LABELS[BASELINE_PERIODS.LAST_90_DAYS] },
+  { key: BASELINE_PERIODS.CALENDAR_YEAR, label: BASELINE_PERIOD_LABELS[BASELINE_PERIODS.CALENDAR_YEAR] },
+  { key: BASELINE_PERIODS.ROLLING_YEAR, label: BASELINE_PERIOD_LABELS[BASELINE_PERIODS.ROLLING_YEAR] },
+  { key: BASELINE_PERIODS.CUSTOM, label: BASELINE_PERIOD_LABELS[BASELINE_PERIODS.CUSTOM] },
+]
+
 export default function DurationalCurvesChart({
   curves = {},
-  masterCurves = null, // Optional Master curve for comparison
+  masterCurves = null, // Legacy all-time Master curve (kept for the "All-time" option)
+  baselineCurves = null, // { period, start, end, curves: { [metric]: { [durationKey]: { value, activityId, activityTitle, activityDate } } } }
+  baselineLoading = false,
+  onPeriodChange, // (period: string, customRange?: { start: string, end: string }) => void
 }) {
   const [activeMetric, setActiveMetric] = useState('Cadence')
-  const [showMaster, setShowMaster] = useState(true)
+  const [showBaseline, setShowBaseline] = useState(true)
+  const [period, setPeriod] = useState(ALL_TIME)
+  const [customRange, setCustomRange] = useState({ start: '', end: '' })
 
   const activeCurveRaw = curves[activeMetric] || {}
-  const masterCurveRaw = (masterCurves && masterCurves[activeMetric]) || {}
   const currentMetricConfig = METRICS.find((m) => m.key === activeMetric) || METRICS[0]
 
-  // Build the chart data: combines the current ride and the Master profile
+  const isCustomPeriod = period === BASELINE_PERIODS.CUSTOM
+  const isAllTime = period === ALL_TIME
+
+  const handlePeriodChange = (nextPeriod) => {
+    setPeriod(nextPeriod)
+    if (!onPeriodChange || nextPeriod === ALL_TIME) return
+    if (nextPeriod === BASELINE_PERIODS.CUSTOM) {
+      if (customRange.start && customRange.end) {
+        onPeriodChange(nextPeriod, customRange)
+      }
+      return
+    }
+    onPeriodChange(nextPeriod)
+  }
+
+  const handleCustomRangeChange = (field, value) => {
+    const next = { ...customRange, [field]: value }
+    setCustomRange(next)
+    if (onPeriodChange && next.start && next.end) {
+      onPeriodChange(BASELINE_PERIODS.CUSTOM, next)
+    }
+  }
+
+  // Normalize the two possible baseline sources (legacy all-time master curve, which is
+  // just plain numbers, vs. a period-scoped baseline, which carries per-point activity
+  // attribution) into a single { value, activityId, activityTitle, activityDate } shape.
+  const baselinePoints = useMemo(() => {
+    if (isAllTime) {
+      const masterCurveRaw = (masterCurves && masterCurves[activeMetric]) || {}
+      return Object.fromEntries(
+        Object.entries(masterCurveRaw)
+          .filter(([, value]) => value !== undefined && value !== null)
+          .map(([durationKey, value]) => [durationKey, { value: Number(value) }])
+      )
+    }
+    return (baselineCurves && baselineCurves.curves && baselineCurves.curves[activeMetric]) || {}
+  }, [isAllTime, masterCurves, baselineCurves, activeMetric])
+
+  const baselineLabel = PERIOD_OPTIONS.find((p) => p.key === period)?.label || 'Baseline'
+
+  // Build the chart data: combines the current ride and the selected baseline period
   const chartData = DURATION_ORDER
     .filter((timeKey) => {
       const hasCurrent = activeCurveRaw[timeKey] !== undefined && activeCurveRaw[timeKey] !== null
-      const hasMaster = masterCurveRaw[timeKey] !== undefined && masterCurveRaw[timeKey] !== null
-      return hasCurrent || hasMaster
+      const hasBaseline = baselinePoints[timeKey] !== undefined && baselinePoints[timeKey] !== null
+      return hasCurrent || hasBaseline
     })
-    .map((timeKey) => ({
-      duration: timeKey,
-      current: activeCurveRaw[timeKey] !== undefined ? Number(activeCurveRaw[timeKey]) : null,
-      master: masterCurveRaw[timeKey] !== undefined ? Number(masterCurveRaw[timeKey]) : null,
-    }))
+    .map((timeKey) => {
+      const baselinePoint = baselinePoints[timeKey]
+      return {
+        duration: timeKey,
+        current: activeCurveRaw[timeKey] !== undefined ? Number(activeCurveRaw[timeKey]) : null,
+        baseline: baselinePoint ? baselinePoint.value : null,
+        baselineActivityId: baselinePoint?.activityId ?? null,
+        baselineActivityTitle: baselinePoint?.activityTitle ?? null,
+      }
+    })
 
   return (
     <div className="w-full bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
@@ -56,25 +120,25 @@ export default function DurationalCurvesChart({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
-            Durational Curves & Benchmark
+            Durational Curves & Baseline
           </h2>
           <p className="text-[10px] text-slate-400">
-            Comparison of the current ride against the personal maximum (Master Best)
+            Comparison of the current ride against your best curve ({baselineLabel.toLowerCase()})
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {masterCurves && (
+          {(masterCurves || baselineCurves || onPeriodChange) && (
             <button
               type="button"
-              onClick={() => setShowMaster(!showMaster)}
+              onClick={() => setShowBaseline(!showBaseline)}
               className={`px-2.5 py-1.5 rounded-xl text-[10px] font-bold border transition ${
-                showMaster
+                showBaseline
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 border-transparent'
                   : 'bg-transparent text-slate-400 border-slate-200 dark:border-slate-800'
               }`}
             >
-              {showMaster ? '✓ All-time PB enabled' : '+ Show All-time PB'}
+              {showBaseline ? `✓ ${baselineLabel} enabled` : `+ Show ${baselineLabel}`}
             </button>
           )}
 
@@ -99,6 +163,52 @@ export default function DurationalCurvesChart({
           </div>
         </div>
       </div>
+
+      {/* Baseline period selector (issue #28): 30/90 days, this calendar year, last
+          floating year, or a custom day-picker range. Only shown when the parent wires
+          up onPeriodChange (i.e. supports fetching period-scoped baseline curves). */}
+      {onPeriodChange && (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-800">
+            {PERIOD_OPTIONS.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => handlePeriodChange(option.key)}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition ${
+                  period === option.key
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          {isCustomPeriod && (
+            <div className="flex items-center gap-1.5">
+              <input
+                type="date"
+                value={customRange.start}
+                onChange={(e) => handleCustomRangeChange('start', e.target.value)}
+                className="px-2 py-1 text-[10px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200"
+              />
+              <span className="text-[10px] text-slate-400">to</span>
+              <input
+                type="date"
+                value={customRange.end}
+                onChange={(e) => handleCustomRangeChange('end', e.target.value)}
+                className="px-2 py-1 text-[10px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200"
+              />
+            </div>
+          )}
+
+          {baselineLoading && (
+            <span className="text-[10px] font-semibold text-slate-400">Loading baseline…</span>
+          )}
+        </div>
+      )}
 
       {/* Chart */}
       <div className="w-full h-72 sm:h-80">
@@ -143,12 +253,22 @@ export default function DurationalCurvesChart({
                             </span>
                           </div>
                         )}
-                        {showMaster && dataPoint.master != null && (
+                        {showBaseline && dataPoint.baseline != null && (
                           <div className="flex items-center justify-between gap-4 text-slate-400">
-                            <span>All-time PB:</span>
+                            <span>{baselineLabel}:</span>
                             <span className="font-bold text-slate-200">
-                              {dataPoint.master} {currentMetricConfig.unit}
+                              {dataPoint.baseline} {currentMetricConfig.unit}
                             </span>
+                          </div>
+                        )}
+                        {showBaseline && dataPoint.baseline != null && dataPoint.baselineActivityId && (
+                          <div className="pt-1 border-t border-slate-800">
+                            <Link
+                              href={`/activities/${dataPoint.baselineActivityId}`}
+                              className="text-[10px] font-bold text-orange-400 hover:text-orange-300 underline"
+                            >
+                              View activity{dataPoint.baselineActivityTitle ? `: ${dataPoint.baselineActivityTitle}` : ''}
+                            </Link>
                           </div>
                         )}
                       </div>
@@ -158,16 +278,16 @@ export default function DurationalCurvesChart({
                 }}
               />
 
-              {/* Reference line: Master Best (dashed) */}
-              {showMaster && (
+              {/* Reference line: selected baseline period (dashed) */}
+              {showBaseline && (
                 <Line
                   type="monotone"
-                  dataKey="master"
+                  dataKey="baseline"
                   stroke="#64748b"
                   strokeWidth={2}
                   strokeDasharray="4 4"
                   dot={false}
-                  name="All-time PB"
+                  name={baselineLabel}
                 />
               )}
 
