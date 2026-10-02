@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
+import { deleteActivity } from '../lib/activityActions'
 import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
@@ -55,6 +56,23 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Trvalé smazání aktivity (issue #18): odstraní záznam z activities (a kaskádově
+  // i navázané curves/template_executions) a případný archivovaný .fit soubor ze Storage.
+  const handleDeleteActivity = async (activity) => {
+    const confirmed = window.confirm(
+      `Opravdu trvale smazat aktivitu "${activity.title || 'Velodrome Session'}"? Tuto akci nelze vrátit zpět.`
+    )
+    if (!confirmed) return
+
+    const { error } = await deleteActivity(supabase, activity)
+    if (error) {
+      alert('Chyba při mazání aktivity: ' + error.message)
+      return
+    }
+
+    setActivities((prev) => prev.filter((a) => a.id !== activity.id))
+  }
+
   const latestActivity = activities[0] || null
 
   return (
@@ -77,6 +95,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         <ActivityFeed
           activities={activities}
           onAddWorkout={() => setIsWorkoutModalOpen(true)}
+          onDeleteActivity={handleDeleteActivity}
         />
       </div>
 

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
+import { deleteActivity } from '../../../lib/activityActions'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import BenchmarkCards from '../../../components/BenchmarkCards'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
@@ -35,6 +36,7 @@ export default function ActivityDetailPage() {
   const [cog, setCog] = useState('14')
   const [trackId, setTrackId] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!activityId) return
@@ -135,6 +137,26 @@ export default function ActivityDetailPage() {
     return Math.round((ring / sprocket) * 26.8 * 10) / 10
   }
 
+  // Trvalé smazání aktivity (issue #18): maže záznam z DB (kaskádově i curves/analýzy)
+  // a případný archivovaný .fit soubor, poté uživatele vrátí na Cockpit.
+  const handleDeleteActivity = async () => {
+    const confirmed = window.confirm(
+      'Opravdu trvale smazat tuto aktivitu? Tato akce je nevratná a odstraní i veškerá navázaná data (křivky, analýzy).'
+    )
+    if (!confirmed) return
+
+    setDeleting(true)
+    const { error } = await deleteActivity(supabase, activity)
+    setDeleting(false)
+
+    if (error) {
+      alert('Chyba při mazání aktivity: ' + error.message)
+      return
+    }
+
+    router.push('/')
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -185,6 +207,15 @@ export default function ActivityDetailPage() {
           </h1>
           <p className="text-xs font-semibold text-slate-400">{actDate}</p>
         </div>
+
+        <button
+          type="button"
+          onClick={handleDeleteActivity}
+          disabled={deleting}
+          className="py-2 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
+        >
+          {deleting ? 'Mažu...' : '🗑 Delete Activity'}
+        </button>
       </div>
 
       {/* 2. Kontextové štítky vybavení a nastavení */}
