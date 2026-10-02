@@ -6,10 +6,12 @@
 -- against the fuller tracks catalogue.
 --
 -- user_id resolution: v1 identified riders by a free-text email (its "UserID" column). We
--- resolve this to a v2 auth.users row by exact email match. Each INSERT is individually guarded
--- with `WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = ...)` so a PB for an email with no
--- matching v2 account is silently skipped (not a migration failure) rather than aborting the
--- whole file - safe to re-run once accounts are created.
+-- resolve this to a v2 auth.users row by exact email match. personal_bests.user_id has an FK to
+-- public.profiles(id) (not auth.users directly), so each INSERT is guarded with
+-- `WHERE EXISTS (... auth.users u JOIN public.profiles p ON p.id = u.id ...)` - requiring BOTH a
+-- matching auth account AND a profiles row (created by the app's register flow) - so a PB for an
+-- email with no matching v2 account/profile is silently skipped (not a migration failure, no FK
+-- violation) rather than aborting the whole file - safe to re-run once accounts are created.
 --
 -- track_id resolution: matched by exact name against public.tracks.name. One alias is special-
 -- cased: v1's raw "Praha - Trebesin" track string is the same physical velodrome as the existing
@@ -43,7 +45,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -62,7 +67,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -81,7 +89,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -100,7 +111,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -119,7 +133,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -138,7 +155,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -157,7 +177,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -176,7 +199,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -195,7 +221,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -214,7 +243,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -233,7 +265,10 @@ SELECT
     NULL,
     '{}',
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -252,7 +287,10 @@ SELECT
     250,
     ARRAY[22.106,15.232,15.480]::numeric[],
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -271,7 +309,10 @@ SELECT
     1000,
     ARRAY[74.275,73.809,78.483]::numeric[],
     'Gearing si nepamatuju přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -290,7 +331,10 @@ SELECT
     NULL,
     '{}',
     'Převody nevím a nebyl to úplný pevný start, protože mě neměl kdo držet. Měření taky není přesně, ale byla to moje base line'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -309,7 +353,10 @@ SELECT
     1000,
     ARRAY[75.229,70.307,70.970,74.503]::numeric[],
     'Gearing je přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -328,7 +375,10 @@ SELECT
     250,
     ARRAY[22.192,15.580,15.590]::numeric[],
     'Gearing si nepamatuju - sestava Šipčiak, Čermák, Kolář'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -347,7 +397,10 @@ SELECT
     250,
     ARRAY[19.2,19.1,19.3,19.4,19.7,19.6,19.4,19.6,19.2,19.4,19.3,18.8]::numeric[],
     'Gearing přesně, rozjeto na negative split. Zase tak moc se to nepovedlo, ale na konci jsem zrychlil'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -366,7 +419,10 @@ SELECT
     250,
     '{}',
     'Didn''t have a good wind-up.'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'jedkornbluh@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'jedkornbluh@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -385,7 +441,10 @@ SELECT
     333.3,
     '{}',
     'Krásný počasí, Gearing přesně. Podle Kellyše to chtělo těžší převod - 60x16 bych příště zkusil'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -404,7 +463,10 @@ SELECT
     333.3,
     '{}',
     'Krásný počasí, Gearing přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -423,7 +485,10 @@ SELECT
     400,
     '{}',
     'Krásný počasí trošku vitr. Gearing přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -442,7 +507,10 @@ SELECT
     400,
     '{}',
     'Krásný počasí, trochu vitr, gearing přesně'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -461,7 +529,10 @@ SELECT
     333.3,
     '{}',
     NULL
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'vojta.david@seznam.cz');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'vojta.david@seznam.cz'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -480,7 +551,10 @@ SELECT
     333.3,
     '{}',
     NULL
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'vojta.david@seznam.cz');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'vojta.david@seznam.cz'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -503,7 +577,10 @@ SELECT
 - Gearing lehký, ale takhle byla kadence optimální = postupně přikládat
 - Aero ponožky, silniční kombinéza, POC Tempor helma
 - Lehačky asi ještě trošku zkrátíme'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -522,7 +599,10 @@ SELECT
     333.3,
     ARRAY[24.98,24.26,25.48]::numeric[],
     NULL
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'vojta.david@seznam.cz');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'vojta.david@seznam.cz'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -541,7 +621,10 @@ SELECT
     333.3,
     ARRAY[25.99,25.65,25.29,25.2,25.09,26.54]::numeric[],
     NULL
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'vojta.david@seznam.cz');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'vojta.david@seznam.cz'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -560,7 +643,10 @@ SELECT
     250,
     ARRAY[23.0,18.0,17.9,17.8,18.0,18.3,18.3,18.5,19.2,19.1,18.8,18.2]::numeric[],
     'Gearing přesně, nácvik rozjet to pod 19vetřin na kolo a pak zrychlovat. Nepodařilo se to úplně, ale je tam progress, takže spokojenost. To líznuté 19s primárně kvůli tomu, že jsem nevěděl kolik kol do konce zbývá a tak jsem to raději zpomalil.'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -579,7 +665,10 @@ SELECT
     333.3,
     '{}',
     'vítr 2,5mps'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'vojta.david@seznam.cz');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'vojta.david@seznam.cz'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -598,7 +687,10 @@ SELECT
     333.3,
     '{}',
     'decentně foukalo na cílovce. Gearing přesně, nezávodní kola, bez návleků na nohy.'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
 
 INSERT INTO public.personal_bests (user_id, track_id, track_name, discipline, discipline_distance_m, event_name, achieved_date, time_seconds, avg_speed_kmh, chainring, cog, split_mode, split_distance_m, lap_times, notes)
 SELECT
@@ -617,4 +709,7 @@ SELECT
     250,
     ARRAY[25.96,18.53,17.56,17.71,18.23,18.53,19.01,19.2,19.72,19.5,18.95,19.06]::numeric[],
     'Gearing přesně, únava celkem velká, chtěl jsem to na těch 18 vteřinách zastabilizovat a pak zrychlit, ale už to bylo mimo. Na další pokus dávám 60x16'
-WHERE EXISTS (SELECT 1 FROM auth.users WHERE email = 'koli440@gmail.com');
+WHERE EXISTS (
+    SELECT 1 FROM auth.users u JOIN public.profiles p ON p.id = u.id
+    WHERE u.email = 'koli440@gmail.com'
+);
