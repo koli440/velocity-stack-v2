@@ -23,6 +23,13 @@ export default function Footer() {
           </Link>
 
           <Link
+            href="/feedback"
+            className="hover:text-slate-900 dark:hover:text-white transition"
+          >
+            💡 Feedback
+          </Link>
+
+          <Link
             href="/report-bug"
             className="flex items-center gap-1.5 text-rose-500/90 dark:text-rose-400 hover:text-rose-600 font-semibold transition"
           >
