@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { deleteActivity } from '../../../lib/activityActions'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
+import ActivityStreamsChart from '../../../components/ActivityStreamsChart'
 import BenchmarkCards from '../../../components/BenchmarkCards'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
 import TemplateExecutionCard from '../../../components/TemplateExecutionCard'
@@ -274,6 +275,9 @@ export default function ActivityDetailPage() {
 
       {/* 3b. Kompletní sada metrik aktivity */}
       <ActivityMetricsGrid activity={activity} curvesMap={curvesMap} />
+
+      {/* 3c. Graf telemetrie v čase/vzdálenosti: speed, HR, power, cadence, torque (issue #12) */}
+      <ActivityStreamsChart timeSeries={activity.time_series} />
 
       {/* 4. Durational Curves Chart se zobrazením All-time PB linky */}
       <DurationalCurvesChart curves={curvesMap} masterCurves={masterCurves} />

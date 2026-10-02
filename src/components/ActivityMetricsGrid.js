@@ -35,6 +35,21 @@ function MetricCard({ label, value, hint }) {
   )
 }
 
+// Pro aktivity bez rychlostního senzoru indikujeme přímo pod metrikou, jak byla rychlost/
+// vzdálenost dopočítána - viz issue #12 diskuze (fixed-gear kadence vs. GPS vs. road bike
+// s volnoběhem). Kompaktní "hint" pod hodnotou je přesnější i úspornější než jeden velký
+// badge v hlavičce stránky.
+const SPEED_SOURCE_HINTS = {
+  sensor: 'Rychlostní senzor',
+  gps: 'Odhad z GPS',
+  derived_from_cadence: 'Odhad z kadence',
+  unavailable: 'Data nejsou k dispozici',
+}
+
+function speedSourceHint(speedSource) {
+  return SPEED_SOURCE_HINTS[speedSource]
+}
+
 export default function ActivityMetricsGrid({ activity, curvesMap = {} }) {
   if (!activity) return null
 
@@ -43,6 +58,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {} }) {
 
   const startTime = activity.start_time || activity.activity_date
   const hasFtp = activity.intensity_factor != null && activity.training_load != null
+  const speedHint = speedSourceHint(activity.speed_source)
 
   return (
     <div className="space-y-4">
@@ -56,11 +72,11 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {} }) {
           label="Start Time"
           value={startTime ? new Date(startTime).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }) : '—'}
         />
-        <MetricCard label="Distance" value={formatDistance(activity.distance_m)} />
-        <MetricCard label="Moving Time" value={formatDuration(activity.moving_time_s)} />
+        <MetricCard label="Distance" value={formatDistance(activity.distance_m)} hint={speedHint} />
+        <MetricCard label="Moving Time" value={formatDuration(activity.moving_time_s)} hint={speedHint} />
         <MetricCard label="Elapsed Time" value={formatDuration(activity.elapsed_time_s)} />
-        <MetricCard label="Avg Speed" value={formatValue(activity.avg_speed_kmh, 'km/h', 1)} />
-        <MetricCard label="Max Speed" value={formatValue(activity.max_speed_kmh, 'km/h', 1)} />
+        <MetricCard label="Avg Speed" value={formatValue(activity.avg_speed_kmh, 'km/h', 1)} hint={speedHint} />
+        <MetricCard label="Max Speed" value={formatValue(activity.max_speed_kmh, 'km/h', 1)} hint={speedHint} />
       </div>
 
       {/* Výkon */}

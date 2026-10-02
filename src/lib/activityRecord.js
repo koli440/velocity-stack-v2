@@ -81,6 +81,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     elevation_loss_m: summary.elevation_loss_m ?? null,
     intensity_factor: intensityFactor,
     training_load: trainingLoad,
+    speed_source: summary.speed_source ?? null,
     time_series: timeSeries || {},
     curves_data: curvesData || {},
     raw_file_url: rawFileUrl,
