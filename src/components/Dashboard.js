@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { deleteActivity } from '../lib/activityActions'
+import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
 import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
@@ -19,22 +20,51 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false)
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false)
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false)
+  // Dynamic loading of activities (issue #46): with thousands of activities per user,
+  // we only ever hold one page in memory at a time and fetch more on demand.
+  const [hasMoreActivities, setHasMoreActivities] = useState(
+    initialActivities.length === DEFAULT_ACTIVITIES_PAGE_SIZE
+  )
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
+  // Resets back to the first page, e.g. after login or a sync/import.
   const reloadActivities = async (userId) => {
     const targetId = userId || user?.id
     if (!targetId) {
       setActivities([])
+      setHasMoreActivities(false)
       return
     }
 
-    const { data, error } = await supabase
-      .from('activities')
-      .select('*, tracks(*)')
-      .eq('user_id', targetId)
-      .order('activity_date', { ascending: false })
+    const { data, hasMore, error } = await fetchActivitiesPage(supabase, {
+      userId: targetId,
+      page: 0,
+    })
 
-    if (!error && data) {
+    if (!error) {
       setActivities(data)
+      setHasMoreActivities(hasMore)
+    }
+  }
+
+  // Fetches and appends the next page of activities for the current user.
+  const loadMoreActivities = async () => {
+    if (!user?.id || isLoadingMore || !hasMoreActivities) return
+
+    setIsLoadingMore(true)
+    try {
+      const nextPage = Math.floor(activities.length / DEFAULT_ACTIVITIES_PAGE_SIZE)
+      const { data, hasMore, error } = await fetchActivitiesPage(supabase, {
+        userId: user.id,
+        page: nextPage,
+      })
+
+      if (!error) {
+        setActivities((prev) => [...prev, ...data])
+        setHasMoreActivities(hasMore)
+      }
+    } finally {
+      setIsLoadingMore(false)
     }
   }
 
@@ -98,6 +128,9 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           activities={activities}
           onAddWorkout={() => setIsWorkoutModalOpen(true)}
           onDeleteActivity={handleDeleteActivity}
+          hasMore={hasMoreActivities}
+          isLoadingMore={isLoadingMore}
+          onLoadMore={loadMoreActivities}
         />
       </div>
 
