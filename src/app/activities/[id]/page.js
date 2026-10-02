@@ -30,6 +30,8 @@ export default function ActivityDetailPage() {
   const [tracks, setTracks] = useState([])
   const [curvesMap, setCurvesMap] = useState({})
   const [masterCurves, setMasterCurves] = useState(null)
+  const [baselineCurves, setBaselineCurves] = useState(null)
+  const [baselineLoading, setBaselineLoading] = useState(false)
 
   // Quick edit state for gear ratio and track in the bottom panel
   const [chainring, setChainring] = useState('58')
@@ -97,6 +99,29 @@ export default function ActivityDetailPage() {
 
     loadData()
   }, [activityId])
+
+  // Fetch a period-scoped baseline/"history curve" (issue #28): last 30/90 days, this
+  // calendar year, the last floating year, or a custom day-picker range. Always reads
+  // live from the DB, so it automatically reflects every newly uploaded activity.
+  const handleBaselinePeriodChange = async (period, customRange) => {
+    if (!activity?.user_id) return
+    setBaselineLoading(true)
+    try {
+      const rpcArgs = { p_user_id: activity.user_id, p_period: period }
+      if (period === 'custom' && customRange) {
+        rpcArgs.p_start_date = customRange.start
+        rpcArgs.p_end_date = customRange.end
+      }
+      const { data, error } = await supabase.rpc('get_athlete_baseline_curves', rpcArgs)
+      if (error) throw error
+      setBaselineCurves(data)
+    } catch (err) {
+      console.warn('Baseline curves RPC failed:', err)
+      setBaselineCurves(null)
+    } finally {
+      setBaselineLoading(false)
+    }
+  }
 
   // Quick save of the gear ratio from the bottom bar
   const handleUpdateGear = async (e) => {
@@ -277,8 +302,16 @@ export default function ActivityDetailPage() {
       {/* 3c. Telemetry chart over time/distance: speed, HR, power, cadence, torque (issue #12) */}
       <ActivityStreamsChart timeSeries={activity.time_series} />
 
-      {/* 4. Durational Curves Chart showing the All-time PB line */}
-      <DurationalCurvesChart curves={curvesMap} masterCurves={masterCurves} />
+      {/* 4. Durational Curves Chart: current ride vs. a selectable baseline/"history
+           curve" (all-time, last 30/90 days, this calendar year, last floating year,
+           or a custom day-picker range) - issue #28 */}
+      <DurationalCurvesChart
+        curves={curvesMap}
+        masterCurves={masterCurves}
+        baselineCurves={baselineCurves}
+        baselineLoading={baselineLoading}
+        onPeriodChange={handleBaselinePeriodChange}
+      />
 
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
       <TemplateExecutionCard activityId={activityId} />
