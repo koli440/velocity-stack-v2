@@ -49,15 +49,23 @@ export async function POST(req, { params }) {
 
     const result = evaluateTemplate(template, activity.time_series || {}, activity.ftp_at_activity_w ?? null)
 
+    // A given template can only be run once per activity (unique constraint on
+    // activity_id + template_id) — re-running replaces the prior result
+    // instead of accumulating duplicate rows. Different templates can still
+    // each have their own execution for the same activity.
     const { data: execution, error: execError } = await supabase
       .from('template_executions')
-      .insert({
-        activity_id: activity.id,
-        template_id: template.id,
-        user_id: user.id,
-        efforts: result.efforts || [],
-        summary: result.summary || {},
-      })
+      .upsert(
+        {
+          activity_id: activity.id,
+          template_id: template.id,
+          user_id: user.id,
+          efforts: result.efforts || [],
+          summary: result.summary || {},
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'activity_id,template_id' }
+      )
       .select()
       .single()
 
@@ -86,7 +94,7 @@ export async function GET(req, { params }) {
       .from('template_executions')
       .select('*, analysis_templates(slug, name, category)')
       .eq('activity_id', activityId)
-      .order('created_at', { ascending: false })
+      .order('updated_at', { ascending: false })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
