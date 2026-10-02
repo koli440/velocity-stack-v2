@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { getAuthHeader } from '../lib/supabase'
+import { getAuthHeader, supabase } from '../lib/supabase'
+import TemplateCreatorModal from './TemplateCreatorModal'
 
 function formatMetric(value, suffix = '') {
   if (value === null || value === undefined) return '—'
@@ -9,7 +10,7 @@ function formatMetric(value, suffix = '') {
   return `${value}${suffix}`
 }
 
-export default function TemplateExecutionCard({ activityId }) {
+export default function TemplateExecutionCard({ activityId, onLatestExecution }) {
   const [templates, setTemplates] = useState([])
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
   const [running, setRunning] = useState(false)
@@ -17,25 +18,28 @@ export default function TemplateExecutionCard({ activityId }) {
   const [execution, setExecution] = useState(null)
   const [history, setHistory] = useState([])
   const [error, setError] = useState(null)
+  const [currentUserId, setCurrentUserId] = useState(null)
+  const [creatorOpen, setCreatorOpen] = useState(false)
+  const [editingTemplate, setEditingTemplate] = useState(null)
+
+  const loadTemplates = async () => {
+    setLoadingTemplates(true)
+    try {
+      const authHeader = await getAuthHeader()
+      const res = await fetch('/api/templates', { headers: authHeader })
+      const data = await res.json()
+      if (res.ok) {
+        setTemplates(data.templates || [])
+        if (data.templates?.length) {
+          setSelectedTemplateId((prev) => prev || data.templates[0].id)
+        }
+      }
+    } finally {
+      setLoadingTemplates(false)
+    }
+  }
 
   useEffect(() => {
-    const loadTemplates = async () => {
-      setLoadingTemplates(true)
-      try {
-        const authHeader = await getAuthHeader()
-        const res = await fetch('/api/templates', { headers: authHeader })
-        const data = await res.json()
-        if (res.ok) {
-          setTemplates(data.templates || [])
-          if (data.templates?.length) {
-            setSelectedTemplateId((prev) => prev || data.templates[0].id)
-          }
-        }
-      } finally {
-        setLoadingTemplates(false)
-      }
-    }
-
     const loadLastExecution = async () => {
       if (!activityId) return
       const authHeader = await getAuthHeader()
@@ -48,9 +52,21 @@ export default function TemplateExecutionCard({ activityId }) {
       }
     }
 
+    const loadCurrentUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setCurrentUserId(user?.id || null)
+    }
+
     loadTemplates()
     loadLastExecution()
+    loadCurrentUser()
   }, [activityId])
+
+  useEffect(() => {
+    onLatestExecution?.(execution)
+  }, [execution, onLatestExecution])
 
   const selectedTemplate = useMemo(
     () => templates.find((t) => t.id === selectedTemplateId) || null,
@@ -97,6 +113,36 @@ export default function TemplateExecutionCard({ activityId }) {
     }
   }
 
+  const handleTemplateSaved = (savedTemplate) => {
+    setEditingTemplate(null)
+    loadTemplates()
+    if (savedTemplate?.id) setSelectedTemplateId(savedTemplate.id)
+  }
+
+  const handleEditTemplate = (template) => {
+    setEditingTemplate(template)
+    setCreatorOpen(true)
+  }
+
+  const handleDeleteTemplate = async (template) => {
+    if (!window.confirm(`Delete template "${template.name}"? This cannot be undone.`)) return
+    try {
+      const authHeader = await getAuthHeader()
+      const res = await fetch(`/api/templates/${template.slug}`, {
+        method: 'DELETE',
+        headers: authHeader,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete template')
+      if (selectedTemplateId === template.id) setSelectedTemplateId('')
+      loadTemplates()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const ownsSelectedTemplate = !!(selectedTemplate && currentUserId && selectedTemplate.user_id === currentUserId)
+
   return (
     <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -104,7 +150,7 @@ export default function TemplateExecutionCard({ activityId }) {
           <span>🧪</span> Analysis Template Evaluation
         </h3>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
           <select
             value={selectedTemplateId}
             onChange={(e) => setSelectedTemplateId(e.target.value)}
@@ -114,6 +160,7 @@ export default function TemplateExecutionCard({ activityId }) {
             {templates.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
+                {t.user_id ? ' (mine)' : ''}
               </option>
             ))}
           </select>
@@ -125,11 +172,40 @@ export default function TemplateExecutionCard({ activityId }) {
           >
             {running ? 'Running…' : execution ? 'Re-run' : 'Run Template'}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEditingTemplate(null)
+              setCreatorOpen(true)
+            }}
+            className="py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 font-black text-[11px] uppercase tracking-wider transition whitespace-nowrap"
+          >
+            + Create Template
+          </button>
         </div>
       </div>
 
       {selectedTemplate?.description && (
         <p className="text-[11px] text-slate-400">{selectedTemplate.description}</p>
+      )}
+
+      {ownsSelectedTemplate && (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleEditTemplate(selectedTemplate)}
+            className="text-[10px] font-black uppercase tracking-wider text-orange-500"
+          >
+            Edit Template
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDeleteTemplate(selectedTemplate)}
+            className="text-[10px] font-black uppercase tracking-wider text-red-500"
+          >
+            Delete Template
+          </button>
+        </div>
       )}
 
       {error && (
@@ -160,11 +236,12 @@ export default function TemplateExecutionCard({ activityId }) {
                   className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-1"
                 >
                   <div className="text-xs font-black text-slate-900 dark:text-white">
-                    Effort #{idx + 1} ({eff.duration_sec}s)
+                    {eff.role ? `${eff.role === 'work' ? 'Work' : 'Recovery'} rep ${eff.rep || idx + 1}` : `Effort #${idx + 1}`} ({eff.duration_sec}s)
                   </div>
                   <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-400">
                     {eff.avg_power != null && <div>Avg W: <b className="text-slate-700 dark:text-slate-200">{eff.avg_power}</b></div>}
                     {eff.max_power != null && <div>Max W: <b className="text-slate-700 dark:text-slate-200">{eff.max_power}</b></div>}
+                    {eff.pct_of_ftp != null && <div>% FTP: <b className="text-slate-700 dark:text-slate-200">{eff.pct_of_ftp}%</b></div>}
                     {eff.pacing_index != null && <div>Pacing: <b className="text-slate-700 dark:text-slate-200">{eff.pacing_index}%</b></div>}
                     {eff.dropoff_pct != null && <div>Drop-off: <b className="text-slate-700 dark:text-slate-200">{eff.dropoff_pct}%</b></div>}
                     {eff.hr_recovery_60s != null && <div>HR recovery: <b className="text-slate-700 dark:text-slate-200">{eff.hr_recovery_60s} bpm</b></div>}
@@ -212,6 +289,16 @@ export default function TemplateExecutionCard({ activityId }) {
           </div>
         </div>
       )}
+
+      <TemplateCreatorModal
+        isOpen={creatorOpen}
+        editingTemplate={editingTemplate}
+        onClose={() => {
+          setCreatorOpen(false)
+          setEditingTemplate(null)
+        }}
+        onSaved={handleTemplateSaved}
+      />
     </div>
   )
 }

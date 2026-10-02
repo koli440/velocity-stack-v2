@@ -87,5 +87,10 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     raw_file_url: rawFileUrl,
     file_sha256: fileSha256,
     processing_status: processingStatus,
+    // Point-in-time FTP snapshot (issue #14): persisted as a raw column so
+    // %FTP-based template evaluation always uses the FTP that was valid when
+    // the ride happened, never the athlete's current (possibly very
+    // different) FTP.
+    ftp_at_activity_w: ftpWatts ?? null,
   }
 }

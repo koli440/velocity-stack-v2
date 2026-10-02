@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
@@ -32,6 +32,16 @@ export default function ActivityDetailPage() {
   const [masterCurves, setMasterCurves] = useState(null)
   const [baselineCurves, setBaselineCurves] = useState(null)
   const [baselineLoading, setBaselineLoading] = useState(false)
+  const [latestExecution, setLatestExecution] = useState(null)
+
+  // Matched work/recovery windows from the most recent template execution (issue #14),
+  // overlaid on the stream charts above via ActivityStreamsChart's highlightWindows prop.
+  const highlightWindows = useMemo(() => {
+    if (!Array.isArray(latestExecution?.efforts)) return []
+    return latestExecution.efforts
+      .filter((e) => e.start_sec != null && e.end_sec != null)
+      .map((e) => ({ start_sec: e.start_sec, end_sec: e.end_sec, role: e.role || 'work' }))
+  }, [latestExecution])
 
   // Quick edit state for gear ratio and track in the bottom panel
   const [chainring, setChainring] = useState('58')
@@ -311,7 +321,7 @@ export default function ActivityDetailPage() {
       <ActivityMetricsGrid activity={activity} curvesMap={curvesMap} masterCurves={masterCurves || {}} />
 
       {/* 3c. Telemetry chart over time/distance: speed, HR, power, cadence, torque (issue #12) */}
-      <ActivityStreamsChart timeSeries={activity.time_series} />
+      <ActivityStreamsChart timeSeries={activity.time_series} highlightWindows={highlightWindows} />
 
       {/* 4. Durational Curves Chart: current ride vs. a selectable baseline/"history
            curve" (all-time, last 30/90 days, this calendar year, last floating year,
@@ -325,7 +335,7 @@ export default function ActivityDetailPage() {
       />
 
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
-      <TemplateExecutionCard activityId={activityId} />
+      <TemplateExecutionCard activityId={activityId} onLatestExecution={setLatestExecution} />
 
       {/* 5. Bottom panel: Quick track and gearing setup */}
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">

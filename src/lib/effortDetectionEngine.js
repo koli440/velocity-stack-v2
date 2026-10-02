@@ -19,11 +19,20 @@ export function analyzeSessionEfforts({
   discipline = 'f200',
   timeSeries = {},
   userRole = 'masters', // e.g. masters (3km), elite (4km)
+  // Only used by the user-authorable `custom_intervals` pattern (issue #14):
+  steps = null,
+  repeatCount = null,
+  ftpAtActivityW = null,
 }) {
   const { watts = [], cadence = [], torque = [] } = timeSeries
 
   if (!watts.length && !cadence.length) {
     return { pattern: 'none', efforts: [], message: 'Missing per-second data for analysis.' }
+  }
+
+  // 0. Profile: user-authored interval DSL (issue #14)
+  if (discipline === 'custom_intervals') {
+    return detectCustomIntervalSequence({ watts, steps: steps || [], repeatCount: repeatCount || 1, ftpAtActivityW })
   }
 
   // 1. Profile: Sustained effort (Pursuit)
@@ -244,4 +253,142 @@ function detectRepeatedBursts(watts, cadence) {
     pattern: 'repeated_bursts',
     efforts: efforts.slice(0, 10), // top 10 attacks
   }
+}
+
+// E. User-authorable custom interval sequence detector (issue #14)
+//
+// Unlike the discipline-specific detectors above, this one is driven entirely
+// by the manifest parsed from a user's DSL template (src/lib/intervalDsl.js):
+// a cyclic `work`(+`recovery`) state machine with no assumption about when
+// the sequence starts, matched "at least N" (partial matches are valid, not
+// failures) rather than requiring the full configured repeat count.
+
+function buildPrefixSum(watts) {
+  const prefix = new Array(watts.length + 1).fill(0)
+  for (let i = 0; i < watts.length; i++) {
+    prefix[i + 1] = prefix[i] + (watts[i] || 0)
+  }
+  return prefix
+}
+
+function windowAvg(prefix, start, end) {
+  return (prefix[end] - prefix[start]) / (end - start)
+}
+
+function durationRange(step) {
+  const tol = step.durationTolerancePct / 100
+  const durMin = Math.max(1, Math.round(step.targetDurationSec * (1 - tol)))
+  const durMax = Math.max(durMin, Math.round(step.targetDurationSec * (1 + tol)))
+  return { durMin, durMax }
+}
+
+function stepBandMatches(avgPower, step, ftpAtActivityW) {
+  if (step.bandType === 'pct_ftp') {
+    if (!ftpAtActivityW) return false
+    const pct = (avgPower / ftpAtActivityW) * 100
+    if (step.powerMin != null && pct < step.powerMin) return false
+    if (step.powerMax != null && pct > step.powerMax) return false
+    return true
+  }
+  if (step.bandType === 'watts') {
+    if (step.powerMin != null && avgPower < step.powerMin) return false
+    if (step.powerMax != null && avgPower > step.powerMax) return false
+    return true
+  }
+  return true
+}
+
+/** Earliest window (duration within tolerance) whose average power satisfies the step's band. */
+function findThresholdWindow(prefix, cursor, step, ftpAtActivityW) {
+  const n = prefix.length - 1
+  const { durMin, durMax } = durationRange(step)
+
+  for (let s = cursor; s + durMin <= n; s++) {
+    for (let d = durMin; d <= durMax && s + d <= n; d++) {
+      const avgPower = windowAvg(prefix, s, s + d)
+      if (stepBandMatches(avgPower, step, ftpAtActivityW)) {
+        return { start: s, end: s + d, avgPower }
+      }
+    }
+  }
+  return null
+}
+
+/** Single highest-average-power window (duration within tolerance) found anywhere from `cursor` onward. */
+function findBestWindow(prefix, cursor, step) {
+  const n = prefix.length - 1
+  const { durMin, durMax } = durationRange(step)
+
+  let best = null
+  for (let s = cursor; s + durMin <= n; s++) {
+    for (let d = durMin; d <= durMax && s + d <= n; d++) {
+      const avgPower = windowAvg(prefix, s, s + d)
+      if (!best || avgPower > best.avgPower) {
+        best = { start: s, end: s + d, avgPower }
+      }
+    }
+  }
+  return best
+}
+
+/**
+ * @param {{watts: number[], steps: object[], repeatCount: number, ftpAtActivityW: number|null}} args
+ *   `steps` come from src/lib/intervalDsl.js's parseIntervalDsl (role, targetDurationSec,
+ *   durationTolerancePct, bandType, powerMin, powerMax), in DSL declaration order
+ *   (typically [work] or [work, recovery]).
+ */
+export function detectCustomIntervalSequence({ watts = [], steps = [], repeatCount = 1, ftpAtActivityW = null }) {
+  if (!watts.length || !steps.length) {
+    return { pattern: 'custom_intervals', efforts: [] }
+  }
+
+  const prefix = buildPrefixSum(watts)
+  const efforts = []
+  let cursor = 0
+
+  for (let rep = 0; rep < repeatCount; rep++) {
+    const repWindows = []
+    let repCursor = cursor
+
+    for (const step of steps) {
+      const found =
+        step.bandType === 'best'
+          ? findBestWindow(prefix, repCursor, step)
+          : findThresholdWindow(prefix, repCursor, step, ftpAtActivityW)
+
+      if (!found) {
+        repWindows.length = 0
+        break
+      }
+
+      repWindows.push({ step, found })
+      repCursor = found.end
+    }
+
+    // No complete work(+recovery) cycle could be found starting here: the
+    // stream is exhausted or no more valid windows exist — stop, we've
+    // collected however many complete reps we could ("at least N" semantics).
+    if (!repWindows.length) break
+
+    repWindows.forEach(({ step, found }) => {
+      const segWatts = watts.slice(found.start, found.end)
+      const avgPower = Math.round(found.avgPower)
+      const maxPower = segWatts.length ? Math.max(...segWatts) : null
+      efforts.push({
+        id: `custom_${step.role}_${found.start}`,
+        role: step.role,
+        start_sec: found.start,
+        end_sec: found.end,
+        duration_sec: found.end - found.start,
+        avg_power: avgPower,
+        max_power: maxPower,
+        band_type: step.bandType,
+        ...(ftpAtActivityW ? { pct_of_ftp: Math.round((avgPower / ftpAtActivityW) * 1000) / 10 } : {}),
+      })
+    })
+
+    cursor = repCursor
+  }
+
+  return { pattern: 'custom_intervals', efforts }
 }
