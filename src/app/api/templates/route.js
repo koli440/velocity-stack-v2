@@ -57,7 +57,6 @@ export async function POST(req) {
         description: description || null,
         category: category || 'road',
         manifest,
-        is_default: false,
         user_id: user.id,
         visibility: visibility === 'public' ? 'public' : 'private',
         dsl_source: dslSource,
