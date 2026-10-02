@@ -4,21 +4,28 @@
 // load_discipline_data / get_track_laps_info helpers in utils.py). v1 stored PBs in a Google
 // Sheet keyed by a free-text UserID; v2 persists them in the `personal_bests` table (see
 // supabase/migrations/20261007000000_personal_bests.sql), scoped to the authenticated user via
-// RLS. Disciplines are a fixed UCI reference list, not user data, so - like Pursuit Strategist
-// (#52) - they're kept as a static catalogue here rather than a DB table.
+// RLS. Disciplines are a fixed reference list (mirroring v1's "Disciplines" sheet), not user
+// data, so - like Pursuit Strategist (#52) - they're kept as a static catalogue here rather than
+// a DB table.
 
-// Fixed catalogue of UCI track cycling disciplines a rider can log a PB against, with their race
-// distance in meters (used to compute average speed).
+// Fixed catalogue of track cycling disciplines a rider can log a PB against, with their race
+// distance in meters (used to compute average speed). Mirrors v1's "Disciplines" Google Sheet
+// worksheet verbatim (name + distance + category) - this previously held an invented, UCI-generic
+// list that didn't match any of v1's actual discipline names, so every migrated PB's
+// getDisciplineDistance() lookup would silently fail.
 export const DISCIPLINES = [
-  { category: 'Sprint', name: 'Flying 200m', distanceM: 200 },
-  { category: 'Sprint', name: 'Kilo (1km Time Trial)', distanceM: 1000 },
-  { category: 'Sprint', name: '500m Time Trial (Women)', distanceM: 500 },
-  { category: 'Pursuit', name: 'Individual Pursuit (Men)', distanceM: 4000 },
-  { category: 'Pursuit', name: 'Individual Pursuit (Women)', distanceM: 3000 },
-  { category: 'Pursuit', name: 'Team Pursuit', distanceM: 4000 },
-  { category: 'Endurance', name: 'Scratch Race', distanceM: 10000 },
-  { category: 'Endurance', name: 'Points Race', distanceM: 20000 },
-  { category: 'Endurance', name: 'Madison', distanceM: 30000 },
+  { category: 'Sprint', name: '200m Flying', distanceM: 200 },
+  { category: 'Time Trial', name: '500m TT', distanceM: 500 },
+  { category: 'Time Trial', name: '666m TT', distanceM: 666 },
+  { category: 'Time Trial', name: '750m TT', distanceM: 750 },
+  { category: 'Time Trial', name: '750m Team Sprint', distanceM: 750 },
+  { category: 'Time Trial', name: '800m TT', distanceM: 800 },
+  { category: 'Time Trial', name: '1000m TT', distanceM: 1000 },
+  { category: 'Endurance', name: '2000m Individual Pursuit', distanceM: 2000 },
+  { category: 'Endurance', name: '3000m Individual Pursuit', distanceM: 3000 },
+  { category: 'Endurance', name: '4000m Individual Pursuit', distanceM: 4000 },
+  { category: 'Endurance', name: '4000m Team Pursuit', distanceM: 4000 },
+  { category: 'BMX', name: 'BMX Race', distanceM: 350 },
 ]
 
 export const SPLIT_MODES = {

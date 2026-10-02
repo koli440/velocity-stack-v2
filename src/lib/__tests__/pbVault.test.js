@@ -14,8 +14,8 @@ import {
 } from '../pbVault.js'
 
 test('getDisciplineDistance resolves known disciplines and falls back to null', () => {
-  assert.equal(getDisciplineDistance('Kilo (1km Time Trial)'), 1000)
-  assert.equal(getDisciplineDistance('Individual Pursuit (Men)'), 4000)
+  assert.equal(getDisciplineDistance('1000m TT'), 1000)
+  assert.equal(getDisciplineDistance('4000m Individual Pursuit'), 4000)
   assert.equal(getDisciplineDistance('Some Unknown Event'), null)
 })
 
