@@ -3,9 +3,12 @@
 // Kompletní sada metrik aktivity (issue #11): čas, vzdálenost, výkon (vč. průměrů v různých
 // oknech), tepová frekvence, kadence, točivý moment, převýšení a zátěžové ukazatele.
 //
-// issue #20: Peak Power, Peak Torque, Max Cadence a Max Speed se dříve zobrazovaly i v
-// BenchmarkCards (historické srovnání), takže se duplikovaly a plýtvaly místem. Zde je
-// proto nezobrazujeme znovu a layout je kompaktnější.
+// issue #20: metriky už dříve duplikoval samostatný BenchmarkCards blok nad touto mřížkou
+// (Peak Power/Max Watts, Max Cadence/Cadence Peak, Peak Torque, Max Speed/Top Speed).
+// Namísto dvou vizuálně podobných sekcí vedle sebe je srovnání s historickým maximem (PB)
+// teď součástí příslušné karty zde (badge + hint), BenchmarkCards sekce byla odstraněna.
+// Skupiny metrik jsou navíc barevně odlišené (barva popisku + levý okraj karty), aby se
+// v kompaktní mřížce dalo rychleji orientovat.
 //
 // issue #17: uživatel si může jednotlivé metriky skrýt přes menu "Manage metrics". Výběr
 // se ukládá do sloupce profiles.hidden_activity_metrics (stejné místo jako ostatní
@@ -36,10 +39,25 @@ function formatValue(value, unit, decimals = 0) {
   return `${num} ${unit}`
 }
 
-function MetricCard({ label, value, hint }) {
+// Barevné odlišení skupin metrik - stejná paleta jako dřívější BenchmarkCards
+// (fialová pro výkon, jantarová pro točivý moment/zátěž, nebeská pro rychlost/čas).
+const GROUP_COLORS = {
+  'Time & Distance': { border: 'border-l-sky-400', label: 'text-sky-500 dark:text-sky-400' },
+  Power: { border: 'border-l-purple-400', label: 'text-purple-500 dark:text-purple-400' },
+  Load: { border: 'border-l-amber-400', label: 'text-amber-500 dark:text-amber-400' },
+  'Heart Rate & Cadence': { border: 'border-l-rose-400', label: 'text-rose-500 dark:text-rose-400' },
+}
+const DEFAULT_GROUP_COLOR = { border: 'border-l-slate-300 dark:border-l-slate-700', label: 'text-slate-400' }
+
+function MetricCard({ label, value, hint, badge, accent = DEFAULT_GROUP_COLOR }) {
   return (
-    <div className="p-3 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder space-y-0.5">
-      <span className="text-[10px] uppercase font-bold text-slate-400 block">{label}</span>
+    <div
+      className={`p-3 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder border-l-4 ${accent.border} space-y-0.5`}
+    >
+      <div className="flex items-center justify-between gap-1">
+        <span className={`text-[10px] uppercase font-bold block ${accent.label}`}>{label}</span>
+        {badge}
+      </div>
       <div className="text-base font-black text-slate-900 dark:text-white">{value}</div>
       {hint && <div className="text-[10px] text-slate-400">{hint}</div>}
     </div>
@@ -61,13 +79,45 @@ function speedSourceHint(speedSource) {
   return SPEED_SOURCE_HINTS[speedSource]
 }
 
-export default function ActivityMetricsGrid({ activity, curvesMap = {} }) {
+// Badge porovnávající aktuální hodnotu s historickým maximem jezdce (dříve BenchmarkCards).
+// Nový All-time PB -> zelený badge, jinak procento z osobního maxima.
+function pbBadge(current, master) {
+  if (current == null || master == null) return null
+  const pct = Math.round((current / master) * 100)
+  const isPB = current >= master
+
+  if (isPB) {
+    return (
+      <span className="text-[9px] font-black py-0.5 px-1.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap">
+        🏆 PB
+      </span>
+    )
+  }
+
+  return (
+    <span className="text-[9px] font-bold py-0.5 px-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 whitespace-nowrap">
+      {pct}% PB
+    </span>
+  )
+}
+
+function pbHint(master, unit) {
+  return master != null ? `Historické max.: ${master} ${unit}` : undefined
+}
+
+export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCurves = {} }) {
   const powerCurve = useMemo(() => curvesMap?.Power || {}, [curvesMap])
   const powerWindows = ['15s', '30s', '1m', '5m', '15m', '30m']
 
   const startTime = activity?.start_time || activity?.activity_date
   const hasFtp = activity?.intensity_factor != null && activity?.training_load != null
   const speedHint = speedSourceHint(activity?.speed_source)
+
+  // Historická maxima pro srovnávací badge (viz dříve BenchmarkCards)
+  const powerMaster5s = masterCurves?.Power?.['5s'] ?? null
+  const cadenceMaster1s = masterCurves?.Cadence?.['1s'] ?? null
+  const speedMaster5s = masterCurves?.Speed?.['5s'] ?? null
+  const torqueMaster1s = masterCurves?.Torque?.['1s'] ?? null
 
   const [userId, setUserId] = useState(null)
   const [hiddenIds, setHiddenIds] = useState([])
@@ -144,11 +194,25 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {} }) {
       { id: 'moving_time', group: 'Time & Distance', label: 'Moving Time', value: formatDuration(activity?.moving_time_s), hint: speedHint },
       { id: 'elapsed_time', group: 'Time & Distance', label: 'Elapsed Time', value: formatDuration(activity?.elapsed_time_s) },
       { id: 'avg_speed', group: 'Time & Distance', label: 'Avg Speed', value: formatValue(activity?.avg_speed_kmh, 'km/h', 1), hint: speedHint },
-      // max_speed_kmh je vynechán - už je vidět jako "Top Speed" v BenchmarkCards (issue #20)
+      {
+        id: 'max_speed',
+        group: 'Time & Distance',
+        label: 'Max Speed',
+        value: formatValue(activity?.max_speed_kmh, 'km/h', 1),
+        hint: pbHint(speedMaster5s, 'km/h') || speedHint,
+        badge: pbBadge(activity?.max_speed_kmh, speedMaster5s),
+      },
 
       { id: 'avg_power', group: 'Power', label: 'Avg Power', value: formatValue(activity?.avg_power_w, 'W') },
       { id: 'normalized_power', group: 'Power', label: 'Normalized Power', value: formatValue(activity?.normalized_power_w, 'W') },
-      // max_power_w je vynechán - už je vidět jako "Max Watts" v BenchmarkCards (issue #20)
+      {
+        id: 'max_power',
+        group: 'Power',
+        label: 'Peak Power',
+        value: formatValue(activity?.max_power_w, 'W'),
+        hint: pbHint(powerMaster5s, 'W'),
+        badge: pbBadge(activity?.max_power_w, powerMaster5s),
+      },
       ...powerWindows.map((win) => ({
         id: `avg_power_${win}`,
         group: 'Power',
@@ -176,12 +240,26 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {} }) {
       { id: 'avg_hr', group: 'Heart Rate & Cadence', label: 'Avg HR', value: formatValue(activity?.avg_hr, 'bpm') },
       { id: 'max_hr', group: 'Heart Rate & Cadence', label: 'Max HR', value: formatValue(activity?.max_hr, 'bpm') },
       { id: 'avg_cadence', group: 'Heart Rate & Cadence', label: 'Avg Cadence', value: formatValue(activity?.avg_cadence_rpm, 'RPM') },
-      // max_cadence_rpm je vynechán - už je vidět jako "Cadence Peak" v BenchmarkCards (issue #20)
+      {
+        id: 'max_cadence',
+        group: 'Heart Rate & Cadence',
+        label: 'Max Cadence',
+        value: formatValue(activity?.max_cadence_rpm, 'RPM'),
+        hint: pbHint(cadenceMaster1s, 'RPM'),
+        badge: pbBadge(activity?.max_cadence_rpm, cadenceMaster1s),
+      },
       { id: 'avg_torque', group: 'Heart Rate & Cadence', label: 'Avg Torque', value: formatValue(activity?.avg_torque_nm, 'Nm', 1) },
-      // peak_torque_nm je vynechán - už je vidět jako "Peak Torque" v BenchmarkCards (issue #20)
+      {
+        id: 'peak_torque',
+        group: 'Heart Rate & Cadence',
+        label: 'Peak Torque',
+        value: formatValue(activity?.peak_torque_nm, 'Nm', 1),
+        hint: pbHint(torqueMaster1s, 'Nm'),
+        badge: pbBadge(activity?.peak_torque_nm, torqueMaster1s),
+      },
     ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activity, hasFtp, powerCurve, speedHint, startTime])
+  }, [activity, hasFtp, powerCurve, speedHint, startTime, powerMaster5s, cadenceMaster1s, speedMaster5s, torqueMaster1s])
 
   if (!activity) return null
 
@@ -242,13 +320,16 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {} }) {
         <p className="text-xs text-slate-400 italic">Všechny metriky jsou skryté. Odkryjte je přes „Manage Metrics“.</p>
       )}
 
-      {groups.map((group) => (
-        <div key={group.name} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-          {group.items.map((m) => (
-            <MetricCard key={m.id} label={m.label} value={m.value} hint={m.hint} />
-          ))}
-        </div>
-      ))}
+      {groups.map((group) => {
+        const accent = GROUP_COLORS[group.name] || DEFAULT_GROUP_COLOR
+        return (
+          <div key={group.name} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            {group.items.map((m) => (
+              <MetricCard key={m.id} label={m.label} value={m.value} hint={m.hint} badge={m.badge} accent={accent} />
+            ))}
+          </div>
+        )
+      })}
     </div>
   )
 }

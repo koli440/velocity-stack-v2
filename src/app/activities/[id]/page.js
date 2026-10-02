@@ -8,7 +8,6 @@ import { supabase } from '../../../lib/supabase'
 import { deleteActivity } from '../../../lib/activityActions'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import ActivityStreamsChart from '../../../components/ActivityStreamsChart'
-import BenchmarkCards from '../../../components/BenchmarkCards'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
 import TemplateExecutionCard from '../../../components/TemplateExecutionCard'
 
@@ -270,11 +269,10 @@ export default function ActivityDetailPage() {
         </div>
       )}
 
-      {/* 3. Benchmarkové karty porovnání výkonu */}
-      <BenchmarkCards currentActivity={activity} masterCurves={masterCurves || {}} />
-
-      {/* 3b. Kompletní sada metrik aktivity */}
-      <ActivityMetricsGrid activity={activity} curvesMap={curvesMap} />
+      {/* 3. Kompletní sada metrik aktivity (vč. srovnání s historickým maximem - dříve
+           samostatná sekce BenchmarkCards, nyní sloučená sem, aby se metriky nezobrazovaly
+           ve dvou podobně vypadajících blocích za sebou - issue #20) */}
+      <ActivityMetricsGrid activity={activity} curvesMap={curvesMap} masterCurves={masterCurves || {}} />
 
       {/* 3c. Graf telemetrie v čase/vzdálenosti: speed, HR, power, cadence, torque (issue #12) */}
       <ActivityStreamsChart timeSeries={activity.time_series} />
