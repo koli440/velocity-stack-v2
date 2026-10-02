@@ -134,34 +134,52 @@ export async function POST(req) {
       // Preferovaná cesta: stáhnout surový .fit soubor a nechat ho analyzovat tou samou cestou
       // jako ruční upload (/api/analyze). Tím zajistíme, že Intervals.icu sync a manuální .fit
       // upload produkují identickou sadu metrik (issue #11) z jediného výpočetního enginu.
-      const fileRes = await fetch(`https://intervals.icu/api/v1/activity/${actId}/file`, {
-        headers: { Authorization: authHeader },
-        cache: 'no-store',
-      })
+      //
+      // Celý blok je obalen vlastním try/catch: volání /api/analyze je síťový hop do jiné
+      // (Python) serverless funkce, který může selhat způsobem, který nevrací JSON (timeout,
+      // proxy/platformová chybová HTML stránka apod.). Takovou chybu nesmíme nechat probublat
+      // do vnějšího handleru - musíme se potichu přepnout na degradovaný fallback níže, jinak
+      // klient dostane "Unexpected token '<' ... is not valid JSON" místo funkčního importu.
+      try {
+        const fileRes = await fetch(`https://intervals.icu/api/v1/activity/${actId}/file`, {
+          headers: { Authorization: authHeader },
+          cache: 'no-store',
+        })
 
-      if (fileRes.ok) {
-        const fitBlob = await fileRes.blob()
-        if (fitBlob.size > 0) {
-          const formData = new FormData()
-          formData.append('file', fitBlob, `${actId}.fit`)
+        if (fileRes.ok) {
+          const fitBlob = await fileRes.blob()
+          if (fitBlob.size > 0) {
+            const formData = new FormData()
+            formData.append('file', fitBlob, `${actId}.fit`)
 
-          const analyzeRes = await fetch(new URL('/api/analyze', req.url).toString(), {
-            method: 'POST',
-            body: formData,
-          })
+            const analyzeRes = await fetch(new URL('/api/analyze', req.url).toString(), {
+              method: 'POST',
+              body: formData,
+            })
 
-          if (analyzeRes.ok) {
-            const parsedData = await analyzeRes.json()
-            if (parsedData?.success) {
-              return NextResponse.json({
-                success: true,
-                summary: parsedData.summary,
-                curves: parsedData.curves,
-                time_series: parsedData.time_series || {},
-              })
+            const analyzeContentType = analyzeRes.headers.get('content-type') || ''
+            if (analyzeRes.ok && analyzeContentType.includes('application/json')) {
+              const parsedData = await analyzeRes.json()
+              if (parsedData?.success) {
+                return NextResponse.json({
+                  success: true,
+                  summary: parsedData.summary,
+                  curves: parsedData.curves,
+                  time_series: parsedData.time_series || {},
+                })
+              }
+            } else if (!analyzeRes.ok) {
+              console.warn(
+                `/api/analyze returned ${analyzeRes.status}, falling back to raw Intervals.icu streams for activity ${actId}`
+              )
             }
           }
         }
+      } catch (analyzeErr) {
+        console.warn(
+          `Preferred .fit analysis path failed for activity ${actId}, falling back to raw Intervals.icu streams:`,
+          analyzeErr.message
+        )
       }
 
       // Degradovaný fallback: jízda na Intervals.icu nemá dostupný raw .fit soubor (např. ruční

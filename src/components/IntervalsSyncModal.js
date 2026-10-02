@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
+import { parseJsonResponse } from '../lib/httpJson'
 
 export default function IntervalsSyncModal({
   isOpen,
@@ -56,7 +57,7 @@ export default function IntervalsSyncModal({
           }),
         })
 
-        const data = await res.json()
+        const data = await parseJsonResponse(res)
         if (!res.ok) {
           throw new Error(data.error || 'Nepodařilo se načíst jízdy z Intervals.icu.')
         }
@@ -101,7 +102,7 @@ export default function IntervalsSyncModal({
         }),
       })
 
-      const result = await res.json()
+      const result = await parseJsonResponse(res)
       if (!res.ok) {
         throw new Error(result.error || 'Import selhal.')
       }
