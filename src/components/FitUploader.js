@@ -21,6 +21,15 @@ export default function FitUploader({
   const [selectedTrack, setSelectedTrack] = useState(tracks[0]?.id || '')
   const [chainring, setChainring] = useState('58')
   const [cog, setCog] = useState('14')
+  // Výchozí předpoklad: jízda na vybraném velodromu je na fixed-gear (dráhovém) kole bez
+  // volnoběhu, jinde (silnice) je pravděpodobný volnoběh. Jde kdykoliv přepsat zaškrtnutím níže.
+  const [isFixedGear, setIsFixedGear] = useState(!!tracks[0]?.id)
+
+  const handleTrackChange = (trackId) => {
+    setSelectedTrack(trackId)
+    setIsFixedGear(!!trackId)
+    if (rawFile) runAnalyze(rawFile, chainring, cog, !!trackId)
+  }
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
@@ -29,19 +38,19 @@ export default function FitUploader({
     setFileSelected(file.name)
     setRawFile(file)
     setTitle(file.name.replace(/\.[^/.]+$/, ''))
-    await runAnalyze(file, chainring, cog)
+    await runAnalyze(file, chainring, cog, isFixedGear)
   }
 
-  // Spuštění (nebo přepočtu) analýzy na serveru. Chainring/cog posíláme vždy, protože dráhová
-  // kola jsou fixed-gear bez volnoběhu a bez rychlostního senzoru - pokud .fit soubor neobsahuje
-  // reálnou rychlost, server dopočítá rychlost (a tedy i vzdálenost/moving time) z kadence
-  // a tohoto převodu (viz api/analyze.py: gear_development_m).
-  const runAnalyze = async (file, chainringVal, cogVal) => {
+  // Spuštění (nebo přepočtu) analýzy na serveru. Chainring/cog posíláme vždy a is_fixed_gear
+  // podle zaškrtnutí níže - server tyto hodnoty použije k dopočtu rychlosti z kadence pouze
+  // tehdy, pokud .fit soubor neobsahuje reálnou rychlost ani GPS trasu (viz api/analyze.py).
+  const runAnalyze = async (file, chainringVal, cogVal, isFixedGearVal = isFixedGear) => {
     setLoading(true)
     const formData = new FormData()
     formData.append('file', file)
     formData.append('chainring', chainringVal)
     formData.append('cog', cogVal)
+    formData.append('is_fixed_gear', isFixedGearVal ? 'true' : 'false')
 
     try {
       const res = await fetch('/api/analyze', {
@@ -62,12 +71,17 @@ export default function FitUploader({
     }
   }
 
-  // Pokud byla rychlost dopočítána z kadence (žádný rychlostní senzor v souboru), přepočteme ji
-  // znovu po úpravě převodu - jinak by zůstala spočítaná s výchozím převodem 58/14.
+  // Pokud byla rychlost dopočítána z kadence (žádný rychlostní senzor ani GPS v souboru),
+  // přepočteme ji znovu po úpravě převodu - jinak by zůstala spočítaná s výchozím převodem 58/14.
   const handleGearBlur = () => {
     if (rawFile && analysis?.summary?.speed_source === 'derived_from_cadence') {
-      runAnalyze(rawFile, chainring, cog)
+      runAnalyze(rawFile, chainring, cog, isFixedGear)
     }
+  }
+
+  const handleFixedGearChange = (checked) => {
+    setIsFixedGear(checked)
+    if (rawFile) runAnalyze(rawFile, chainring, cog, checked)
   }
 
   const handleSave = async (e) => {
@@ -219,7 +233,7 @@ export default function FitUploader({
               </label>
               <select
                 value={selectedTrack}
-                onChange={(e) => setSelectedTrack(e.target.value)}
+                onChange={(e) => handleTrackChange(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
               >
                 <option value="">-- Select Velodrome --</option>
@@ -230,6 +244,16 @@ export default function FitUploader({
                 ))}
               </select>
             </div>
+
+            <label className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-semibold cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isFixedGear}
+                onChange={(e) => handleFixedGearChange(e.target.checked)}
+                className="rounded border-slate-300 dark:border-slate-700 text-emerald-500 focus:ring-emerald-500"
+              />
+              Pevný převod (fixed-gear, bez volnoběhu)
+            </label>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -259,13 +283,34 @@ export default function FitUploader({
               </div>
             </div>
 
+            {analysis?.summary?.speed_source === 'gps' && (
+              <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-[11px] font-semibold">
+                <span>📍</span>
+                <span>
+                  Tento soubor neobsahuje senzor rychlosti - rychlost, vzdálenost a moving time
+                  jsou dopočítány z GPS trasy.
+                </span>
+              </div>
+            )}
+
             {analysis?.summary?.speed_source === 'derived_from_cadence' && (
               <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-[11px] font-semibold">
                 <span>ℹ️</span>
                 <span>
-                  Tento soubor neobsahuje senzor rychlosti - rychlost, vzdálenost a moving time
-                  jsou dopočítány z kadence a zadaného převodu. Opravte chainring/cog výše pro
-                  přesnější odhad.
+                  Tento soubor neobsahuje senzor rychlosti ani GPS trasu - rychlost, vzdálenost
+                  a moving time jsou dopočítány z kadence a zadaného převodu (jen pro fixed-gear
+                  kola). Opravte chainring/cog výše pro přesnější odhad.
+                </span>
+              </div>
+            )}
+
+            {analysis?.summary?.speed_source === 'unavailable' && (
+              <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] font-semibold">
+                <span>⚠️</span>
+                <span>
+                  Tento soubor neobsahuje senzor rychlosti, GPS trasu ani potvrzení fixed-gear
+                  kola - rychlost, vzdálenost a moving time nelze spolehlivě dopočítat, proto se
+                  nezobrazí. Pokud jde o dráhové (fixed-gear) kolo, zaškrtněte to výše.
                 </span>
               </div>
             )}

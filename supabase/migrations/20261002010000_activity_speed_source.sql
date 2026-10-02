@@ -1,11 +1,13 @@
--- Issue #12 follow-up: track speed provenance so the UI can be transparent when speed/distance/
--- moving time were derived from cadence + gear ratio instead of a real speed sensor.
+-- Issue #12 follow-up: track speed provenance so the UI can be transparent about how
+-- speed/distance/moving time were computed for a given activity.
 --
--- Track bikes are fixed-gear and often have no GPS/wheel speed sensor; .fit files from those
--- devices report a "speed" field of 0.0 for every record. api/analyze.py and
--- src/app/api/sync/intervals/route.js now detect this and derive speed from cadence + the
--- chainring/cog ratio (see gear_development_m / gearDevelopmentM), tagging the result so it can
--- be surfaced to the athlete instead of silently presented as sensor-accurate.
+-- Not every ride has a real speed sensor. Track bikes are fixed-gear and often have no GPS/wheel
+-- speed sensor at all; road rides commonly have GPS but no wheel sensor, and freewheel a lot
+-- (so cadence alone cannot be used to infer speed). api/analyze.py and
+-- src/app/api/sync/intervals/route.js pick, in order: a real recorded speed signal ('sensor'),
+-- GPS-derived speed/distance ('gps'), cadence + gear-ratio derived speed for fixed-gear bikes
+-- with neither of the above ('derived_from_cadence'), or otherwise leave speed/distance/moving
+-- time unset rather than guess ('unavailable').
 
 ALTER TABLE public.activities
     ADD COLUMN IF NOT EXISTS speed_source TEXT;

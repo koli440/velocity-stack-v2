@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { deriveSpeedFromCadence, hasSpeedSignal as hasRealSpeedSignal } from '../../../../lib/trackGearing'
+import { deriveSpeedAndDistanceFromGps } from '../../../../lib/gpsDistance'
 
 const DURATIONAL_INTERVALS = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 900, 1200, 1800, 3600]
 
@@ -74,7 +75,7 @@ function computeElevationChanges(altitudeStream) {
 
 export async function POST(req) {
   try {
-    const { athleteId, apiKey, action, activityId, chainring, cog } = await req.json()
+    const { athleteId, apiKey, action, activityId, chainring, cog, isFixedGear } = await req.json()
 
     if (!athleteId || !apiKey) {
       return NextResponse.json(
@@ -157,6 +158,7 @@ export async function POST(req) {
             // (viz api/analyze.py: gear_development_m), stejně jako u ručního uploadu.
             if (chainring) formData.append('chainring', String(chainring))
             if (cog) formData.append('cog', String(cog))
+            if (isFixedGear) formData.append('is_fixed_gear', 'true')
 
             const analyzeRes = await fetch(new URL('/api/analyze', req.url).toString(), {
               method: 'POST',
@@ -191,7 +193,7 @@ export async function POST(req) {
       // Degradovaný fallback: jízda na Intervals.icu nemá dostupný raw .fit soubor (např. ruční
       // záznam), takže se spoléháme na jejich vteřinové streamy a dopočítáme metriky lokálně.
       const streamsRes = await fetch(
-        `https://intervals.icu/api/v1/activity/${actId}/streams?types=watts,cadence,heartrate,velocity_smooth,latlng,altitude`,
+        `https://intervals.icu/api/v1/activity/${actId}/streams?types=watts,cadence,heartrate,velocity_smooth,latlng,altitude,distance`,
         {
           headers: { Authorization: authHeader },
           cache: 'no-store',
@@ -228,25 +230,6 @@ export async function POST(req) {
         ? streamsMap.velocity_smooth.map((v) => (v != null ? Math.round(v * 3.6 * 10) / 10 : 0))
         : null
 
-      // Dráhová kola jsou fixed-gear bez rychlostního senzoru - pokud Intervals.icu nevrátil
-      // žádný "velocity_smooth" stream (nebo je celý nulový), dopočítáme rychlost z kadence
-      // a zadaného převodu, stejně jako preferovaná cesta přes api/analyze.py.
-      let effectiveSpeedStream = speedKmhStream
-      let speedSource = speedKmhStream ? 'sensor' : null
-      if (!hasRealSpeedSignal(speedKmhStream) && chainring && cog && streamsMap.cadence?.length) {
-        effectiveSpeedStream = deriveSpeedFromCadence(streamsMap.cadence, chainring, cog)
-        speedSource = 'derived_from_cadence'
-      }
-
-      let torqueStream = null
-      if (streamsMap.watts && streamsMap.cadence) {
-        torqueStream = streamsMap.watts.map((w, idx) => {
-          const cad = streamsMap.cadence[idx]
-          if (!cad || cad <= 0 || !w) return 0
-          return Math.round(((w * 60) / (2 * Math.PI * cad)) * 10) / 10
-        })
-      }
-
       // GPS trasa: latitude je v streamsMap.latlng.data, longitude v data2 (ověřeno dokumentací
       // Intervals.icu API - ActivityStream má oddělená pole "data"/"data2" pro víceprvkové streamy).
       // Ponecháváme fallback na starší formát páru [lat, lng] pro jistotu.
@@ -260,6 +243,41 @@ export async function POST(req) {
           latitudeStream = streamsMap.latlng
           longitudeStream = streamsMap2.latlng
         }
+      }
+
+      // Rychlost/vzdálenost nejsou vždy k dispozici přímo - podle toho, co Intervals.icu vrátí,
+      // volíme v tomto pořadí (stejná logika jako preferovaná cesta přes api/analyze.py):
+      //   1) "sensor"               - reálný (nenulový) "velocity_smooth" stream
+      //   2) "gps"                  - žádný rychlostní senzor, ale je GPS trasa -> dopočet z polohy
+      //                               (funguje i pro silniční jízdu s volnoběhem)
+      //   3) "derived_from_cadence" - žádný senzor ani GPS, ale fixed-gear (dráhové) kolo se
+      //                               známým převodem -> rychlost = f(kadence, převod)
+      //   4) "unavailable"          - nic z výše uvedeného - raději to přiznáme, než abychom
+      //                               tiše ukazovali nulu/chybná data
+      let effectiveSpeedStream = speedKmhStream
+      let speedSource = null
+      let gpsDistanceM = null
+      if (hasRealSpeedSignal(speedKmhStream)) {
+        speedSource = 'sensor'
+      } else if (latitudeStream?.length > 1 && longitudeStream?.length > 1) {
+        const gps = deriveSpeedAndDistanceFromGps(latitudeStream, longitudeStream)
+        effectiveSpeedStream = gps.speedKmh
+        gpsDistanceM = gps.distanceM
+        speedSource = 'gps'
+      } else if (isFixedGear && chainring && cog && streamsMap.cadence?.length) {
+        effectiveSpeedStream = deriveSpeedFromCadence(streamsMap.cadence, chainring, cog)
+        speedSource = 'derived_from_cadence'
+      } else {
+        speedSource = 'unavailable'
+      }
+
+      let torqueStream = null
+      if (streamsMap.watts && streamsMap.cadence) {
+        torqueStream = streamsMap.watts.map((w, idx) => {
+          const cad = streamsMap.cadence[idx]
+          if (!cad || cad <= 0 || !w) return 0
+          return Math.round(((w * 60) / (2 * Math.PI * cad)) * 10) / 10
+        })
       }
 
       // Výpočet zátěžových křivek
@@ -276,11 +294,25 @@ export async function POST(req) {
         return valid.length > 0 ? Math.max(...valid) : null
       }
 
-      // Streamy jsou vzorkovány ~1Hz, stejně jako v api/analyze.py.
-      const movingTimeS = (effectiveSpeedStream || []).filter((s) => (s || 0) > 1.0).length || null
-      const distanceM = effectiveSpeedStream?.length
-        ? Math.round(effectiveSpeedStream.reduce((acc, s) => acc + (s || 0) / 3.6, 0) * 10) / 10
-        : null
+      // Streamy jsou vzorkovány ~1Hz, stejně jako v api/analyze.py. Pokud rychlost vůbec nemáme
+      // k dispozici (speedSource === 'unavailable'), raději vrátíme None než falešnou nulu.
+      const movingTimeS =
+        speedSource !== 'unavailable'
+          ? (effectiveSpeedStream || []).filter((s) => (s || 0) > 1.0).length || null
+          : null
+
+      // Vzdálenost: preferujeme nativní kumulativní stream z Intervals.icu, dál GPS trasu
+      // (pokud jsme ji použili k odvození rychlosti výše), jinak integrujeme rychlost.
+      let distanceM = null
+      if (streamsMap.distance?.length) {
+        distanceM =
+          Math.round((streamsMap.distance[streamsMap.distance.length - 1] - streamsMap.distance[0]) * 10) /
+          10
+      } else if (speedSource === 'gps' && gpsDistanceM != null) {
+        distanceM = gpsDistanceM
+      } else if (speedSource !== 'unavailable' && effectiveSpeedStream?.length) {
+        distanceM = Math.round(effectiveSpeedStream.reduce((acc, s) => acc + (s || 0) / 3.6, 0) * 10) / 10
+      }
       const { gain: elevationGainM, loss: elevationLossM } = computeElevationChanges(
         streamsMap.altitude
       )
@@ -291,14 +323,14 @@ export async function POST(req) {
 
       const summary = {
         max_cadence_rpm: getMax(streamsMap.cadence),
-        max_speed_kmh: getMax(effectiveSpeedStream),
+        max_speed_kmh: speedSource !== 'unavailable' ? getMax(effectiveSpeedStream) : null,
         max_power_w: getMax(streamsMap.watts),
         peak_torque_nm: getMax(torqueStream),
         start_time: null,
         elapsed_time_s: streamsMap.watts?.length ? streamsMap.watts.length - 1 : null,
         moving_time_s: movingTimeS,
         distance_m: distanceM,
-        avg_speed_kmh: meanOf(effectiveSpeedStream),
+        avg_speed_kmh: speedSource !== 'unavailable' ? meanOf(effectiveSpeedStream) : null,
         avg_power_w: avgPower != null ? Math.round(avgPower) : null,
         avg_cadence_rpm: avgCadence != null ? Math.round(avgCadence) : null,
         avg_torque_nm: avgTorque != null ? Math.round(avgTorque * 10) / 10 : null,

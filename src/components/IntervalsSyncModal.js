@@ -17,7 +17,16 @@ export default function IntervalsSyncModal({
   const [errorMsg, setErrorMsg] = useState(null)
   const [activitiesList, setActivitiesList] = useState([])
   const [selectedTrackId, setSelectedTrackId] = useState('')
+  // Výchozí předpoklad: jízda přiřazená k velodromu je na fixed-gear (dráhovém) kole bez
+  // volnoběhu, jinde (silnice) je naopak pravděpodobný volnoběh - proto se mění spolu s výběrem
+  // velodromu níže, ale jde o ni přepsat (viz handleSelectTrack).
+  const [isFixedGear, setIsFixedGear] = useState(false)
   const [hasCredentials, setHasCredentials] = useState(true)
+
+  const handleSelectTrack = (trackId) => {
+    setSelectedTrackId(trackId)
+    setIsFixedGear(!!trackId)
+  }
 
   // Načtení jízd z Intervals.icu při otevření modálu
   useEffect(() => {
@@ -44,6 +53,7 @@ export default function IntervalsSyncModal({
         setHasCredentials(true)
         if (profile.home_track_id) {
           setSelectedTrackId(profile.home_track_id)
+          setIsFixedGear(true)
         }
 
         // 2. Volání API route pro seznam jízd
@@ -100,9 +110,11 @@ export default function IntervalsSyncModal({
           apiKey: profile.intervals_api_key,
           activityId: selectedRide.id,
           // Dráhová kola jsou fixed-gear bez rychlostního senzoru - server tyto hodnoty použije
-          // k dopočtu rychlosti z kadence, pokud jízda neobsahuje reálná data z rychloměru.
+          // k dopočtu rychlosti z kadence, pokud jízda neobsahuje reálná data z rychloměru ani
+          // GPS trasu, a uživatel zaškrtnutím potvrdil, že kolo je skutečně bez volnoběhu.
           chainring: profile.default_chainring || 58,
           cog: profile.default_cog || 14,
+          isFixedGear,
         }),
       })
 
@@ -195,7 +207,7 @@ export default function IntervalsSyncModal({
             </label>
             <select
               value={selectedTrackId}
-              onChange={(e) => setSelectedTrackId(e.target.value)}
+              onChange={(e) => handleSelectTrack(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500 font-semibold"
             >
               <option value="">-- Bez určení velodromu --</option>
@@ -205,6 +217,19 @@ export default function IntervalsSyncModal({
                 </option>
               ))}
             </select>
+            <label className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-semibold cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isFixedGear}
+                onChange={(e) => setIsFixedGear(e.target.checked)}
+                className="rounded border-slate-300 dark:border-slate-700 text-orange-500 focus:ring-orange-500"
+              />
+              Pevný převod (fixed-gear, bez volnoběhu)
+            </label>
+            <p className="mt-1 text-[10px] text-slate-400 leading-snug">
+              Použije se jen pokud Intervals.icu nevrátí rychlostní senzor ani GPS trasu -
+              rychlost se pak dopočítá z kadence a převodu.
+            </p>
           </div>
         </div>
 
