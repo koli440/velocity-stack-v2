@@ -157,8 +157,8 @@ export default function BulkImportModal({
             </h2>
           </div>
           <p className="text-xs text-slate-400">
-            Select a .zip export (Strava, Garmin, etc.) or multiple .fit files to bulk-import
-            your full ride history.
+            Select a .zip export (Strava, Garmin, etc.), individual .fit/.fit.gz files, or
+            multiple at once to bulk-import your full ride history.
           </p>
 
           {/* Options shared across every file in the batch */}
@@ -238,14 +238,14 @@ export default function BulkImportModal({
             <label className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition bg-slate-50 dark:bg-slate-900/40">
               <span className="text-2xl mb-1">📁</span>
               <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                Choose a .zip archive or multiple .fit files
+                Choose a .zip archive, multiple .fit files, or Garmin .fit.gz files
               </span>
               <span className="text-[11px] text-slate-400 mt-0.5">
                 {picking ? 'Reading archive...' : 'Click to browse'}
               </span>
               <input
                 type="file"
-                accept=".fit,.zip"
+                accept=".fit,.fit.gz,.gz,.zip"
                 multiple
                 onChange={handleFilesPicked}
                 disabled={picking}

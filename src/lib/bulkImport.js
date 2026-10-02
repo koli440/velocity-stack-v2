@@ -13,16 +13,21 @@ import { buildActivityInsert } from './activityRecord'
 import { findDuplicate } from './activityDuplicates'
 
 const FIT_EXTENSION_RE = /\.fit$/i
+const FIT_GZ_EXTENSION_RE = /\.fit\.gz$/i
 const ZIP_EXTENSION_RE = /\.zip$/i
 
 /**
  * Expands a user-selected FileList/File[] into a flat list of .fit files, transparently
  * unpacking any .zip archives (e.g. a full Strava/Garmin export bundle) via JSZip.
- * Non-.fit entries inside a zip (readme, .gpx, .tcx, folders, etc.) are silently skipped, as
- * are any top-level files that are neither .fit nor .zip.
+ * Garmin Connect's "Export Your Data" bundle nests each ride under activities/<id>.fit.gz
+ * (individually gzip-compressed) - those are kept as-is here (`gzip: true`) and only
+ * decompressed later, per-file, inside `importSingleFitFile` so one corrupt entry can't abort
+ * expansion of an entire archive.
+ * Non-.fit(.gz) entries inside a zip (readme, .gpx, .tcx, folders, etc.) are silently skipped,
+ * as are any top-level files that are neither .fit, .fit.gz, nor .zip.
  *
  * @param {FileList|File[]} fileList
- * @returns {Promise<{ name: string, blob: Blob, lastModified: number|undefined }[]>}
+ * @returns {Promise<{ name: string, blob: Blob, lastModified: number|undefined, gzip?: boolean }[]>}
  */
 export async function expandToFitFiles(fileList) {
   const files = Array.from(fileList || [])
@@ -32,6 +37,13 @@ export async function expandToFitFiles(fileList) {
     if (ZIP_EXTENSION_RE.test(file.name)) {
       const entries = await extractFitEntriesFromZip(file)
       result.push(...entries)
+    } else if (FIT_GZ_EXTENSION_RE.test(file.name)) {
+      result.push({
+        name: file.name.replace(/\.gz$/i, ''),
+        blob: file,
+        lastModified: file.lastModified,
+        gzip: true,
+      })
     } else if (FIT_EXTENSION_RE.test(file.name)) {
       result.push({ name: file.name, blob: file, lastModified: file.lastModified })
     }
@@ -47,16 +59,36 @@ async function extractFitEntriesFromZip(zipFile) {
 
   for (const relativePath of Object.keys(zip.files)) {
     const entry = zip.files[relativePath]
-    if (entry.dir || !FIT_EXTENSION_RE.test(relativePath)) continue
+    if (entry.dir) continue
+
+    const isGzip = FIT_GZ_EXTENSION_RE.test(relativePath)
+    if (!isGzip && !FIT_EXTENSION_RE.test(relativePath)) continue
 
     const blob = await entry.async('blob')
     // Use only the final path segment as the display name - archives commonly nest files
     // under an "activities/" (or similar) folder.
-    const name = relativePath.split('/').pop()
-    entries.push({ name, blob, lastModified: entry.date ? entry.date.getTime() : undefined })
+    const rawName = relativePath.split('/').pop()
+    const name = isGzip ? rawName.replace(/\.gz$/i, '') : rawName
+    entries.push({ name, blob, lastModified: entry.date ? entry.date.getTime() : undefined, gzip: isGzip })
   }
 
   return entries
+}
+
+/**
+ * Decompresses a gzip-compressed Blob (e.g. a Garmin Connect `<id>.fit.gz` entry) using the
+ * native, browser/Node-global `DecompressionStream` - no extra dependency needed for a format
+ * this ubiquitous.
+ *
+ * @param {Blob} blob
+ * @returns {Promise<Blob>}
+ */
+async function gunzipBlob(blob) {
+  if (typeof DecompressionStream === 'undefined') {
+    throw new Error('This browser does not support decompressing .gz files - please extract the archive first.')
+  }
+  const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'))
+  return await new Response(stream).blob()
 }
 
 /**
@@ -77,7 +109,9 @@ export async function sha256Hex(buffer) {
  * bad file.
  *
  * @param {object} params
- * @param {{ name: string, blob: Blob, lastModified?: number }} params.file
+ * @param {{ name: string, blob: Blob, lastModified?: number, gzip?: boolean }} params.file
+ *   - when `gzip` is set (e.g. a Garmin Connect export's `<id>.fit.gz`), `blob` is decompressed
+ *   before hashing/analysis/upload so duplicate detection and storage both see plain .fit bytes.
  * @param {(blob: Blob, meta: object) => Promise<{ summary: object, curves: object, time_series: object }>} params.analyzeFile
  *   - injected so the UI can POST to /api/analyze while tests can supply a fake.
  * @param {import('@supabase/supabase-js').SupabaseClient} params.supabase
@@ -102,7 +136,12 @@ export async function importSingleFitFile({
   const fileName = file?.name || 'unknown.fit'
 
   try {
-    const arrayBuffer = await file.blob.arrayBuffer()
+    // Garmin Connect exports each activity individually gzip-compressed (<id>.fit.gz) -
+    // decompress up front so hashing/duplicate-detection/analysis/storage all see the same
+    // plain .fit bytes a manually-uploaded .fit file would produce.
+    const fitBlob = file.gzip ? await gunzipBlob(file.blob) : file.blob
+
+    const arrayBuffer = await fitBlob.arrayBuffer()
     const fileSha256 = await sha256Hex(arrayBuffer)
 
     // Cheap pre-check: an exact file hash match means we can skip without paying for analysis.
@@ -110,7 +149,7 @@ export async function importSingleFitFile({
       return { fileName, status: 'skipped', reason: 'duplicate' }
     }
 
-    const analysis = await analyzeFile(file.blob, meta)
+    const analysis = await analyzeFile(fitBlob, meta)
     if (!analysis?.summary) {
       return { fileName, status: 'error', error: 'Analysis did not return a summary.' }
     }
@@ -128,7 +167,7 @@ export async function importSingleFitFile({
       const storagePath = `${userId}/${Date.now()}-${fileName}`
       const { error: uploadError } = await supabase.storage
         .from('raw-activity-files')
-        .upload(storagePath, file.blob, { contentType: 'application/octet-stream' })
+        .upload(storagePath, fitBlob, { contentType: 'application/octet-stream' })
 
       if (uploadError) {
         console.warn(`Raw .fit archive upload failed for ${fileName}:`, uploadError.message)
