@@ -6,6 +6,8 @@ import {
   gearDevelopmentM,
   deriveSpeedFromCadence,
   hasSpeedSignal,
+  gearInches,
+  speedAtCadence,
 } from '../trackGearing.js'
 
 test('gearDevelopmentM matches the gear-inches formula used elsewhere in the app', () => {
@@ -38,4 +40,29 @@ test('hasSpeedSignal is false for a flat all-zero stream (no speed sensor in the
 
 test('hasSpeedSignal is true as soon as any sample shows real motion', () => {
   assert.equal(hasSpeedSignal([0, 0, 12.4, 0]), true)
+})
+
+test('gearInches matches v1 Gear Architect formula for an arbitrary wheel size', () => {
+  // gear_inches = (chainring/cog) * wheel_size, pages/20_gears.py in v1
+  assert.ok(Math.abs(gearInches(52, 14, 27.0) - (52 / 14) * 27.0) < 1e-9)
+})
+
+test('gearInches with the track wheel diameter matches gearDevelopmentM in gear-inches terms', () => {
+  const developmentM = gearDevelopmentM(58, 14)
+  const expectedDevelopmentM = gearInches(58, 14, TRACK_WHEEL_DIAMETER_INCHES) * Math.PI * 0.0254
+  assert.ok(Math.abs(developmentM - expectedDevelopmentM) < 1e-9)
+})
+
+test('speedAtCadence matches the v1 Gear Architect speed_at_cadence_kmh formula', () => {
+  const gi = gearInches(52, 14, 27.0)
+  // speed_at_cadence_kmh = (gear_inches * 0.0254 * pi * cadence * 60) / 1000
+  const expected = (gi * 0.0254 * Math.PI * 105 * 60) / 1000
+  assert.ok(Math.abs(speedAtCadence(gi, 105) - expected) < 1e-9)
+})
+
+test('speedAtCadence agrees with deriveSpeedFromCadence for the same gear and wheel size', () => {
+  const gi = gearInches(58, 14, TRACK_WHEEL_DIAMETER_INCHES)
+  const viaGeneric = Math.round(speedAtCadence(gi, 90) * 10) / 10
+  const [viaTrack] = deriveSpeedFromCadence([90], 58, 14)
+  assert.equal(viaGeneric, viaTrack)
 })
