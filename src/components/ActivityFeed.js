@@ -2,6 +2,18 @@
 
 import Link from 'next/link'
 
+function formatMovingTime(sec) {
+  if (!sec) return null
+  const m = Math.floor(sec / 60)
+  const s = Math.round(sec % 60)
+  return `${m}m ${s < 10 ? '0' : ''}${s}s`
+}
+
+function formatDistance(meters) {
+  if (!meters) return null
+  return `${(meters / 1000).toFixed(1)} km`
+}
+
 export default function ActivityFeed({ activities = [], onAddWorkout }) {
   return (
     <div className="space-y-4">
@@ -40,6 +52,32 @@ export default function ActivityFeed({ activities = [], onAddWorkout }) {
                 )}
                 {act.tracks?.name && <span>• {act.tracks.name}</span>}
               </div>
+
+              {/* Rychlé metrikové štítky (issue #11): jen ty, které aktivita skutečně má */}
+              {(act.distance_m || act.moving_time_s || act.avg_power_w || act.avg_hr) && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {formatDistance(act.distance_m) && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                      {formatDistance(act.distance_m)}
+                    </span>
+                  )}
+                  {formatMovingTime(act.moving_time_s) && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                      {formatMovingTime(act.moving_time_s)}
+                    </span>
+                  )}
+                  {act.avg_power_w && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400">
+                      {Math.round(act.avg_power_w)} W avg
+                    </span>
+                  )}
+                  {act.avg_hr && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400">
+                      {Math.round(act.avg_hr)} bpm avg
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">

@@ -17,6 +17,7 @@ export default function ProfileSettingsModal({
   const [defaultChainring, setDefaultChainring] = useState('58')
   const [defaultCog, setDefaultCog] = useState('14')
   const [crankLength, setCrankLength] = useState('165.0')
+  const [ftpWatts, setFtpWatts] = useState('')
   const [themePref, setThemePref] = useState('dark')
 
   // Intervals.icu údaje
@@ -42,6 +43,7 @@ export default function ProfileSettingsModal({
         setDefaultChainring(data.default_chainring ? String(data.default_chainring) : '58')
         setDefaultCog(data.default_cog ? String(data.default_cog) : '14')
         setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
+        setFtpWatts(data.ftp_w ? String(data.ftp_w) : '')
         setThemePref(data.theme_preference || 'dark')
         setIntervalsAthleteId(data.intervals_athlete_id || '')
         setIntervalsApiKey(data.intervals_api_key || '')
@@ -66,6 +68,7 @@ export default function ProfileSettingsModal({
       default_chainring: defaultChainring ? parseInt(defaultChainring) : null,
       default_cog: defaultCog ? parseInt(defaultCog) : null,
       crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
+      ftp_w: ftpWatts ? parseInt(ftpWatts) : null,
       theme_preference: themePref,
       intervals_athlete_id: intervalsAthleteId.trim() || null,
       intervals_api_key: intervalsApiKey.trim() || null,
@@ -191,6 +194,22 @@ export default function ProfileSettingsModal({
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+              FTP / Threshold Power (W)
+            </label>
+            <input
+              type="number"
+              value={ftpWatts}
+              onChange={(e) => setFtpWatts(e.target.value)}
+              placeholder="např. 280"
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
+            />
+            <p className="text-[10px] text-slate-400 mt-1">
+              Používá se k výpočtu Intensity Factor a Training Load u nahraných aktivit.
+            </p>
           </div>
 
           {/* Sekce pro Intervals.icu */}

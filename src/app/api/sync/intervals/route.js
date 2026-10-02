@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
 
+const DURATIONAL_INTERVALS = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 900, 1200, 1800, 3600]
+
 // Pomocná funkce pro výpočet durational curves
-function computeDurationalCurve(
-  stream,
-  intervals = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 1200, 1800, 3600]
-) {
+function computeDurationalCurve(stream, intervals = DURATIONAL_INTERVALS) {
   if (!stream || stream.length === 0) return null
 
   const curve = {}
@@ -31,6 +30,45 @@ function computeDurationalCurve(
   })
 
   return curve
+}
+
+// Následující pomocné funkce (mean/normalized power/elevation) duplikují logiku z api/analyze.py
+// pro jediný degradovaný fallback případ: jízdu na Intervals.icu bez dostupného .fit souboru
+// (viz "Pokus B" níže). Preferovanou cestou je vždy stažení .fit a jeho analýza přes /api/analyze,
+// aby obě cesty importu produkovaly identické metriky (issue #11).
+function meanOf(values) {
+  const valid = (values || []).filter((v) => typeof v === 'number' && !isNaN(v))
+  if (!valid.length) return null
+  return valid.reduce((a, b) => a + b, 0) / valid.length
+}
+
+function computeNormalizedPower(wattsStream, windowSec = 30) {
+  if (!wattsStream || wattsStream.length < windowSec) return null
+
+  let sum = 0
+  for (let i = 0; i < windowSec; i++) sum += wattsStream[i] || 0
+  const rollingAvgs = [sum / windowSec]
+
+  for (let i = windowSec; i < wattsStream.length; i++) {
+    sum += (wattsStream[i] || 0) - (wattsStream[i - windowSec] || 0)
+    rollingAvgs.push(sum / windowSec)
+  }
+
+  const quadMean = meanOf(rollingAvgs.map((v) => v ** 4))
+  return quadMean != null ? Math.round(quadMean ** 0.25) : null
+}
+
+function computeElevationChanges(altitudeStream) {
+  if (!altitudeStream || altitudeStream.length < 2) return { gain: 0, loss: 0 }
+
+  let gain = 0
+  let loss = 0
+  for (let i = 1; i < altitudeStream.length; i++) {
+    const diff = (altitudeStream[i] ?? altitudeStream[i - 1]) - altitudeStream[i - 1]
+    if (diff > 0) gain += diff
+    else loss += Math.abs(diff)
+  }
+  return { gain: Math.round(gain * 10) / 10, loss: Math.round(loss * 10) / 10 }
 }
 
 export async function POST(req) {
@@ -93,8 +131,41 @@ export async function POST(req) {
 
       const actId = String(activityId)
 
-      // Pokus A: Vteřinové streamy (explicitně vyžádáme i GPS stream "latlng" a nadmořskou výšku,
-      // intervals.icu je bez query parametru "types" do odpovědi nemusí zahrnout)
+      // Preferovaná cesta: stáhnout surový .fit soubor a nechat ho analyzovat tou samou cestou
+      // jako ruční upload (/api/analyze). Tím zajistíme, že Intervals.icu sync a manuální .fit
+      // upload produkují identickou sadu metrik (issue #11) z jediného výpočetního enginu.
+      const fileRes = await fetch(`https://intervals.icu/api/v1/activity/${actId}/file`, {
+        headers: { Authorization: authHeader },
+        cache: 'no-store',
+      })
+
+      if (fileRes.ok) {
+        const fitBlob = await fileRes.blob()
+        if (fitBlob.size > 0) {
+          const formData = new FormData()
+          formData.append('file', fitBlob, `${actId}.fit`)
+
+          const analyzeRes = await fetch(new URL('/api/analyze', req.url).toString(), {
+            method: 'POST',
+            body: formData,
+          })
+
+          if (analyzeRes.ok) {
+            const parsedData = await analyzeRes.json()
+            if (parsedData?.success) {
+              return NextResponse.json({
+                success: true,
+                summary: parsedData.summary,
+                curves: parsedData.curves,
+                time_series: parsedData.time_series || {},
+              })
+            }
+          }
+        }
+      }
+
+      // Degradovaný fallback: jízda na Intervals.icu nemá dostupný raw .fit soubor (např. ruční
+      // záznam), takže se spoléháme na jejich vteřinové streamy a dopočítáme metriky lokálně.
       const streamsRes = await fetch(
         `https://intervals.icu/api/v1/activity/${actId}/streams?types=watts,cadence,heartrate,velocity_smooth,latlng,altitude`,
         {
@@ -108,40 +179,7 @@ export async function POST(req) {
         streamsData = await streamsRes.json()
       }
 
-      // Pokus B: Fallback na .FIT soubor
       if (!streamsData || !Array.isArray(streamsData) || streamsData.length === 0) {
-        const fileRes = await fetch(
-          `https://intervals.icu/api/v1/activity/${actId}/file`,
-          {
-            headers: { Authorization: authHeader },
-            cache: 'no-store',
-          }
-        )
-
-        if (fileRes.ok) {
-          const fitBlob = await fileRes.blob()
-          const formData = new FormData()
-          formData.append('file', fitBlob, `${actId}.fit`)
-
-          const analyzeRes = await fetch(
-            new URL('/api/analyze', req.url).toString(),
-            {
-              method: 'POST',
-              body: formData,
-            }
-          )
-
-          if (analyzeRes.ok) {
-            const parsedData = await analyzeRes.json()
-            return NextResponse.json({
-              success: true,
-              summary: parsedData.summary,
-              curves: parsedData.curves,
-              time_series: parsedData.time_series || {},
-            })
-          }
-        }
-
         return NextResponse.json(
           { error: `Pro jízdu ${actId} nejsou v Intervals.icu dostupná žádná data.` },
           { status: 404 }
@@ -204,11 +242,37 @@ export async function POST(req) {
         return valid.length > 0 ? Math.max(...valid) : null
       }
 
+      // Streamy jsou vzorkovány ~1Hz, stejně jako v api/analyze.py.
+      const movingTimeS = (speedKmhStream || []).filter((s) => (s || 0) > 1.0).length || null
+      const distanceM = speedKmhStream?.length
+        ? Math.round(speedKmhStream.reduce((acc, s) => acc + (s || 0) / 3.6, 0) * 10) / 10
+        : null
+      const { gain: elevationGainM, loss: elevationLossM } = computeElevationChanges(
+        streamsMap.altitude
+      )
+      const avgPower = meanOf(streamsMap.watts)
+      const avgCadence = meanOf(streamsMap.cadence)
+      const avgTorque = meanOf(torqueStream)
+      const avgHr = meanOf(streamsMap.heartrate)
+
       const summary = {
-        max_cadence: getMax(streamsMap.cadence),
+        max_cadence_rpm: getMax(streamsMap.cadence),
         max_speed_kmh: getMax(speedKmhStream),
         max_power_w: getMax(streamsMap.watts),
         peak_torque_nm: getMax(torqueStream),
+        start_time: null,
+        elapsed_time_s: streamsMap.watts?.length ? streamsMap.watts.length - 1 : null,
+        moving_time_s: movingTimeS,
+        distance_m: distanceM,
+        avg_speed_kmh: meanOf(speedKmhStream),
+        avg_power_w: avgPower != null ? Math.round(avgPower) : null,
+        avg_cadence_rpm: avgCadence != null ? Math.round(avgCadence) : null,
+        avg_torque_nm: avgTorque != null ? Math.round(avgTorque * 10) / 10 : null,
+        avg_hr: avgHr != null ? Math.round(avgHr) : null,
+        max_hr: getMax(streamsMap.heartrate),
+        normalized_power_w: computeNormalizedPower(streamsMap.watts),
+        elevation_gain_m: elevationGainM,
+        elevation_loss_m: elevationLossM,
       }
 
       // Časová řada vteřinu po vteřině

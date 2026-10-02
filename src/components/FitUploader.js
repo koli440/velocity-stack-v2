@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { buildActivityInsert } from '../lib/activityRecord'
 
 export default function FitUploader({
   tracks = [],
@@ -83,26 +84,30 @@ export default function FitUploader({
       }
 
       // 1. Zápis aktivity do tabulky activities
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('ftp_w')
+        .eq('id', currentUser.id)
+        .maybeSingle()
+
+      const activityRecord = buildActivityInsert(analysis.summary, {
+        title,
+        userId: currentUser.id,
+        trackId: selectedTrack,
+        chainring,
+        cog,
+        crankLengthMm: 165.0,
+        timeSeries: analysis.time_series,
+        curvesData: analysis.curves,
+        rawFileUrl,
+        fileSha256,
+        processingStatus: 'baseline_completed',
+        ftpWatts: profile?.ftp_w ?? null,
+      })
+
       const { data: activity, error: actError } = await supabase
         .from('activities')
-        .insert({
-          title: title.trim() || 'Track Session',
-          user_id: currentUser.id,
-          track_id: selectedTrack || null,
-          chainring: chainring ? parseInt(chainring) : null,
-          cog: cog ? parseInt(cog) : null,
-          crank_length_mm: 165.0,
-          max_cadence_rpm: analysis.summary.max_cadence ?? null,
-          max_speed_kmh: analysis.summary.max_speed_kmh ?? null,
-          max_power_w: analysis.summary.max_power_w ?? null,
-          peak_torque_nm: analysis.summary.peak_torque_nm ?? null,
-          time_series: analysis.time_series ?? {},
-          curves_data: analysis.curves ?? {},
-          raw_file_url: rawFileUrl,
-          file_sha256: fileSha256,
-          processing_status: 'baseline_completed',
-          activity_date: new Date().toISOString(),
-        })
+        .insert(activityRecord)
         .select()
         .single()
 

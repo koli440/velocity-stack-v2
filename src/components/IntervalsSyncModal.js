@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { buildActivityInsert } from '../lib/activityRecord'
 
 export default function IntervalsSyncModal({
   isOpen,
@@ -82,7 +83,9 @@ export default function IntervalsSyncModal({
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('intervals_athlete_id, intervals_api_key, default_chainring, default_cog, crank_length_mm')
+        .select(
+          'intervals_athlete_id, intervals_api_key, default_chainring, default_cog, crank_length_mm, ftp_w'
+        )
         .eq('id', currentUser.id)
         .single()
 
@@ -105,23 +108,21 @@ export default function IntervalsSyncModal({
 
       const { summary = {}, curves = {}, time_series = {} } = result
 
-      // 2. Vložení do tabulky activities včetně time_series
-      const newActivity = {
-        user_id: currentUser.id,
+      // 2. Vložení do tabulky activities (stejná mapovací logika jako u ručního uploadu, viz
+      // src/lib/activityRecord.js — obě cesty importu produkují identickou sadu metrik)
+      const newActivity = buildActivityInsert(summary, {
         title: selectedRide.name || 'Intervals.icu Sync',
-        activity_date: selectedRide.start_date_local,
-        distance_m: selectedRide.distance_m || 0,
-        moving_time_s: selectedRide.moving_time_s || 0,
-        track_id: selectedTrackId || null,
+        userId: currentUser.id,
+        trackId: selectedTrackId,
         chainring: profile.default_chainring || 58,
         cog: profile.default_cog || 14,
-        crank_length_mm: profile.crank_length_mm || 165.0,
-        max_cadence_rpm: summary.max_cadence || null,
-        max_speed_kmh: summary.max_speed_kmh || null,
-        max_power_w: summary.max_power_w || null,
-        peak_torque_nm: summary.peak_torque_nm || null,
-        time_series: time_series || {}, // Ukládáme sekundové streamy pro detekci úseků
-      }
+        crankLengthMm: profile.crank_length_mm || 165.0,
+        timeSeries: time_series,
+        curvesData: curves,
+        processingStatus: 'baseline_completed',
+        ftpWatts: profile.ftp_w ?? null,
+        fallbackActivityDate: selectedRide.start_date_local,
+      })
 
       const { data: actData, error: actErr } = await supabase
         .from('activities')
