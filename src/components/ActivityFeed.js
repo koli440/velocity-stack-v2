@@ -14,7 +14,14 @@ function formatDistance(meters) {
   return `${(meters / 1000).toFixed(1)} km`
 }
 
-export default function ActivityFeed({ activities = [], onAddWorkout, onDeleteActivity }) {
+export default function ActivityFeed({
+  activities = [],
+  onAddWorkout,
+  onDeleteActivity,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
+}) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -101,6 +108,19 @@ export default function ActivityFeed({ activities = [], onAddWorkout, onDeleteAc
           </div>
         ))}
       </div>
+
+      {hasMore && onLoadMore && (
+        <div className="flex justify-center pt-2">
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 transition disabled:opacity-50"
+          >
+            {isLoadingMore ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
