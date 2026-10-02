@@ -14,7 +14,7 @@ function formatDistance(meters) {
   return `${(meters / 1000).toFixed(1)} km`
 }
 
-export default function ActivityFeed({ activities = [], onAddWorkout }) {
+export default function ActivityFeed({ activities = [], onAddWorkout, onDeleteActivity }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -87,6 +87,16 @@ export default function ActivityFeed({ activities = [], onAddWorkout }) {
               >
                 Detail →
               </Link>
+              {onDeleteActivity && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteActivity(act)}
+                  aria-label="Smazat aktivitu"
+                  className="py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-bold text-rose-500 transition"
+                >
+                  Smazat
+                </button>
+              )}
             </div>
           </div>
         ))}
