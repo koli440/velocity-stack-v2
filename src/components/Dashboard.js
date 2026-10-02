@@ -150,6 +150,13 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           <span>📦</span> Import History
         </button>
 
+        <button
+          onClick={() => router.push('/aero-lab')}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-bold transition border border-sky-500/30 shadow-xs"
+        >
+          <span>🧪</span> Aero Lab
+        </button>
+
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
 
