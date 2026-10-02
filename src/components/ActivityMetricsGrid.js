@@ -1,18 +1,19 @@
 'use client'
 
-// Kompletní sada metrik aktivity (issue #11): čas, vzdálenost, výkon (vč. průměrů v různých
-// oknech), tepová frekvence, kadence, točivý moment, převýšení a zátěžové ukazatele.
+// Complete set of activity metrics (issue #11): time, distance, power (incl. averages across
+// different windows), heart rate, cadence, torque, elevation and load indicators.
 //
-// issue #20: metriky už dříve duplikoval samostatný BenchmarkCards blok nad touto mřížkou
-// (Peak Power/Max Watts, Max Cadence/Cadence Peak, Peak Torque, Max Speed/Top Speed).
-// Namísto dvou vizuálně podobných sekcí vedle sebe je srovnání s historickým maximem (PB)
-// teď součástí příslušné karty zde (badge + hint), BenchmarkCards sekce byla odstraněna.
-// Skupiny metrik jsou navíc barevně odlišené (barva popisku + levý okraj karty), aby se
-// v kompaktní mřížce dalo rychleji orientovat.
+// issue #20: these metrics used to be duplicated by a separate BenchmarkCards block above
+// this grid (Peak Power/Max Watts, Max Cadence/Cadence Peak, Peak Torque, Max Speed/Top Speed).
+// Instead of two visually similar sections next to each other, the comparison with the
+// historical maximum (PB) is now part of the relevant card here (badge + hint), and the
+// BenchmarkCards section has been removed.
+// Metric groups are additionally color-coded (label color + left card border) to make
+// the compact grid easier to scan.
 //
-// issue #17: uživatel si může jednotlivé metriky skrýt přes menu "Manage metrics". Výběr
-// se ukládá do sloupce profiles.hidden_activity_metrics (stejné místo jako ostatní
-// uživatelské preference - theme_preference, ftp_w, ...), ne do localStorage.
+// issue #17: a user can hide individual metrics via the "Manage metrics" menu. The selection
+// is stored in the profiles.hidden_activity_metrics column (the same place as other
+// user preferences - theme_preference, ftp_w, ...), not in localStorage.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
@@ -39,8 +40,8 @@ function formatValue(value, unit, decimals = 0) {
   return `${num} ${unit}`
 }
 
-// Barevné odlišení skupin metrik - stejná paleta jako dřívější BenchmarkCards
-// (fialová pro výkon, jantarová pro točivý moment/zátěž, nebeská pro rychlost/čas).
+// Color-coded metric groups - same palette as the former BenchmarkCards
+// (purple for power, amber for torque/load, sky blue for speed/time).
 const GROUP_COLORS = {
   'Time & Distance': { border: 'border-l-sky-400', label: 'text-sky-500 dark:text-sky-400' },
   Power: { border: 'border-l-purple-400', label: 'text-purple-500 dark:text-purple-400' },
@@ -64,23 +65,23 @@ function MetricCard({ label, value, hint, badge, accent = DEFAULT_GROUP_COLOR })
   )
 }
 
-// Pro aktivity bez rychlostního senzoru indikujeme přímo pod metrikou, jak byla rychlost/
-// vzdálenost dopočítána - viz issue #12 diskuze (fixed-gear kadence vs. GPS vs. road bike
-// s volnoběhem). Kompaktní "hint" pod hodnotou je přesnější i úspornější než jeden velký
-// badge v hlavičce stránky.
+// For activities without a speed sensor we indicate directly under the metric how the speed/
+// distance was derived - see issue #12 discussion (fixed-gear cadence vs. GPS vs. road bike
+// with freewheel). A compact "hint" under the value is more precise and economical than one
+// big badge in the page header.
 const SPEED_SOURCE_HINTS = {
-  sensor: 'Rychlostní senzor',
-  gps: 'Odhad z GPS',
-  derived_from_cadence: 'Odhad z kadence',
-  unavailable: 'Data nejsou k dispozici',
+  sensor: 'Speed sensor',
+  gps: 'Estimated from GPS',
+  derived_from_cadence: 'Estimated from cadence',
+  unavailable: 'Data not available',
 }
 
 function speedSourceHint(speedSource) {
   return SPEED_SOURCE_HINTS[speedSource]
 }
 
-// Badge porovnávající aktuální hodnotu s historickým maximem jezdce (dříve BenchmarkCards).
-// Nový All-time PB -> zelený badge, jinak procento z osobního maxima.
+// Badge comparing the current value with the rider's historical maximum (formerly BenchmarkCards).
+// New All-time PB -> green badge, otherwise percentage of the personal maximum.
 function pbBadge(current, master) {
   if (current == null || master == null) return null
   const pct = Math.round((current / master) * 100)
@@ -102,7 +103,7 @@ function pbBadge(current, master) {
 }
 
 function pbHint(master, unit) {
-  return master != null ? `Historické max.: ${master} ${unit}` : undefined
+  return master != null ? `Historical max: ${master} ${unit}` : undefined
 }
 
 export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCurves = {} }) {
@@ -113,7 +114,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
   const hasFtp = activity?.intensity_factor != null && activity?.training_load != null
   const speedHint = speedSourceHint(activity?.speed_source)
 
-  // Historická maxima pro srovnávací badge (viz dříve BenchmarkCards)
+  // Historical maxima for the comparison badge (see former BenchmarkCards)
   const powerMaster5s = masterCurves?.Power?.['5s'] ?? null
   const cadenceMaster1s = masterCurves?.Cadence?.['1s'] ?? null
   const speedMaster5s = masterCurves?.Speed?.['5s'] ?? null
@@ -124,7 +125,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
-  // Načtení přihlášeného uživatele a jeho uložené preference skrytých metrik z profiles.
+  // Load the signed-in user and their stored preference for hidden metrics from profiles.
   useEffect(() => {
     let cancelled = false
 
@@ -174,12 +175,12 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
       .eq('id', userId)
 
     if (error) {
-      console.warn('Nepodařilo se uložit preferenci skrytých metrik:', error.message)
+      console.warn('Failed to save hidden metrics preference:', error.message)
     }
   }
 
-  // Ploché pole definic metrik - umožňuje jednoduché filtrování podle skrytých ID
-  // a zároveň jediné místo, kde se definuje "co je metrika" (pro menu i render).
+  // Flat array of metric definitions - allows simple filtering by hidden IDs
+  // and is also the single place where "what is a metric" is defined (for menu and render).
   const metrics = useMemo(() => {
     return [
       {
@@ -187,7 +188,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
         group: 'Time & Distance',
         label: 'Start Time',
         value: startTime
-          ? new Date(startTime).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })
+          ? new Date(startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
           : '—',
       },
       { id: 'distance', group: 'Time & Distance', label: 'Distance', value: formatDistance(activity?.distance_m), hint: speedHint },
@@ -317,7 +318,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
       </div>
 
       {groups.length === 0 && (
-        <p className="text-xs text-slate-400 italic">Všechny metriky jsou skryté. Odkryjte je přes „Manage Metrics“.</p>
+        <p className="text-xs text-slate-400 italic">All metrics are hidden. Reveal them via “Manage Metrics”.</p>
       )}
 
       {groups.map((group) => {

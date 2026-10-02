@@ -56,17 +56,17 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Trvalé smazání aktivity (issue #18): odstraní záznam z activities (a kaskádově
-  // i navázané curves/template_executions) a případný archivovaný .fit soubor ze Storage.
+  // Permanent deletion of the activity (issue #18): removes the record from activities (cascading
+  // to linked curves/template_executions) and any archived .fit file from Storage.
   const handleDeleteActivity = async (activity) => {
     const confirmed = window.confirm(
-      `Opravdu trvale smazat aktivitu "${activity.title || 'Velodrome Session'}"? Tuto akci nelze vrátit zpět.`
+      `Are you sure you want to permanently delete activity "${activity.title || 'Velodrome Session'}"? This action cannot be undone.`
     )
     if (!confirmed) return
 
     const { error } = await deleteActivity(supabase, activity)
     if (error) {
-      alert('Chyba při mazání aktivity: ' + error.message)
+      alert('Error while deleting activity: ' + error.message)
       return
     }
 
@@ -77,7 +77,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
 
   return (
     <div className="flex flex-col xl:flex-row gap-6 items-start">
-      {/* Hlavní Cockpit */}
+      {/* Main Cockpit */}
       <div className="flex-1 w-full space-y-6">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
@@ -88,10 +88,10 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           </p>
         </div>
 
-        {/* Telemetrické dlaždice */}
+        {/* Telemetry tiles */}
         <TelemetryCards lastActivity={latestActivity} />
 
-        {/* Seznam aktivit */}
+        {/* Activity list */}
         <ActivityFeed
           activities={activities}
           onAddWorkout={() => setIsWorkoutModalOpen(true)}
@@ -99,7 +99,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         />
       </div>
 
-      {/* Pravý panel */}
+      {/* Right panel */}
       <div className="w-full xl:w-80 shrink-0 space-y-3">
         <button
           onClick={() => setIsSyncModalOpen(true)}
@@ -111,7 +111,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
 
-      {/* Modál pro manuální nahrání .FIT souboru */}
+      {/* Modal for manual .FIT file upload */}
       {isWorkoutModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
           <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -132,7 +132,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         </div>
       )}
 
-      {/* Modál pro výběr a import z Intervals.icu */}
+      {/* Modal for selecting and importing from Intervals.icu */}
       <IntervalsSyncModal
         isOpen={isSyncModalOpen}
         onClose={() => setIsSyncModalOpen(false)}

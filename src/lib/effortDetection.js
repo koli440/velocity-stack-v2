@@ -1,26 +1,26 @@
 // src/lib/effortDetection.js
 
 /**
- * Detekce souvislého bloku stíhacího závodu (Individual Pursuit)
- * @param {number[]} wattsStream - pole wattů po sekundách
- * @param {number[]} cadenceStream - pole kadence po sekundách
+ * Detection of a sustained Individual Pursuit effort block
+ * @param {number[]} wattsStream - array of watts per second
+ * @param {number[]} cadenceStream - array of cadence per second
  */
 export function detectPursuitEffort(wattsStream = [], cadenceStream = []) {
   if (!wattsStream || wattsStream.length === 0) return null
 
-  // 1. Zjistíme zátěžový práh: stíhačka je na velodromu nejtvrdší souvislý blok v jízdě.
-  // Odhadneme FTP/práh z 95% průměru horní třetiny aktivních wattů.
+  // 1. Determine the load threshold: a pursuit is the hardest sustained block on the velodrome in a ride.
+  // We estimate the FTP/threshold from the 95% average of the top third of active watts.
   const activeWatts = wattsStream.filter((w) => w > 100)
   if (activeWatts.length < 60) return null
 
   const sortedWatts = [...activeWatts].sort((a, b) => b - a)
-  // Horních 20 % hodnot udává závodní tempo
+  // The top 20% of values indicates race pace
   const topThreshold = sortedWatts[Math.floor(sortedWatts.length * 0.2)] * 0.75
 
   let inBlock = false
   let startIdx = 0
   let dropCounter = 0
-  const maxAllowedDropSec = 3 // tolerance na výpadek/zakolísání
+  const maxAllowedDropSec = 3 // tolerance for a dip/wobble
   let blocks = []
 
   for (let i = 0; i < wattsStream.length; i++) {
@@ -38,7 +38,7 @@ export function detectPursuitEffort(wattsStream = [], cadenceStream = []) {
         if (dropCounter > maxAllowedDropSec || i === wattsStream.length - 1) {
           const endIdx = i - dropCounter
           const duration = endIdx - startIdx
-          // Stíhačka na dráze trvá typicky mezi 70 s (1 km) až 330 s (4 km)
+          // A track pursuit typically lasts between 70 s (1 km) and 330 s (4 km)
           if (duration >= 60 && duration <= 360) {
             blocks.push({ startIdx, endIdx, duration })
           }
@@ -52,7 +52,7 @@ export function detectPursuitEffort(wattsStream = [], cadenceStream = []) {
 
   if (blocks.length === 0) return null
 
-  // Vybereme nejdominantnější blok (nejvyšší průměrný výkon x čas)
+  // Select the most dominant block (highest average power x time)
   let bestBlock = null
   let maxScore = 0
 
@@ -71,23 +71,23 @@ export function detectPursuitEffort(wattsStream = [], cadenceStream = []) {
   const segWatts = wattsStream.slice(bestBlock.startIdx, bestBlock.endIdx)
   const segCad = cadenceStream.slice(bestBlock.startIdx, bestBlock.endIdx)
 
-  // 2. Návrh vzdálenosti podle času (typické časy v dráhové cyklistice)
+  // 2. Suggest a distance based on time (typical times in track cycling)
   const dur = bestBlock.duration
-  let suggestedDist = 3000 // výchozí pro Masters
-  let label = '3 km Stíhačka (Masters)'
+  let suggestedDist = 3000 // default for Masters
+  let label = '3 km Pursuit (Masters)'
 
   if (dur < 95) {
     suggestedDist = 1000
-    label = '1 km Pevný start'
+    label = '1 km Standing Start'
   } else if (dur < 175) {
     suggestedDist = 2000
-    label = '2 km Stíhačka'
+    label = '2 km Pursuit'
   } else if (dur >= 175 && dur <= 250) {
     suggestedDist = 3000
-    label = '3 km Stíhačka (Masters)'
+    label = '3 km Pursuit (Masters)'
   } else {
     suggestedDist = 4000
-    label = '4 km Stíhačka (Elite)'
+    label = '4 km Pursuit (Elite)'
   }
 
   return {
@@ -101,7 +101,7 @@ export function detectPursuitEffort(wattsStream = [], cadenceStream = []) {
     max_power: Math.max(...segWatts),
     avg_cadence: segCad.length ? Math.round(segCad.reduce((a, b) => a + b, 0) / dur) : null,
     max_cadence: segCad.length ? Math.max(...segCad) : null,
-    // Výpočet průměrné rychlosti čistě z času a navržené vzdálenosti: (metry / sekundy) * 3.6
+    // Calculate average speed purely from time and the suggested distance: (meters / seconds) * 3.6
     calculated_avg_speed_kmh: Math.round(((suggestedDist / dur) * 3.6) * 10) / 10,
   }
 }

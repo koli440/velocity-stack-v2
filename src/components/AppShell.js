@@ -20,7 +20,7 @@ export default function AppShell({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
-  // Cesty, které nepotřebují Shell (Login a Register)
+  // Paths that don't need the Shell (Login and Register)
   const isAuthPage = pathname === '/login' || pathname === '/register'
 
   const fetchProfile = async (userId) => {
@@ -71,7 +71,7 @@ export default function AppShell({ children }) {
     router.push('/login')
   }
 
-  // Přihlašovací/Registrační stránky zobrazujeme v čistém plném okně
+  // Show Login/Register pages in a clean full window
   if (isAuthPage) {
     return <main className="min-h-screen">{children}</main>
   }
@@ -86,14 +86,14 @@ export default function AppShell({ children }) {
 
   return (
     <div className="flex min-h-screen bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
-      {/* 1. Responzivní Sidebar (desktop trvalý, mobil drawer) */}
+      {/* 1. Responsive Sidebar (persistent on desktop, drawer on mobile) */}
       <Sidebar
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* 2. Hlavní aplikační tělo */}
+      {/* 2. Main application body */}
       <div className="flex-1 flex flex-col min-w-0">
         <TopNav
           user={user}
@@ -103,16 +103,16 @@ export default function AppShell({ children }) {
           onSignOut={handleSignOut}
         />
 
-        {/* Dynamický obsah stránky (Dashboard, Detail aktivity, Mapy atd.) */}
+        {/* Dynamic page content (Dashboard, Activity Detail, Maps, etc.) */}
         <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-6xl w-full mx-auto space-y-6">
           {children}
         </main>
 
-        {/* 3. Globální patička */}
+        {/* 3. Global footer */}
         <Footer />
       </div>
 
-      {/* Globální modál profilu jezdce */}
+      {/* Global rider profile modal */}
       <ProfileSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => {

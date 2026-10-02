@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
-// Vlastní ikony pro start / cíl trasy
+// Custom icons for the route's start / finish
 const startIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -13,7 +13,7 @@ const startIcon = new L.Icon({
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
-  className: 'hue-rotate-[90deg]', // nazelenalý odstín pro start
+  className: 'hue-rotate-[90deg]', // greenish hue for the start
 })
 
 const finishIcon = new L.Icon({
@@ -27,7 +27,7 @@ const finishIcon = new L.Icon({
 })
 
 export default function ActivityMap({ latitude = [], longitude = [] }) {
-  // Sestavení pole [lat, lng] bodů; vyřadíme nevalidní/nulové souřadnice (0,0)
+  // Build the array of [lat, lng] points; discard invalid/zero coordinates (0,0)
   const points = []
   const len = Math.min(latitude.length, longitude.length)
   for (let i = 0; i < len; i++) {
@@ -43,7 +43,7 @@ export default function ActivityMap({ latitude = [], longitude = [] }) {
   const start = points[0]
   const finish = points[points.length - 1]
 
-  // Bounding box okolo celé trasy pro výchozí přiblížení mapy
+  // Bounding box around the entire route for the default map zoom
   const bounds = L.latLngBounds(points)
 
   return (

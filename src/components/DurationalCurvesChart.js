@@ -28,7 +28,7 @@ const METRICS = [
 
 export default function DurationalCurvesChart({
   curves = {},
-  masterCurves = null, // Volitelná Master křivka pro srovnání
+  masterCurves = null, // Optional Master curve for comparison
 }) {
   const [activeMetric, setActiveMetric] = useState('Cadence')
   const [showMaster, setShowMaster] = useState(true)
@@ -37,7 +37,7 @@ export default function DurationalCurvesChart({
   const masterCurveRaw = (masterCurves && masterCurves[activeMetric]) || {}
   const currentMetricConfig = METRICS.find((m) => m.key === activeMetric) || METRICS[0]
 
-  // Sestavení dat pro graf: propojí aktuální jízdu i Master profil
+  // Build the chart data: combines the current ride and the Master profile
   const chartData = DURATION_ORDER
     .filter((timeKey) => {
       const hasCurrent = activeCurveRaw[timeKey] !== undefined && activeCurveRaw[timeKey] !== null
@@ -52,14 +52,14 @@ export default function DurationalCurvesChart({
 
   return (
     <div className="w-full bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
-      {/* Horní lišta s taby */}
+      {/* Top bar with tabs */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
             Durational Curves & Benchmark
           </h2>
           <p className="text-[10px] text-slate-400">
-            Srovnání aktuální jízdy proti osobnímu maximu (Master Best)
+            Comparison of the current ride against the personal maximum (Master Best)
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export default function DurationalCurvesChart({
                   : 'bg-transparent text-slate-400 border-slate-200 dark:border-slate-800'
               }`}
             >
-              {showMaster ? '✓ All-time PB zapnuto' : '+ Zobrazit All-time PB'}
+              {showMaster ? '✓ All-time PB enabled' : '+ Show All-time PB'}
             </button>
           )}
 
@@ -100,7 +100,7 @@ export default function DurationalCurvesChart({
         </div>
       </div>
 
-      {/* Graf */}
+      {/* Chart */}
       <div className="w-full h-72 sm:h-80">
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
@@ -137,7 +137,7 @@ export default function DurationalCurvesChart({
                         </div>
                         {dataPoint.current != null && (
                           <div className="flex items-center justify-between gap-4">
-                            <span className="text-slate-300">Tato jízda:</span>
+                            <span className="text-slate-300">This ride:</span>
                             <span className="font-black" style={{ color: currentMetricConfig.color }}>
                               {dataPoint.current} {currentMetricConfig.unit}
                             </span>
@@ -158,7 +158,7 @@ export default function DurationalCurvesChart({
                 }}
               />
 
-              {/* Referenční čára: Master Best (čárkovaná) */}
+              {/* Reference line: Master Best (dashed) */}
               {showMaster && (
                 <Line
                   type="monotone"
@@ -171,7 +171,7 @@ export default function DurationalCurvesChart({
                 />
               )}
 
-              {/* Aktuální jízda (plná barva) */}
+              {/* Current ride (solid color) */}
               <Line
                 type="monotone"
                 dataKey="current"
@@ -179,13 +179,13 @@ export default function DurationalCurvesChart({
                 strokeWidth={3}
                 dot={{ fill: currentMetricConfig.color, r: 4, strokeWidth: 0 }}
                 activeDot={{ r: 6, fill: currentMetricConfig.color }}
-                name="Tato jízda"
+                name="This ride"
               />
             </LineChart>
           </ResponsiveContainer>
         ) : (
           <div className="h-full flex items-center justify-center text-xs font-semibold text-slate-400">
-            Pro vybranou metriku ({activeMetric}) nejsou k dispozici žádná data.
+            No data is available for the selected metric ({activeMetric}).
           </div>
         )}
       </div>

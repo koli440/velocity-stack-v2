@@ -11,7 +11,7 @@ export default function RosterPanel({ onAddWorkout }) {
 
   return (
     <aside className="w-80 shrink-0 space-y-6">
-      {/* Tlačítko pro spuštění modalu */}
+      {/* Button to open the modal */}
       <button
         onClick={onAddWorkout}
         className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg transition transform active:scale-95"

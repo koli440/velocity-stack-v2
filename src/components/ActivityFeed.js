@@ -46,14 +46,14 @@ export default function ActivityFeed({ activities = [], onAddWorkout, onDeleteAc
               </Link>
 
               <div className="text-xs text-slate-400 flex items-center gap-3">
-                <span>{new Date(act.activity_date || act.created_at).toLocaleDateString('cs-CZ')}</span>
+                <span>{new Date(act.activity_date || act.created_at).toLocaleDateString('en-US')}</span>
                 {act.chainring && act.cog && (
-                  <span>• Převod {act.chainring}×{act.cog}</span>
+                  <span>• Gear {act.chainring}×{act.cog}</span>
                 )}
                 {act.tracks?.name && <span>• {act.tracks.name}</span>}
               </div>
 
-              {/* Rychlé metrikové štítky (issue #11): jen ty, které aktivita skutečně má */}
+              {/* Quick metric badges (issue #11): only the ones the activity actually has */}
               {(act.distance_m || act.moving_time_s || act.avg_power_w || act.avg_hr) && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   {formatDistance(act.distance_m) && (
@@ -91,10 +91,10 @@ export default function ActivityFeed({ activities = [], onAddWorkout, onDeleteAc
                 <button
                   type="button"
                   onClick={() => onDeleteActivity(act)}
-                  aria-label="Smazat aktivitu"
+                  aria-label="Delete activity"
                   className="py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-bold text-rose-500 transition"
                 >
-                  Smazat
+                  Delete
                 </button>
               )}
             </div>

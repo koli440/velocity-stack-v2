@@ -1,34 +1,34 @@
-[ Synchronizována nová jízda ]
+[ New ride synced ]
              │
              ▼
 ┌──────────────────────────────────────────────┐
-│ KROK 1: Základní kontext                    │
-│ • Prostředí: [ Dráha ▼ ]                    │
-│ • Velodrom:  [ Motol (250m dřevo) ▼ ]        │
-│ • Typ jízdy: [ Trénink / Závod / Test ]      │
+│ STEP 1: Basic context                        │
+│ • Environment: [ Track ▼ ]                   │
+│ • Velodrome:   [ Motol (250m wood) ▼ ]        │
+│ • Ride type:   [ Training / Race / Test ]     │
 └──────────────────────┬───────────────────────┘
                        │
                        ▼
 ┌──────────────────────────────────────────────┐
-│ KROK 2: Setup & Převody                      │
-│ • Kolo:      [ Look T20 / Argon18 ▼ ]        │
-│ • Převod:    [ 58 ] × [ 14 ] (111.9")        │
-│ • Kliky:     [ 165 mm ]                      │
-│ • řídítka:   [ Vision Metron 4 ]             │
-│ • Helma:     [ POC Ventral ]                 │
+│ STEP 2: Setup & Gears                        │
+│ • Bike:      [ Look T20 / Argon18 ▼ ]        │
+│ • Gear:      [ 58 ] × [ 14 ] (111.9")        │
+│ • Cranks:    [ 165 mm ]                      │
+│ • Handlebar: [ Vision Metron 4 ]             │
+│ • Helmet:    [ POC Ventral ]                 │
 └──────────────────────┬───────────────────────┘
                        │
                        ▼
 ┌──────────────────────────────────────────────┐
-│ KROK 3: Segmentace / Disciplína              │
-│ • Co se jelo: [ F200m Letmý / Úseky / Balík ]│
-│ • Detekce úseků: Automaticky / podle Lap tlačítka│
-│   nebo detekce akcelerací (kadence > 125 RPM)│
-| nebo detekce na základě torque.              |
+│ STEP 3: Segmentation / Discipline             │
+│ • What was ridden: [ F200m Flying / Laps / Pack ]│
+│ • Lap detection: Automatic / by Lap button    │
+│   or acceleration detection (cadence > 125 RPM)│
+| or torque-based detection.                   |
 └──────────────────────┬───────────────────────┘
                        │
                        ▼
-             [ Uložit a Vyhodnotit ]
+             [ Save and Evaluate ]
                        |
                        ▼
-             [Zobrazit porovnání proti průměrným / maximálním hodnotám za poslední x dní, tuto sezonu, all time atd.]
+             [Show comparison against average / maximum values for the last x days, this season, all time, etc.]

@@ -20,7 +20,7 @@ export default function ProfileSettingsModal({
   const [ftpWatts, setFtpWatts] = useState('')
   const [themePref, setThemePref] = useState('dark')
 
-  // Intervals.icu údaje
+  // Intervals.icu data
   const [intervalsAthleteId, setIntervalsAthleteId] = useState('')
   const [intervalsApiKey, setIntervalsApiKey] = useState('')
 
@@ -79,7 +79,7 @@ export default function ProfileSettingsModal({
     setLoading(false)
 
     if (error) {
-      alert('Chyba při ukládání profilu: ' + error.message)
+      alert('Error while saving profile: ' + error.message)
     } else {
       onClose()
     }
@@ -204,15 +204,15 @@ export default function ProfileSettingsModal({
               type="number"
               value={ftpWatts}
               onChange={(e) => setFtpWatts(e.target.value)}
-              placeholder="např. 280"
+              placeholder="e.g. 280"
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
             />
             <p className="text-[10px] text-slate-400 mt-1">
-              Používá se k výpočtu Intensity Factor a Training Load u nahraných aktivit.
+              Used to calculate Intensity Factor and Training Load for uploaded activities.
             </p>
           </div>
 
-          {/* Sekce pro Intervals.icu */}
+          {/* Section for Intervals.icu */}
           <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-base">🔄</span>
@@ -221,13 +221,13 @@ export default function ProfileSettingsModal({
               </h3>
             </div>
             <p className="text-[11px] text-slate-400">
-              Přihlašovací údaje pro manuální import tréninků ze zařízení Garmin & Wahoo.
+              Credentials for manually importing workouts from Garmin & Wahoo devices.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                  Athlete ID (např. i228280)
+                  Athlete ID (e.g. i228280)
                 </label>
                 <input
                   type="text"
@@ -246,7 +246,7 @@ export default function ProfileSettingsModal({
                   type="password"
                   value={intervalsApiKey}
                   onChange={(e) => setIntervalsApiKey(e.target.value)}
-                  placeholder="Z nastavení intervals.icu"
+                  placeholder="From intervals.icu settings"
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
                 />
               </div>
@@ -258,7 +258,7 @@ export default function ProfileSettingsModal({
             disabled={loading}
             className="w-full mt-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50"
           >
-            {loading ? 'Ukládám profil...' : 'Save Changes'}
+            {loading ? 'Saving profile...' : 'Save Changes'}
           </button>
         </form>
       </div>

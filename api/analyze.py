@@ -8,7 +8,7 @@ from fitparse import FitFile
 from http.server import BaseHTTPRequestHandler
 
 def compute_durational_curve(data_series, intervals):
-    """Vypočítá maximální průměry pro zadané časové intervaly (rolling max)."""
+    """Computes the maximum averages for the given time intervals (rolling max)."""
     if not data_series or len(data_series) == 0:
         return {}
     
@@ -19,12 +19,12 @@ def compute_durational_curve(data_series, intervals):
     for sec in intervals:
         if n < sec:
             continue
-        # Klouzavý součet přes konvoluci
+        # Rolling sum via convolution
         window = np.ones(sec)
         rolling_sums = np.convolve(arr, window, mode='valid')
         max_avg = float(np.max(rolling_sums) / sec)
         
-        # Klíč: 1s, 5s, 1m, 1h...
+        # Key: 1s, 5s, 1m, 1h...
         if sec < 60:
             label = f"{sec}s"
         elif sec < 3600:
@@ -37,7 +37,7 @@ def compute_durational_curve(data_series, intervals):
     return curve
 
 def compute_normalized_power(watts_stream, window_sec=30):
-    """Standardní algoritmus Normalized Power: 30s klouzavý průměr -> ^4 -> průměr -> ^0.25."""
+    """Standard Normalized Power algorithm: 30s rolling average -> ^4 -> average -> ^0.25."""
     if not watts_stream or len(watts_stream) < window_sec:
         return None
 
@@ -48,7 +48,7 @@ def compute_normalized_power(watts_stream, window_sec=30):
     return round(float(quad_mean ** 0.25))
 
 def compute_elevation_changes(altitude_stream, smoothing_window=5):
-    """Součet kladných/záporných převýšení z (vyhlazeného) streamu nadmořské výšky."""
+    """Sum of positive/negative elevation changes from the (smoothed) altitude stream."""
     if not altitude_stream or len(altitude_stream) < 2:
         return 0.0, 0.0
 
@@ -66,19 +66,19 @@ def safe_mean(values):
     valid = [v for v in values if v is not None]
     return round(float(np.mean(valid)), 1) if valid else None
 
-# Standardní průměr kola dráhové (track) pevné převodovky v palcích - stejná konstanta jako
-# `calcGearInches()` v src/app/activities/[id]/page.js, aby oba výpočty souhlasily.
+# Standard track (fixed-gear) wheel diameter in inches - the same constant as
+# `calcGearInches()` in src/app/activities/[id]/page.js, so both calculations stay consistent.
 TRACK_WHEEL_DIAMETER_INCHES = 26.8
 
 def gear_development_m(chainring, cog, wheel_diameter_inches=TRACK_WHEEL_DIAMETER_INCHES):
-    """Vzdálenost (v metrech), kterou kolo urazí za jednu otáčku klik u fixed-gear dráhového kola."""
+    """Distance (in meters) the wheel travels per crank revolution on a fixed-gear track bike."""
     gear_inches = (float(chainring) / float(cog)) * wheel_diameter_inches
-    return gear_inches * math.pi * 0.0254  # palce -> metry
+    return gear_inches * math.pi * 0.0254  # inches -> meters
 
 EARTH_RADIUS_M = 6371000
 
 def haversine_m(lat1, lon1, lat2, lon2):
-    """Vzdušná vzdálenost (v metrech) mezi dvěma GPS souřadnicemi (ve stupních)."""
+    """Great-circle distance (in meters) between two GPS coordinates (in degrees)."""
     lat1, lon1, lat2, lon2 = map(math.radians, (lat1, lon1, lat2, lon2))
     d_lat = lat2 - lat1
     d_lon = lon2 - lon1
@@ -114,7 +114,7 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
     timestamp_stream = []
     distance_stream = []
 
-    # FIT ukládá GPS souřadnice v semicircles -> stupně: deg = semicircles * (180 / 2^31)
+    # FIT stores GPS coordinates in semicircles -> degrees: deg = semicircles * (180 / 2^31)
     SEMICIRCLE_TO_DEG = 180.0 / (2 ** 31)
 
     for record in fitfile.get_messages('record'):
@@ -128,9 +128,9 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         c = vals.get('cadence', 0) or 0
         cadence_stream.append(int(c))
         
-        # Speed: FIT ukládá v m/s -> převod na km/h. Novější/rychlejší zařízení posílají
-        # "enhanced_speed" místo (nebo navíc k) klasickému "speed" poli - pokud bychom ho
-        # ignorovali, rychlost by vypadala jako chybějící, přestože v souboru je.
+        # Speed: FIT stores it in m/s -> convert to km/h. Newer/faster devices send
+        # "enhanced_speed" instead of (or in addition to) the classic "speed" field - if we
+        # ignored it, speed would appear missing even though it's present in the file.
         s = vals.get('enhanced_speed')
         if s is None:
             s = vals.get('speed', 0.0)
@@ -142,12 +142,12 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         if hr is not None:
             hr_stream.append(int(hr))
 
-        # Časové razítko záznamu (pro start_time / elapsed_time i GPS dt níže)
+        # Record timestamp (for start_time / elapsed_time and the GPS dt below)
         ts = vals.get('timestamp')
         if ts is not None:
             timestamp_stream.append(ts)
 
-        # GPS pozice (pokud jízda obsahuje satelitní záznam, např. silniční trénink)
+        # GPS position (if the ride includes satellite data, e.g. a road ride)
         lat_raw = vals.get('position_lat')
         lng_raw = vals.get('position_long')
         if lat_raw is not None and lng_raw is not None:
@@ -157,17 +157,17 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
             lng_stream.append(lng_deg)
             gps_points.append((lat_deg, lng_deg, ts))
 
-        # Nadmořská výška
+        # Altitude
         alt = vals.get('altitude') or vals.get('enhanced_altitude')
         if alt is not None:
             altitude_stream.append(round(float(alt), 1))
 
-        # Kumulativní vzdálenost (metry) - pokud zařízení pole posílá
+        # Cumulative distance (meters) - if the device sends this field
         dist = vals.get('distance')
         if dist is not None:
             distance_stream.append(float(dist))
             
-    # Dopočet točivého momentu (Torque v Nm) z W a RPM: T = (P * 60) / (2 * pi * RPM)
+    # Compute torque (in Nm) from W and RPM: T = (P * 60) / (2 * pi * RPM)
     torque_stream = []
     for w, c in zip(watts_stream, cadence_stream):
         if c > 0 and w > 0:
@@ -176,25 +176,25 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         else:
             torque_stream.append(0.0)
 
-    # Rychlost/vzdálenost nejsou vždy k dispozici přímo - podle toho, co zařízení umí zaznamenat,
-    # volíme v tomto pořadí (viz issue #12 diskuze o fixed-gear dráhových kolech vs. silniční
-    # jízdy s volnoběhem):
-    #   1) "sensor"             - soubor obsahuje reálný (nenulový) rychlostní signál
-    #   2) "gps"                - žádný rychlostní senzor, ale je k dispozici GPS trasa -> rychlost
-    #                             a vzdálenost dopočítáme z polohy (funguje i pro volnoběh/road bike)
-    #   3) "derived_from_cadence" - žádný senzor ani GPS, ale jde o fixed-gear (dráhové) kolo
-    #                             s kadencí a známým převodem -> rychlost = f(kadence, převod)
-    #   4) "unavailable"        - nic z výše uvedeného není k dispozici; raději to přiznáme, než
-    #                             abychom tiše ukazovali nulu/chybná data
+    # Speed/distance aren't always directly available - depending on what the device can
+    # record, we pick in this order (see issue #12 discussion about fixed-gear track bikes vs.
+    # freewheel road rides):
+    #   1) "sensor"             - the file contains a real (nonzero) speed signal
+    #   2) "gps"                - no speed sensor, but a GPS track is available -> speed
+    #                             and distance are derived from position (works for freewheel/road bikes too)
+    #   3) "derived_from_cadence" - no sensor or GPS, but it's a fixed-gear (track) bike
+    #                             with cadence and a known gear -> speed = f(cadence, gear)
+    #   4) "unavailable"        - none of the above is available; it's more honest to admit that
+    #                             than to silently show zero/incorrect data
     gps_distance_m = None
     has_speed_signal = any(v > 0 for v in speed_stream)
     if has_speed_signal:
         speed_source = 'sensor'
     elif len(gps_points) > 1:
         gps_speed_kmh, gps_distance_m = derive_speed_and_distance_from_gps(gps_points)
-        # GPS body jsou řídké (zaznamenány jen když je fix) - namapujeme je zpět na plný,
-        # vteřinový speed_stream podle indexu nejbližšího staršího GPS bodu, aby graf/souhrny
-        # zůstaly zarovnané se zbytkem streamů.
+        # GPS points are sparse (only recorded when there's a fix) - we map them back onto a
+        # full, per-second speed_stream using the index of the nearest earlier GPS point, so
+        # the chart/summaries stay aligned with the rest of the streams.
         speed_stream = [0.0] * len(watts_stream)
         gps_idx = 0
         for i in range(len(speed_stream)):
@@ -230,8 +230,8 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         
     has_gps = len(lat_stream) > 1
 
-    # Čas: elapsed = od prvního do posledního záznamu; moving = pouze vteřiny s rychlostí > 1 km/h
-    # (FIT záznamy jsou typicky vzorkovány ~1Hz, proto 1 vzorek ~= 1 sekunda)
+    # Time: elapsed = from the first to the last record; moving = only seconds with speed > 1 km/h
+    # (FIT records are typically sampled at ~1Hz, so 1 sample ~= 1 second)
     if len(timestamp_stream) >= 2:
         start_time = timestamp_stream[0]
         elapsed_time_s = (timestamp_stream[-1] - timestamp_stream[0]).total_seconds()
@@ -240,17 +240,17 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         elapsed_time_s = float(max(len(watts_stream) - 1, 0))
 
     MOVING_SPEED_THRESHOLD_KMH = 1.0
-    # Pokud nemáme žádný způsob, jak rychlost zjistit/dopočítat, je poctivější vrátit None než
-    # tiše předstírat 0 vteřin v pohybu.
+    # If we have no way to determine/derive speed, it's more honest to return None than
+    # to silently pretend 0 seconds moving.
     moving_time_s = (
         float(sum(1 for s in speed_stream if s > MOVING_SPEED_THRESHOLD_KMH))
         if speed_source != 'unavailable'
         else None
     )
 
-    # Vzdálenost: preferujeme kumulativní pole z FIT souboru (nejpřesnější, nezávislé na tom, jak
-    # jsme dopočítali rychlost), dál GPS trasu (pokud jsme ji použili k odvození rychlosti výše),
-    # jinak integrujeme (dopočítanou nebo reálnou) rychlost. Bez žádného z toho necháváme None.
+    # Distance: we prefer the cumulative field from the FIT file (most accurate, independent of how
+    # we derived speed), then the GPS track (if we used it to derive speed above),
+    # otherwise we integrate the (derived or real) speed. Without any of these we leave it as None.
     if distance_stream:
         distance_m = round(distance_stream[-1] - distance_stream[0], 1)
     elif speed_source == 'gps' and gps_distance_m is not None:
@@ -303,8 +303,8 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
     return output
 
 def _parse_multipart(body, boundary):
-    """Minimální parser pro multipart/form-data bez závislosti na cgi modulu
-    (odstraněn v novějších verzích Pythonu). Vrací dict name -> (filename, content_bytes)."""
+    """Minimal parser for multipart/form-data without depending on the cgi module
+    (removed in newer Python versions). Returns dict name -> (filename, content_bytes)."""
     fields = {}
     delimiter = b'--' + boundary
     for raw_part in body.split(delimiter):
@@ -333,8 +333,8 @@ def _parse_multipart(body, boundary):
     return fields
 
 class handler(BaseHTTPRequestHandler):
-    """Vercel Python Function entrypoint: třída musí být přesně pojmenovaná `handler`
-    a dědit z BaseHTTPRequestHandler, jinak Vercel soubor nerozpozná jako funkci."""
+    """Vercel Python Function entrypoint: the class must be named exactly `handler`
+    and inherit from BaseHTTPRequestHandler, otherwise Vercel won't recognize the file as a function."""
 
     def _send_json(self, payload, status=200):
         body = json.dumps(payload).encode('utf-8')
@@ -365,9 +365,9 @@ class handler(BaseHTTPRequestHandler):
 
             _, file_bytes = file_field
 
-            # Volitelný převod (chainring/cog) odesílaný uploaderem - použije se k dopočtu
-            # rychlosti z kadence, pokud .fit soubor neobsahuje reálný rychlostní senzor
-            # (typické pro dráhová kola bez GPS/kola čidla).
+            # Optional gear (chainring/cog) sent by the uploader - used to derive
+            # speed from cadence if the .fit file doesn't contain a real speed sensor
+            # (typical for track bikes without GPS/speed sensor).
             def _read_field_number(field_name):
                 field = fields.get(field_name)
                 if not field:
@@ -381,10 +381,10 @@ class handler(BaseHTTPRequestHandler):
             chainring = _read_field_number('chainring')
             cog = _read_field_number('cog')
 
-            # Je tato jízda na fixed-gear (dráhovém) kole bez volnoběhu? Pokud ano a soubor
-            # neobsahuje rychlostní senzor ani GPS, smíme rychlost bezpečně dopočítat z kadence -
-            # u kola s volnoběhem (silniční jízda) by to bylo zavádějící (jezdec může šlapat
-            # naprázdno nebo jet bez šlapání z kopce).
+            # Is this ride on a fixed-gear (track) bike without a freewheel? If so and the file
+            # contains neither a speed sensor nor GPS, we can safely derive speed from cadence -
+            # on a freewheel bike (road ride) this would be misleading (the rider could coast
+            # or freewheel downhill without pedaling).
             is_fixed_gear_field = fields.get('is_fixed_gear')
             is_fixed_gear = False
             if is_fixed_gear_field:

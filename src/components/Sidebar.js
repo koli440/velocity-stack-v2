@@ -15,7 +15,7 @@ export default function Sidebar({
 
   const handleNavigate = (path) => {
     router.push(path)
-    if (onClose) onClose() // zavřít mobilní drawer po kliknutí
+    if (onClose) onClose() // close the mobile drawer after clicking
   }
 
   const isHomeActive = pathname === '/'
@@ -30,7 +30,7 @@ export default function Sidebar({
 
   return (
     <>
-      {/* 1. Backdrop pro mobilní zobrazení */}
+      {/* 1. Backdrop for mobile view */}
       {isOpen && (
         <div
           onClick={onClose}
@@ -38,14 +38,14 @@ export default function Sidebar({
         />
       )}
 
-      {/* 2. Samotný panel */}
+      {/* 2. The panel itself */}
       <aside
         className={`fixed md:sticky top-0 left-0 z-50 h-screen w-64 shrink-0 flex flex-col justify-between p-5 bg-white dark:bg-surface-darkCard border-r border-slate-200 dark:border-surface-darkBorder transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         <div className="space-y-6">
-          {/* Logo & zavírací křížek pro mobil */}
+          {/* Logo & close icon for mobile */}
           <div className="flex items-center justify-between px-2">
             <div
               onClick={() => handleNavigate('/')}
@@ -59,7 +59,7 @@ export default function Sidebar({
               </span>
             </div>
 
-            {/* Křížek viditelný pouze na mobilu */}
+            {/* Close icon visible only on mobile */}
             <button
               onClick={onClose}
               className="md:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-1"
@@ -68,7 +68,7 @@ export default function Sidebar({
             </button>
           </div>
 
-          {/* Navigace */}
+          {/* Navigation */}
           <nav className="space-y-1">
             <button
               onClick={() => handleNavigate('/')}
@@ -77,7 +77,7 @@ export default function Sidebar({
               <span>🏠</span> Home Cockpit
             </button>
 
-            {/* Rozbalovací sekce Rides */}
+            {/* Collapsible Rides section */}
             <div>
               <button
                 onClick={() => setRidesOpen(!ridesOpen)}
@@ -123,7 +123,7 @@ export default function Sidebar({
           </nav>
         </div>
 
-        {/* Spodní přepínač Coach / Rider */}
+        {/* Bottom Coach / Rider switch */}
         <div className="pt-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between px-2">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             {isCoach ? 'Coach View' : 'Rider View'}

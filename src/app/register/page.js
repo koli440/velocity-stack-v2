@@ -30,7 +30,7 @@ export default function RegisterPage() {
       if (error) throw error
 
       if (data?.user) {
-        // Aktualizace vytvořeného profilu o zadané jméno
+        // Update the created profile with the provided name
         await supabase.from('profiles').upsert({
           id: data.user.id,
           first_name: formData.firstName.trim() || null,
@@ -78,7 +78,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="text"
-                placeholder="Jan"
+                placeholder="John"
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 transition"
@@ -90,7 +90,7 @@ export default function RegisterPage() {
               </label>
               <input
                 type="text"
-                placeholder="Novák"
+                placeholder="Doe"
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 transition"

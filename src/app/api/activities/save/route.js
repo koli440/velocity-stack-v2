@@ -3,12 +3,12 @@ import { getRequestUser } from '../../../../lib/supabaseServer'
 
 export async function POST(req) {
   try {
-    // Získáme ověřenou identitu uživatele z Bearer tokenu (nikoliv z body!)
+    // Get the authenticated user identity from the Bearer token (not from the body!)
     const { supabase, user } = await getRequestUser(req)
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized: Neplatná nebo chybějící session.' },
+        { error: 'Unauthorized: Invalid or missing session.' },
         { status: 401 }
       )
     }
@@ -27,12 +27,12 @@ export async function POST(req) {
       file_sha256,
     } = body
 
-    // Ukládáme přímo s ověřeným user.id
+    // Save directly with the verified user.id
     const { data, error } = await supabase
       .from('activities')
       .insert({
         title,
-        user_id: user.id, // <--- Bezpečně svázáno s auth.uid()
+        user_id: user.id, // <--- Securely bound to auth.uid()
         track_id: track_id || null,
         chainring: chainring ? parseInt(chainring) : null,
         cog: cog ? parseInt(cog) : null,
@@ -55,7 +55,7 @@ export async function POST(req) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    // Perzistujeme i jednotlivé durational curves do activity_curves (pro chart komponenty)
+    // Also persist the individual durational curves into activity_curves (for chart components)
     if (curves && Object.keys(curves).length > 0) {
       const curveRows = Object.entries(curves).map(([curveType, curveData]) => ({
         activity_id: data.id,

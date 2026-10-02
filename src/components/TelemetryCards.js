@@ -40,7 +40,7 @@ export default function TelemetryCards({ lastActivity }) {
         </div>
       </div>
 
-      {/* 2. Peak Power (Velký neonový/zelený indikátor s křivkou) */}
+      {/* 2. Peak Power (large neon/green indicator with a curve) */}
       <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
         <div className="flex justify-between items-start mb-1">
           <span className="text-xs uppercase font-bold text-slate-400">Peak Power</span>
@@ -80,7 +80,7 @@ export default function TelemetryCards({ lastActivity }) {
         </div>
       </div>
 
-      {/* 3. Average Cadence (Kruhový prvek s RPM) */}
+      {/* 3. Average Cadence (circular RPM element) */}
       <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm flex items-center justify-between">
         <div>
           <span className="text-xs uppercase font-bold text-slate-400">Average Cadence</span>
@@ -96,7 +96,7 @@ export default function TelemetryCards({ lastActivity }) {
         </div>
       </div>
 
-      {/* 4. Gym Strength Log (Silová příprava) */}
+      {/* 4. Gym Strength Log (strength training) */}
       <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-2">
         <span className="text-xs uppercase font-bold text-slate-400">Gym Strength Log</span>
         <div className="space-y-2 text-xs pt-1">
