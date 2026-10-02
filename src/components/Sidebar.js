@@ -20,6 +20,8 @@ export default function Sidebar({
 
   const isHomeActive = pathname === '/'
   const isVelodromeActive = pathname.startsWith('/velodromes')
+  const isAboutActive = pathname.startsWith('/about')
+  const isFeedbackActive = pathname.startsWith('/feedback')
 
   const navItemClass = (active) =>
     `w-full text-left flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
@@ -109,6 +111,12 @@ export default function Sidebar({
             </button>
             <button className={navItemClass(false)}>
               <span>👥</span> Team
+            </button>
+            <button onClick={() => handleNavigate('/feedback')} className={navItemClass(isFeedbackActive)}>
+              <span>💡</span> Feedback
+            </button>
+            <button onClick={() => handleNavigate('/about')} className={navItemClass(isAboutActive)}>
+              <span>📖</span> About
             </button>
 
             <button
