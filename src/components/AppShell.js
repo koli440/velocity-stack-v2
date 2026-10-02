@@ -22,6 +22,8 @@ export default function AppShell({ children }) {
 
   // Paths that don't need the Shell (Login and Register)
   const isAuthPage = pathname === '/login' || pathname === '/register'
+  // Public tools that match v1 behavior: usable without an account (Gear Architect, Velodromes map)
+  const isPublicPage = pathname.startsWith('/gears')
 
   const fetchProfile = async (userId) => {
     const { data } = await supabase
@@ -43,7 +45,7 @@ export default function AppShell({ children }) {
       const currentUser = session?.user ?? null
       setUser(currentUser)
 
-      if (!currentUser && !isAuthPage) {
+      if (!currentUser && !isAuthPage && !isPublicPage) {
         router.push('/login')
       } else if (currentUser) {
         fetchProfile(currentUser.id)
@@ -56,7 +58,7 @@ export default function AppShell({ children }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null
       setUser(currentUser)
-      if (!currentUser && !isAuthPage) {
+      if (!currentUser && !isAuthPage && !isPublicPage) {
         router.push('/login')
       } else if (currentUser) {
         fetchProfile(currentUser.id)
@@ -64,7 +66,7 @@ export default function AppShell({ children }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [router, isAuthPage, setTheme])
+  }, [router, isAuthPage, isPublicPage, setTheme])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
