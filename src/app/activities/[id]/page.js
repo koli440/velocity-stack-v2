@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import BenchmarkCards from '../../../components/BenchmarkCards'
+import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
 import TemplateExecutionCard from '../../../components/TemplateExecutionCard'
 
 // Leaflet vyžaduje window/document -> dynamický import bez SSR
@@ -239,6 +240,9 @@ export default function ActivityDetailPage() {
 
       {/* 3. Benchmarkové karty porovnání výkonu */}
       <BenchmarkCards currentActivity={activity} masterCurves={masterCurves || {}} />
+
+      {/* 3b. Kompletní sada metrik aktivity */}
+      <ActivityMetricsGrid activity={activity} curvesMap={curvesMap} />
 
       {/* 4. Durational Curves Chart se zobrazením All-time PB linky */}
       <DurationalCurvesChart curves={curvesMap} masterCurves={masterCurves} />

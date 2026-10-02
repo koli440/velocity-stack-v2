@@ -36,6 +36,36 @@ def compute_durational_curve(data_series, intervals):
         
     return curve
 
+def compute_normalized_power(watts_stream, window_sec=30):
+    """Standardní algoritmus Normalized Power: 30s klouzavý průměr -> ^4 -> průměr -> ^0.25."""
+    if not watts_stream or len(watts_stream) < window_sec:
+        return None
+
+    arr = np.array(watts_stream, dtype=float)
+    window = np.ones(window_sec) / window_sec
+    rolling_avg = np.convolve(arr, window, mode='valid')
+    quad_mean = np.mean(np.power(rolling_avg, 4))
+    return round(float(quad_mean ** 0.25))
+
+def compute_elevation_changes(altitude_stream, smoothing_window=5):
+    """Součet kladných/záporných převýšení z (vyhlazeného) streamu nadmořské výšky."""
+    if not altitude_stream or len(altitude_stream) < 2:
+        return 0.0, 0.0
+
+    arr = np.array(altitude_stream, dtype=float)
+    if len(arr) >= smoothing_window:
+        kernel = np.ones(smoothing_window) / smoothing_window
+        arr = np.convolve(arr, kernel, mode='valid')
+
+    diffs = np.diff(arr)
+    gain = float(np.sum(diffs[diffs > 0]))
+    loss = float(np.sum(np.abs(diffs[diffs < 0])))
+    return round(gain, 1), round(loss, 1)
+
+def safe_mean(values):
+    valid = [v for v in values if v is not None]
+    return round(float(np.mean(valid)), 1) if valid else None
+
 def analyze_fit_file(file_path):
     fitfile = FitFile(file_path)
     
@@ -46,6 +76,8 @@ def analyze_fit_file(file_path):
     lat_stream = []
     lng_stream = []
     altitude_stream = []
+    timestamp_stream = []
+    distance_stream = []
 
     # FIT ukládá GPS souřadnice v semicircles -> stupně: deg = semicircles * (180 / 2^31)
     SEMICIRCLE_TO_DEG = 180.0 / (2 ** 31)
@@ -81,6 +113,16 @@ def analyze_fit_file(file_path):
         alt = vals.get('altitude') or vals.get('enhanced_altitude')
         if alt is not None:
             altitude_stream.append(round(float(alt), 1))
+
+        # Časové razítko záznamu (pro start_time / elapsed_time)
+        ts = vals.get('timestamp')
+        if ts is not None:
+            timestamp_stream.append(ts)
+
+        # Kumulativní vzdálenost (metry) - pokud zařízení pole posílá
+        dist = vals.get('distance')
+        if dist is not None:
+            distance_stream.append(float(dist))
             
     # Dopočet točivého momentu (Torque v Nm) z W a RPM: T = (P * 60) / (2 * pi * RPM)
     torque_stream = []
@@ -91,7 +133,7 @@ def analyze_fit_file(file_path):
         else:
             torque_stream.append(0.0)
             
-    intervals = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 1200, 1800, 3600]
+    intervals = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 900, 1200, 1800, 3600]
     
     curves = {
         'Power': compute_durational_curve(watts_stream, intervals),
@@ -104,12 +146,47 @@ def analyze_fit_file(file_path):
         
     has_gps = len(lat_stream) > 1
 
+    # Čas: elapsed = od prvního do posledního záznamu; moving = pouze vteřiny s rychlostí > 1 km/h
+    # (FIT záznamy jsou typicky vzorkovány ~1Hz, proto 1 vzorek ~= 1 sekunda)
+    if len(timestamp_stream) >= 2:
+        start_time = timestamp_stream[0]
+        elapsed_time_s = (timestamp_stream[-1] - timestamp_stream[0]).total_seconds()
+    else:
+        start_time = timestamp_stream[0] if timestamp_stream else None
+        elapsed_time_s = float(max(len(watts_stream) - 1, 0))
+
+    MOVING_SPEED_THRESHOLD_KMH = 1.0
+    moving_time_s = float(sum(1 for s in speed_stream if s > MOVING_SPEED_THRESHOLD_KMH))
+
+    # Vzdálenost: preferujeme kumulativní pole z FIT souboru, jinak integrujeme rychlost (m/s * 1s)
+    if distance_stream:
+        distance_m = round(distance_stream[-1] - distance_stream[0], 1)
+    elif speed_stream:
+        distance_m = round(sum(s / 3.6 for s in speed_stream), 1)
+    else:
+        distance_m = None
+
+    elevation_gain_m, elevation_loss_m = compute_elevation_changes(altitude_stream)
+
     summary = {
         'max_power_w': int(max(watts_stream)) if watts_stream else None,
         'max_cadence_rpm': int(max(cadence_stream)) if cadence_stream else None,
         'max_speed_kmh': float(max(speed_stream)) if speed_stream else None,
         'peak_torque_nm': float(max(torque_stream)) if torque_stream else None,
         'has_gps': has_gps,
+        'start_time': start_time.isoformat() if start_time else None,
+        'elapsed_time_s': elapsed_time_s,
+        'moving_time_s': moving_time_s,
+        'distance_m': distance_m,
+        'avg_speed_kmh': safe_mean(speed_stream),
+        'avg_power_w': round(safe_mean(watts_stream)) if watts_stream else None,
+        'avg_cadence_rpm': round(safe_mean(cadence_stream)) if cadence_stream else None,
+        'avg_torque_nm': safe_mean(torque_stream),
+        'avg_hr': round(safe_mean(hr_stream)) if hr_stream else None,
+        'max_hr': int(max(hr_stream)) if hr_stream else None,
+        'normalized_power_w': compute_normalized_power(watts_stream),
+        'elevation_gain_m': elevation_gain_m,
+        'elevation_loss_m': elevation_loss_m,
     }
     
     output = {
