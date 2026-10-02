@@ -4,7 +4,7 @@ import { deriveSpeedAndDistanceFromGps } from '../../../../lib/gpsDistance'
 
 const DURATIONAL_INTERVALS = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 900, 1200, 1800, 3600]
 
-// Pomocná funkce pro výpočet durational curves
+// Helper function to compute durational curves
 function computeDurationalCurve(stream, intervals = DURATIONAL_INTERVALS) {
   if (!stream || stream.length === 0) return null
 
@@ -34,10 +34,10 @@ function computeDurationalCurve(stream, intervals = DURATIONAL_INTERVALS) {
   return curve
 }
 
-// Následující pomocné funkce (mean/normalized power/elevation) duplikují logiku z api/analyze.py
-// pro jediný degradovaný fallback případ: jízdu na Intervals.icu bez dostupného .fit souboru
-// (viz "Pokus B" níže). Preferovanou cestou je vždy stažení .fit a jeho analýza přes /api/analyze,
-// aby obě cesty importu produkovaly identické metriky (issue #11).
+// The following helper functions (mean/normalized power/elevation) duplicate logic from api/analyze.py
+// for the single degraded fallback case: an Intervals.icu ride without an available .fit file
+// (see "Attempt B" below). The preferred path is always downloading the .fit file and analyzing it
+// via /api/analyze, so that both import paths produce identical metrics (issue #11).
 function meanOf(values) {
   const valid = (values || []).filter((v) => typeof v === 'number' && !isNaN(v))
   if (!valid.length) return null
@@ -79,14 +79,14 @@ export async function POST(req) {
 
     if (!athleteId || !apiKey) {
       return NextResponse.json(
-        { error: 'Chybí Intervals Athlete ID nebo API Key' },
+        { error: 'Missing Intervals Athlete ID or API Key' },
         { status: 400 }
       )
     }
 
     const authHeader = `Basic ${Buffer.from(`API_KEY:${apiKey}`).toString('base64')}`
 
-    // 1. Akce: Seznam jízd za posledních 30 dní
+    // 1. Action: list rides from the last 30 days
     if (action === 'list') {
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -125,7 +125,7 @@ export async function POST(req) {
       return NextResponse.json({ success: true, activities: rides })
     }
 
-    // 2. Akce: Import vybrané jízdy
+    // 2. Action: import the selected ride
     if (action === 'import') {
       if (!activityId) {
         return NextResponse.json({ error: 'Missing activityId' }, { status: 400 })
@@ -133,15 +133,15 @@ export async function POST(req) {
 
       const actId = String(activityId)
 
-      // Preferovaná cesta: stáhnout surový .fit soubor a nechat ho analyzovat tou samou cestou
-      // jako ruční upload (/api/analyze). Tím zajistíme, že Intervals.icu sync a manuální .fit
-      // upload produkují identickou sadu metrik (issue #11) z jediného výpočetního enginu.
+      // Preferred path: download the raw .fit file and let it be analyzed through the same path
+      // as a manual upload (/api/analyze). This ensures that the Intervals.icu sync and manual .fit
+      // upload produce an identical set of metrics (issue #11) from a single computation engine.
       //
-      // Celý blok je obalen vlastním try/catch: volání /api/analyze je síťový hop do jiné
-      // (Python) serverless funkce, který může selhat způsobem, který nevrací JSON (timeout,
-      // proxy/platformová chybová HTML stránka apod.). Takovou chybu nesmíme nechat probublat
-      // do vnějšího handleru - musíme se potichu přepnout na degradovaný fallback níže, jinak
-      // klient dostane "Unexpected token '<' ... is not valid JSON" místo funkčního importu.
+      // The whole block is wrapped in its own try/catch: calling /api/analyze is a network hop to a
+      // different (Python) serverless function, which can fail in a way that does not return JSON
+      // (timeout, proxy/platform error HTML page, etc.). We must not let such an error bubble up
+      // to the outer handler - we need to silently fall back to the degraded fallback below, otherwise
+      // the client gets "Unexpected token '<' ... is not valid JSON" instead of a working import.
       try {
         const fileRes = await fetch(`https://intervals.icu/api/v1/activity/${actId}/file`, {
           headers: { Authorization: authHeader },
@@ -153,9 +153,9 @@ export async function POST(req) {
           if (fitBlob.size > 0) {
             const formData = new FormData()
             formData.append('file', fitBlob, `${actId}.fit`)
-            // Dráhová kola jsou fixed-gear bez rychlostního senzoru - pokud .fit soubor
-            // neobsahuje reálnou rychlost, /api/analyze ji dopočítá z kadence + převodu
-            // (viz api/analyze.py: gear_development_m), stejně jako u ručního uploadu.
+            // Track bikes are fixed-gear without a speed sensor - if the .fit file
+            // does not contain real speed, /api/analyze derives it from cadence + gear ratio
+            // (see api/analyze.py: gear_development_m), just like with a manual upload.
             if (chainring) formData.append('chainring', String(chainring))
             if (cog) formData.append('cog', String(cog))
             if (isFixedGear) formData.append('is_fixed_gear', 'true')
@@ -190,8 +190,8 @@ export async function POST(req) {
         )
       }
 
-      // Degradovaný fallback: jízda na Intervals.icu nemá dostupný raw .fit soubor (např. ruční
-      // záznam), takže se spoléháme na jejich vteřinové streamy a dopočítáme metriky lokálně.
+      // Degraded fallback: the Intervals.icu ride has no raw .fit file available (e.g. a manual
+      // entry), so we rely on their per-second streams and compute the metrics locally.
       const streamsRes = await fetch(
         `https://intervals.icu/api/v1/activity/${actId}/streams?types=watts,cadence,heartrate,velocity_smooth,latlng,altitude,distance`,
         {
@@ -207,14 +207,14 @@ export async function POST(req) {
 
       if (!streamsData || !Array.isArray(streamsData) || streamsData.length === 0) {
         return NextResponse.json(
-          { error: `Pro jízdu ${actId} nejsou v Intervals.icu dostupná žádná data.` },
+          { error: `No data is available in Intervals.icu for ride ${actId}.` },
           { status: 404 }
         )
       }
 
-      // Namapování streamů do přehledného slovníku
-      // Pozn.: stream "latlng" vrací souřadnice rozdělené do dvou paralelních polí -
-      // "data" (latitude) a "data2" (longitude), nikoliv jedno pole dvojic [lat, lng]
+      // Map the streams into a convenient dictionary
+      // Note: the "latlng" stream returns coordinates split into two parallel arrays -
+      // "data" (latitude) and "data2" (longitude), not a single array of [lat, lng] pairs
       const streamsMap = {}
       const streamsMap2 = {}
       streamsData.forEach((s) => {
@@ -230,9 +230,9 @@ export async function POST(req) {
         ? streamsMap.velocity_smooth.map((v) => (v != null ? Math.round(v * 3.6 * 10) / 10 : 0))
         : null
 
-      // GPS trasa: latitude je v streamsMap.latlng.data, longitude v data2 (ověřeno dokumentací
-      // Intervals.icu API - ActivityStream má oddělená pole "data"/"data2" pro víceprvkové streamy).
-      // Ponecháváme fallback na starší formát páru [lat, lng] pro jistotu.
+      // GPS route: latitude is in streamsMap.latlng.data, longitude in data2 (verified against
+      // the Intervals.icu API docs - ActivityStream has separate "data"/"data2" fields for
+      // multi-element streams). We keep a fallback to the older [lat, lng] pair format just in case.
       let latitudeStream = null
       let longitudeStream = null
       if (Array.isArray(streamsMap.latlng) && streamsMap.latlng.length > 0) {
@@ -245,15 +245,15 @@ export async function POST(req) {
         }
       }
 
-      // Rychlost/vzdálenost nejsou vždy k dispozici přímo - podle toho, co Intervals.icu vrátí,
-      // volíme v tomto pořadí (stejná logika jako preferovaná cesta přes api/analyze.py):
-      //   1) "sensor"               - reálný (nenulový) "velocity_smooth" stream
-      //   2) "gps"                  - žádný rychlostní senzor, ale je GPS trasa -> dopočet z polohy
-      //                               (funguje i pro silniční jízdu s volnoběhem)
-      //   3) "derived_from_cadence" - žádný senzor ani GPS, ale fixed-gear (dráhové) kolo se
-      //                               známým převodem -> rychlost = f(kadence, převod)
-      //   4) "unavailable"          - nic z výše uvedeného - raději to přiznáme, než abychom
-      //                               tiše ukazovali nulu/chybná data
+      // Speed/distance are not always directly available - depending on what Intervals.icu
+      // returns, we choose in this order (same logic as the preferred path via api/analyze.py):
+      //   1) "sensor"               - a real (non-zero) "velocity_smooth" stream
+      //   2) "gps"                  - no speed sensor, but there is a GPS route -> derive from position
+      //                               (works for a road ride with freewheel too)
+      //   3) "derived_from_cadence" - no sensor nor GPS, but a fixed-gear (track) bike with a known
+      //                               gear ratio -> speed = f(cadence, gear ratio)
+      //   4) "unavailable"          - none of the above - better to admit it than to
+      //                               silently show zero/incorrect data
       let effectiveSpeedStream = speedKmhStream
       let speedSource = null
       let gpsDistanceM = null
@@ -280,7 +280,7 @@ export async function POST(req) {
         })
       }
 
-      // Výpočet zátěžových křivek
+      // Compute the load curves
       const curves = {}
       if (streamsMap.cadence?.length) curves.Cadence = computeDurationalCurve(streamsMap.cadence)
       if (effectiveSpeedStream?.length) curves.Speed = computeDurationalCurve(effectiveSpeedStream)
@@ -294,15 +294,15 @@ export async function POST(req) {
         return valid.length > 0 ? Math.max(...valid) : null
       }
 
-      // Streamy jsou vzorkovány ~1Hz, stejně jako v api/analyze.py. Pokud rychlost vůbec nemáme
-      // k dispozici (speedSource === 'unavailable'), raději vrátíme None než falešnou nulu.
+      // Streams are sampled at ~1Hz, same as in api/analyze.py. If speed is not available at all
+      // (speedSource === 'unavailable'), we'd rather return None than a false zero.
       const movingTimeS =
         speedSource !== 'unavailable'
           ? (effectiveSpeedStream || []).filter((s) => (s || 0) > 1.0).length || null
           : null
 
-      // Vzdálenost: preferujeme nativní kumulativní stream z Intervals.icu, dál GPS trasu
-      // (pokud jsme ji použili k odvození rychlosti výše), jinak integrujeme rychlost.
+      // Distance: we prefer the native cumulative stream from Intervals.icu, then the GPS route
+      // (if we used it to derive speed above), otherwise we integrate speed.
       let distanceM = null
       if (streamsMap.distance?.length) {
         distanceM =
@@ -342,7 +342,7 @@ export async function POST(req) {
         speed_source: speedSource,
       }
 
-      // Časová řada vteřinu po vteřině
+      // Second-by-second time series
       const timeSeries = {
         watts: streamsMap.watts || [],
         cadence: streamsMap.cadence || [],

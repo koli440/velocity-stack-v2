@@ -11,7 +11,7 @@ import ActivityStreamsChart from '../../../components/ActivityStreamsChart'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
 import TemplateExecutionCard from '../../../components/TemplateExecutionCard'
 
-// Leaflet vyžaduje window/document -> dynamický import bez SSR
+// Leaflet requires window/document -> dynamic import without SSR
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
   ssr: false,
   loading: () => (
@@ -31,7 +31,7 @@ export default function ActivityDetailPage() {
   const [curvesMap, setCurvesMap] = useState({})
   const [masterCurves, setMasterCurves] = useState(null)
 
-  // Rychlý editační stav pro převod a dráhu ve spodním panelu
+  // Quick edit state for gear ratio and track in the bottom panel
   const [chainring, setChainring] = useState('58')
   const [cog, setCog] = useState('14')
   const [trackId, setTrackId] = useState('')
@@ -44,7 +44,7 @@ export default function ActivityDetailPage() {
     const loadData = async () => {
       setLoading(true)
 
-      // 1. Paralelní načtení detailu jízdy, tratí a křivek této aktivity
+      // 1. Parallel fetch of the activity detail, tracks and curves for this activity
       const [actRes, tracksRes, curvesRes] = await Promise.all([
         supabase
           .from('activities')
@@ -65,7 +65,7 @@ export default function ActivityDetailPage() {
         setCog(act.cog ? String(act.cog) : '14')
         setTrackId(act.track_id || '')
 
-        // 2. Načtení historických maxim jezdce pro srovnání (Master Curves)
+        // 2. Fetch the rider's historical maxima for comparison (Master Curves)
         if (act.user_id) {
           try {
             const { data: masterData } = await supabase.rpc('get_athlete_master_curves', {
@@ -73,7 +73,7 @@ export default function ActivityDetailPage() {
             })
             if (masterData) setMasterCurves(masterData)
           } catch (err) {
-            console.warn('Master curves RPC nebyla nalezena nebo selhala:', err)
+            console.warn('Master curves RPC was not found or failed:', err)
           }
         }
       }
@@ -98,7 +98,7 @@ export default function ActivityDetailPage() {
     loadData()
   }, [activityId])
 
-  // Rychlé uložení převodu ze spodní lišty
+  // Quick save of the gear ratio from the bottom bar
   const handleUpdateGear = async (e) => {
     e.preventDefault()
     setSavingGear(true)
@@ -125,11 +125,11 @@ export default function ActivityDetailPage() {
       }))
       setTimeout(() => setSaveSuccess(false), 2500)
     } else {
-      alert('Chyba při ukládání: ' + error.message)
+      alert('Error while saving: ' + error.message)
     }
   }
 
-  // Výpočet převodového vývinu (Gear Inches)
+  // Calculation of gear development (Gear Inches)
   const calcGearInches = () => {
     const ring = parseFloat(chainring)
     const sprocket = parseFloat(cog)
@@ -137,11 +137,11 @@ export default function ActivityDetailPage() {
     return Math.round((ring / sprocket) * 26.8 * 10) / 10
   }
 
-  // Trvalé smazání aktivity (issue #18): maže záznam z DB (kaskádově i curves/analýzy)
-  // a případný archivovaný .fit soubor, poté uživatele vrátí na Cockpit.
+  // Permanent deletion of the activity (issue #18): deletes the DB record (cascading curves/analysis)
+  // and any archived .fit file, then returns the user to the Cockpit.
   const handleDeleteActivity = async () => {
     const confirmed = window.confirm(
-      'Opravdu trvale smazat tuto aktivitu? Tato akce je nevratná a odstraní i veškerá navázaná data (křivky, analýzy).'
+      'Are you sure you want to permanently delete this activity? This action is irreversible and will remove all linked data (curves, analysis).'
     )
     if (!confirmed) return
 
@@ -150,7 +150,7 @@ export default function ActivityDetailPage() {
     setDeleting(false)
 
     if (error) {
-      alert('Chyba při mazání aktivity: ' + error.message)
+      alert('Error while deleting activity: ' + error.message)
       return
     }
 
@@ -161,7 +161,7 @@ export default function ActivityDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-xs uppercase font-bold tracking-wider text-slate-400 animate-pulse">
-          Načítám telemetrii aktivity a historická maxima...
+          Loading activity telemetry and historical maxima...
         </div>
       </div>
     )
@@ -171,19 +171,19 @@ export default function ActivityDetailPage() {
     return (
       <div className="text-center py-16 space-y-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-          Aktivita nebyla nalezena
+          Activity not found
         </h2>
         <Link
           href="/"
           className="inline-block py-2 px-4 rounded-xl bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 font-bold text-xs uppercase"
         >
-          ← Zpět do Cockpitu
+          ← Back to Cockpit
         </Link>
       </div>
     )
   }
 
-  const actDate = new Date(activity.activity_date || activity.created_at).toLocaleDateString('cs-CZ', {
+  const actDate = new Date(activity.activity_date || activity.created_at).toLocaleDateString('en-US', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -193,7 +193,7 @@ export default function ActivityDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* 1. Horní navigační lišta */}
+      {/* 1. Top navigation bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <Link
@@ -214,11 +214,11 @@ export default function ActivityDetailPage() {
           disabled={deleting}
           className="py-2 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
         >
-          {deleting ? 'Mažu...' : '🗑 Delete Activity'}
+          {deleting ? 'Deleting...' : '🗑 Delete Activity'}
         </button>
       </div>
 
-      {/* 2. Kontextové štítky vybavení a nastavení */}
+      {/* 2. Contextual badges for gear and setup */}
       {(activity.bike_model || activity.handlebar_setup || activity.helmet || activity.tracks || activity.perceived_exertion) && (
         <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
           {activity.tracks && (
@@ -256,7 +256,7 @@ export default function ActivityDetailPage() {
         </div>
       )}
 
-      {/* 2b. GPS mapa trasy (pouze pro aktivity se satelitním záznamem, např. silniční jízdy) */}
+      {/* 2b. GPS route map (only for activities with a satellite recording, e.g. road rides) */}
       {Array.isArray(activity.time_series?.latitude) && activity.time_series.latitude.length > 1 && (
         <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
           <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -269,21 +269,21 @@ export default function ActivityDetailPage() {
         </div>
       )}
 
-      {/* 3. Kompletní sada metrik aktivity (vč. srovnání s historickým maximem - dříve
-           samostatná sekce BenchmarkCards, nyní sloučená sem, aby se metriky nezobrazovaly
-           ve dvou podobně vypadajících blocích za sebou - issue #20) */}
+      {/* 3. Complete set of activity metrics (incl. comparison with the historical maximum - previously
+           a separate BenchmarkCards section, now merged here so the metrics don't appear
+           in two similarly looking blocks in a row - issue #20) */}
       <ActivityMetricsGrid activity={activity} curvesMap={curvesMap} masterCurves={masterCurves || {}} />
 
-      {/* 3c. Graf telemetrie v čase/vzdálenosti: speed, HR, power, cadence, torque (issue #12) */}
+      {/* 3c. Telemetry chart over time/distance: speed, HR, power, cadence, torque (issue #12) */}
       <ActivityStreamsChart timeSeries={activity.time_series} />
 
-      {/* 4. Durational Curves Chart se zobrazením All-time PB linky */}
+      {/* 4. Durational Curves Chart showing the All-time PB line */}
       <DurationalCurvesChart curves={curvesMap} masterCurves={masterCurves} />
 
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
       <TemplateExecutionCard activityId={activityId} />
 
-      {/* 5. Spodní panel: Rychlé nastavení dráhy a převodů */}
+      {/* 5. Bottom panel: Quick track and gearing setup */}
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <span>⚙️</span> Track & Gearing Setup for this Ride
@@ -338,7 +338,7 @@ export default function ActivityDetailPage() {
               disabled={savingGear}
               className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
             >
-              {savingGear ? 'Ukládám...' : 'Update Setup'}
+              {savingGear ? 'Saving...' : 'Update Setup'}
             </button>
           </div>
         </form>
@@ -354,7 +354,7 @@ export default function ActivityDetailPage() {
 
           {saveSuccess && (
             <span className="font-bold text-emerald-500 animate-fade-in">
-              ✓ Nastavení uloženo
+              ✓ Setup saved
             </span>
           )}
         </div>

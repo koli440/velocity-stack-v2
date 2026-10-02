@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
-// Oprava výchozích ikon Leafletu pro Next.js bundler
+// Fix for Leaflet's default icons with the Next.js bundler
 const customIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -17,7 +17,7 @@ const customIcon = new L.Icon({
 })
 
 export default function VelodromeMap({ tracks = [] }) {
-  // Vybereme pouze velodromy s platnými GPS souřadnicemi
+  // Select only velodromes with valid GPS coordinates
   const validTracks = tracks.filter(t => t.latitude && t.longitude && !isNaN(t.latitude) && !isNaN(t.longitude))
 
   return (

@@ -16,13 +16,13 @@ export default function FitUploader({
   const [rawFile, setRawFile] = useState(null)
   const [analysis, setAnalysis] = useState(null)
 
-  // Parametry tréninku
+  // Workout parameters
   const [title, setTitle] = useState('Velodrome Flying Laps')
   const [selectedTrack, setSelectedTrack] = useState(tracks[0]?.id || '')
   const [chainring, setChainring] = useState('58')
   const [cog, setCog] = useState('14')
-  // Výchozí předpoklad: jízda na vybraném velodromu je na fixed-gear (dráhovém) kole bez
-  // volnoběhu, jinde (silnice) je pravděpodobný volnoběh. Jde kdykoliv přepsat zaškrtnutím níže.
+  // Default assumption: a ride on the selected velodrome is on a fixed-gear (track) bike
+  // without freewheel; elsewhere (road) a freewheel is likely. Can be overridden with the checkbox below.
   const [isFixedGear, setIsFixedGear] = useState(!!tracks[0]?.id)
 
   const handleTrackChange = (trackId) => {
@@ -41,9 +41,9 @@ export default function FitUploader({
     await runAnalyze(file, chainring, cog, isFixedGear)
   }
 
-  // Spuštění (nebo přepočtu) analýzy na serveru. Chainring/cog posíláme vždy a is_fixed_gear
-  // podle zaškrtnutí níže - server tyto hodnoty použije k dopočtu rychlosti z kadence pouze
-  // tehdy, pokud .fit soubor neobsahuje reálnou rychlost ani GPS trasu (viz api/analyze.py).
+  // Trigger (or recompute) the analysis on the server. We always send chainring/cog and
+  // is_fixed_gear based on the checkbox below - the server uses these values to derive speed
+  // from cadence only when the .fit file contains no real speed or GPS route (see api/analyze.py).
   const runAnalyze = async (file, chainringVal, cogVal, isFixedGearVal = isFixedGear) => {
     setLoading(true)
     const formData = new FormData()
@@ -71,8 +71,8 @@ export default function FitUploader({
     }
   }
 
-  // Pokud byla rychlost dopočítána z kadence (žádný rychlostní senzor ani GPS v souboru),
-  // přepočteme ji znovu po úpravě převodu - jinak by zůstala spočítaná s výchozím převodem 58/14.
+  // If speed was derived from cadence (no speed sensor or GPS in the file),
+  // we recompute it after the gear ratio is edited - otherwise it would stay computed with the default 58/14 ratio.
   const handleGearBlur = () => {
     if (rawFile && analysis?.summary?.speed_source === 'derived_from_cadence') {
       runAnalyze(rawFile, chainring, cog, isFixedGear)
@@ -87,13 +87,13 @@ export default function FitUploader({
   const handleSave = async (e) => {
     e.preventDefault()
     if (!analysis || !currentUser) {
-      alert('Pro uložení tréninku musíte být přihlášeni.')
+      alert('You must be signed in to save the workout.')
       return
     }
     setSaving(true)
 
     try {
-      // 0. Archivace nezměněného raw .fit souboru do Supabase Storage (Phase 1)
+      // 0. Archive the unmodified raw .fit file to Supabase Storage (Phase 1)
       let rawFileUrl = null
       let fileSha256 = null
 
@@ -115,7 +115,7 @@ export default function FitUploader({
         }
       }
 
-      // 1. Zápis aktivity do tabulky activities
+      // 1. Write the activity into the activities table
       const { data: profile } = await supabase
         .from('profiles')
         .select('ftp_w')
@@ -145,7 +145,7 @@ export default function FitUploader({
 
       if (actError) throw actError
 
-      // 2. Zápis křivek do tabulky activity_curves (sloupec data)
+      // 2. Write the curves into the activity_curves table (data column)
       if (analysis.curves && Object.keys(analysis.curves).length > 0) {
         const curveRows = Object.entries(analysis.curves).map(
           ([metricType, metricData]) => ({
@@ -162,7 +162,7 @@ export default function FitUploader({
         if (curvesError) throw curvesError
       }
 
-      // 3. Předání nového ID zpět pro přesměrování
+      // 3. Pass the new ID back for redirection
       if (onSaved) {
         onSaved(activity.id)
       }
@@ -252,7 +252,7 @@ export default function FitUploader({
                 onChange={(e) => handleFixedGearChange(e.target.checked)}
                 className="rounded border-slate-300 dark:border-slate-700 text-emerald-500 focus:ring-emerald-500"
               />
-              Pevný převod (fixed-gear, bez volnoběhu)
+              Fixed gear (fixed-gear, no freewheel)
             </label>
 
             <div className="grid grid-cols-2 gap-3">
@@ -287,8 +287,8 @@ export default function FitUploader({
               <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-[11px] font-semibold">
                 <span>📍</span>
                 <span>
-                  Tento soubor neobsahuje senzor rychlosti - rychlost, vzdálenost a moving time
-                  jsou dopočítány z GPS trasy.
+                  This file does not contain a speed sensor - speed, distance and moving time
+                  are derived from the GPS route.
                 </span>
               </div>
             )}
@@ -297,9 +297,9 @@ export default function FitUploader({
               <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-[11px] font-semibold">
                 <span>ℹ️</span>
                 <span>
-                  Tento soubor neobsahuje senzor rychlosti ani GPS trasu - rychlost, vzdálenost
-                  a moving time jsou dopočítány z kadence a zadaného převodu (jen pro fixed-gear
-                  kola). Opravte chainring/cog výše pro přesnější odhad.
+                  This file does not contain a speed sensor or a GPS route - speed, distance
+                  and moving time are derived from cadence and the entered gear ratio (only for
+                  fixed-gear bikes). Adjust the chainring/cog above for a more accurate estimate.
                 </span>
               </div>
             )}
@@ -308,9 +308,9 @@ export default function FitUploader({
               <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] font-semibold">
                 <span>⚠️</span>
                 <span>
-                  Tento soubor neobsahuje senzor rychlosti, GPS trasu ani potvrzení fixed-gear
-                  kola - rychlost, vzdálenost a moving time nelze spolehlivě dopočítat, proto se
-                  nezobrazí. Pokud jde o dráhové (fixed-gear) kolo, zaškrtněte to výše.
+                  This file does not contain a speed sensor, a GPS route, or fixed-gear confirmation
+                  - speed, distance and moving time cannot be reliably derived, so they are not
+                  shown. If this is a track (fixed-gear) bike, check the box above.
                 </span>
               </div>
             )}

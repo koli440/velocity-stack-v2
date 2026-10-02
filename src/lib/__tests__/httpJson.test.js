@@ -30,5 +30,5 @@ test('parseJsonResponse throws a friendly error for an HTML error page', async (
 
 test('parseJsonResponse throws a friendly error when content-type is missing', async () => {
   const res = fakeResponse({ status: 200, contentType: '' })
-  await assert.rejects(() => parseJsonResponse(res), /unexpected response|neočekávanou odpověď/i)
+  await assert.rejects(() => parseJsonResponse(res), /unexpected response/i)
 })

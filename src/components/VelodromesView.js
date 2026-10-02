@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
 
-// Dynamický import Leaflet mapy
+// Dynamic import of the Leaflet map
 const VelodromeMap = dynamic(() => import('./VelodromeMap'), {
   ssr: false,
   loading: () => (
@@ -70,13 +70,13 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
     }
   }
 
-  // KPI metriky
+  // KPI metrics
   const totalTracks = tracks.length
   const indoorCount = tracks.filter(t => t.is_indoor).length
   const outdoorCount = totalTracks - indoorCount
   const uniqueCountries = new Set(tracks.map(t => t.country_code).filter(Boolean)).size
 
-  // Filtrování
+  // Filtering
   const filteredTracks = tracks.filter(t => {
     const matchesSearch =
       t.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -96,7 +96,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
 
   return (
     <div className="space-y-6">
-      {/* Hlavička & tlačítko pro přidání */}
+      {/* Header & add button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
@@ -115,7 +115,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         </button>
       </div>
 
-      {/* KPI Ukazatele */}
+      {/* KPI Indicators */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Tracks</div>
@@ -135,7 +135,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         </div>
       </div>
 
-      {/* Formulář pro přidání dráhy */}
+      {/* Form for adding a track */}
       {showAddModal && (
         <form onSubmit={handleSubmit} className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-emerald-500/40 shadow-md space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
@@ -148,7 +148,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
               <input
                 required
                 type="text"
-                placeholder="e.g. Stab Vélodrome"
+                placeholder="e.g. Stab Velodrome"
                 value={formData.name}
                 onChange={e => setFormData({...formData, name: e.target.value})}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
@@ -236,7 +236,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         </form>
       )}
 
-      {/* Radarová mapa */}
+      {/* Radar map */}
       <section className="space-y-2">
         <div className="flex justify-between items-center">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -249,7 +249,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         <VelodromeMap tracks={tracks} />
       </section>
 
-      {/* Ovládání filtrů */}
+      {/* Filter controls */}
       <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <input
@@ -309,7 +309,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         </div>
       </div>
 
-      {/* Karty velodromů */}
+      {/* Velodrome cards */}
       {viewMode === 'cards' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTracks.map(t => (
@@ -364,7 +364,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
           ))}
         </div>
       ) : (
-        /* Tabulka */
+        /* Table */
         <div className="overflow-x-auto bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
           <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
             <thead className="bg-slate-50 dark:bg-slate-900/60 text-[11px] uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-800">

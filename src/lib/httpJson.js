@@ -18,7 +18,7 @@ export async function parseJsonResponse(res) {
   const contentType = res.headers.get('content-type') || ''
   if (!contentType.includes('application/json')) {
     throw new Error(
-      `Server vrátil neočekávanou odpověď (HTTP ${res.status}). Zkuste import prosím opakovat.`
+      `The server returned an unexpected response (HTTP ${res.status}). Please try the import again.`
     )
   }
   return res.json()

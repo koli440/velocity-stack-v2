@@ -1,5 +1,5 @@
 import './globals.css'
-import { ThemeProvider } from '../components/ThemeProvider' // Tvůj existující theme provider
+import { ThemeProvider } from '../components/ThemeProvider' // Your existing theme provider
 import AppShell from '../components/AppShell'
 
 export const metadata = {
@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="cs" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className="antialiased font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <AppShell>{children}</AppShell>

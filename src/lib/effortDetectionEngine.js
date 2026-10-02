@@ -1,8 +1,8 @@
 /**
- * Univerzální detekční motor pro VelocityStack
+ * Universal effort detection engine for VelocityStack
  */
 
-// Pomocná funkce: Klouzavý průměr pro vyhlazení šumu
+// Helper function: moving average to smooth out noise
 function movingAverage(arr, windowSize = 3) {
   if (!arr || arr.length === 0) return []
   return arr.map((val, idx) => {
@@ -13,45 +13,45 @@ function movingAverage(arr, windowSize = 3) {
 }
 
 /**
- * Hlavní dispečer detekce
+ * Main detection dispatcher
  */
 export function analyzeSessionEfforts({
   discipline = 'f200',
   timeSeries = {},
-  userRole = 'masters', // např. masters (3km), elite (4km)
+  userRole = 'masters', // e.g. masters (3km), elite (4km)
 }) {
   const { watts = [], cadence = [], torque = [] } = timeSeries
 
   if (!watts.length && !cadence.length) {
-    return { pattern: 'none', efforts: [], message: 'Chybí sekundová data pro analýzu.' }
+    return { pattern: 'none', efforts: [], message: 'Missing per-second data for analysis.' }
   }
 
-  // 1. Profil: Monolitický tah (Stíhačka / Pursuit)
+  // 1. Profile: Sustained effort (Pursuit)
   if (discipline === 'individual_pursuit' || discipline === 'team_pursuit') {
     return detectSustainedTimeTrial(watts, cadence, userRole)
   }
 
-  // 2. Profil: Letmá dvoustovka (F200)
+  // 2. Profile: Flying 200 (F200)
   if (discipline === 'f200' || discipline === 'match_sprint') {
     return detectFlyingSprint(cadence, watts)
   }
 
-  // 3. Profil: Pevný start (1km, 500m, Standing Start)
+  // 3. Profile: Standing start (1km, 500m, Standing Start)
   if (discipline === 'standing_start' || discipline === 'team_sprint') {
     return detectStandingStart(torque, cadence, watts)
   }
 
-  // 4. Profil: Bodovačka / Scratch / Intervaly (Opakované záchvaty)
+  // 4. Profile: Points Race / Scratch / Intervals (repeated bursts)
   return detectRepeatedBursts(watts, cadence)
 }
 
-// A. Detektor stíhačky a časovky
+// A. Pursuit and time-trial detector
 function detectSustainedTimeTrial(watts, cadence, userRole) {
   const active = watts.filter((w) => w > 120)
   if (active.length < 50) return { pattern: 'sustained_tt', efforts: [] }
 
   const sorted = [...active].sort((a, b) => b - a)
-  const threshold = sorted[Math.floor(sorted.length * 0.25)] * 0.75 // 75 % závodního tempa
+  const threshold = sorted[Math.floor(sorted.length * 0.25)] * 0.75 // 75% of race pace
 
   let inEffort = false
   let start = 0
@@ -83,7 +83,7 @@ function detectSustainedTimeTrial(watts, cadence, userRole) {
     }
   }
 
-  // Vybereme hlavní blok stíhačky
+  // Select the main pursuit block
   const best = candidates.sort((a, b) => b.dur - a.dur)[0]
   if (!best) return { pattern: 'sustained_tt', efforts: [] }
 
@@ -91,21 +91,21 @@ function detectSustainedTimeTrial(watts, cadence, userRole) {
   const segCad = cadence.slice(best.start, best.end)
   const avgW = Math.round(segWatts.reduce((a, b) => a + b, 0) / best.dur)
 
-  // Automatický návrh vzdálenosti
+  // Automatic distance suggestion
   let dist = 3000
-  let label = '3 km Stíhačka (Masters)'
+  let label = '3 km Pursuit (Masters)'
   if (best.dur < 100) {
     dist = 1000
-    label = '1 km Pevný start'
+    label = '1 km Standing Start'
   } else if (best.dur < 185) {
     dist = 2000
-    label = '2 km Stíhačka'
+    label = '2 km Pursuit'
   } else if (best.dur >= 185 && best.dur <= 255) {
     dist = 3000
-    label = '3 km Stíhačka (Masters)'
+    label = '3 km Pursuit (Masters)'
   } else {
     dist = 4000
-    label = '4 km Stíhačka (Elite)'
+    label = '4 km Pursuit (Elite)'
   }
 
   const speedKmh = Math.round(((dist / best.dur) * 3.6) * 10) / 10
@@ -131,11 +131,11 @@ function detectSustainedTimeTrial(watts, cadence, userRole) {
   }
 }
 
-// B. Detektor letmé dvoustovky (F200)
+// B. Flying 200 (F200) detector
 function detectFlyingSprint(cadence, watts) {
   if (!cadence.length) return { pattern: 'flying_sprint', efforts: [] }
 
-  // Hledáme absolutní špičku kadence po nájezdu
+  // Look for the absolute cadence peak after the run-up
   let maxRpmIdx = 0
   let maxRpm = 0
 
@@ -148,7 +148,7 @@ function detectFlyingSprint(cadence, watts) {
 
   if (maxRpm < 120) return { pattern: 'flying_sprint', efforts: [] }
 
-  // F200 trvá cca 10–13 sekund v okolí peaku
+  // F200 lasts about 10-13 seconds around the peak
   const start = Math.max(0, maxRpmIdx - 6)
   const end = Math.min(cadence.length - 1, maxRpmIdx + 6)
   const dur = end - start
@@ -165,19 +165,19 @@ function detectFlyingSprint(cadence, watts) {
         end_sec: end,
         duration_sec: dur,
         suggested_distance_m: 200,
-        discipline_label: '200m s letmým startem',
+        discipline_label: '200m flying start',
         max_cadence: maxRpm,
         avg_cadence: Math.round(segCad.reduce((a, b) => a + b, 0) / dur),
         max_power: segW.length ? Math.max(...segW) : null,
-        estimated_f200_time: (dur * (200 / (dur * 17.5))).toFixed(3), // odhad času
+        estimated_f200_time: (dur * (200 / (dur * 17.5))).toFixed(3), // estimated time
       },
     ],
   }
 }
 
-// C. Detektor pevného startu
+// C. Standing start detector
 function detectStandingStart(torque, cadence, watts) {
-  // Hledáme první masivní skok torque (> 75 Nm) z nízké kadence
+  // Look for the first massive torque spike (> 75 Nm) from low cadence
   let startIdx = -1
   for (let i = 0; i < torque.length; i++) {
     if ((torque[i] || 0) > 75 && (cadence[i] || 0) < 60) {
@@ -188,7 +188,7 @@ function detectStandingStart(torque, cadence, watts) {
 
   if (startIdx === -1) return { pattern: 'standing_start', efforts: [] }
 
-  // Sledujeme úsilí po dobu 60–80 s
+  // We track the effort for 60-80 s
   const endIdx = Math.min(torque.length - 1, startIdx + 70)
   const dur = endIdx - startIdx
 
@@ -201,7 +201,7 @@ function detectStandingStart(torque, cadence, watts) {
         end_sec: endIdx,
         duration_sec: dur,
         suggested_distance_m: 1000,
-        discipline_label: 'Pevný start (Kilo / 500m)',
+        discipline_label: 'Standing Start (Kilo / 500m)',
         peak_torque: Math.max(...torque.slice(startIdx, endIdx)),
         max_power: watts.length ? Math.max(...watts.slice(startIdx, endIdx)) : null,
       },
@@ -209,7 +209,7 @@ function detectStandingStart(torque, cadence, watts) {
   }
 }
 
-// D. Detektor opakovaných nástupů (Bodovačka, Scratch, Intervaly)
+// D. Repeated attacks detector (Points Race, Scratch, Intervals)
 function detectRepeatedBursts(watts, cadence) {
   const activeW = watts.filter((w) => w > 150)
   const p90 = activeW.length ? [...activeW].sort((a, b) => b - a)[Math.floor(activeW.length * 0.15)] : 350
@@ -233,7 +233,7 @@ function detectRepeatedBursts(watts, cadence) {
           duration_sec: dur,
           max_power: Math.max(...watts.slice(start, i)),
           avg_power: Math.round(watts.slice(start, i).reduce((a, b) => a + b, 0) / dur),
-          type: 'Ostrý nástup / Únik / Sprint na pásku',
+          type: 'Sharp attack / Breakaway / Sprint for the line',
         })
       }
       inBurst = false
@@ -242,6 +242,6 @@ function detectRepeatedBursts(watts, cadence) {
 
   return {
     pattern: 'repeated_bursts',
-    efforts: efforts.slice(0, 10), // horních 10 nástupů
+    efforts: efforts.slice(0, 10), // top 10 attacks
   }
 }
