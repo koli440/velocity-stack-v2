@@ -20,6 +20,10 @@ CREATE INDEX IF NOT EXISTS idx_feedback_status ON public.feedback(status);
 
 ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
 
+-- DROP POLICY IF EXISTS guards make this safe to re-run: this migration's version
+-- number used to collide with 20261007000000_personal_bests.sql, so it may already
+-- have been applied once under the old colliding timestamp.
+DROP POLICY IF EXISTS "Users can submit feedback" ON public.feedback;
 CREATE POLICY "Users can submit feedback"
     ON public.feedback FOR INSERT
     WITH CHECK (auth.uid() = user_id);
@@ -27,6 +31,7 @@ CREATE POLICY "Users can submit feedback"
 -- The community roadmap is shared: any signed-in user can see all entries
 -- (the API layer only returns category/module/description/status, never
 -- user_id, to keep authorship private).
+DROP POLICY IF EXISTS "Signed-in users can view the feedback roadmap" ON public.feedback;
 CREATE POLICY "Signed-in users can view the feedback roadmap"
     ON public.feedback FOR SELECT
     USING (auth.role() = 'authenticated');
