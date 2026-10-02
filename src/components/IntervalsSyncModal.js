@@ -99,6 +99,10 @@ export default function IntervalsSyncModal({
           athleteId: profile.intervals_athlete_id,
           apiKey: profile.intervals_api_key,
           activityId: selectedRide.id,
+          // Dráhová kola jsou fixed-gear bez rychlostního senzoru - server tyto hodnoty použije
+          // k dopočtu rychlosti z kadence, pokud jízda neobsahuje reálná data z rychloměru.
+          chainring: profile.default_chainring || 58,
+          cog: profile.default_cog || 14,
         }),
       })
 

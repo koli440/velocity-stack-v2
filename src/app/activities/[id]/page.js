@@ -220,7 +220,7 @@ export default function ActivityDetailPage() {
       </div>
 
       {/* 2. Kontextové štítky vybavení a nastavení */}
-      {(activity.bike_model || activity.handlebar_setup || activity.helmet || activity.tracks || activity.perceived_exertion) && (
+      {(activity.bike_model || activity.handlebar_setup || activity.helmet || activity.tracks || activity.perceived_exertion || activity.speed_source === 'derived_from_cadence') && (
         <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
           {activity.tracks && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -252,6 +252,15 @@ export default function ActivityDetailPage() {
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-orange-500/10 text-orange-500 border border-orange-500/20 font-black">
               <span>🔥</span>
               <span>RPE: {activity.perceived_exertion}/10</span>
+            </div>
+          )}
+          {activity.speed_source === 'derived_from_cadence' && (
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-bold"
+              title="Tento soubor neobsahoval rychlostní senzor - rychlost, vzdálenost a moving time jsou odhadnuty z kadence a převodu (chainring/cog)."
+            >
+              <span>ℹ️</span>
+              <span>Speed estimated from gear ratio</span>
             </div>
           )}
         </div>

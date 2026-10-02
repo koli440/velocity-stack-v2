@@ -28,9 +28,20 @@ export default function FitUploader({
 
     setFileSelected(file.name)
     setRawFile(file)
+    setTitle(file.name.replace(/\.[^/.]+$/, ''))
+    await runAnalyze(file, chainring, cog)
+  }
+
+  // Spuštění (nebo přepočtu) analýzy na serveru. Chainring/cog posíláme vždy, protože dráhová
+  // kola jsou fixed-gear bez volnoběhu a bez rychlostního senzoru - pokud .fit soubor neobsahuje
+  // reálnou rychlost, server dopočítá rychlost (a tedy i vzdálenost/moving time) z kadence
+  // a tohoto převodu (viz api/analyze.py: gear_development_m).
+  const runAnalyze = async (file, chainringVal, cogVal) => {
     setLoading(true)
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('chainring', chainringVal)
+    formData.append('cog', cogVal)
 
     try {
       const res = await fetch('/api/analyze', {
@@ -41,7 +52,6 @@ export default function FitUploader({
       const data = await res.json()
       if (res.ok) {
         setAnalysis(data)
-        setTitle(file.name.replace(/\.[^/.]+$/, ''))
       } else {
         alert(data.error || 'Upload failed')
       }
@@ -49,6 +59,14 @@ export default function FitUploader({
       alert('Error parsing FIT file: ' + err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Pokud byla rychlost dopočítána z kadence (žádný rychlostní senzor v souboru), přepočteme ji
+  // znovu po úpravě převodu - jinak by zůstala spočítaná s výchozím převodem 58/14.
+  const handleGearBlur = () => {
+    if (rawFile && analysis?.summary?.speed_source === 'derived_from_cadence') {
+      runAnalyze(rawFile, chainring, cog)
     }
   }
 
@@ -222,6 +240,7 @@ export default function FitUploader({
                   type="number"
                   value={chainring}
                   onChange={(e) => setChainring(e.target.value)}
+                  onBlur={handleGearBlur}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
@@ -234,10 +253,22 @@ export default function FitUploader({
                   type="number"
                   value={cog}
                   onChange={(e) => setCog(e.target.value)}
+                  onBlur={handleGearBlur}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
             </div>
+
+            {analysis?.summary?.speed_source === 'derived_from_cadence' && (
+              <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-[11px] font-semibold">
+                <span>ℹ️</span>
+                <span>
+                  Tento soubor neobsahuje senzor rychlosti - rychlost, vzdálenost a moving time
+                  jsou dopočítány z kadence a zadaného převodu. Opravte chainring/cog výše pro
+                  přesnější odhad.
+                </span>
+              </div>
+            )}
 
             <button
               type="submit"

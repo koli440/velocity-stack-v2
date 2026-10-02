@@ -66,7 +66,16 @@ def safe_mean(values):
     valid = [v for v in values if v is not None]
     return round(float(np.mean(valid)), 1) if valid else None
 
-def analyze_fit_file(file_path):
+# Standardní průměr kola dráhové (track) pevné převodovky v palcích - stejná konstanta jako
+# `calcGearInches()` v src/app/activities/[id]/page.js, aby oba výpočty souhlasily.
+TRACK_WHEEL_DIAMETER_INCHES = 26.8
+
+def gear_development_m(chainring, cog, wheel_diameter_inches=TRACK_WHEEL_DIAMETER_INCHES):
+    """Vzdálenost (v metrech), kterou kolo urazí za jednu otáčku klik u fixed-gear dráhového kola."""
+    gear_inches = (float(chainring) / float(cog)) * wheel_diameter_inches
+    return gear_inches * math.pi * 0.0254  # palce -> metry
+
+def analyze_fit_file(file_path, chainring=None, cog=None):
     fitfile = FitFile(file_path)
     
     watts_stream = []
@@ -132,7 +141,21 @@ def analyze_fit_file(file_path):
             torque_stream.append(round(t, 1))
         else:
             torque_stream.append(0.0)
-            
+
+    # Dráhová (track) kola jsou fixed-gear bez volnoběhu a bez rychlostního senzoru typicky
+    # nemají vůbec žádné GPS/kolo čidlo -> FIT knihovna pro pole "speed" vrací u každého záznamu
+    # výchozích 0.0. V takovém případě dopočítáme rychlost (a tedy i vzdálenost/moving_time)
+    # z kadence a zvoleného převodu (chainring/cog) - viz gear_development_m() výše.
+    speed_source = 'sensor'
+    has_speed_signal = any(v > 0 for v in speed_stream)
+    if not has_speed_signal and chainring and cog and cadence_stream:
+        development_m = gear_development_m(chainring, cog)
+        speed_stream = [
+            round(development_m * (c / 60.0) * 3.6, 1) if c > 0 else 0.0
+            for c in cadence_stream
+        ]
+        speed_source = 'derived_from_cadence'
+
     intervals = [1, 5, 10, 15, 30, 60, 120, 180, 300, 600, 900, 1200, 1800, 3600]
     
     curves = {
@@ -187,6 +210,7 @@ def analyze_fit_file(file_path):
         'normalized_power_w': compute_normalized_power(watts_stream),
         'elevation_gain_m': elevation_gain_m,
         'elevation_loss_m': elevation_loss_m,
+        'speed_source': speed_source,
     }
     
     output = {
@@ -270,11 +294,27 @@ class handler(BaseHTTPRequestHandler):
 
             _, file_bytes = file_field
 
+            # Volitelný převod (chainring/cog) odesílaný uploaderem - použije se k dopočtu
+            # rychlosti z kadence, pokud .fit soubor neobsahuje reálný rychlostní senzor
+            # (typické pro dráhová kola bez GPS/kola čidla).
+            def _read_field_number(field_name):
+                field = fields.get(field_name)
+                if not field:
+                    return None
+                _, raw = field
+                try:
+                    return float(raw.decode('utf-8').strip())
+                except (ValueError, UnicodeDecodeError):
+                    return None
+
+            chainring = _read_field_number('chainring')
+            cog = _read_field_number('cog')
+
             with tempfile.NamedTemporaryFile(suffix='.fit', delete=False) as tmp:
                 tmp.write(file_bytes)
                 tmp_path = tmp.name
 
-            result = analyze_fit_file(tmp_path)
+            result = analyze_fit_file(tmp_path, chainring=chainring, cog=cog)
             self._send_json(result, 200)
         except Exception as e:
             self._send_json({'success': False, 'error': str(e)}, 500)
