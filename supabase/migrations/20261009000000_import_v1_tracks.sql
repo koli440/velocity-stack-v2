@@ -31,7 +31,6 @@ FROM (
 ('Rotterdam - Ahoy', 'NED', 200.0, 'Wood', 0, 51.8833, 4.4833, NULL),
 ('Plovdiv - Kolodruma', 'BUL', 250.0, 'Wood', 160, 42.1332, 24.7672, NULL),
 ('Athens - Olympic Velodrome', 'GRE', 250.0, 'Wood', 200, 38.0366, 23.7828, NULL),
-('Sangalhos - Velódromo Nacional', 'PRT', 250.0, 'Wood', 80, 40.4795, -8.4725, NULL),
 ('Linz - TipsArena', 'AUT', 200.0, 'Wood', 260, 48.2985, 14.2742, NULL),
 ('Panevėžys - Cido Arena', 'LTU', 250.0, 'Wood', 50, 55.7325, 24.3395, NULL),
 ('Carson - Velo Sports Center', 'USA', 250.0, 'Wood', 15, 33.8645, -118.2615, NULL),
