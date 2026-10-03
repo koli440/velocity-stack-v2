@@ -155,4 +155,5 @@ WHERE NOT EXISTS (
       AND round(t.length_m) = round(v.length_m)
       AND abs(t.latitude - v.latitude) <= 0.01
       AND abs(t.longitude - v.longitude) <= 0.01
-);
+)
+ON CONFLICT (name) DO NOTHING;
