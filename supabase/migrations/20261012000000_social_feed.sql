@@ -115,7 +115,11 @@ CREATE POLICY "profiles_update_own"
 -- Runs with the view owner's rights (bypasses profiles RLS) but only exposes
 -- non-sensitive columns.
 CREATE OR REPLACE VIEW public.public_profiles AS
-    SELECT id, username, full_name, avatar_url
+    SELECT
+        id,
+        COALESCE(NULLIF(nickname, ''), NULLIF(first_name, '')) AS username,
+        NULLIF(btrim(COALESCE(first_name, '') || ' ' || COALESCE(last_name, '')), '') AS full_name,
+        NULL::text AS avatar_url
     FROM public.profiles;
 
 GRANT SELECT ON public.public_profiles TO authenticated;
