@@ -23,9 +23,10 @@ function DeltaBadge({ current, previous, label }) {
   const diff = Math.round((current - previous) * 10) / 10
   if (diff === 0) return null
   return (
-    <span className={`ml-1 text-[10px] font-bold ${diff > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-      {label ? `${label} ` : ''}{diff > 0 ? '▲' : '▼'} {Math.abs(diff)}
-    </span>
+    <div className={`flex justify-between gap-3 text-[10px] font-bold ${diff > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+      <span className="text-slate-400 font-semibold">{label}</span>
+      <span>{diff > 0 ? '▲' : '▼'} {Math.abs(diff)}</span>
+    </div>
   )
 }
 
@@ -290,18 +291,21 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
                       <div className="text-[8px] uppercase font-bold text-slate-400">{key.replace(/_/g, ' ')}</div>
                       <div className="text-xs font-black text-orange-500">
                         {formatMetric(value)}
-                        <DeltaBadge current={value} previous={prev?.summary?.[key]} label="prev" />
-                        <DeltaBadge current={value} previous={baselines.allTime.summary[key]} label="all-time" />
-                        <DeltaBadge current={value} previous={baselines.last90.summary[key]} label="90d" />
+                      </div>
+                      <div className="mt-1 space-y-0.5 text-left">
+                        <DeltaBadge current={value} previous={prev?.summary?.[key]} label="Last run" />
+                        <DeltaBadge current={value} previous={baselines.last90.summary[key]} label="90-day avg" />
+                        <DeltaBadge current={value} previous={baselines.allTime.summary[key]} label="All-time avg" />
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {prev && (
-                  <div className="text-[10px] text-slate-400">
-                    Δ vs previous run ({prev.activities?.title || 'Session'}, {formatDate(prev.activities?.activity_date)}),
-                    all-time average ({baselines.allTime.count} runs), 90-day average ({baselines.last90.count} runs)
+                  <div className="text-[10px] text-slate-400 space-y-0.5">
+                    <div>Last run: {prev.activities?.title || 'Session'}, {formatDate(prev.activities?.activity_date)}</div>
+                    <div>90-day average: {baselines.last90.count} runs</div>
+                    <div>All-time average: {baselines.allTime.count} runs</div>
                   </div>
                 )}
 
