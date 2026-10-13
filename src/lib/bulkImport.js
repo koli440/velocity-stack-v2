@@ -9,7 +9,7 @@
 // that are also available under Node's `node --test`), so it can be exercised with fake
 // `analyzeFile`/`supabase` doubles in unit tests without a browser or network access.
 
-import { buildActivityInsert } from './activityRecord'
+import { buildActivityInsert } from './activityRecord.js'
 import { findDuplicate } from './activityDuplicates'
 
 const FIT_EXTENSION_RE = /\.fit$/i

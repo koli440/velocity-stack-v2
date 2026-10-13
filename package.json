@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test src scripts",
+    "test": "node --test src",
+    "test:bots": "node --test scripts/bots/__tests__/generate-ride.test.mjs scripts/bots/__tests__/follow-back.test.mjs",
+    "bots:check": "node scripts/bots/check-follow.mjs",
     "bots:daily": "node scripts/bots/daily.mjs",
     "bots:reset": "node scripts/bots/reset.mjs"
   },
