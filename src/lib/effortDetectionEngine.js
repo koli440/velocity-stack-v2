@@ -394,7 +394,13 @@ function findThresholdWindowDistance(wattsPrefix, speedPrefix, cursor, step, ftp
     while (eLo <= n && metersAt(speedPrefix, s, eLo) < distMin) eLo++
     while (eHi <= n && metersAt(speedPrefix, s, eHi) <= distMax) eHi++
 
-    for (let e = eLo; e < eHi; e++) {
+    // Distance accumulates continuously (unlike integer-second durations), so at a tight
+    // or zero tolerance the per-second-sampled cumulative distance can jump clean over the
+    // narrow [distMin, distMax] window between two consecutive seconds, leaving eHi <= eLo
+    // and no candidate in [eLo, eHi). Always consider eLo itself — the closest achievable
+    // end-point for this start — even when its distance slightly overshoots distMax.
+    const loopEnd = Math.max(eHi, eLo + 1)
+    for (let e = eLo; e < loopEnd && e <= n; e++) {
       const metrics = computeMetrics(wattsPrefix, speedPrefix, s, e)
       if (stepBandMatches(metrics, step, ftpAtActivityW)) {
         return { start: s, end: e, ...metrics, distanceM: metersAt(speedPrefix, s, e) }
@@ -421,7 +427,10 @@ function findBestWindowDistance(wattsPrefix, speedPrefix, cursor, step) {
     while (eLo <= n && metersAt(speedPrefix, s, eLo) < distMin) eLo++
     while (eHi <= n && metersAt(speedPrefix, s, eHi) <= distMax) eHi++
 
-    for (let e = eLo; e < eHi; e++) {
+    // See the comment in findThresholdWindowDistance: always consider eLo as a candidate
+    // end-point, even when [eLo, eHi) is empty due to distance discretization.
+    const loopEnd = Math.max(eHi, eLo + 1)
+    for (let e = eLo; e < loopEnd && e <= n; e++) {
       const value = windowAvg(metricPrefix, s, e)
       if (!best || value > best.value) {
         best = { start: s, end: e, value, distanceM: metersAt(speedPrefix, s, e) }
