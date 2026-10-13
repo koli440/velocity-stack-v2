@@ -1,5 +1,6 @@
 'use client'
 
+import BotBadge from './BotBadge'
 import Link from 'next/link'
 import Icon from './ActivityIcons'
 import BadgePill from './BadgePill'
@@ -63,6 +64,7 @@ function AuthorLine({ author }) {
         </span>
       )}
       {name}
+      {author.is_bot && <BotBadge />}
     </div>
   )
 }
