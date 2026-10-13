@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { deleteActivity } from '../../../lib/activityActions'
+import { removeActivityPhotoFiles } from '../../../lib/activityPhotos'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import ActivityStreamsChart from '../../../components/ActivityStreamsChart'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
@@ -13,6 +14,8 @@ import TemplateRunsSection from '../../../components/TemplateRunsSection'
 import VelodromePicker from '../../../components/VelodromePicker'
 
 // Leaflet requires window/document -> dynamic import without SSR
+import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
+
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
   ssr: false,
   loading: () => (
@@ -186,6 +189,7 @@ export default function ActivityDetailPage() {
     if (!confirmed) return
 
     setDeleting(true)
+    await removeActivityPhotoFiles(supabase, activity.id).catch(() => {})
     const { error } = await deleteActivity(supabase, activity)
     setDeleting(false)
 
@@ -308,6 +312,9 @@ export default function ActivityDetailPage() {
           />
         </div>
       )}
+
+      {/* 2c. Photo gallery (issue #49) */}
+      <ActivityPhotoGallery activityId={activity.id} ownerId={activity.user_id} />
 
       {/* 3. Complete set of activity metrics (incl. comparison with the historical maximum - previously
            a separate BenchmarkCards section, now merged here so the metrics don't appear
