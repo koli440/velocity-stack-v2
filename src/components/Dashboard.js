@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { deleteActivity } from '../lib/activityActions'
 import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
-import { syncFeedData } from '../lib/feedSync'
+import { syncFeedData, syncFeedDataIfNeeded } from '../lib/feedSync'
 import { fetchFollowingFeedPage, fetchDiscoverFeedPage, fetchBlockedIds, setActivityVisibility } from '../lib/social'
 import FollowPanel from './FollowPanel'
 import NotificationBell from './NotificationBell'
@@ -118,18 +118,23 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
       return
     }
 
-    // Persist route previews + badges for anything new before reading the feed back.
-    await syncFeedData(supabase, targetId).catch((err) => console.warn('Feed sync failed:', err))
-
-    const { data, hasMore, error } = await fetchActivitiesPage(supabase, {
-      userId: targetId,
-      page: 0,
-    })
-
-    if (!error) {
-      setActivities(data)
-      setHasMoreActivities(hasMore)
+    const loadFirstPage = async () => {
+      const { data, hasMore, error } = await fetchActivitiesPage(supabase, {
+        userId: targetId,
+        page: 0,
+      })
+      if (!error) {
+        setActivities(data)
+        setHasMoreActivities(hasMore)
+      }
     }
+
+    // Show the feed right away; persist route previews + badges for anything new in the
+    // background (only when something is pending) and refresh once if it changed anything.
+    await loadFirstPage()
+    syncFeedDataIfNeeded(supabase, targetId)
+      .then((res) => (res.ran && (res.previews || res.badges) ? loadFirstPage() : null))
+      .catch((err) => console.warn('Feed sync failed:', err))
   }
 
   // Fetches and appends the next page of activities for the current user.

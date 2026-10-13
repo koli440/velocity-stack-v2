@@ -1,7 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { zoneSignature } from '../privacyZone.js'
-import { backfillRoutePreviews, refreshUserBadges, syncFeedData } from '../feedSync.js'
+import {
+  backfillRoutePreviews,
+  refreshUserBadges,
+  syncFeedData,
+  hasPendingFeedSync,
+  syncFeedDataIfNeeded,
+} from '../feedSync.js'
 
 function fakeClient({ previewRows = [], history = [], pbs = [], zoneRow = null } = {}) {
   const updates = []
@@ -98,4 +104,18 @@ test('syncFeedData loads the owner zone when none is given', async () => {
   })
   await syncFeedData(c, 'u')
   assert.equal(c.updates.find((u) => u.id === 'a').route_preview_zone, 'z50.00000x14.00000x200')
+})
+
+test('hasPendingFeedSync reports pending rows from a single limited query', async () => {
+  const pending = fakeClient({ history: [{ id: 'a' }] })
+  assert.equal(await hasPendingFeedSync(pending, 'u'), true)
+  assert.match(pending.orFilters[0], /badges\.is\.null/)
+  assert.equal(await hasPendingFeedSync(fakeClient({ history: [] }), 'u'), false)
+})
+
+test('syncFeedDataIfNeeded skips the heavy sync when nothing is pending', async () => {
+  const c = fakeClient({ history: [] })
+  assert.deepEqual(await syncFeedDataIfNeeded(c, 'u'), { previews: 0, badges: 0, ran: false })
+  assert.equal(c.updates.length, 0)
+  assert.deepEqual(await syncFeedDataIfNeeded(c, null), { previews: 0, badges: 0, ran: false })
 })
