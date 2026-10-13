@@ -4,7 +4,8 @@ import Link from 'next/link'
 import Icon from './ActivityIcons'
 import BadgePill from './BadgePill'
 import RouteThumbnail from './RouteThumbnail'
-import { BADGE_CONFIG } from '../lib/activityBadges'
+import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
+import { VISIBILITY_OPTIONS, authorName } from '../lib/social'
 
 // Left accent color by intensity factor.
 function intensityAccent(intensityFactor) {
@@ -35,6 +36,37 @@ function formatDistance(meters) {
   return `${(meters / 1000).toFixed(1)} km`
 }
 
+function CoverPhoto({ cover }) {
+  return (
+    <div className="relative w-full h-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={cover.url} alt="Activity cover" loading="lazy" className="w-full h-full object-cover" />
+      {cover.count > 1 && (
+        <span className="absolute bottom-1 right-1 text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-950/70 text-white">
+          +{cover.count - 1}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function AuthorLine({ author }) {
+  const name = authorName(author)
+  return (
+    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+      {author.avatar_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={author.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+      ) : (
+        <span className="w-5 h-5 rounded-full bg-orange-500/20 text-orange-500 text-[10px] font-black flex items-center justify-center">
+          {name.charAt(0).toUpperCase()}
+        </span>
+      )}
+      {name}
+    </div>
+  )
+}
+
 function BadgeRow({ badges }) {
   const visible = badges.slice(0, BADGE_CONFIG.maxVisible)
   const extra = badges.slice(BADGE_CONFIG.maxVisible)
@@ -57,7 +89,11 @@ function BadgeRow({ badges }) {
 
 export default function ActivityFeed({
   activities = [],
-  badgesById = null,
+  isOwnFeed = true,
+  onChangeVisibility,
+  coverPhotos = null,
+  title = 'Recent Sessions',
+  emptyMessage = null,
   onAddWorkout,
   onDeleteActivity,
   hasMore = false,
@@ -68,7 +104,7 @@ export default function ActivityFeed({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">
-          Recent Sessions
+          {title}
         </h2>
         {onAddWorkout && (
           <button
@@ -80,6 +116,10 @@ export default function ActivityFeed({
         )}
       </div>
 
+      {activities.length === 0 && emptyMessage && (
+        <p className="text-xs text-slate-400 py-6 text-center">{emptyMessage}</p>
+      )}
+
       <div className="space-y-3">
         {activities.map((act) => (
           <div
@@ -87,13 +127,16 @@ export default function ActivityFeed({
             className={`p-4 rounded-2xl border border-l-4 bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder ${intensityAccent(act.intensity_factor)} transition flex flex-col sm:flex-row items-stretch sm:items-center gap-4`}
           >
             <Link href={`/activities/${act.id}`} tabIndex={-1} className="block w-full h-24 sm:w-24 sm:h-24 shrink-0">
-              <RouteThumbnail latitude={act.route_lat} longitude={act.route_lng} className="w-full h-full" />
+              {coverPhotos?.get(act.id)?.url ? (
+                <CoverPhoto cover={coverPhotos.get(act.id)} />
+              ) : (
+                <RouteThumbnail preview={act.route_preview} className="w-full h-full" />
+              )}
             </Link>
 
             <div className="space-y-1 flex-1 min-w-0">
-              {badgesById?.get(act.id)?.length > 0 && (
-                <BadgeRow badges={badgesById.get(act.id)} />
-              )}
+              {!isOwnFeed && act.author && <AuthorLine author={act.author} />}
+              {hydrateBadges(act.badges).length > 0 && <BadgeRow badges={hydrateBadges(act.badges)} />}
               <Link
                 href={`/activities/${act.id}`}
                 className="text-sm font-black text-slate-900 dark:text-white hover:text-orange-500 transition"
@@ -145,7 +188,21 @@ export default function ActivityFeed({
               >
                 Detail →
               </Link>
-              {onDeleteActivity && (
+              {isOwnFeed && onChangeVisibility && (
+                <select
+                  value={act.visibility || 'private'}
+                  onChange={(e) => onChangeVisibility(act, e.target.value)}
+                  aria-label="Who can see this activity"
+                  className="py-2 px-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300"
+                >
+                  {VISIBILITY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {onDeleteActivity && isOwnFeed && (
                 <button
                   type="button"
                   onClick={() => onDeleteActivity(act)}

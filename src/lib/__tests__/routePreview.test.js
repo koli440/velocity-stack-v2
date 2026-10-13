@@ -34,3 +34,26 @@ test('simplifyPoints drops collinear points', () => {
   const out = simplifyPoints([[0, 0], [1, 1], [2, 2], [3, 3]], 0.1)
   assert.deepEqual(out, [[0, 0], [3, 3]])
 })
+
+import { buildFeedPreview, sparklineToPath } from '../routePreview.js'
+
+test('buildFeedPreview prefers GPS route', () => {
+  const p = buildFeedPreview({ latitude: [50, 50.01, 50.02], longitude: [14, 14.01, 14.0], watts: [100, 200] })
+  assert.equal(p.kind, 'route')
+  assert.ok(p.points.length >= 2)
+})
+
+test('buildFeedPreview falls back to a downsampled power sparkline', () => {
+  const watts = Array.from({ length: 1000 }, (_, i) => (i % 100) * 3)
+  const p = buildFeedPreview({ watts })
+  assert.equal(p.kind, 'sparkline')
+  assert.equal(p.values.length, 40)
+  assert.ok(sparklineToPath(p.values).split(' ').length === 40)
+})
+
+test('buildFeedPreview returns a none sentinel when nothing is drawable', () => {
+  assert.deepEqual(buildFeedPreview({}), { kind: 'none' })
+  assert.deepEqual(buildFeedPreview({ watts: [0, 0, 0] }), { kind: 'none' })
+  assert.deepEqual(buildFeedPreview(undefined), { kind: 'none' })
+  assert.equal(sparklineToPath([1]), '')
+})

@@ -23,7 +23,29 @@ export const BADGE_KINDS = Object.freeze({
   BIG_CLIMB: { label: 'Big climb', tone: 'purple', priority: 7 },
   HIGH_POWER: { label: 'High power', tone: 'purple', priority: 8 },
   TOP_SPEED: { label: 'Top speed', tone: 'blue', priority: 9 },
+  CURVE_RECORD: { label: 'Power curve record', tone: 'gold', priority: 2 },
+  MILESTONE: { label: 'Milestone', tone: 'blue', priority: 10 },
 })
+
+// Durations (keys of the stored Power curve) that can earn a power-curve record.
+export const CURVE_RECORD_KEYS = Object.freeze(['5s', '1m', '5m', '20m', '1h'])
+export const CURVE_KEY_LABELS = Object.freeze({ '5s': '5 s', '1m': '1 min', '5m': '5 min', '20m': '20 min', '1h': '1 h' })
+export const SESSION_MILESTONES = Object.freeze([10, 25, 50, 100, 250, 500, 1000])
+export const DISTANCE_MILESTONES_KM = Object.freeze([100, 500, 1000, 2500, 5000, 10000, 25000])
+
+/** Reduces badges to what is persisted in `activities.badges`. */
+export function serializeBadges(badges = []) {
+  return badges.map(({ kind, detail }) => ({ kind, detail }))
+}
+
+/** Rebuilds display badges (label/tone/priority) from persisted `{ kind, detail }` rows. */
+export function hydrateBadges(stored) {
+  if (!Array.isArray(stored)) return []
+  return stored
+    .filter((b) => b && BADGE_KINDS[b.kind])
+    .map((b) => ({ kind: b.kind, detail: b.detail || '', ...BADGE_KINDS[b.kind] }))
+    .sort((a, b) => a.priority - b.priority)
+}
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null)
 
@@ -69,6 +91,10 @@ export function computeActivityBadges(activities = [], personalBests = [], confi
     elevation_gain_m: [],
   }
   let prevAvgPower = null
+  let sessionCount = 0
+  let totalDistanceM = 0
+  const bestCurve = {}
+  let priorCurveActivities = 0
   const result = new Map()
 
   const pbDays = new Map()
@@ -135,6 +161,31 @@ export function computeActivityBadges(activities = [], personalBests = [], confi
     )
       add('BIG_CLIMB', `${Math.round(elevation)} m climbed`)
 
+    const curve = act.power_curve && typeof act.power_curve === 'object' ? act.power_curve : null
+    const curveRecords = []
+    if (curve) {
+      for (const key of CURVE_RECORD_KEYS) {
+        const value = num(Number(curve[key]))
+        if (!value) continue
+        const best = bestCurve[key]
+        if (best && priorCurveActivities >= cfg.minPriorForRecord && value > best) {
+          curveRecords.push(`${CURVE_KEY_LABELS[key]} +${Math.round(value - best)} W`)
+        }
+      }
+      if (curveRecords.length) add('CURVE_RECORD', curveRecords.join(', '))
+    }
+
+    sessionCount++
+    const prevDistanceKm = totalDistanceM / 1000
+    totalDistanceM += distance || 0
+    const distanceKm = totalDistanceM / 1000
+    if (SESSION_MILESTONES.includes(sessionCount)) {
+      add('MILESTONE', `${sessionCount}th session`)
+    } else {
+      const crossed = DISTANCE_MILESTONES_KM.filter((m) => prevDistanceKm < m && distanceKm >= m)
+      if (crossed.length) add('MILESTONE', `${crossed[crossed.length - 1].toLocaleString('en-US')} km total`)
+    }
+
     badges.sort((a, b) => a.priority - b.priority)
     result.set(act.id, badges)
 
@@ -143,6 +194,13 @@ export function computeActivityBadges(activities = [], personalBests = [], confi
     if (distance) insertSorted(metrics.distance_m, distance)
     if (elevation) insertSorted(metrics.elevation_gain_m, elevation)
     if (avgPower) prevAvgPower = avgPower
+    if (curve) {
+      for (const key of CURVE_RECORD_KEYS) {
+        const value = num(Number(curve[key]))
+        if (value && (!bestCurve[key] || value > bestCurve[key])) bestCurve[key] = value
+      }
+      priorCurveActivities++
+    }
   }
 
   return result
