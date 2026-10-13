@@ -269,7 +269,12 @@ CREATE POLICY "activities_select_shared"
 -- (The blocker still sees the riders they blocked so they can unblock them.)
 DROP VIEW IF EXISTS public.public_profiles;
 CREATE VIEW public.public_profiles AS
-    SELECT p.id, p.username, p.full_name, p.avatar_url, p.require_follow_approval
+    SELECT
+        p.id,
+        COALESCE(NULLIF(p.nickname, ''), NULLIF(p.first_name, '')) AS username,
+        NULLIF(btrim(COALESCE(p.first_name, '') || ' ' || COALESCE(p.last_name, '')), '') AS full_name,
+        NULL::text AS avatar_url,
+        p.require_follow_approval
     FROM public.profiles p
     WHERE NOT EXISTS (
         SELECT 1 FROM public.blocks b
