@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
@@ -9,7 +9,7 @@ import { deleteActivity } from '../../../lib/activityActions'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import ActivityStreamsChart from '../../../components/ActivityStreamsChart'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
-import TemplateExecutionCard from '../../../components/TemplateExecutionCard'
+import TemplateRunsSection from '../../../components/TemplateRunsSection'
 
 // Leaflet requires window/document -> dynamic import without SSR
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
@@ -32,16 +32,9 @@ export default function ActivityDetailPage() {
   const [masterCurves, setMasterCurves] = useState(null)
   const [baselineCurves, setBaselineCurves] = useState(null)
   const [baselineLoading, setBaselineLoading] = useState(false)
-  const [latestExecution, setLatestExecution] = useState(null)
-
-  // Matched work/recovery windows from the most recent template execution (issue #14),
-  // overlaid on the stream charts above via ActivityStreamsChart's highlightWindows prop.
-  const highlightWindows = useMemo(() => {
-    if (!Array.isArray(latestExecution?.efforts)) return []
-    return latestExecution.efforts
-      .filter((e) => e.start_sec != null && e.end_sec != null)
-      .map((e) => ({ start_sec: e.start_sec, end_sec: e.end_sec, role: e.role || 'work' }))
-  }, [latestExecution])
+  // Matched windows of every template run toggled "on chart" (issues #14, #66),
+  // overlaid on the stream charts via ActivityStreamsChart's highlightWindows prop.
+  const [highlightWindows, setHighlightWindows] = useState([])
 
   // Quick edit state for gear ratio and track in the bottom panel
   const [chainring, setChainring] = useState('58')
@@ -335,7 +328,7 @@ export default function ActivityDetailPage() {
       />
 
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
-      <TemplateExecutionCard activityId={activityId} onLatestExecution={setLatestExecution} />
+      <TemplateRunsSection activityId={activityId} onVisibleWindowsChange={setHighlightWindows} />
 
       {/* 5. Bottom panel: Quick track and gearing setup */}
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
