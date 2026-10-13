@@ -41,7 +41,7 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows }) {
                   key={`${w.role}-${w.start_sec}-${idx}`}
                   x1={w.start_sec}
                   x2={w.end_sec}
-                  fill={w.role === 'recovery' ? '#3b82f6' : '#f97316'}
+                  fill={w.color || (w.role === 'recovery' ? '#3b82f6' : '#f97316')}
                   fillOpacity={0.18}
                   stroke="none"
                   ifOverflow="visible"
