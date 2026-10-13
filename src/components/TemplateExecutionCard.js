@@ -262,11 +262,14 @@ export default function TemplateExecutionCard({ activityId, onLatestExecution })
                   className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-1"
                 >
                   <div className="text-xs font-black text-slate-900 dark:text-white">
-                    {eff.role ? `${eff.role === 'work' ? 'Work' : 'Recovery'} rep ${eff.rep || idx + 1}` : `Effort #${idx + 1}`} ({eff.duration_sec}s)
+                    {eff.role ? `${eff.role === 'work' ? 'Work' : 'Recovery'} rep ${eff.rep || idx + 1}` : `Effort #${idx + 1}`}{' '}
+                    ({eff.distance_m != null ? `${eff.distance_m}m` : `${eff.duration_sec}s`})
                   </div>
                   <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-400">
+                    {eff.target_distance_m != null && <div>Target: <b className="text-slate-700 dark:text-slate-200">{eff.target_distance_m}m</b></div>}
                     {eff.avg_power != null && <div>Avg W: <b className="text-slate-700 dark:text-slate-200">{eff.avg_power}</b></div>}
                     {eff.max_power != null && <div>Max W: <b className="text-slate-700 dark:text-slate-200">{eff.max_power}</b></div>}
+                    {eff.avg_speed_kmh != null && <div>Avg speed: <b className="text-slate-700 dark:text-slate-200">{eff.avg_speed_kmh} km/h</b></div>}
                     {eff.pct_of_ftp != null && <div>% FTP: <b className="text-slate-700 dark:text-slate-200">{eff.pct_of_ftp}%</b></div>}
                     {eff.pacing_index != null && <div>Pacing: <b className="text-slate-700 dark:text-slate-200">{eff.pacing_index}%</b></div>}
                     {eff.dropoff_pct != null && <div>Drop-off: <b className="text-slate-700 dark:text-slate-200">{eff.dropoff_pct}%</b></div>}
