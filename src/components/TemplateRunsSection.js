@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getAuthHeader, supabase } from '../lib/supabase'
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import TemplateCreatorModal from './TemplateCreatorModal'
 
 const RUN_COLORS = ['#f59e0b', '#38bdf8', '#d946ef', '#34d399', '#f87171', '#a78bfa']
@@ -67,6 +68,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
   const [hiddenIds, setHiddenIds] = useState(() => new Set())
   const [expandedIds, setExpandedIds] = useState(() => new Set())
   const [tab, setTab] = useState('runs')
+  const [compareMetric, setCompareMetric] = useState('')
   const [compareTemplateId, setCompareTemplateId] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [pickedTemplateId, setPickedTemplateId] = useState('')
@@ -326,8 +328,37 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
             const rows = historyBySlug[compareTemplate.slug] || []
             const keys = [...new Set(rows.flatMap((r) => Object.keys(r.summary || {})))].slice(0, 5)
             if (rows.length === 0) return <p className="text-[11px] text-slate-400">No runs of this template yet.</p>
+            const metric = keys.includes(compareMetric) ? compareMetric : keys[0]
+            const chartData = [...rows].reverse().map((r) => ({
+              label: formatDate(r.activities?.activity_date) || '—',
+              value: typeof r.summary?.[metric] === 'number' ? Math.round(r.summary[metric] * 10) / 10 : null,
+              current: r.activity_id === activityId,
+            }))
             return (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto space-y-3">
+                {metric && (
+                  <div className="space-y-1">
+                    <select
+                      value={metric}
+                      onChange={(e) => setCompareMetric(e.target.value)}
+                      className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1.5 text-[11px] text-slate-900 dark:text-white font-semibold"
+                    >
+                      {keys.map((k) => <option key={k} value={k}>{k.replace(/_/g, ' ')}</option>)}
+                    </select>
+                    <div className="h-28">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                          <XAxis dataKey="label" tick={{ fontSize: 9 }} />
+                          <YAxis width={36} tick={{ fontSize: 9 }} domain={['auto', 'auto']} />
+                          <Tooltip />
+                          <Bar dataKey="value" name={metric.replace(/_/g, ' ')} radius={[4, 4, 0, 0]}>
+                            {chartData.map((d, i) => <Cell key={i} fill={d.current ? '#f97316' : '#94a3b8'} />)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
                 <table className="w-full text-[11px]">
                   <thead className="text-slate-400 text-left uppercase text-[9px]">
                     <tr>
