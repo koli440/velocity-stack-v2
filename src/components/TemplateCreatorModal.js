@@ -8,35 +8,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAuthHeader } from '../lib/supabase'
 import { parseIntervalDsl } from '../lib/intervalDsl'
+import { DSL_GUIDE_PATH } from '../lib/dslGuide'
 
 const CATEGORIES = ['road', 'track', 'gym']
-
-const DSL_EXAMPLES = [
-  {
-    title: 'Repeated VO2max intervals (%FTP-banded)',
-    dsl: '4x\nwork 3min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP',
-  },
-  {
-    title: 'Decisive climb / final sprint (one-shot, no FTP needed)',
-    dsl: '1x\nwork 5min ±40% @ best',
-  },
-  {
-    title: 'Threshold block (%FTP band)',
-    dsl: '1x\nwork 20min ±15% @ 95-105%FTP',
-  },
-  {
-    title: 'Absolute watts (no FTP set)',
-    dsl: '5x\nwork 30sec ±20% @ 250-300W\nrecovery 90sec ±50% @ <150W',
-  },
-  {
-    title: 'Pursuit pacing: best power over 4 x 1km',
-    dsl: '4x\nwork 1km ±5% @ best power\nrecovery 2min ±50% @ <55%FTP',
-  },
-  {
-    title: 'Flying 200: best speed over a single 200m',
-    dsl: '1x\nwork 200m ±10% @ best speed',
-  },
-]
 
 function formatBandLabel(step) {
   if (step.bandType === 'best') return `best ${step.bestMetric || 'power'} effort`
@@ -69,7 +43,6 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
   const [category, setCategory] = useState('road')
   const [visibility, setVisibility] = useState('private')
   const [dslSource, setDslSource] = useState('4x\nwork 3min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP')
-  const [showGuide, setShowGuide] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
 
@@ -244,42 +217,14 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
         )}
 
         <div className="border-t border-slate-100 dark:border-slate-800/60 pt-3">
-          <button
-            type="button"
-            onClick={() => setShowGuide((v) => !v)}
+          <a
+            href={DSL_GUIDE_PATH}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-[11px] font-black uppercase tracking-wider text-orange-500"
           >
-            {showGuide ? '▾' : '▸'} DSL Syntax Guide
-          </button>
-
-          {showGuide && (
-            <div className="mt-2 space-y-3 text-[11px] text-slate-500 dark:text-slate-400">
-              <p>
-                Line 1 is a repeat count (e.g. <code>4x</code>, or <code>1x</code> for a one-shot pattern). Each
-                following line is a step: <code>work|recovery &lt;value&gt;min|sec|km|m ±&lt;tolerance&gt;% @ &lt;band&gt;</code>.
-                A band is a %FTP range/bound (<code>90-110%FTP</code>, <code>&lt;55%FTP</code>, <code>&gt;80%FTP</code>),
-                an absolute watts or km/h range/bound (same syntax with <code>W</code> or <code>km/h</code>), or
-                <code>best</code>/<code>max</code> to locate the single highest-average window of that duration with no
-                threshold at all.
-              </p>
-              <p>
-                Use <code>km</code>/<code>m</code> instead of <code>min</code>/<code>sec</code> to find the best
-                interval for a given <strong>distance</strong> rather than duration — e.g. the best 4km Individual
-                Pursuit pace or the best 200m Flying Sprint. Because a distance-keyed window has no inherent
-                power-vs-speed preference, <code>best</code>/<code>max</code> requires the metric to be spelled out
-                on those steps: <code>best power</code> or <code>best speed</code>. Duration-keyed steps keep the
-                bare <code>best</code>/<code>max</code> (defaulting to power) for older templates.
-              </p>
-              <div className="space-y-2">
-                {DSL_EXAMPLES.map((ex) => (
-                  <div key={ex.title} className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-2.5">
-                    <div className="font-bold text-slate-700 dark:text-slate-200 mb-1">{ex.title}</div>
-                    <pre className="whitespace-pre-wrap font-mono text-[10px]">{ex.dsl}</pre>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            📐 DSL Syntax Guide ↗
+          </a>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
