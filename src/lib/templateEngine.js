@@ -199,13 +199,14 @@ function evaluateStandingStart(template, timeSeries, detection) {
 }
 
 /**
- * User-authorable "custom_intervals" pattern (issue #14): a manifest compiled
- * from a user's interval DSL (src/lib/intervalDsl.js) rather than a fixed
- * track-cycling discipline. Reuses the same avg/max/pacingIndex/dropoffPct
- * helpers as the other evaluators above.
+ * User-authorable "custom_intervals" pattern (issue #14, distance-keyed steps
+ * added in #43): a manifest compiled from a user's interval DSL
+ * (src/lib/intervalDsl.js) rather than a fixed track-cycling discipline.
+ * Reuses the same avg/max/pacingIndex/dropoffPct helpers as the other
+ * evaluators above.
  */
 function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW) {
-  const { watts = [] } = timeSeries
+  const { watts = [], speed = [] } = timeSeries
   const manifest = template.manifest || {}
   const repsTarget = manifest.repeat_count || null
 
@@ -223,12 +224,17 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
     repEfforts.map((e) => ({
       ...e,
       rep: repIdx + 1,
-      pacing_index: pacingIndex(watts, e.start_sec, e.end_sec),
+      // Pace against whichever stream the effort was actually measured on
+      // (distance-keyed "best speed" steps have no avg_power at all).
+      pacing_index: pacingIndex(e.avg_power != null ? watts : speed, e.start_sec, e.end_sec),
     }))
   )
 
   const workEfforts = efforts.filter((e) => e.role === 'work')
+  const workPowers = workEfforts.map((e) => e.avg_power).filter((p) => typeof p === 'number')
+  const workSpeeds = workEfforts.map((e) => e.avg_speed_kmh).filter((s) => typeof s === 'number')
   const dropoff = dropoffPct(workEfforts.map((e) => e.avg_power))
+  const isDistanceKeyed = workEfforts.some((e) => e.target_distance_m != null)
 
   return {
     efforts,
@@ -236,7 +242,13 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
       reps_detected: reps.length,
       reps_target: repsTarget,
       dropoff_pct: dropoff,
-      avg_power: workEfforts.length ? Math.round(avg(workEfforts.map((e) => e.avg_power))) : null,
+      avg_power: workPowers.length ? Math.round(avg(workPowers)) : null,
+      ...(isDistanceKeyed
+        ? {
+            target_distance_m: workEfforts[0]?.target_distance_m ?? null,
+            avg_speed_kmh: workSpeeds.length ? Math.round(avg(workSpeeds) * 10) / 10 : null,
+          }
+        : {}),
     },
   }
 }

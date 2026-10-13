@@ -68,3 +68,70 @@ test('evaluateTemplate (custom_intervals): watts band works without an ftpAtActi
   assert.equal(result.summary.reps_detected, 2)
   assert.equal(result.efforts.every((e) => e.pct_of_ftp === undefined), true)
 })
+
+// --- Distance-keyed steps (issue #43) --------------------------------------
+
+function repeatSpeed(value, count) {
+  return new Array(count).fill(value)
+}
+
+test('evaluateTemplate (custom_intervals): distance-keyed "best power" surfaces distance/speed summary fields', () => {
+  // 20s warmup + 100s @ 36km/h (10m/s -> 1000m) @ 300W + 20s cooldown.
+  const timeSeries = {
+    watts: [...repeatWatts(100, 20), ...repeatWatts(300, 100), ...repeatWatts(100, 20)],
+    speed: [...repeatSpeed(5, 20), ...repeatSpeed(36, 100), ...repeatSpeed(5, 20)],
+  }
+  const template = {
+    slug: 'tpl_pursuit_test',
+    manifest: {
+      pattern: 'custom_intervals',
+      repeat_count: 1,
+      steps: [
+        {
+          role: 'work',
+          keyBy: 'distance',
+          targetDistanceM: 1000,
+          durationTolerancePct: 10,
+          bandType: 'best',
+          bestMetric: 'power',
+        },
+      ],
+    },
+  }
+
+  const result = evaluateTemplate(template, timeSeries, null)
+  assert.equal(result.summary.reps_detected, 1)
+  assert.equal(result.summary.target_distance_m, 1000)
+  assert.ok(result.summary.avg_speed_kmh >= 32 && result.summary.avg_speed_kmh <= 40)
+  assert.equal(result.summary.avg_power, 300)
+
+  const effort = result.efforts[0]
+  assert.equal(effort.target_distance_m, 1000)
+  assert.ok(effort.distance_m >= 900 && effort.distance_m <= 1100)
+  assert.equal(typeof effort.estimated_time_sec, 'number')
+})
+
+test('evaluateTemplate (custom_intervals): distance-keyed step reports no match without a speed stream', () => {
+  const timeSeries = { watts: [...repeatWatts(100, 20), ...repeatWatts(300, 100), ...repeatWatts(100, 20)] }
+  const template = {
+    slug: 'tpl_pursuit_no_speed',
+    manifest: {
+      pattern: 'custom_intervals',
+      repeat_count: 1,
+      steps: [
+        {
+          role: 'work',
+          keyBy: 'distance',
+          targetDistanceM: 1000,
+          durationTolerancePct: 10,
+          bandType: 'best',
+          bestMetric: 'power',
+        },
+      ],
+    },
+  }
+
+  const result = evaluateTemplate(template, timeSeries, null)
+  assert.equal(result.efforts.length, 0)
+  assert.equal(result.summary.reps_detected, 0)
+})

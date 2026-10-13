@@ -158,3 +158,111 @@ test('detectCustomIntervalSequence: pct_ftp band vs watts band behave independen
   })
   assert.equal(pctFtpResult.efforts.length, 0)
 })
+
+// --- Distance-keyed steps (issue #43) --------------------------------------
+//
+// speed is per-second km/h; distance is derived by integrating speed/3.6.
+// 36 km/h == 10 m/s, so a 90s window at constant 36 km/h covers exactly 900m.
+
+function repeatSpeed(value, count) {
+  return new Array(count).fill(value)
+}
+
+// 20s warmup (5km/h, 100W) + 100s work plateau (36km/h, 300W) + 20s cooldown (5km/h, 100W).
+// The 100s plateau covers 1000m at a constant 10 m/s.
+function buildDistancePlateauStream() {
+  return {
+    watts: [...repeatWatts(100, 20), ...repeatWatts(300, 100), ...repeatWatts(100, 20)],
+    speed: [...repeatSpeed(5, 20), ...repeatSpeed(36, 100), ...repeatSpeed(5, 20)],
+  }
+}
+
+test('detectCustomIntervalSequence (distance-keyed): "best power" locates the highest-power ~1km window', () => {
+  const { watts, speed } = buildDistancePlateauStream()
+  const step = {
+    role: 'work',
+    keyBy: 'distance',
+    targetDistanceM: 1000,
+    durationTolerancePct: 10,
+    bandType: 'best',
+    bestMetric: 'power',
+  }
+
+  const result = detectCustomIntervalSequence({ watts, speed, steps: [step], repeatCount: 1, ftpAtActivityW: null })
+  assert.equal(result.efforts.length, 1)
+  const effort = result.efforts[0]
+  assert.equal(effort.band_type, 'best')
+  assert.equal(effort.best_metric, 'power')
+  assert.equal(effort.avg_power, 300) // the full 300W plateau is the unique max
+  assert.equal(effort.target_distance_m, 1000)
+  // 10% tolerance -> acceptable distance range is 900-1100m.
+  assert.ok(effort.distance_m >= 900 && effort.distance_m <= 1100, `distance_m ${effort.distance_m} in tolerance`)
+  assert.ok(effort.avg_speed_kmh >= 32 && effort.avg_speed_kmh <= 40)
+})
+
+test('detectCustomIntervalSequence (distance-keyed): "best speed" picks the faster of two equal-distance windows', () => {
+  // Two back-to-back ~1km windows: first slower (30km/h), second faster (45km/h).
+  const watts = [...repeatWatts(100, 10), ...repeatWatts(250, 120), ...repeatWatts(250, 80), ...repeatWatts(100, 10)]
+  const speed = [...repeatSpeed(5, 10), ...repeatSpeed(30, 120), ...repeatSpeed(45, 80), ...repeatSpeed(5, 10)]
+  const step = {
+    role: 'work',
+    keyBy: 'distance',
+    targetDistanceM: 1000,
+    durationTolerancePct: 10,
+    bandType: 'best',
+    bestMetric: 'speed',
+  }
+
+  const result = detectCustomIntervalSequence({ watts, speed, steps: [step], repeatCount: 1, ftpAtActivityW: null })
+  assert.equal(result.efforts.length, 1)
+  const effort = result.efforts[0]
+  // The 45km/h segment is fully inside the faster plateau (starts at sec 10+120=130).
+  assert.ok(effort.start_sec >= 130, `expected the faster plateau, start_sec=${effort.start_sec}`)
+  assert.ok(effort.avg_speed_kmh >= 40)
+})
+
+test('detectCustomIntervalSequence (distance-keyed): pct_ftp threshold band matches a window inside tolerance', () => {
+  const { watts, speed } = buildDistancePlateauStream()
+  const step = {
+    role: 'work',
+    keyBy: 'distance',
+    targetDistanceM: 1000,
+    durationTolerancePct: 10,
+    bandType: 'pct_ftp',
+    powerMin: 90,
+    powerMax: 110,
+  }
+
+  const result = detectCustomIntervalSequence({ watts, speed, steps: [step], repeatCount: 1, ftpAtActivityW: 300 })
+  assert.equal(result.efforts.length, 1)
+  const effort = result.efforts[0]
+  assert.ok(effort.pct_of_ftp >= 90 && effort.pct_of_ftp <= 110)
+  assert.ok(effort.distance_m >= 900 && effort.distance_m <= 1100)
+})
+
+test('detectCustomIntervalSequence (distance-keyed): fails gracefully with no speed stream', () => {
+  const { watts } = buildDistancePlateauStream()
+  const step = {
+    role: 'work',
+    keyBy: 'distance',
+    targetDistanceM: 1000,
+    durationTolerancePct: 10,
+    bandType: 'best',
+    bestMetric: 'power',
+  }
+
+  const result = detectCustomIntervalSequence({ watts, speed: [], steps: [step], repeatCount: 1, ftpAtActivityW: null })
+  assert.equal(result.efforts.length, 0)
+  assert.ok(/speed stream/i.test(result.message))
+
+  // An all-zero speed stream (e.g. a track bike with no speed sensor) behaves the same way.
+  const resultZeroSpeed = detectCustomIntervalSequence({
+    watts,
+    speed: new Array(watts.length).fill(0),
+    steps: [step],
+    repeatCount: 1,
+    ftpAtActivityW: null,
+  })
+  assert.equal(resultZeroSpeed.efforts.length, 0)
+  assert.ok(/speed stream/i.test(resultZeroSpeed.message))
+})

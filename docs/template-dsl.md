@@ -27,15 +27,17 @@ recovery <value><unit> ±<tolerance>% @ <band>
 - **Step lines**: one `work` line, and optionally one `recovery` line (omit it entirely
   for one-shot patterns).
   - `<role>` — `work` or `recovery`.
-  - `<value><unit>` — target duration, `unit` is `min` or `sec` (e.g. `3min`, `30sec`).
-  - `±<tolerance>%` — a percentage tolerance applied to the target duration to get an
-    acceptable duration *range*. E.g. `3min ±30%` → the detector accepts windows between
-    `126s` and `234s`.
-  - `@ <band>` — the power band the window's average power must satisfy (see below).
+  - `<value><unit>` — the target window size. `unit` is either a duration (`min`/`sec`,
+    e.g. `3min`, `30sec`) or a **distance** (`km`/`m`, e.g. `4km`, `200m`) — see
+    [Distance-keyed steps](#distance-keyed-steps) below.
+  - `±<tolerance>%` — a percentage tolerance applied to the target value to get an
+    acceptable range. E.g. `3min ±30%` → the detector accepts windows between `126s` and
+    `234s`; `4km ±5%` → windows covering between `3.8km` and `4.2km`.
+  - `@ <band>` — the power (or speed) band the window must satisfy (see below).
 
 ### Power bands
 
-There are three kinds of band:
+There are four kinds of band:
 
 1. **Relative `%FTP` band** — evaluated against the *activity's own* FTP snapshot
    (`ftp_at_activity_w`), never the athlete's current/live FTP, so matching stays
@@ -49,32 +51,71 @@ There are three kinds of band:
    - Range: `250-300W`
    - Max only: `<150W`
    - Min only: `>280W`
-3. **`best` / `max` keyword** — no numeric threshold at all. Instead of checking against
-   a power band, the detector locates the single highest-average-power window of
-   approximately that duration (within the duration tolerance) in the stream. This is
-   the right choice for structural, non-repeatable efforts (a decisive climb, a final
-   sprint) or for comparing the "same" workout years apart without FTP drift getting in
-   the way.
+3. **Speed band** — same range/min/max syntax, suffixed `km/h`. Useful for sprint/speed
+   work where power isn't the point.
+   - Range: `40-50km/h`
+   - Max only: `<35km/h`
+   - Min only: `>45km/h`
+4. **`best` / `max` keyword** — no numeric threshold at all. Instead of checking against
+   a band, the detector locates the single highest-average window of approximately that
+   size (duration or distance) in the stream. This is the right choice for structural,
+   non-repeatable efforts (a decisive climb, a final sprint, a pursuit pacing block) or
+   for comparing the "same" workout years apart without FTP drift getting in the way.
+   On a **duration-keyed** step, bare `best`/`max` defaults to optimising average
+   **power** (unchanged, for backward compatibility with templates saved before distance
+   keying existed). On a **distance-keyed** step the metric must be spelled out
+   explicitly, since there's no default: `best power` or `best speed`.
+
+### Distance-keyed steps
+
+Instead of a duration unit, a step can use `km` or `m` to search for the best interval
+over a target **distance** rather than a target time — e.g. "find my best pace over a
+4km Individual Pursuit" or "find my best 200m flying sprint speed", regardless of how
+long that distance actually took on the day. Distance is derived by integrating the
+activity's per-second speed stream (`velocity_smooth`, where available), so distance-keyed
+steps only work on activities that have a speed stream — if one isn't available, the
+step reports no match rather than throwing.
+
+```
+4x
+work 1km ±5% @ best power
+recovery 2min ±50% @ <55%FTP
+
+1x
+work 200m ±10% @ best speed
+```
+
+Duration-keyed and distance-keyed steps can be mixed within the same template (e.g. a
+distance-keyed `work` step with a duration-keyed `recovery` step, as above).
 
 ### Validation rules
 
 - `repeatCount >= 1`.
-- Duration must be `> 0`.
+- Duration (or distance) must be `> 0`.
 - Tolerance must be between `0` and `100` (percent).
 - At least one `work` step is required.
-- For `%FTP`/`W` bands, bounds must be `>= 0`, and when both a min and max are given,
-  `min < max`.
+- For `%FTP`/`W`/`km/h` bands, bounds must be `>= 0`, and when both a min and max are
+  given, `min < max`.
+- A distance-keyed step's `best`/`max` band must specify a metric (`best power` or
+  `best speed`); a bare `best`/`max` on a distance-keyed step is a validation error.
 - Unrecognized band syntax produces a parse error tagged with the offending line number.
 
 ### Matching semantics (detection)
 
+
 - The detector scans the power stream cyclically (work, then recovery if present, then
-  back to work) looking for windows that satisfy each step's duration range and power
-  band, up to `repeatCount` times.
+  back to work) looking for windows that satisfy each step's duration (or distance)
+  range and band, up to `repeatCount` times.
 - It does **not** require finding the full configured `repeatCount` to produce a result:
   it reports however many complete work(+recovery) cycles were actually found
   (`reps_detected`), alongside the configured target (`reps_target`), so a partial match
   (e.g. "3 of 4 reps") is a valid, useful result rather than a failure.
+- For a **distance-keyed** step, the detector instead searches windows whose cumulative
+  distance (integrated from the activity's speed stream) falls within the target
+  distance's tolerance range, and picks the window with the best `best power`/
+  `best speed` metric (or the band match, for `%FTP`/`W`/`km/h` bands) among those.
+  Resulting efforts additionally report `target_distance_m`, `distance_m`, and
+  `estimated_time_sec` (how long that distance actually took).
 
 ## Worked examples
 
@@ -122,6 +163,31 @@ recovery 90sec ±50% @ <150W
 For an athlete without an FTP configured (or where absolute power is simply more
 meaningful), this looks for up to five ~30-second efforts at 250–300W, each followed by
 ~90 seconds of recovery below 150W.
+
+### 5. Individual Pursuit pacing (4 x 1km, best power)
+
+```
+4x
+work 1km ±5% @ best power
+recovery 2min ±50% @ <55%FTP
+```
+
+Looks for up to four ~1km (0.95–1.05km) work windows, each scored by its highest average
+power, interleaved with ~2 minute recoveries below 55% FTP. Useful for comparing lap
+pacing across a 4km Individual Pursuit-style effort — each rep's `avg_power`,
+`avg_speed_kmh`, and `estimated_time_sec` are reported individually so splits can be
+compared rep-to-rep.
+
+### 6. Flying 200 (one-shot, best speed)
+
+```
+1x
+work 200m ±10% @ best speed
+```
+
+A single pass, no recovery step: finds the single fastest ~200m window (180–220m) by
+average speed anywhere in the ride — a flying-200-style effort where speed, not power,
+is what matters.
 
 ## Round-tripping
 

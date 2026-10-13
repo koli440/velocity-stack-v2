@@ -28,11 +28,19 @@ const DSL_EXAMPLES = [
     title: 'Absolute watts (no FTP set)',
     dsl: '5x\nwork 30sec ±20% @ 250-300W\nrecovery 90sec ±50% @ <150W',
   },
+  {
+    title: 'Pursuit pacing: best power over 4 x 1km',
+    dsl: '4x\nwork 1km ±5% @ best power\nrecovery 2min ±50% @ <55%FTP',
+  },
+  {
+    title: 'Flying 200: best speed over a single 200m',
+    dsl: '1x\nwork 200m ±10% @ best speed',
+  },
 ]
 
 function formatBandLabel(step) {
-  if (step.bandType === 'best') return 'best effort'
-  const suffix = step.bandType === 'watts' ? 'W' : '% FTP'
+  if (step.bandType === 'best') return `best ${step.bestMetric || 'power'} effort`
+  const suffix = step.bandType === 'watts' ? 'W' : step.bandType === 'speed_kmh' ? 'km/h' : '% FTP'
   if (step.powerMin != null && step.powerMax != null) return `${step.powerMin}-${step.powerMax}${suffix}`
   if (step.powerMax != null) return `<${step.powerMax}${suffix}`
   if (step.powerMin != null) return `>${step.powerMin}${suffix}`
@@ -44,6 +52,15 @@ function formatDurationLabel(sec) {
   const m = Math.floor(sec / 60)
   const s = sec % 60
   return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${sec}s`
+}
+
+function formatDistanceLabel(m) {
+  if (m % 1000 === 0 && m >= 1000) return `${m / 1000}km`
+  return `${m}m`
+}
+
+function formatValueLabel(step) {
+  return step.keyBy === 'distance' ? formatDistanceLabel(step.targetDistanceM) : formatDurationLabel(step.targetDurationSec)
 }
 
 export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editingTemplate = null }) {
@@ -210,7 +227,7 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
               {parsed.steps
                 .map(
                   (s) =>
-                    `${s.role === 'work' ? 'Work' : 'Recovery'} ${formatDurationLabel(s.targetDurationSec)} ±${
+                    `${s.role === 'work' ? 'Work' : 'Recovery'} ${formatValueLabel(s)} ±${
                       s.durationTolerancePct
                     }% @ ${formatBandLabel(s)}`
                 )
@@ -239,10 +256,19 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
             <div className="mt-2 space-y-3 text-[11px] text-slate-500 dark:text-slate-400">
               <p>
                 Line 1 is a repeat count (e.g. <code>4x</code>, or <code>1x</code> for a one-shot pattern). Each
-                following line is a step: <code>work|recovery &lt;value&gt;min|sec ±&lt;tolerance&gt;% @ &lt;band&gt;</code>.
+                following line is a step: <code>work|recovery &lt;value&gt;min|sec|km|m ±&lt;tolerance&gt;% @ &lt;band&gt;</code>.
                 A band is a %FTP range/bound (<code>90-110%FTP</code>, <code>&lt;55%FTP</code>, <code>&gt;80%FTP</code>),
-                an absolute watts range/bound (same syntax with <code>W</code>), or <code>best</code>/<code>max</code> to
-                locate the single highest-average-power window of that duration with no threshold at all.
+                an absolute watts or km/h range/bound (same syntax with <code>W</code> or <code>km/h</code>), or
+                <code>best</code>/<code>max</code> to locate the single highest-average window of that duration with no
+                threshold at all.
+              </p>
+              <p>
+                Use <code>km</code>/<code>m</code> instead of <code>min</code>/<code>sec</code> to find the best
+                interval for a given <strong>distance</strong> rather than duration — e.g. the best 4km Individual
+                Pursuit pace or the best 200m Flying Sprint. Because a distance-keyed window has no inherent
+                power-vs-speed preference, <code>best</code>/<code>max</code> requires the metric to be spelled out
+                on those steps: <code>best power</code> or <code>best speed</code>. Duration-keyed steps keep the
+                bare <code>best</code>/<code>max</code> (defaulting to power) for older templates.
               </p>
               <div className="space-y-2">
                 {DSL_EXAMPLES.map((ex) => (
