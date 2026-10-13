@@ -8,6 +8,7 @@ import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activi
 import { syncFeedData } from '../lib/feedSync'
 import { fetchFollowingFeedPage, setActivityVisibility } from '../lib/social'
 import FollowPanel from './FollowPanel'
+import { fetchCoverPhotos, removeActivityPhotoFiles } from '../lib/activityPhotos'
 import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
@@ -34,6 +35,20 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const [followingActivities, setFollowingActivities] = useState([])
   const [hasMoreFollowing, setHasMoreFollowing] = useState(false)
   const [isLoadingFollowing, setIsLoadingFollowing] = useState(false)
+  const [coverPhotos, setCoverPhotos] = useState(new Map())
+
+  // Signed cover-photo URLs for everything currently shown (one query + one signing call).
+  useEffect(() => {
+    const ids = [...activities, ...followingActivities].map((a) => a.id)
+    if (!ids.length) return
+    let cancelled = false
+    fetchCoverPhotos(supabase, ids).then(({ covers, error }) => {
+      if (!cancelled && !error) setCoverPhotos(covers)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [activities, followingActivities])
 
   const reloadFollowingFeed = async (userId) => {
     const targetId = userId || user?.id
@@ -140,6 +155,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     )
     if (!confirmed) return
 
+    await removeActivityPhotoFiles(supabase, activity.id).catch(() => {})
     const { error } = await deleteActivity(supabase, activity)
     if (error) {
       alert('Error while deleting activity: ' + error.message)
@@ -201,6 +217,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
             onAddWorkout={() => setIsWorkoutModalOpen(true)}
             onDeleteActivity={handleDeleteActivity}
             onChangeVisibility={handleChangeVisibility}
+            coverPhotos={coverPhotos}
             hasMore={hasMoreActivities}
             isLoadingMore={isLoadingMore}
             onLoadMore={loadMoreActivities}
@@ -209,6 +226,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           <ActivityFeed
             title="Following"
             isOwnFeed={false}
+            coverPhotos={coverPhotos}
             activities={followingActivities}
             hasMore={hasMoreFollowing}
             isLoadingMore={isLoadingFollowing}
