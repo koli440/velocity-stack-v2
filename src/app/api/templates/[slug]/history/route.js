@@ -29,7 +29,7 @@ export async function GET(req, { params }) {
       .eq('template_id', template.id)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(25)
+      .limit(1000)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })

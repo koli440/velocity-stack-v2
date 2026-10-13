@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { computeBaselines } from '../lib/templateBaselines'
 import TemplateCreatorModal from './TemplateCreatorModal'
 
 const RUN_COLORS = ['#f59e0b', '#38bdf8', '#d946ef', '#34d399', '#f87171', '#a78bfa']
@@ -17,13 +18,13 @@ function formatDate(value) {
   return value ? new Date(value).toLocaleDateString('cs-CZ') : ''
 }
 
-function DeltaBadge({ current, previous }) {
+function DeltaBadge({ current, previous, label }) {
   if (typeof current !== 'number' || typeof previous !== 'number') return null
   const diff = Math.round((current - previous) * 10) / 10
   if (diff === 0) return null
   return (
     <span className={`ml-1 text-[10px] font-bold ${diff > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-      {diff > 0 ? '▲' : '▼'} {Math.abs(diff)}
+      {label ? `${label} ` : ''}{diff > 0 ? '▲' : '▼'} {Math.abs(diff)}
     </span>
   )
 }
@@ -135,10 +136,8 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
       return next
     })
 
-  const previousRunFor = (run) => {
-    const history = historyBySlug[run.analysis_templates?.slug] || []
-    return history.find((h) => h.activity_id !== activityId && new Date(h.created_at) <= new Date(run.updated_at))
-  }
+  const baselinesFor = (run) =>
+    computeBaselines(historyBySlug[run.analysis_templates?.slug] || [], { activityId, runAt: run.updated_at })
 
   const runTemplate = async (templateId, { hide = false } = {}) => {
     setRunning(true)
@@ -249,7 +248,8 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
             </p>
           )}
           {runs.map((run) => {
-            const prev = previousRunFor(run)
+            const baselines = baselinesFor(run)
+            const prev = baselines.previous
             const expanded = expandedIds.has(run.id)
             const entries = Object.entries(run.summary || {}).slice(0, 4)
             const hasEfforts = Array.isArray(run.efforts) && run.efforts.length > 0
@@ -290,7 +290,9 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
                       <div className="text-[8px] uppercase font-bold text-slate-400">{key.replace(/_/g, ' ')}</div>
                       <div className="text-xs font-black text-orange-500">
                         {formatMetric(value)}
-                        <DeltaBadge current={value} previous={prev?.summary?.[key]} />
+                        <DeltaBadge current={value} previous={prev?.summary?.[key]} label="prev" />
+                        <DeltaBadge current={value} previous={baselines.allTime.summary[key]} label="all-time" />
+                        <DeltaBadge current={value} previous={baselines.last90.summary[key]} label="90d" />
                       </div>
                     </div>
                   ))}
@@ -298,7 +300,8 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
 
                 {prev && (
                   <div className="text-[10px] text-slate-400">
-                    Δ vs previous run of this template ({prev.activities?.title || 'Session'}, {formatDate(prev.activities?.activity_date)})
+                    Δ vs previous run ({prev.activities?.title || 'Session'}, {formatDate(prev.activities?.activity_date)}),
+                    all-time average ({baselines.allTime.count} runs), 90-day average ({baselines.last90.count} runs)
                   </div>
                 )}
 
