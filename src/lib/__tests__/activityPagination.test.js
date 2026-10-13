@@ -94,3 +94,12 @@ test('fetchActivitiesPage surfaces query errors without throwing', async () => {
   assert.equal(result.hasMore, false)
   assert.equal(result.error.message, 'db exploded')
 })
+
+import { FEED_ACTIVITY_COLUMNS } from '../activityPagination.js'
+
+test('feed columns skip heavy blobs but include persisted preview + badges', () => {
+  assert.ok(!/time_series|curves_data/.test(FEED_ACTIVITY_COLUMNS))
+  for (const col of ['route_preview', 'badges', 'visibility', 'raw_file_url']) {
+    assert.ok(FEED_ACTIVITY_COLUMNS.includes(col), col)
+  }
+})

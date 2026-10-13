@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { deleteActivity } from '../lib/activityActions'
-import { fetchActivitiesPage, fetchBadgeHistory, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
-import { computeActivityBadges } from '../lib/activityBadges'
+import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
+import { syncFeedData } from '../lib/feedSync'
+import { fetchFollowingFeedPage, setActivityVisibility } from '../lib/social'
+import FollowPanel from './FollowPanel'
 import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
@@ -27,13 +29,43 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     initialActivities.length === DEFAULT_ACTIVITIES_PAGE_SIZE
   )
   const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [badgesById, setBadgesById] = useState(null)
+  // Feed scope: own sessions or sessions shared by followed riders (issue #49).
+  const [scope, setScope] = useState('mine')
+  const [followingActivities, setFollowingActivities] = useState([])
+  const [hasMoreFollowing, setHasMoreFollowing] = useState(false)
+  const [isLoadingFollowing, setIsLoadingFollowing] = useState(false)
 
-  // Badges are computed from a lightweight metric-only history, so they stay consistent
-  // however many feed pages are loaded.
-  const reloadBadges = async (userId) => {
-    const { activities: history, personalBests, error } = await fetchBadgeHistory(supabase, { userId })
-    if (!error) setBadgesById(computeActivityBadges(history, personalBests))
+  const reloadFollowingFeed = async (userId) => {
+    const targetId = userId || user?.id
+    if (!targetId) return
+    setIsLoadingFollowing(true)
+    const { data, hasMore, error } = await fetchFollowingFeedPage(supabase, { userId: targetId, page: 0 })
+    if (!error) {
+      setFollowingActivities(data)
+      setHasMoreFollowing(hasMore)
+    }
+    setIsLoadingFollowing(false)
+  }
+
+  const loadMoreFollowing = async () => {
+    if (!user?.id || isLoadingFollowing || !hasMoreFollowing) return
+    setIsLoadingFollowing(true)
+    const page = Math.floor(followingActivities.length / DEFAULT_ACTIVITIES_PAGE_SIZE)
+    const { data, hasMore, error } = await fetchFollowingFeedPage(supabase, { userId: user.id, page })
+    if (!error) {
+      setFollowingActivities((prev) => [...prev, ...data])
+      setHasMoreFollowing(hasMore)
+    }
+    setIsLoadingFollowing(false)
+  }
+
+  const handleChangeVisibility = async (activity, visibility) => {
+    const { error } = await setActivityVisibility(supabase, { activityId: activity.id, visibility })
+    if (error) {
+      alert('Could not change visibility: ' + error.message)
+      return
+    }
+    setActivities((prev) => prev.map((a) => (a.id === activity.id ? { ...a, visibility } : a)))
   }
 
   // Resets back to the first page, e.g. after login or a sync/import.
@@ -45,6 +77,9 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
       return
     }
 
+    // Persist route previews + badges for anything new before reading the feed back.
+    await syncFeedData(supabase, targetId).catch((err) => console.warn('Feed sync failed:', err))
+
     const { data, hasMore, error } = await fetchActivitiesPage(supabase, {
       userId: targetId,
       page: 0,
@@ -53,7 +88,6 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     if (!error) {
       setActivities(data)
       setHasMoreActivities(hasMore)
-      reloadBadges(targetId)
     }
   }
 
@@ -113,6 +147,8 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     }
 
     setActivities((prev) => prev.filter((a) => a.id !== activity.id))
+    // Deleting changes records/milestones of later sessions.
+    if (user?.id) syncFeedData(supabase, user.id).then(() => reloadActivities(user.id))
   }
 
   const latestActivity = activities[0] || null
@@ -133,16 +169,57 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         {/* Telemetry tiles */}
         <TelemetryCards lastActivity={latestActivity} />
 
-        {/* Activity list */}
-        <ActivityFeed
-          activities={activities}
-          badgesById={badgesById}
-          onAddWorkout={() => setIsWorkoutModalOpen(true)}
-          onDeleteActivity={handleDeleteActivity}
-          hasMore={hasMoreActivities}
-          isLoadingMore={isLoadingMore}
-          onLoadMore={loadMoreActivities}
-        />
+        {/* Feed scope */}
+        <div className="flex gap-2" role="tablist" aria-label="Feed scope">
+          {[
+            ['mine', 'My sessions'],
+            ['following', 'Following'],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={scope === value}
+              onClick={() => {
+                setScope(value)
+                if (value === 'following') reloadFollowingFeed()
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                scope === value
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'border-slate-200 dark:border-slate-800 text-slate-500'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {scope === 'mine' ? (
+          <ActivityFeed
+            activities={activities}
+            onAddWorkout={() => setIsWorkoutModalOpen(true)}
+            onDeleteActivity={handleDeleteActivity}
+            onChangeVisibility={handleChangeVisibility}
+            hasMore={hasMoreActivities}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={loadMoreActivities}
+          />
+        ) : (
+          <ActivityFeed
+            title="Following"
+            isOwnFeed={false}
+            activities={followingActivities}
+            hasMore={hasMoreFollowing}
+            isLoadingMore={isLoadingFollowing}
+            onLoadMore={loadMoreFollowing}
+            emptyMessage={
+              isLoadingFollowing
+                ? 'Loading…'
+                : 'Nothing here yet. Follow riders in the Riders panel to see the sessions they share.'
+            }
+          />
+        )}
       </div>
 
       {/* Right panel */}
@@ -188,6 +265,8 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         >
           <span>🧪</span> Aero Lab
         </button>
+
+        <FollowPanel userId={user?.id} onChanged={() => scope === 'following' && reloadFollowingFeed()} />
 
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>

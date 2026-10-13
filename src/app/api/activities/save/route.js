@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
+import { buildFeedPreview } from '../../../../lib/routePreview'
 
 export async function POST(req) {
   try {
@@ -43,6 +44,7 @@ export async function POST(req) {
         peak_torque_nm: summary?.peak_torque_nm ?? null,
         curves_data: curves ?? {},
         time_series: time_series ?? {},
+        route_preview: buildFeedPreview(time_series ?? {}),
         raw_file_url: raw_file_url ?? null,
         file_sha256: file_sha256 ?? null,
         processing_status: 'baseline_completed',

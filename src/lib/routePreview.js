@@ -105,3 +105,50 @@ export function buildRoutePreview(latitude, longitude, { maxPoints = 60 } = {}) 
 export function routePreviewToPath(points) {
   return points.map(([x, y]) => `${x},${y}`).join(' ')
 }
+
+const SPARKLINE_POINTS = 40
+
+/**
+ * Persisted feed preview for an activity's `time_series`.
+ * - GPS route -> { kind: 'route', points }
+ * - no GPS but power -> { kind: 'sparkline', values } (downsampled mean power, rounded)
+ * - nothing usable -> { kind: 'none' } (sentinel so backfill doesn't retry forever)
+ */
+export function buildFeedPreview(timeSeries = {}) {
+  const route = buildRoutePreview(timeSeries?.latitude, timeSeries?.longitude)
+  if (route) return { kind: 'route', points: route.points }
+
+  const watts = Array.isArray(timeSeries?.watts)
+    ? timeSeries.watts.filter((w) => Number.isFinite(w))
+    : []
+  if (watts.length >= 10 && watts.some((w) => w > 0)) {
+    const buckets = Math.min(SPARKLINE_POINTS, watts.length)
+    const values = []
+    for (let b = 0; b < buckets; b++) {
+      const from = Math.floor((b * watts.length) / buckets)
+      const to = Math.max(from + 1, Math.floor(((b + 1) * watts.length) / buckets))
+      let sum = 0
+      for (let i = from; i < to; i++) sum += watts[i]
+      values.push(Math.round(sum / (to - from)))
+    }
+    return { kind: 'sparkline', values }
+  }
+
+  return { kind: 'none' }
+}
+
+/** SVG polyline points for a sparkline within the preview viewbox. */
+export function sparklineToPath(values) {
+  if (!Array.isArray(values) || values.length < 2) return ''
+  const max = Math.max(...values)
+  const min = Math.min(...values)
+  const range = max - min || 1
+  const step = (ROUTE_PREVIEW_SIZE - PADDING * 2) / (values.length - 1)
+  return values
+    .map((v, i) => {
+      const x = Math.round((PADDING + i * step) * 10) / 10
+      const y = Math.round((ROUTE_PREVIEW_SIZE - PADDING - ((v - min) / range) * (ROUTE_PREVIEW_SIZE - PADDING * 2)) * 10) / 10
+      return `${x},${y}`
+    })
+    .join(' ')
+}

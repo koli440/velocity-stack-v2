@@ -5,6 +5,8 @@
 // `activities` table insert payload. Keeping this in one place guarantees every ingestion path
 // persists the same set of activity-level metrics (issue #11).
 
+import { buildFeedPreview } from './routePreview.js'
+
 /**
  * @param {object} summary - output of api/analyze.py's `analyze_fit_file().summary`
  * @param {object} meta
@@ -83,6 +85,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     training_load: trainingLoad,
     speed_source: summary.speed_source ?? null,
     time_series: timeSeries || {},
+    route_preview: buildFeedPreview(timeSeries || {}),
     curves_data: curvesData || {},
     raw_file_url: rawFileUrl,
     file_sha256: fileSha256,
