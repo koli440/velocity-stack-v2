@@ -266,3 +266,46 @@ test('detectCustomIntervalSequence (distance-keyed): fails gracefully with no sp
   assert.equal(resultZeroSpeed.efforts.length, 0)
   assert.ok(/speed stream/i.test(resultZeroSpeed.message))
 })
+
+test('detectCustomIntervalSequence (distance-keyed): zero-tolerance "best speed" with repeatCount > 1 finds all reps', () => {
+  // Regression test: distance accumulates continuously (unlike integer-second
+  // durations), so at a tight/zero tolerance the per-second-sampled cumulative
+  // distance can jump clean over a narrow [distMin, distMax] window between two
+  // consecutive seconds. Three distinct, non-round speeds (39/38/37 km/h) are
+  // used so 300m never lands exactly on a whole second, and low-speed gaps keep
+  // "best speed" from picking a window that straddles two plateaus.
+  const watts = [
+    ...repeatWatts(200, 28),
+    ...repeatWatts(200, 10),
+    ...repeatWatts(200, 29),
+    ...repeatWatts(200, 10),
+    ...repeatWatts(200, 30),
+    ...repeatWatts(200, 10),
+  ]
+  const speed = [
+    ...repeatSpeed(39, 28), // ~303.3m in 28s
+    ...repeatSpeed(2, 10),
+    ...repeatSpeed(38, 29), // ~306.1m in 29s
+    ...repeatSpeed(2, 10),
+    ...repeatSpeed(37, 30), // ~308.3m in 30s
+    ...repeatSpeed(2, 10),
+  ]
+  const step = {
+    role: 'work',
+    keyBy: 'distance',
+    targetDistanceM: 300,
+    durationTolerancePct: 0,
+    bandType: 'best',
+    bestMetric: 'speed',
+  }
+
+  const result = detectCustomIntervalSequence({ watts, speed, steps: [step], repeatCount: 3, ftpAtActivityW: null })
+  assert.equal(result.efforts.length, 3, 'all 3 reps should be found, not starved by distance discretization')
+
+  const speeds = result.efforts.map((e) => e.avg_speed_kmh)
+  assert.deepEqual(speeds, [39, 38, 37])
+  for (const effort of result.efforts) {
+    assert.equal(effort.target_distance_m, 300)
+    assert.ok(effort.distance_m >= 300, `distance_m ${effort.distance_m} should meet the 0%-tolerance minimum`)
+  }
+})
