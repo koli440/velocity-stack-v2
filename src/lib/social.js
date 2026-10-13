@@ -5,10 +5,16 @@
 import { FEED_ACTIVITY_COLUMNS, DEFAULT_ACTIVITIES_PAGE_SIZE } from './activityPagination.js'
 
 export const VISIBILITY_OPTIONS = Object.freeze([
-  { value: 'private', label: 'Only me' },
-  { value: 'followers', label: 'Followers' },
-  { value: 'public', label: 'Public' },
+  { value: 'private', label: 'Only me', hint: 'Only you can see this session' },
+  { value: 'followers', label: 'Followers', hint: 'Only riders who follow you can see this session' },
+  {
+    value: 'public',
+    label: 'Public',
+    hint: 'Any signed-in VelocityStack rider can see this session (including its route) in Discover, unless you blocked them',
+  },
 ])
+
+export const DEFAULT_VISIBILITY = 'public'
 
 export const RIDER_SEARCH_LIMIT = 10
 
@@ -37,22 +43,26 @@ export async function fetchProfilesByIds(client, ids) {
   if (!unique.length) return { profiles: new Map(), error: null }
   const { data, error } = await client
     .from('public_profiles')
-    .select('id, username, full_name, avatar_url')
+    .select('id, username, full_name, avatar_url, require_follow_approval')
     .in('id', unique)
   if (error) return { profiles: new Map(), error }
   return { profiles: new Map((data || []).map((p) => [p.id, p])), error: null }
 }
 
-export async function followUser(client, { followerId, followeeId }) {
+// With `requiresApproval` (target.require_follow_approval) a follow request is created
+// instead of a follow. RLS enforces both paths, so a stale flag just surfaces an error.
+export async function followUser(client, { followerId, followeeId, requiresApproval = false }) {
   if (!followerId || !followeeId || followerId === followeeId) {
-    return { error: new Error('Invalid follow request') }
+    return { error: new Error('Invalid follow request'), status: null }
   }
-  const { error } = await client
-    .from('follows')
-    .insert({ follower_id: followerId, followee_id: followeeId })
-  // Already following = success (primary key violation).
-  if (error && error.code !== '23505') return { error }
-  return { error: null }
+  const table = requiresApproval ? 'follow_requests' : 'follows'
+  const row = requiresApproval
+    ? { requester_id: followerId, target_id: followeeId }
+    : { follower_id: followerId, followee_id: followeeId }
+  const { error } = await client.from(table).insert(row)
+  // Already following / already requested = success (primary key violation).
+  if (error && error.code !== '23505') return { error, status: null }
+  return { error: null, status: requiresApproval ? 'requested' : 'following' }
 }
 
 export async function unfollowUser(client, { followerId, followeeId }) {
@@ -64,18 +74,21 @@ export async function unfollowUser(client, { followerId, followeeId }) {
   return { error: error || null }
 }
 
-export async function searchRiders(client, { term, excludeId, limit = RIDER_SEARCH_LIMIT } = {}) {
+export async function searchRiders(
+  client,
+  { term, excludeId, excludeIds = [], limit = RIDER_SEARCH_LIMIT } = {}
+) {
   const clean = sanitizeSearchTerm(term)
   if (clean.length < 2) return { riders: [], error: null }
   let query = client
     .from('public_profiles')
-    .select('id, username, full_name, avatar_url')
+    .select('id, username, full_name, avatar_url, require_follow_approval')
     .or(`username.ilike.%${clean}%,full_name.ilike.%${clean}%`)
     .limit(limit + 1)
   const { data, error } = await query
   if (error) return { riders: [], error }
   return {
-    riders: (data || []).filter((r) => r.id !== excludeId).slice(0, limit),
+    riders: (data || []).filter((r) => r.id !== excludeId && !excludeIds.includes(r.id)).slice(0, limit),
     error: null,
   }
 }
@@ -124,4 +137,132 @@ export async function setActivityVisibility(client, { activityId, visibility }) 
 
 export function authorName(author) {
   return author?.full_name || author?.username || 'Rider'
+}
+
+// ---- Blocking -----------------------------------------------------------------------
+
+// The database removes follows and pending requests in both directions (trigger).
+export async function blockUser(client, { blockerId, blockedId }) {
+  if (!blockerId || !blockedId || blockerId === blockedId) {
+    return { error: new Error('Invalid block request') }
+  }
+  const { error } = await client.from('blocks').insert({ blocker_id: blockerId, blocked_id: blockedId })
+  if (error && error.code !== '23505') return { error }
+  return { error: null }
+}
+
+export async function unblockUser(client, { blockerId, blockedId }) {
+  const { error } = await client
+    .from('blocks')
+    .delete()
+    .eq('blocker_id', blockerId)
+    .eq('blocked_id', blockedId)
+  return { error: error || null }
+}
+
+export async function fetchBlockedIds(client, userId) {
+  if (!userId) return { ids: [], error: null }
+  const { data, error } = await client.from('blocks').select('blocked_id').eq('blocker_id', userId)
+  if (error) return { ids: [], error }
+  return { ids: (data || []).map((r) => r.blocked_id), error: null }
+}
+
+// ---- Followers, counts, requests ------------------------------------------------------
+
+export async function fetchFollowerIds(client, userId) {
+  if (!userId) return { ids: [], error: null }
+  const { data, error } = await client.from('follows').select('follower_id').eq('followee_id', userId)
+  if (error) return { ids: [], error }
+  return { ids: (data || []).map((r) => r.follower_id), error: null }
+}
+
+// Counts are only available for the signed-in rider (RLS: follows are visible to the
+// two riders involved).
+export async function fetchFollowCounts(client, userId) {
+  if (!userId) return { followers: 0, following: 0, error: null }
+  const [followers, following] = await Promise.all([
+    client.from('follows').select('follower_id', { count: 'exact', head: true }).eq('followee_id', userId),
+    client.from('follows').select('followee_id', { count: 'exact', head: true }).eq('follower_id', userId),
+  ])
+  const error = followers.error || following.error || null
+  return { followers: followers.count ?? 0, following: following.count ?? 0, error }
+}
+
+export async function fetchIncomingRequestIds(client, userId) {
+  if (!userId) return { ids: [], error: null }
+  const { data, error } = await client.from('follow_requests').select('requester_id').eq('target_id', userId)
+  if (error) return { ids: [], error }
+  return { ids: (data || []).map((r) => r.requester_id), error: null }
+}
+
+export async function fetchOutgoingRequestIds(client, userId) {
+  if (!userId) return { ids: [], error: null }
+  const { data, error } = await client.from('follow_requests').select('target_id').eq('requester_id', userId)
+  if (error) return { ids: [], error }
+  return { ids: (data || []).map((r) => r.target_id), error: null }
+}
+
+export async function approveFollowRequest(client, { requesterId }) {
+  const { error } = await client.rpc('approve_follow_request', { p_requester: requesterId })
+  return { error: error || null }
+}
+
+// Used both by the target (decline) and the requester (cancel).
+export async function removeFollowRequest(client, { requesterId, targetId }) {
+  const { error } = await client
+    .from('follow_requests')
+    .delete()
+    .eq('requester_id', requesterId)
+    .eq('target_id', targetId)
+  return { error: error || null }
+}
+
+export async function setRequireFollowApproval(client, { userId, value }) {
+  const { error } = await client
+    .from('profiles')
+    .update({ require_follow_approval: !!value })
+    .eq('id', userId)
+  return { error: error || null }
+}
+
+export async function fetchRequireFollowApproval(client, userId) {
+  const { data, error } = await client
+    .from('profiles')
+    .select('require_follow_approval')
+    .eq('id', userId)
+    .maybeSingle()
+  return { value: !!data?.require_follow_approval, error: error || null }
+}
+
+// ---- Discover (public activities) -------------------------------------------------------
+
+/**
+ * One page of public activities from other riders. RLS already hides activities of
+ * riders who blocked the viewer; `excludeIds` also hides riders the viewer blocked.
+ */
+export async function fetchDiscoverFeedPage(
+  client,
+  { userId, excludeIds = [], page = 0, pageSize = DEFAULT_ACTIVITIES_PAGE_SIZE } = {}
+) {
+  if (!userId) return { data: [], hasMore: false, error: null }
+  const from = page * pageSize
+  let query = client
+    .from('activities')
+    .select(FEED_ACTIVITY_COLUMNS)
+    .eq('visibility', 'public')
+    .neq('user_id', userId)
+  if (excludeIds.length) query = query.not('user_id', 'in', `(${excludeIds.join(',')})`)
+  const { data, error } = await query
+    .order('activity_date', { ascending: false })
+    .order('id', { ascending: false })
+    .range(from, from + pageSize - 1)
+  if (error) return { data: [], hasMore: false, error }
+
+  const rows = data || []
+  const { profiles } = await fetchProfilesByIds(client, rows.map((r) => r.user_id))
+  return {
+    data: rows.map((r) => ({ ...r, author: profiles.get(r.user_id) || null })),
+    hasMore: rows.length === pageSize,
+    error: null,
+  }
 }

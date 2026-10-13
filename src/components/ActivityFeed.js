@@ -193,6 +193,7 @@ export default function ActivityFeed({
                   value={act.visibility || 'private'}
                   onChange={(e) => onChangeVisibility(act, e.target.value)}
                   aria-label="Who can see this activity"
+                  title={VISIBILITY_OPTIONS.find((o) => o.value === (act.visibility || 'private'))?.hint}
                   className="py-2 px-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300"
                 >
                   {VISIBILITY_OPTIONS.map((o) => (
