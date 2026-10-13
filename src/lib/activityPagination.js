@@ -11,7 +11,7 @@ export const DEFAULT_ACTIVITIES_PAGE_SIZE = 20
 // Feed columns (issue #49): explicit list instead of `*` so the heavy `time_series` /
 // `curves_data` blobs are not shipped for every card; the persisted `route_preview` and
 // `badges` columns carry everything the card needs.
-export const FEED_ACTIVITY_COLUMNS = [
+const FEED_COLUMN_LIST = [
   'id',
   'user_id',
   'title',
@@ -35,7 +35,15 @@ export const FEED_ACTIVITY_COLUMNS = [
   'route_preview',
   'badges',
   'tracks(name, length_m, surface)',
-].join(', ')
+]
+
+export const FEED_ACTIVITY_COLUMNS = FEED_COLUMN_LIST.join(', ')
+
+// Same card data for activities of OTHER riders, read from the `shared_activities` view
+// (no raw_file_url; GPS stripped). `tracks` is a JSON column there, not an embed.
+export const SHARED_FEED_COLUMNS = FEED_COLUMN_LIST.filter((c) => c !== 'raw_file_url')
+  .map((c) => (c.startsWith('tracks(') ? 'tracks' : c))
+  .join(', ')
 
 /**
  * Fetches a single page of a user's activities, most recent first.

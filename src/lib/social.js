@@ -2,7 +2,12 @@
 // per-activity visibility. All access control is enforced by RLS (see
 // supabase/migrations/20261012000000_social_feed.sql); these helpers just shape queries.
 
-import { FEED_ACTIVITY_COLUMNS, DEFAULT_ACTIVITIES_PAGE_SIZE } from './activityPagination.js'
+import {
+  FEED_ACTIVITY_COLUMNS,
+  SHARED_FEED_COLUMNS,
+  DEFAULT_ACTIVITIES_PAGE_SIZE,
+} from './activityPagination.js'
+import { normalizeZone, validateZone } from './privacyZone.js'
 
 export const VISIBILITY_OPTIONS = Object.freeze([
   { value: 'private', label: 'Only me', hint: 'Only you can see this session' },
@@ -109,8 +114,8 @@ export async function fetchFollowingFeedPage(
 
   const from = page * pageSize
   const { data, error } = await client
-    .from('activities')
-    .select(FEED_ACTIVITY_COLUMNS)
+    .from('shared_activities')
+    .select(SHARED_FEED_COLUMNS)
     .in('user_id', ids)
     .neq('visibility', 'private')
     .order('activity_date', { ascending: false })
@@ -247,8 +252,8 @@ export async function fetchDiscoverFeedPage(
   if (!userId) return { data: [], hasMore: false, error: null }
   const from = page * pageSize
   let query = client
-    .from('activities')
-    .select(FEED_ACTIVITY_COLUMNS)
+    .from('shared_activities')
+    .select(SHARED_FEED_COLUMNS)
     .eq('visibility', 'public')
     .neq('user_id', userId)
   if (excludeIds.length) query = query.not('user_id', 'in', `(${excludeIds.join(',')})`)
@@ -265,4 +270,31 @@ export async function fetchDiscoverFeedPage(
     hasMore: rows.length === pageSize,
     error: null,
   }
+}
+
+// ---- GPS privacy zone ---------------------------------------------------------------------
+
+export async function fetchPrivacyZone(client, userId) {
+  if (!userId) return { zone: null, error: null }
+  const { data, error } = await client
+    .from('profiles')
+    .select('privacy_zone_lat, privacy_zone_lng, privacy_zone_radius_m')
+    .eq('id', userId)
+    .maybeSingle()
+  if (error) return { zone: null, error }
+  return { zone: normalizeZone(data), error: null }
+}
+
+/** Saves (or, with `zone: null`, disables) the zone. Previews must be rebuilt afterwards. */
+export async function savePrivacyZone(client, { userId, zone }) {
+  let columns = { privacy_zone_lat: null, privacy_zone_lng: null, privacy_zone_radius_m: null }
+  if (zone) {
+    const problem = validateZone(zone)
+    if (problem) return { error: new Error(problem), zone: null }
+    const z = normalizeZone(zone)
+    columns = { privacy_zone_lat: z.lat, privacy_zone_lng: z.lng, privacy_zone_radius_m: z.radius }
+  }
+  const { error } = await client.from('profiles').update(columns).eq('id', userId)
+  if (error) return { error, zone: null }
+  return { error: null, zone: normalizeZone(columns) }
 }

@@ -46,6 +46,8 @@ export default function ActivityDetailPage() {
   const [trackId, setTrackId] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  // true when another rider's activity is opened through the restricted shared_activities view
+  const [sharedView, setSharedView] = useState(false)
 
   useEffect(() => {
     if (!activityId) return
@@ -67,8 +69,16 @@ export default function ActivityDetailPage() {
           .eq('activity_id', activityId),
       ])
 
-      if (actRes.data) {
-        const act = actRes.data
+      let actData = actRes.data
+      if (!actData) {
+        // Not our activity: other riders only get the restricted view (no GPS, no raw file).
+        const shared = await supabase.from('shared_activities').select('*').eq('id', activityId).maybeSingle()
+        actData = shared.data
+        setSharedView(!!actData)
+      }
+
+      if (actData) {
+        const act = actData
         setActivity(act)
         setChainring(act.chainring ? String(act.chainring) : '58')
         setCog(act.cog ? String(act.cog) : '14')
@@ -252,6 +262,7 @@ export default function ActivityDetailPage() {
           <p className="text-xs font-semibold text-slate-400">{actDate}</p>
         </div>
 
+        {!sharedView && (
         <button
           type="button"
           onClick={handleDeleteActivity}
@@ -260,6 +271,7 @@ export default function ActivityDetailPage() {
         >
           {deleting ? 'Deleting...' : '🗑 Delete Activity'}
         </button>
+        )}
       </div>
 
       {/* 2. Contextual badges for gear and setup */}
@@ -336,9 +348,12 @@ export default function ActivityDetailPage() {
       />
 
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
-      <TemplateRunsSection activityId={activityId} onVisibleWindowsChange={setHighlightWindows} />
+      {!sharedView && (
+        <TemplateRunsSection activityId={activityId} onVisibleWindowsChange={setHighlightWindows} />
+      )}
 
-      {/* 5. Bottom panel: Quick track and gearing setup */}
+      {/* 5. Bottom panel: Quick track and gearing setup (own activities only) */}
+      {!sharedView && (
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <span>⚙️</span> Track & Gearing Setup for this Ride
@@ -403,6 +418,7 @@ export default function ActivityDetailPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }
