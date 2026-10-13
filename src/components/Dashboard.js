@@ -6,8 +6,9 @@ import { supabase } from '../lib/supabase'
 import { deleteActivity } from '../lib/activityActions'
 import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
 import { syncFeedData } from '../lib/feedSync'
-import { fetchFollowingFeedPage, setActivityVisibility } from '../lib/social'
+import { fetchFollowingFeedPage, fetchDiscoverFeedPage, fetchBlockedIds, setActivityVisibility } from '../lib/social'
 import FollowPanel from './FollowPanel'
+import NotificationBell from './NotificationBell'
 import { fetchCoverPhotos, removeActivityPhotoFiles } from '../lib/activityPhotos'
 import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
@@ -35,11 +36,14 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
   const [followingActivities, setFollowingActivities] = useState([])
   const [hasMoreFollowing, setHasMoreFollowing] = useState(false)
   const [isLoadingFollowing, setIsLoadingFollowing] = useState(false)
+  const [discoverActivities, setDiscoverActivities] = useState([])
+  const [hasMoreDiscover, setHasMoreDiscover] = useState(false)
+  const [isLoadingDiscover, setIsLoadingDiscover] = useState(false)
   const [coverPhotos, setCoverPhotos] = useState(new Map())
 
   // Signed cover-photo URLs for everything currently shown (one query + one signing call).
   useEffect(() => {
-    const ids = [...activities, ...followingActivities].map((a) => a.id)
+    const ids = [...activities, ...followingActivities, ...discoverActivities].map((a) => a.id)
     if (!ids.length) return
     let cancelled = false
     fetchCoverPhotos(supabase, ids).then(({ covers, error }) => {
@@ -48,7 +52,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     return () => {
       cancelled = true
     }
-  }, [activities, followingActivities])
+  }, [activities, followingActivities, discoverActivities])
 
   const reloadFollowingFeed = async (userId) => {
     const targetId = userId || user?.id
@@ -72,6 +76,27 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
       setHasMoreFollowing(hasMore)
     }
     setIsLoadingFollowing(false)
+  }
+
+  const loadDiscover = async (page = 0) => {
+    if (!user?.id) return
+    setIsLoadingDiscover(true)
+    const { ids: excludeIds } = await fetchBlockedIds(supabase, user.id)
+    const { data, hasMore, error } = await fetchDiscoverFeedPage(supabase, {
+      userId: user.id,
+      excludeIds,
+      page,
+    })
+    if (!error) {
+      setDiscoverActivities((prev) => (page === 0 ? data : [...prev, ...data]))
+      setHasMoreDiscover(hasMore)
+    }
+    setIsLoadingDiscover(false)
+  }
+
+  const reloadSocialFeeds = () => {
+    if (scope === 'following') reloadFollowingFeed()
+    if (scope === 'discover') loadDiscover(0)
   }
 
   const handleChangeVisibility = async (activity, visibility) => {
@@ -173,13 +198,16 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     <div className="flex flex-col xl:flex-row gap-6 items-start">
       {/* Main Cockpit */}
       <div className="flex-1 w-full space-y-6">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
-            Ride Telemetry
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Live tracking & neuromuscular session analysis
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
+              Ride Telemetry
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Live tracking & neuromuscular session analysis
+            </p>
+          </div>
+          <NotificationBell userId={user?.id} />
         </div>
 
         {/* Telemetry tiles */}
@@ -190,6 +218,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           {[
             ['mine', 'My sessions'],
             ['following', 'Following'],
+            ['discover', 'Discover'],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -199,6 +228,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
               onClick={() => {
                 setScope(value)
                 if (value === 'following') reloadFollowingFeed()
+                if (value === 'discover') loadDiscover(0)
               }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
                 scope === value
@@ -221,6 +251,17 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
             hasMore={hasMoreActivities}
             isLoadingMore={isLoadingMore}
             onLoadMore={loadMoreActivities}
+          />
+        ) : scope === 'discover' ? (
+          <ActivityFeed
+            title="Discover"
+            isOwnFeed={false}
+            coverPhotos={coverPhotos}
+            activities={discoverActivities}
+            hasMore={hasMoreDiscover}
+            isLoadingMore={isLoadingDiscover}
+            onLoadMore={() => loadDiscover(Math.ceil(discoverActivities.length / DEFAULT_ACTIVITIES_PAGE_SIZE))}
+            emptyMessage={isLoadingDiscover ? 'Loading…' : 'No public sessions from other riders yet.'}
           />
         ) : (
           <ActivityFeed
@@ -284,7 +325,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           <span>🧪</span> Aero Lab
         </button>
 
-        <FollowPanel userId={user?.id} onChanged={() => scope === 'following' && reloadFollowingFeed()} />
+        <FollowPanel userId={user?.id} onChanged={reloadSocialFeeds} />
 
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
