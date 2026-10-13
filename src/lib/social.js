@@ -48,7 +48,7 @@ export async function fetchProfilesByIds(client, ids) {
   if (!unique.length) return { profiles: new Map(), error: null }
   const { data, error } = await client
     .from('public_profiles')
-    .select('id, username, full_name, avatar_url, require_follow_approval')
+    .select('id, username, full_name, avatar_url, require_follow_approval, is_bot')
     .in('id', unique)
   if (error) return { profiles: new Map(), error }
   return { profiles: new Map((data || []).map((p) => [p.id, p])), error: null }
@@ -87,7 +87,7 @@ export async function searchRiders(
   if (clean.length < 2) return { riders: [], error: null }
   let query = client
     .from('public_profiles')
-    .select('id, username, full_name, avatar_url, require_follow_approval')
+    .select('id, username, full_name, avatar_url, require_follow_approval, is_bot')
     .or(`username.ilike.%${clean}%,full_name.ilike.%${clean}%`)
     .limit(limit + 1)
   const { data, error } = await query
