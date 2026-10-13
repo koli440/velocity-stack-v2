@@ -309,3 +309,29 @@ test('detectCustomIntervalSequence (distance-keyed): zero-tolerance "best speed"
     assert.ok(effort.distance_m >= 300, `distance_m ${effort.distance_m} should meet the 0%-tolerance minimum`)
   }
 })
+
+test('detectCustomIntervalSequence: repeated "best" step finds N non-overlapping efforts, even when the best is last', () => {
+  const watts = [
+    ...repeatWatts(100, 20), ...repeatWatts(250, 30),
+    ...repeatWatts(100, 20), ...repeatWatts(280, 30),
+    ...repeatWatts(100, 20), ...repeatWatts(300, 30),
+    ...repeatWatts(100, 20),
+  ]
+  const result = detectCustomIntervalSequence({
+    watts,
+    steps: [{ role: 'work', targetDurationSec: 30, durationTolerancePct: 0, bandType: 'best', powerMin: null, powerMax: null }],
+    repeatCount: 3,
+  })
+  assert.equal(result.efforts.length, 3)
+  assert.deepEqual(result.efforts.map((e) => e.avg_power), [250, 280, 300])
+  for (let i = 1; i < 3; i++) assert.ok(result.efforts[i].start_sec >= result.efforts[i - 1].end_sec)
+})
+
+test('detectCustomIntervalSequence: repeated "best" stops when no room remains', () => {
+  const result = detectCustomIntervalSequence({
+    watts: repeatWatts(200, 70),
+    steps: [{ role: 'work', targetDurationSec: 30, durationTolerancePct: 0, bandType: 'best', powerMin: null, powerMax: null }],
+    repeatCount: 5,
+  })
+  assert.equal(result.efforts.length, 2)
+})

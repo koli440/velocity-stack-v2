@@ -354,7 +354,11 @@ function findThresholdWindowDuration(wattsPrefix, speedPrefix, cursor, step, ftp
 }
 
 /** Single best duration-keyed window (duration within tolerance), optimising `step.bestMetric`. */
-function findBestWindowDuration(wattsPrefix, speedPrefix, cursor, step) {
+function overlaps(blocked, s, e) {
+  return blocked.some(([bs, be]) => s < be && e > bs)
+}
+
+function findBestWindowDuration(wattsPrefix, speedPrefix, cursor, step, blocked = []) {
   const metricPrefix = step.bestMetric === 'speed' ? speedPrefix : wattsPrefix
   if (!metricPrefix) return null
   const n = metricPrefix.length - 1
@@ -363,6 +367,7 @@ function findBestWindowDuration(wattsPrefix, speedPrefix, cursor, step) {
   let best = null
   for (let s = cursor; s + durMin <= n; s++) {
     for (let d = durMin; d <= durMax && s + d <= n; d++) {
+      if (blocked.length && overlaps(blocked, s, s + d)) continue
       const value = windowAvg(metricPrefix, s, s + d)
       if (!best || value > best.value) {
         best = { start: s, end: s + d, value }
@@ -411,7 +416,7 @@ function findThresholdWindowDistance(wattsPrefix, speedPrefix, cursor, step, ftp
 }
 
 /** Single best distance-keyed window (distance within tolerance), optimising `step.bestMetric`. */
-function findBestWindowDistance(wattsPrefix, speedPrefix, cursor, step) {
+function findBestWindowDistance(wattsPrefix, speedPrefix, cursor, step, blocked = []) {
   if (!speedPrefix) return null
   const metricPrefix = step.bestMetric === 'speed' ? speedPrefix : wattsPrefix
   if (!metricPrefix) return null
@@ -431,6 +436,7 @@ function findBestWindowDistance(wattsPrefix, speedPrefix, cursor, step) {
     // end-point, even when [eLo, eHi) is empty due to distance discretization.
     const loopEnd = Math.max(eHi, eLo + 1)
     for (let e = eLo; e < loopEnd && e <= n; e++) {
+      if (blocked.length && overlaps(blocked, s, e)) continue
       const value = windowAvg(metricPrefix, s, e)
       if (!best || value > best.value) {
         best = { start: s, end: e, value, distanceM: metersAt(speedPrefix, s, e) }
@@ -476,11 +482,35 @@ export function detectCustomIntervalSequence({ watts = [], speed = [], steps = [
   const efforts = []
   let cursor = 0
 
+  // A lone "best" step repeated N times means "the N best non-overlapping
+  // efforts": take the global best, block it out, and search the whole
+  // activity again (rather than only looking after the previous one).
+  const single = steps.length === 1 && steps[0].bandType === 'best' ? steps[0] : null
+  const ranked = []
+  if (single) {
+    const blocked = []
+    for (let rep = 0; rep < repeatCount; rep++) {
+      const found =
+        single.keyBy === 'distance'
+          ? findBestWindowDistance(wattsPrefix, speedPrefix, 0, single, blocked)
+          : findBestWindowDuration(wattsPrefix, speedPrefix, 0, single, blocked)
+      if (!found) break
+      blocked.push([found.start, found.end])
+      ranked.push([{ step: single, found }])
+    }
+    ranked.sort((a, b) => a[0].found.start - b[0].found.start)
+  }
+
   for (let rep = 0; rep < repeatCount; rep++) {
     const repWindows = []
     let repCursor = cursor
 
-    for (const step of steps) {
+    if (single) {
+      if (!ranked[rep]) break
+      repWindows.push(...ranked[rep])
+    }
+
+    for (const step of single ? [] : steps) {
       const isDistance = step.keyBy === 'distance'
       const found = isDistance
         ? step.bandType === 'best'
