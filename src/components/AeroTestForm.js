@@ -18,6 +18,7 @@ import {
   calculatePowerBreakdown,
   calculateCdA,
 } from '../lib/aeroLab'
+import VelodromePicker from './VelodromePicker'
 
 const CRR_OPTIONS = [0.0015, 0.002, 0.0025, 0.0033]
 
@@ -233,26 +234,18 @@ export default function AeroTestForm({ tracks = [], onSaved }) {
 
       <div>
         <h3 className="text-xs uppercase font-bold text-slate-400 mb-2">Test Environment</h3>
-        <label className="block space-y-1.5">
+        <div className="block space-y-1.5">
           <span className={labelClass}>Select Velodrome</span>
-          <select
+          <VelodromePicker
+            tracks={tracks}
             value={trackId}
-            onChange={(e) => {
-              setTrackId(e.target.value)
+            defaultToFavorite
+            onChange={(id) => {
+              setTrackId(id)
               setPressureOverride(null)
             }}
-            className={inputClass}
-          >
-            <option value="">Select a track...</option>
-            {[...tracks]
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-          </select>
-        </label>
+          />
+        </div>
 
         <details
           className="mt-3 rounded-xl border border-slate-200 dark:border-slate-800 p-3.5"
