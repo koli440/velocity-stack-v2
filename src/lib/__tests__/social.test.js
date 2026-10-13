@@ -19,6 +19,8 @@ import {
   setRequireFollowApproval,
   VISIBILITY_OPTIONS,
   DEFAULT_VISIBILITY,
+  fetchPrivacyZone,
+  savePrivacyZone,
 } from '../social.js'
 
 // Minimal chainable fake: records calls, resolves per-table results.
@@ -95,13 +97,13 @@ test('following feed returns empty without follows, otherwise attaches authors',
 
   const c = fakeClient({
     follows: { data: [{ followee_id: 'r1' }], error: null },
-    activities: { data: [{ id: 'a1', user_id: 'r1' }], error: null },
+    shared_activities: { data: [{ id: 'a1', user_id: 'r1' }], error: null },
     public_profiles: { data: [{ id: 'r1', full_name: 'Ann' }], error: null },
   })
   const res = await fetchFollowingFeedPage(c, { userId: 'me', pageSize: 1 })
   assert.equal(res.data[0].author.full_name, 'Ann')
   assert.equal(res.hasMore, true)
-  const act = c.log.find((l) => l.table === 'activities')
+  const act = c.log.find((l) => l.table === 'shared_activities')
   assert.ok(act.ops.some((o) => o[0] === 'in' && o[1] === 'user_id' && o[2][0] === 'r1'))
   assert.ok(act.ops.some((o) => o[0] === 'neq' && o[1] === 'visibility' && o[2] === 'private'))
 })
@@ -208,7 +210,7 @@ test('setRequireFollowApproval coerces to boolean', async () => {
 
 test('discover feed requests public rows from others, excludes blocked, attaches authors', async () => {
   const c = fakeClient({
-    activities: { data: [{ id: 'a1', user_id: 'u1' }], error: null },
+    shared_activities: { data: [{ id: 'a1', user_id: 'u1' }], error: null },
     public_profiles: { data: [{ id: 'u1', username: 'ann' }], error: null },
   })
   const res = await fetchDiscoverFeedPage(c, { userId: 'me', excludeIds: ['b1', 'b2'], pageSize: 1 })
@@ -219,4 +221,47 @@ test('discover feed requests public rows from others, excludes blocked, attaches
   assert.equal(res.hasMore, true)
   assert.equal(res.data[0].author.username, 'ann')
   assert.deepEqual((await fetchDiscoverFeedPage(c, { userId: null })).data, [])
+})
+
+test('other riders\' feeds read the restricted shared_activities view, never activities', async () => {
+  const c = fakeClient({
+    follows: { data: [{ followee_id: 'r1' }], error: null },
+    shared_activities: { data: [], error: null },
+  })
+  await fetchFollowingFeedPage(c, { userId: 'me' })
+  await fetchDiscoverFeedPage(c, { userId: 'me' })
+  const tables = c.log.map((l) => l.table)
+  assert.ok(!tables.includes('activities'))
+  assert.equal(tables.filter((x) => x === 'shared_activities').length, 2)
+  for (const call of c.log.filter((l) => l.table === 'shared_activities')) {
+    const cols = call.ops.find((o) => o[0] === 'select')[1]
+    assert.ok(!cols.includes('raw_file_url'))
+    assert.ok(!cols.includes('time_series'))
+  }
+})
+
+test('fetchPrivacyZone normalises columns; disabled when unset', async () => {
+  const c = fakeClient({ profiles: { data: null, error: null } })
+  // maybeSingle resolves through the same thenable
+  assert.equal((await fetchPrivacyZone(c, 'u')).zone, null)
+  const set = fakeClient({ profiles: { data: { privacy_zone_lat: '50.08170', privacy_zone_lng: '14.48420', privacy_zone_radius_m: 250 }, error: null } })
+  assert.deepEqual((await fetchPrivacyZone(set, 'u')).zone, { lat: 50.0817, lng: 14.4842, radius: 250 })
+  assert.equal((await fetchPrivacyZone(set, null)).zone, null)
+})
+
+test('savePrivacyZone validates, rounds and can disable', async () => {
+  const bad = fakeClient({})
+  assert.ok((await savePrivacyZone(bad, { userId: 'u', zone: { lat: 95, lng: 0, radius: 200 } })).error)
+  assert.ok((await savePrivacyZone(bad, { userId: 'u', zone: { lat: 1, lng: 1, radius: 10 } })).error)
+  assert.equal(bad.log.length, 0)
+
+  const ok = fakeClient({ profiles: { error: null } })
+  const res = await savePrivacyZone(ok, { userId: 'u', zone: { lat: '50.123456', lng: '14.1', radius: '200' } })
+  assert.deepEqual(res.zone, { lat: 50.12346, lng: 14.1, radius: 200 })
+  assert.deepEqual(ok.log[0].ops[0], ['update', { privacy_zone_lat: 50.12346, privacy_zone_lng: 14.1, privacy_zone_radius_m: 200 }])
+
+  const off = fakeClient({ profiles: { error: null } })
+  const disabled = await savePrivacyZone(off, { userId: 'u', zone: null })
+  assert.equal(disabled.zone, null)
+  assert.deepEqual(off.log[0].ops[0], ['update', { privacy_zone_lat: null, privacy_zone_lng: null, privacy_zone_radius_m: null }])
 })

@@ -2,6 +2,8 @@
 // Projects GPS points into a square viewbox and simplifies them so the feed can
 // render an inline SVG polyline without Leaflet or map tiles.
 
+import { applyPrivacyZone } from './privacyZone.js'
+
 export const ROUTE_PREVIEW_SIZE = 100
 const PADDING = 8
 
@@ -112,10 +114,12 @@ const SPARKLINE_POINTS = 40
  * Persisted feed preview for an activity's `time_series`.
  * - GPS route -> { kind: 'route', points }
  * - no GPS but power -> { kind: 'sparkline', values } (downsampled mean power, rounded)
+ * - GPS samples inside `privacyZone` are dropped before the route is built
  * - nothing usable -> { kind: 'none' } (sentinel so backfill doesn't retry forever)
  */
-export function buildFeedPreview(timeSeries = {}) {
-  const route = buildRoutePreview(timeSeries?.latitude, timeSeries?.longitude)
+export function buildFeedPreview(timeSeries = {}, privacyZone = null) {
+  const { latitude, longitude } = applyPrivacyZone(timeSeries?.latitude, timeSeries?.longitude, privacyZone)
+  const route = buildRoutePreview(latitude, longitude)
   if (route) return { kind: 'route', points: route.points }
 
   const watts = Array.isArray(timeSeries?.watts)

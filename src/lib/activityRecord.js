@@ -6,6 +6,7 @@
 // persists the same set of activity-level metrics (issue #11).
 
 import { buildFeedPreview } from './routePreview.js'
+import { zoneSignature } from './privacyZone.js'
 
 /**
  * @param {object} summary - output of api/analyze.py's `analyze_fit_file().summary`
@@ -22,6 +23,7 @@ import { buildFeedPreview } from './routePreview.js'
  * @param {string|null} [meta.fileSha256]
  * @param {string} [meta.processingStatus]
  * @param {number|null} [meta.ftpWatts] - athlete FTP, used to derive intensity_factor/training_load
+ * @param {object|null} [meta.privacyZone] - owner's GPS privacy zone, applied to route_preview
  * @param {string} [meta.fallbackActivityDate] - used when summary.start_time is unavailable
  */
 export function buildActivityInsert(summary = {}, meta = {}) {
@@ -38,6 +40,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     fileSha256 = null,
     processingStatus = 'baseline_completed',
     ftpWatts = null,
+    privacyZone = null,
     fallbackActivityDate = new Date().toISOString(),
   } = meta
 
@@ -85,7 +88,8 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     training_load: trainingLoad,
     speed_source: summary.speed_source ?? null,
     time_series: timeSeries || {},
-    route_preview: buildFeedPreview(timeSeries || {}),
+    route_preview: buildFeedPreview(timeSeries || {}, privacyZone),
+    route_preview_zone: zoneSignature(privacyZone),
     curves_data: curvesData || {},
     raw_file_url: rawFileUrl,
     file_sha256: fileSha256,

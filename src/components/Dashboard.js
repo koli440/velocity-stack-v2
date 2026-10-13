@@ -9,6 +9,7 @@ import { syncFeedData } from '../lib/feedSync'
 import { fetchFollowingFeedPage, fetchDiscoverFeedPage, fetchBlockedIds, setActivityVisibility } from '../lib/social'
 import FollowPanel from './FollowPanel'
 import NotificationBell from './NotificationBell'
+import PrivacyZonePanel from './PrivacyZonePanel'
 import { fetchCoverPhotos, removeActivityPhotoFiles } from '../lib/activityPhotos'
 import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
@@ -326,6 +327,8 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         </button>
 
         <FollowPanel userId={user?.id} onChanged={reloadSocialFeeds} />
+
+        <PrivacyZonePanel userId={user?.id} onChanged={() => reloadActivities(user.id)} />
 
         <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
       </div>
