@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import VelodromePicker from './VelodromePicker'
 
 export default function ProfileSettingsModal({
   isOpen,
@@ -143,18 +144,7 @@ export default function ProfileSettingsModal({
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
               Home Velodrome
             </label>
-            <select
-              value={homeTrackId}
-              onChange={(e) => setHomeTrackId(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            >
-              <option value="">-- No Home Track --</option>
-              {tracks.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+            <VelodromePicker tracks={tracks} value={homeTrackId} onChange={setHomeTrackId} favoriteId={null} emptyLabel="-- No Home Track --" compact />
           </div>
 
           <div className="grid grid-cols-3 gap-3">

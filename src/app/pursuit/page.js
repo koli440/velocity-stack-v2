@@ -18,6 +18,7 @@ import {
   formatTime,
   pacingStrategyLabel,
 } from '../../lib/pursuit'
+import VelodromePicker from '../../components/VelodromePicker'
 
 // Sorted, de-duplicated discipline categories (Endurance, Pursuit, Sprint). v1 defaulted the
 // category picker to index 1 of its alphabetically-sorted list, which lands on "Pursuit" here too.
@@ -224,15 +225,10 @@ export default function PursuitPage() {
                 setCountry,
                 countries.map((c) => ({ value: c, label: c }))
               )}
-              {select(
-                'Track',
-                trackId,
-                setTrackId,
-                filteredTracks.map((t) => ({
-                  value: t.id,
-                  label: `${t.name} (${t.length_m}m, ${t.surface})`,
-                }))
-              )}
+              <div className="block space-y-1.5">
+                <span className="text-xs uppercase font-bold text-slate-400">Track</span>
+                <VelodromePicker tracks={filteredTracks} value={trackId} onChange={setTrackId} />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

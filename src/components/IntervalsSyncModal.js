@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import { parseJsonResponse } from '../lib/httpJson'
+import VelodromePicker from './VelodromePicker'
 
 export default function IntervalsSyncModal({
   isOpen,
@@ -220,18 +221,7 @@ export default function IntervalsSyncModal({
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
               Assign to velodrome (default):
             </label>
-            <select
-              value={selectedTrackId}
-              onChange={(e) => handleSelectTrack(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500 font-semibold"
-            >
-              <option value="">-- No velodrome specified --</option>
-              {tracks.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({t.length_m} m, {t.surface})
-                </option>
-              ))}
-            </select>
+            <VelodromePicker tracks={tracks} value={selectedTrackId} onChange={handleSelectTrack} emptyLabel="-- No velodrome specified --" compact />
             <label className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-semibold cursor-pointer">
               <input
                 type="checkbox"

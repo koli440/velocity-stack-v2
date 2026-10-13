@@ -10,6 +10,7 @@ import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import ActivityStreamsChart from '../../../components/ActivityStreamsChart'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
 import TemplateRunsSection from '../../../components/TemplateRunsSection'
+import VelodromePicker from '../../../components/VelodromePicker'
 
 // Leaflet requires window/document -> dynamic import without SSR
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
@@ -341,18 +342,7 @@ export default function ActivityDetailPage() {
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
               Velodrome
             </label>
-            <select
-              value={trackId}
-              onChange={(e) => setTrackId(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500 font-semibold"
-            >
-              <option value="">-- No Track Selected --</option>
-              {tracks.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({t.length_m} m)
-                </option>
-              ))}
-            </select>
+            <VelodromePicker tracks={tracks} value={trackId} onChange={setTrackId} emptyLabel="-- No Track Selected --" compact />
           </div>
 
           <div>

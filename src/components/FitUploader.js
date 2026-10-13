@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
+import VelodromePicker from './VelodromePicker'
 
 export default function FitUploader({
   tracks = [],
@@ -19,12 +20,12 @@ export default function FitUploader({
 
   // Workout parameters
   const [title, setTitle] = useState('Velodrome Flying Laps')
-  const [selectedTrack, setSelectedTrack] = useState(tracks[0]?.id || '')
+  const [selectedTrack, setSelectedTrack] = useState('')
   const [chainring, setChainring] = useState('58')
   const [cog, setCog] = useState('14')
   // Default assumption: a ride on the selected velodrome is on a fixed-gear (track) bike
   // without freewheel; elsewhere (road) a freewheel is likely. Can be overridden with the checkbox below.
-  const [isFixedGear, setIsFixedGear] = useState(!!tracks[0]?.id)
+  const [isFixedGear, setIsFixedGear] = useState(false)
 
   const handleTrackChange = (trackId) => {
     setSelectedTrack(trackId)
@@ -251,18 +252,7 @@ export default function FitUploader({
               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Velodrome
               </label>
-              <select
-                value={selectedTrack}
-                onChange={(e) => handleTrackChange(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              >
-                <option value="">-- Select Velodrome --</option>
-                {tracks.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.length_m} m)
-                  </option>
-                ))}
-              </select>
+              <VelodromePicker tracks={tracks} value={selectedTrack} onChange={handleTrackChange} defaultToFavorite emptyLabel="-- Select Velodrome --" compact />
             </div>
 
             <label className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-semibold cursor-pointer">

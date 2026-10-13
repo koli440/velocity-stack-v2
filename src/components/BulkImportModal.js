@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import { loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import { expandToFitFiles, importFitFilesBatch } from '../lib/bulkImport'
+import VelodromePicker from './VelodromePicker'
 
 const STATUS_META = {
   success: { icon: '✅', label: 'Imported' },
@@ -27,10 +28,10 @@ export default function BulkImportModal({
 
   // Global options shared across every file in the batch - same defaults/conventions as
   // FitUploader / IntervalsSyncModal.
-  const [selectedTrack, setSelectedTrack] = useState(tracks[0]?.id || '')
+  const [selectedTrack, setSelectedTrack] = useState('')
   const [chainring, setChainring] = useState('58')
   const [cog, setCog] = useState('14')
-  const [isFixedGear, setIsFixedGear] = useState(!!tracks[0]?.id)
+  const [isFixedGear, setIsFixedGear] = useState(false)
 
   const handleSelectTrack = (trackId) => {
     setSelectedTrack(trackId)
@@ -167,19 +168,7 @@ export default function BulkImportModal({
               <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
                 Assign to velodrome (default):
               </label>
-              <select
-                value={selectedTrack}
-                onChange={(e) => handleSelectTrack(e.target.value)}
-                disabled={importing}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-semibold disabled:opacity-50"
-              >
-                <option value="">-- No velodrome specified --</option>
-                {tracks.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.length_m} m)
-                  </option>
-                ))}
-              </select>
+              <VelodromePicker tracks={tracks} value={selectedTrack} onChange={handleSelectTrack} disabled={importing} defaultToFavorite emptyLabel="-- No velodrome specified --" compact />
             </div>
 
             <label className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-semibold cursor-pointer">

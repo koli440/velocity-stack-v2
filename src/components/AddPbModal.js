@@ -10,6 +10,7 @@ import {
   calculateAvgSpeedKmh,
   countSplits,
 } from '../lib/pbVault'
+import VelodromePicker from './VelodromePicker'
 
 // "Add New Personal Best" form - migrated from v1's expander in pages/30_PB_vault.py. Collects
 // discipline + track + time (as separate Min/Sec inputs, like v1) plus optional gear and lap/
@@ -160,18 +161,7 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
 
           <label className="block space-y-1.5">
             <span className="text-xs uppercase font-bold text-slate-400">Track</span>
-            <select
-              value={trackId}
-              onChange={(e) => setTrackId(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            >
-              <option value="">No track / other</option>
-              {tracks.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({t.length_m}m, {t.surface})
-                </option>
-              ))}
-            </select>
+            <VelodromePicker tracks={tracks} value={trackId} onChange={setTrackId} defaultToFavorite emptyLabel="No track / other" />
           </label>
 
           <label className="block space-y-1.5">
