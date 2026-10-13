@@ -100,6 +100,36 @@ export async function refreshUserBadges(client, userId) {
   return { updated, error: null }
 }
 
+/**
+ * Cheap check (one tiny indexed query): is there any activity whose preview is missing or
+ * built for a different privacy zone, or whose badges were never computed?
+ */
+export async function hasPendingFeedSync(client, userId, { privacyZone = null } = {}) {
+  const signature = zoneSignature(privacyZone)
+  const stale =
+    signature === 'none'
+      ? 'route_preview.is.null,route_preview_zone.neq.none'
+      : `route_preview.is.null,route_preview_zone.is.null,route_preview_zone.neq.${signature}`
+  const { data, error } = await client
+    .from('activities')
+    .select('id')
+    .eq('user_id', userId)
+    .or(`${stale},badges.is.null`)
+    .limit(1)
+  // On error assume nothing is pending; the next explicit sync will retry.
+  return !error && (data || []).length > 0
+}
+
+/** Runs the full sync only when hasPendingFeedSync says there is something to do. */
+export async function syncFeedDataIfNeeded(client, userId) {
+  if (!userId) return { previews: 0, badges: 0, ran: false }
+  const { zone } = await fetchPrivacyZone(client, userId)
+  if (!(await hasPendingFeedSync(client, userId, { privacyZone: zone }))) {
+    return { previews: 0, badges: 0, ran: false }
+  }
+  return { ...(await syncFeedData(client, userId, { privacyZone: zone })), ran: true }
+}
+
 export async function syncFeedData(client, userId, { privacyZone } = {}) {
   if (!userId) return { previews: 0, badges: 0 }
   const zone = privacyZone === undefined ? (await fetchPrivacyZone(client, userId)).zone : privacyZone
