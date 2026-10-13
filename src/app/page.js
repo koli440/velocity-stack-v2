@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import Dashboard from '../components/Dashboard'
-import { DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
+import { DEFAULT_ACTIVITIES_PAGE_SIZE, FEED_ACTIVITY_COLUMNS } from '../lib/activityPagination'
 
 export const revalidate = 0
 
@@ -10,7 +10,7 @@ export default async function Home() {
   // the dashboard only fetches the first page here; Dashboard loads the rest on demand.
   const { data: activities } = await supabase
     .from('activities')
-    .select('*, tracks(name, length_m, surface)')
+    .select(FEED_ACTIVITY_COLUMNS)
     .order('activity_date', { ascending: false })
     .order('id', { ascending: false })
     .range(0, DEFAULT_ACTIVITIES_PAGE_SIZE - 1)

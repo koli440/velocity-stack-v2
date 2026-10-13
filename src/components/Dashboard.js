@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { deleteActivity } from '../lib/activityActions'
-import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
+import { fetchActivitiesPage, fetchBadgeHistory, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
+import { computeActivityBadges } from '../lib/activityBadges'
 import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
@@ -26,6 +27,14 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     initialActivities.length === DEFAULT_ACTIVITIES_PAGE_SIZE
   )
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [badgesById, setBadgesById] = useState(null)
+
+  // Badges are computed from a lightweight metric-only history, so they stay consistent
+  // however many feed pages are loaded.
+  const reloadBadges = async (userId) => {
+    const { activities: history, personalBests, error } = await fetchBadgeHistory(supabase, { userId })
+    if (!error) setBadgesById(computeActivityBadges(history, personalBests))
+  }
 
   // Resets back to the first page, e.g. after login or a sync/import.
   const reloadActivities = async (userId) => {
@@ -44,6 +53,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     if (!error) {
       setActivities(data)
       setHasMoreActivities(hasMore)
+      reloadBadges(targetId)
     }
   }
 
@@ -126,6 +136,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         {/* Activity list */}
         <ActivityFeed
           activities={activities}
+          badgesById={badgesById}
           onAddWorkout={() => setIsWorkoutModalOpen(true)}
           onDeleteActivity={handleDeleteActivity}
           hasMore={hasMoreActivities}
