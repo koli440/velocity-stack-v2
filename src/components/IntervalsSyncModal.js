@@ -40,25 +40,31 @@ function IntervalsSyncModalInner({
 
       try {
         // 1. Get the credentials from the profile
-        const [{ data: base, error: baseErr }, { data: secrets, error: secretsErr }] = await Promise.all([
+        const [{ data: profile, error: profileErr }, { data: conn }, { data: secrets }] = await Promise.all([
           supabase.from('profiles').select('home_track_id').eq('id', currentUser.id).maybeSingle(),
+          supabase
+            .from('connections')
+            .select('status')
+            .eq('user_id', currentUser.id)
+            .eq('provider', 'intervals')
+            .maybeSingle(),
           supabase
             .from('profile_secrets')
             .select('intervals_athlete_id, intervals_api_key')
             .eq('user_id', currentUser.id)
             .maybeSingle(),
         ])
-        const profileErr = baseErr || secretsErr
-        const profile = { ...(base || {}), ...(secrets || {}) }
+        const connected = conn ? conn.status !== 'disconnected' : false
+        const legacy = !!(secrets?.intervals_athlete_id && secrets?.intervals_api_key) && conn?.status !== 'disconnected'
 
-        if (profileErr || !profile?.intervals_athlete_id || !profile?.intervals_api_key) {
+        if (profileErr || !(connected || legacy)) {
           setHasCredentials(false)
           setLoading(false)
           return
         }
 
         setHasCredentials(true)
-        if (profile.home_track_id) {
+        if (profile?.home_track_id) {
           setSelectedTrackId(profile.home_track_id)
           setIsFixedGear(true)
         }
@@ -191,7 +197,7 @@ function IntervalsSyncModalInner({
                 Missing Intervals.icu credentials
               </div>
               <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                Open your rider profile and enter the Intervals Athlete ID and API Key.
+                Open your rider profile and connect Intervals.icu under Connections.
               </p>
             </div>
           )}
@@ -204,7 +210,7 @@ function IntervalsSyncModalInner({
 
           {!loading && hasCredentials && activitiesList.length === 0 && !errorMsg && (
             <div className="text-center py-10 text-xs text-slate-400">
-              No bike rides were found on Intervals.icu in the last 30 days.
+              No bike rides were found in your Intervals.icu import window (change it in profile settings).
             </div>
           )}
 

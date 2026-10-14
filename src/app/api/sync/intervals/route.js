@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
 import { createIntervalsProvider } from '../../../../lib/server/intervalsProvider'
 import { importActivity } from '../../../../lib/server/importActivity'
+import { loadIntervalsConnection } from '../../../../lib/server/connections'
+import { backfillOldest } from '../../../../lib/connections'
 import { ImportError, DUPLICATE_MESSAGE } from '../../../../lib/server/importErrors'
 
-const LIST_WINDOW_DAYS = 30
 
 // Calls the Python analyzer (/api/analyze) for a downloaded .fit file; null on any failure so the
 // provider falls back to raw streams.
@@ -35,23 +36,26 @@ export async function POST(req) {
 
     const { action, activityId, trackId, isFixedGear } = await req.json()
 
-    // Credentials always come from the caller's own profile_secrets row (RLS), never the request body.
-    const { data: secrets } = await supabase
-      .from('profile_secrets')
-      .select('intervals_athlete_id, intervals_api_key')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    const provider = createIntervalsProvider({
-      athleteId: secrets?.intervals_athlete_id,
-      apiKey: secrets?.intervals_api_key,
-    })
+    // Credentials always come from the caller's own connection (never the request body).
+    const conn = await loadIntervalsConnection({ supabase, userId: user.id })
+    const provider = createIntervalsProvider({ athleteId: conn.athleteId, apiKey: conn.apiKey })
+    const report = async (error) => {
+      try {
+        await supabase.rpc('record_connection_result', { p_provider: 'intervals', p_error: error })
+      } catch {
+        // status bookkeeping must never break a sync
+      }
+    }
 
     if (action === 'list') {
-      const since = new Date()
-      since.setDate(since.getDate() - LIST_WINDOW_DAYS)
-      const activities = await provider.listActivities({ oldest: since.toISOString().split('T')[0] })
-      return NextResponse.json({ success: true, activities })
+      try {
+        const activities = await provider.listActivities({ oldest: backfillOldest(conn.backfillDays) })
+        await report(null)
+        return NextResponse.json({ success: true, activities })
+      } catch (err) {
+        await report(err.message)
+        throw err
+      }
     }
 
     if (action === 'import') {
