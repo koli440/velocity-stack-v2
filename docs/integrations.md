@@ -41,7 +41,8 @@ cursor so the new window is imported.
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only. Required for background sync, the Strava callback and webhook. Without it the run endpoints return 503. |
 | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET` | Strava API app (https://www.strava.com/settings/api). The secret also signs the OAuth state. |
 
-Strava app settings: **Authorization Callback Domain** = the production host (`velocity-stack-v2.vercel.app`).
+Strava app settings: **Authorization Callback Domain** = `www.velocity-stack.app` (the canonical host; the apex `velocity-stack.app` 308-redirects to it).
+The OAuth `redirect_uri` is built from the request host (`src/lib/server/appUrl.js`), so riders should connect via the canonical host. Reaching the app via the `vercel.app` alias still works, but Strava rejects the callback there because the domain does not match.
 The webhook subscription (one per Strava app, callback `{app_base_url}/api/webhooks/strava`) is created automatically when
 the first rider connects, or manually with `POST /api/webhooks/strava/subscribe` while signed in. The verify token and
 the cron token live in `public.sync_settings`; `app_base_url` there decides where pg_cron calls.
