@@ -28,6 +28,10 @@ function fakeClient(results) {
   const log = []
   return {
     log,
+    rpc(name, args) {
+      log.push({ rpc: name, args })
+      return Promise.resolve(results[name] ?? { data: [], error: null })
+    },
     from(table) {
       const call = { table, ops: [] }
       log.push(call)
@@ -54,7 +58,8 @@ function fakeClient(results) {
 test('sanitizeSearchTerm strips filter metacharacters and limits length', () => {
   assert.equal(sanitizeSearchTerm('  jo%hn,(x)_*  '), 'jo hn x')
   assert.equal(sanitizeSearchTerm(null), '')
-  assert.equal(sanitizeSearchTerm('a'.repeat(100)).length, 50)
+  assert.equal(sanitizeSearchTerm('a'.repeat(300)).length, 254)
+  assert.equal(sanitizeSearchTerm(' Ann.Lee@Example.com '), 'Ann.Lee@Example.com')
 })
 
 test('visibility validation', () => {
@@ -83,11 +88,13 @@ test('unfollowUser deletes by both ids', async () => {
 
 test('searchRiders ignores short terms and excludes self', async () => {
   const c = fakeClient({
-    public_profiles: { data: [{ id: 'me' }, { id: 'r1' }, { id: 'r2' }], error: null },
+    search_riders: { data: [{ id: 'me' }, { id: 'r1' }, { id: 'r2' }], error: null },
   })
   assert.deepEqual((await searchRiders(c, { term: 'a' })).riders, [])
   assert.equal(c.log.length, 0)
   const res = await searchRiders(c, { term: 'ann', excludeId: 'me', limit: 1 })
+  assert.equal(c.log[0].rpc, 'search_riders')
+  assert.equal(c.log[0].args.p_term, 'ann')
   assert.deepEqual(res.riders.map((r) => r.id), ['r1'])
 })
 
@@ -98,10 +105,10 @@ test('following feed returns empty without follows, otherwise attaches authors',
   const c = fakeClient({
     follows: { data: [{ followee_id: 'r1' }], error: null },
     shared_activities: { data: [{ id: 'a1', user_id: 'r1' }], error: null },
-    public_profiles: { data: [{ id: 'r1', full_name: 'Ann' }], error: null },
+    public_profiles: { data: [{ id: 'r1', display_name: 'Ann' }], error: null },
   })
   const res = await fetchFollowingFeedPage(c, { userId: 'me', pageSize: 1 })
-  assert.equal(res.data[0].author.full_name, 'Ann')
+  assert.equal(res.data[0].author.display_name, 'Ann')
   assert.equal(res.hasMore, true)
   const act = c.log.find((l) => l.table === 'shared_activities')
   assert.ok(act.ops.some((o) => o[0] === 'in' && o[1] === 'user_id' && o[2][0] === 'r1'))
@@ -115,8 +122,8 @@ test('setActivityVisibility validates input', async () => {
 })
 
 test('authorName falls back gracefully', () => {
-  assert.equal(authorName({ full_name: 'Ann', username: 'a' }), 'Ann')
-  assert.equal(authorName({ username: 'a' }), 'a')
+  assert.equal(authorName({ display_name: 'Ann' }), 'Ann')
+  assert.equal(authorName({ nickname: 'x' }), 'Rider')
   assert.equal(authorName(null), 'Rider')
 })
 
@@ -145,7 +152,7 @@ test('followUser creates a request when the target requires approval', async () 
 })
 
 test('searchRiders also excludes blocked riders', async () => {
-  const c = fakeClient({ public_profiles: { data: [{ id: 'x' }, { id: 'r1' }], error: null } })
+  const c = fakeClient({ search_riders: { data: [{ id: 'x' }, { id: 'r1' }], error: null } })
   const res = await searchRiders(c, { term: 'ann', excludeId: 'me', excludeIds: ['x'] })
   assert.deepEqual(res.riders.map((r) => r.id), ['r1'])
 })
@@ -211,7 +218,7 @@ test('setRequireFollowApproval coerces to boolean', async () => {
 test('discover feed requests public rows from others, excludes blocked, attaches authors', async () => {
   const c = fakeClient({
     shared_activities: { data: [{ id: 'a1', user_id: 'u1' }], error: null },
-    public_profiles: { data: [{ id: 'u1', username: 'ann' }], error: null },
+    public_profiles: { data: [{ id: 'u1', display_name: 'ann' }], error: null },
   })
   const res = await fetchDiscoverFeedPage(c, { userId: 'me', excludeIds: ['b1', 'b2'], pageSize: 1 })
   const ops = c.log[0].ops
@@ -219,7 +226,7 @@ test('discover feed requests public rows from others, excludes blocked, attaches
   assert.ok(ops.some((o) => o[0] === 'neq' && o[1] === 'user_id' && o[2] === 'me'))
   assert.ok(ops.some((o) => o[0] === 'not' && o[1] === 'user_id' && o[3] === '(b1,b2)'))
   assert.equal(res.hasMore, true)
-  assert.equal(res.data[0].author.username, 'ann')
+  assert.equal(res.data[0].author.display_name, 'ann')
   assert.deepEqual((await fetchDiscoverFeedPage(c, { userId: null })).data, [])
 })
 

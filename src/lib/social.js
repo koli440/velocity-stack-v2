@@ -23,6 +23,8 @@ export const DEFAULT_VISIBILITY = 'public'
 
 export const RIDER_SEARCH_LIMIT = 10
 
+const PROFILE_COLUMNS = 'id, display_name, nickname, first_name, last_name, require_follow_approval, is_bot'
+
 export function isValidVisibility(value) {
   return VISIBILITY_OPTIONS.some((o) => o.value === value)
 }
@@ -33,7 +35,7 @@ export function sanitizeSearchTerm(term) {
     .replace(/[%_\\,()*]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 50)
+    .slice(0, 254)
 }
 
 export async function fetchFollowingIds(client, userId) {
@@ -48,7 +50,7 @@ export async function fetchProfilesByIds(client, ids) {
   if (!unique.length) return { profiles: new Map(), error: null }
   const { data, error } = await client
     .from('public_profiles')
-    .select('id, username, full_name, avatar_url, require_follow_approval, is_bot')
+    .select(PROFILE_COLUMNS)
     .in('id', unique)
   if (error) return { profiles: new Map(), error }
   return { profiles: new Map((data || []).map((p) => [p.id, p])), error: null }
@@ -79,18 +81,20 @@ export async function unfollowUser(client, { followerId, followeeId }) {
   return { error: error || null }
 }
 
+// Name search (nickname / first / last, or an exact e-mail address) runs server-side in
+// the search_riders RPC, which also drops blocked riders and the caller.
 export async function searchRiders(
   client,
   { term, excludeId, excludeIds = [], limit = RIDER_SEARCH_LIMIT } = {}
 ) {
   const clean = sanitizeSearchTerm(term)
   if (clean.length < 2) return { riders: [], error: null }
-  let query = client
-    .from('public_profiles')
-    .select('id, username, full_name, avatar_url, require_follow_approval, is_bot')
-    .or(`username.ilike.%${clean}%,full_name.ilike.%${clean}%`)
-    .limit(limit + 1)
-  const { data, error } = await query
+  const { data, error } = await client.rpc('search_riders', {
+    p_term: clean,
+    p_bots_only: false,
+    p_limit: limit + 1 + excludeIds.length,
+    p_offset: 0,
+  })
   if (error) return { riders: [], error }
   return {
     riders: (data || []).filter((r) => r.id !== excludeId && !excludeIds.includes(r.id)).slice(0, limit),
@@ -141,7 +145,7 @@ export async function setActivityVisibility(client, { activityId, visibility }) 
 }
 
 export function authorName(author) {
-  return author?.full_name || author?.username || 'Rider'
+  return author?.display_name || 'Rider'
 }
 
 // ---- Blocking -----------------------------------------------------------------------

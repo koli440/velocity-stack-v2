@@ -126,7 +126,7 @@ export default function RidersExplorer({ userId, onFollowChanged }) {
         <input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search riders by name…"
+          placeholder="Search by nickname, name or exact e-mail…"
           aria-label="Search riders"
           className="flex-1 min-w-[12rem] px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
         />

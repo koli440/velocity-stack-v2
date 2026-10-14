@@ -39,7 +39,7 @@ export default function TopNav({
           >
             <span>👤</span>
             <span className="hidden sm:inline">
-              {profile?.nickname || profile?.first_name || user.email?.split('@')[0]}
+              {profile?.nickname || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || user.email?.split('@')[0]}
             </span>
           </button>
         )}

@@ -7,12 +7,12 @@ export const RIDER_SEARCH_DEBOUNCE_MS = 300
 
 // A term shorter than the minimum is treated as "no search" (browse mode).
 export function normalizeRiderTerm(term) {
-  const clean = String(term ?? '').replace(/\s+/g, ' ').trim().slice(0, 50)
+  const clean = String(term ?? '').replace(/\s+/g, ' ').trim().slice(0, 254) // long enough for a full e-mail address
   return clean.length >= RIDER_SEARCH_MIN_CHARS ? clean : ''
 }
 
 export function riderName(rider) {
-  return rider?.full_name || rider?.username || 'Rider'
+  return rider?.display_name || 'Rider'
 }
 
 export function riderInitial(rider) {

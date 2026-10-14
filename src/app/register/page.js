@@ -25,19 +25,18 @@ export default function RegisterPage() {
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        // The database creates the profile from this metadata (trigger on auth.users).
+        options: {
+          data: {
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim(),
+          },
+        },
       })
 
       if (error) throw error
 
       if (data?.user) {
-        // Update the created profile with the provided name
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          first_name: formData.firstName.trim() || null,
-          last_name: formData.lastName.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-
         router.push('/')
         router.refresh()
       }
