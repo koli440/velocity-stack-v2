@@ -9,6 +9,7 @@ import {
   connectionStatusLabel,
   isConnected,
 } from '../lib/connections'
+import { describeSyncResult } from '../lib/syncPlan'
 
 const BACKFILL_OPTIONS = [
   { value: '30', label: 'Last 30 days' },
@@ -40,6 +41,7 @@ export default function ConnectionsPanel({ userId }) {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [syncMsg, setSyncMsg] = useState(null)
   const [athleteId, setAthleteId] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [backfill, setBackfill] = useState(String(DEFAULT_BACKFILL_DAYS))
@@ -85,6 +87,23 @@ export default function ConnectionsPanel({ userId }) {
       setBusy(false)
     }
   }
+
+  const syncNow = () =>
+    run(async () => {
+      setSyncMsg(null)
+      const res = await fetch('/api/sync/intervals/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: '{}',
+      })
+      const data = await parseJsonResponse(res)
+      if (res.status === 429) {
+        setSyncMsg(data.error)
+        return
+      }
+      if (!res.ok && !data.error) throw new Error('Sync failed')
+      setSyncMsg(describeSyncResult(data))
+    })
 
   const backfillPayload = (v) => (v === 'full' ? null : Number(v))
   const connected = isConnected(conn)
@@ -144,14 +163,26 @@ export default function ConnectionsPanel({ userId }) {
                 ))}
               </select>
             </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => run(() => callIntervals('DELETE'))}
-              className="text-[11px] font-bold uppercase text-red-500 hover:text-red-400 disabled:opacity-50"
-            >
-              Disconnect
-            </button>
+            <p className="text-[11px] text-slate-400">New rides are imported automatically about every 15 minutes.</p>
+            {syncMsg && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={syncNow}
+                className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider disabled:opacity-50"
+              >
+                {busy ? 'Working...' : 'Sync now'}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => run(() => callIntervals('DELETE'))}
+                className="text-[11px] font-bold uppercase text-red-500 hover:text-red-400 disabled:opacity-50"
+              >
+                Disconnect
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-2">
