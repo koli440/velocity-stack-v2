@@ -15,7 +15,8 @@ test('normalizeRiderTerm enforces the minimum length and trims', () => {
   assert.equal(normalizeRiderTerm('a'), '')
   assert.equal(normalizeRiderTerm('  ab  '), 'ab')
   assert.equal(normalizeRiderTerm(null), '')
-  assert.equal(normalizeRiderTerm('x'.repeat(80)).length, 50)
+  assert.equal(normalizeRiderTerm('x'.repeat(300)).length, 254)
+  assert.equal(normalizeRiderTerm(' Ann@Example.com '), 'Ann@Example.com')
 })
 
 test('followButtonLabel covers every state', () => {
@@ -38,7 +39,7 @@ test('formatLastActive', () => {
 test('formatRideCount and riderName', () => {
   assert.equal(formatRideCount(1), '1 public ride')
   assert.equal(formatRideCount(0), '0 public rides')
-  assert.equal(riderName({ username: 'bob' }), 'bob')
+  assert.equal(riderName({ display_name: 'Bob' }), 'Bob')
   assert.equal(riderName(null), 'Rider')
 })
 

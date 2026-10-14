@@ -55,14 +55,9 @@ function AuthorLine({ author }) {
   const name = authorName(author)
   return (
     <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-      {author.avatar_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={author.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
-      ) : (
-        <span className="w-5 h-5 rounded-full bg-orange-500/20 text-orange-500 text-[10px] font-black flex items-center justify-center">
-          {name.charAt(0).toUpperCase()}
-        </span>
-      )}
+      <span className="w-5 h-5 rounded-full bg-orange-500/20 text-orange-500 text-[10px] font-black flex items-center justify-center">
+        {name.charAt(0).toUpperCase()}
+      </span>
       {author.id ? (
         <Link href={`/riders/${author.id}`} className="hover:text-orange-500 transition">
           {name}

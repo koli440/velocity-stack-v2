@@ -24,6 +24,7 @@ export default function ProfileSettingsModal({
   // Intervals.icu data
   const [intervalsAthleteId, setIntervalsAthleteId] = useState('')
   const [intervalsApiKey, setIntervalsApiKey] = useState('')
+  const [discoverableByEmail, setDiscoverableByEmail] = useState(true)
 
   useEffect(() => {
     if (!user?.id || !isOpen) return
@@ -46,9 +47,15 @@ export default function ProfileSettingsModal({
         setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
         setFtpWatts(data.ftp_w ? String(data.ftp_w) : '')
         setThemePref(data.theme_preference || 'dark')
-        setIntervalsAthleteId(data.intervals_athlete_id || '')
-        setIntervalsApiKey(data.intervals_api_key || '')
+        setDiscoverableByEmail(data.discoverable_by_email !== false)
       }
+      const { data: secrets } = await supabase
+        .from('profile_secrets')
+        .select('intervals_athlete_id, intervals_api_key')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      setIntervalsAthleteId(secrets?.intervals_athlete_id || '')
+      setIntervalsApiKey(secrets?.intervals_api_key || '')
       setLoading(false)
     }
 
@@ -71,12 +78,19 @@ export default function ProfileSettingsModal({
       crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
       ftp_w: ftpWatts ? parseInt(ftpWatts) : null,
       theme_preference: themePref,
-      intervals_athlete_id: intervalsAthleteId.trim() || null,
-      intervals_api_key: intervalsApiKey.trim() || null,
+      discoverable_by_email: discoverableByEmail,
       updated_at: new Date().toISOString(),
     }
 
-    const { error } = await supabase.from('profiles').upsert(updates)
+    let { error } = await supabase.from('profiles').upsert(updates)
+    if (!error) {
+      ;({ error } = await supabase.from('profile_secrets').upsert({
+        user_id: user.id,
+        intervals_athlete_id: intervalsAthleteId.trim() || null,
+        intervals_api_key: intervalsApiKey.trim() || null,
+        updated_at: new Date().toISOString(),
+      }))
+    }
     setLoading(false)
 
     if (error) {
@@ -130,7 +144,7 @@ export default function ProfileSettingsModal({
 
           <div>
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Nickname / Roster Display
+              Nickname (shown to other riders)
             </label>
             <input
               type="text"
@@ -139,6 +153,15 @@ export default function ProfileSettingsModal({
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
             />
           </div>
+
+          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={discoverableByEmail}
+              onChange={(e) => setDiscoverableByEmail(e.target.checked)}
+            />
+            <span>Let riders find me by typing my exact e-mail address (your e-mail is never shown)</span>
+          </label>
 
           <div>
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">

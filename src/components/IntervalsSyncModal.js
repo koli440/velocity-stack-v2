@@ -40,11 +40,16 @@ export default function IntervalsSyncModal({
 
       try {
         // 1. Get the credentials from the profile
-        const { data: profile, error: profileErr } = await supabase
-          .from('profiles')
-          .select('intervals_athlete_id, intervals_api_key, home_track_id')
-          .eq('id', currentUser.id)
-          .maybeSingle()
+        const [{ data: base, error: baseErr }, { data: secrets, error: secretsErr }] = await Promise.all([
+          supabase.from('profiles').select('home_track_id').eq('id', currentUser.id).maybeSingle(),
+          supabase
+            .from('profile_secrets')
+            .select('intervals_athlete_id, intervals_api_key')
+            .eq('user_id', currentUser.id)
+            .maybeSingle(),
+        ])
+        const profileErr = baseErr || secretsErr
+        const profile = { ...(base || {}), ...(secrets || {}) }
 
         if (profileErr || !profile?.intervals_athlete_id || !profile?.intervals_api_key) {
           setHasCredentials(false)
@@ -94,13 +99,19 @@ export default function IntervalsSyncModal({
     setErrorMsg(null)
 
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select(
-          'intervals_athlete_id, intervals_api_key, default_chainring, default_cog, crank_length_mm, ftp_w'
-        )
-        .eq('id', currentUser.id)
-        .single()
+      const [{ data: base }, { data: secrets }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('default_chainring, default_cog, crank_length_mm, ftp_w')
+          .eq('id', currentUser.id)
+          .single(),
+        supabase
+          .from('profile_secrets')
+          .select('intervals_athlete_id, intervals_api_key')
+          .eq('user_id', currentUser.id)
+          .maybeSingle(),
+      ])
+      const profile = { ...(base || {}), ...(secrets || {}) }
 
       // 1. Call the API route to import the streams and curves (we pass the full ride ID)
       const res = await fetch('/api/sync/intervals', {

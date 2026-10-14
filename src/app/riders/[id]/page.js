@@ -28,7 +28,7 @@ export default function RiderProfilePage() {
       .order('activity_date', { ascending: false })
       .order('id', { ascending: false })
       .limit(20)
-    setActivities((data || []).map((a) => ({ ...a, author: { id, username: profile.username, full_name: profile.full_name, is_bot: profile.is_bot } })))
+    setActivities((data || []).map((a) => ({ ...a, author: { id, display_name: profile.display_name, is_bot: profile.is_bot } })))
   }
 
   useEffect(() => {

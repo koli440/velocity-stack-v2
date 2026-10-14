@@ -26,7 +26,7 @@ function fakeClient(results) {
 }
 
 test('describeNotification covers each type and missing actors', () => {
-  const actor = { username: 'ann' }
+  const actor = { display_name: 'ann' }
   assert.equal(describeNotification({ type: 'new_follower' }, actor), 'ann started following you')
   assert.equal(describeNotification({ type: 'follow_request' }, actor), 'ann wants to follow you')
   assert.equal(describeNotification({ type: 'follow_approved' }, null), 'A rider approved your follow request')
@@ -41,10 +41,10 @@ test('countUnread counts rows without read_at', () => {
 test('fetchNotifications attaches actors and scopes to the user', async () => {
   const c = fakeClient({
     notifications: { data: [{ id: 'n1', type: 'new_follower', actor_id: 'a1' }, { id: 'n2', type: 'new_follower', actor_id: 'gone' }], error: null },
-    public_profiles: { data: [{ id: 'a1', username: 'ann' }], error: null },
+    public_profiles: { data: [{ id: 'a1', display_name: 'ann' }], error: null },
   })
   const { notifications } = await fetchNotifications(c, 'me')
-  assert.equal(notifications[0].actor.username, 'ann')
+  assert.equal(notifications[0].actor.display_name, 'ann')
   assert.equal(notifications[1].actor, null)
   assert.ok(c.log[0].ops.some((o) => o[0] === 'eq' && o[1] === 'user_id' && o[2] === 'me'))
   assert.deepEqual((await fetchNotifications(c, null)).notifications, [])
