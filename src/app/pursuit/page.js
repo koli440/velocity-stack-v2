@@ -184,7 +184,7 @@ export default function PursuitPage() {
   )
 
   const metric = (label, value, unit) => (
-    <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+    <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
       <span className="text-xs uppercase font-bold text-slate-400">{label}</span>
       <div className="text-2xl sm:text-3xl font-black text-emerald-500 dark:text-brand-neon tracking-tight mt-1">
         {value}
@@ -205,7 +205,7 @@ export default function PursuitPage() {
       </div>
 
       {/* Event settings */}
-      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
+      <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
         <h2 className="text-xs uppercase font-bold text-slate-400">Event Settings</h2>
 
         {loadingTracks ? (
@@ -266,7 +266,7 @@ export default function PursuitPage() {
       </div>
 
       {/* Target time */}
-      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
+      <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
         <h2 className="text-xs uppercase font-bold text-slate-400">Target Time</h2>
         <div className="grid grid-cols-2 gap-4 max-w-xs">
           {field('Min', targetMin, setTargetMin, { min: 0, max: 60, step: 1 })}
@@ -275,7 +275,7 @@ export default function PursuitPage() {
       </div>
 
       {/* Pacing + gear */}
-      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-5">
+      <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-5">
         <div>
           <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">Pacing Parameters</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -323,7 +323,7 @@ export default function PursuitPage() {
       </div>
 
       {!strategy ? (
-        <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm text-sm text-slate-500 dark:text-slate-400">
+        <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm text-sm text-slate-500 dark:text-slate-400">
           {tracks.length === 0
             ? 'Add a track to the database to use the strategist.'
             : 'Distance must be longer than 1 lap and must cleanly divide the selected track to compute a strategy.'}
@@ -349,7 +349,7 @@ export default function PursuitPage() {
           </div>
 
           {/* Splits table */}
-          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm overflow-x-auto">
+          <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm overflow-x-auto">
             <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">📋 Splits</h2>
             <table className="w-full text-sm">
               <thead>
@@ -379,7 +379,7 @@ export default function PursuitPage() {
           </div>
 
           {/* Tempo analysis */}
-          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+          <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
             <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">📈 Tempo Analysis</h2>
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -411,7 +411,7 @@ export default function PursuitPage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+          <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
             <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">⚙️ Cadence (RPM)</h2>
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -444,7 +444,7 @@ export default function PursuitPage() {
           </div>
 
           {/* Training notes */}
-          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-2 text-sm text-slate-600 dark:text-slate-300">
+          <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-2 text-sm text-slate-600 dark:text-slate-300">
             <h2 className="text-xs uppercase font-bold text-slate-400 mb-1">💡 Training Notes</h2>
             <p>
               1. <span className="font-bold">Standing start lap:</span> you need to rip it in{' '}

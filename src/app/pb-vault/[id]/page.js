@@ -165,7 +165,7 @@ export default function PbDetailPage() {
   }
 
   const metric = (label, value, unit) => (
-    <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+    <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
       <span className="text-xs uppercase font-bold text-slate-400">{label}</span>
       <div className="text-2xl font-black text-emerald-500 dark:text-brand-neon tracking-tight mt-1">
         {value}
@@ -199,13 +199,13 @@ export default function PbDetailPage() {
       </div>
 
       {pb.notes && (
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-sm text-slate-600 dark:text-slate-300">
+        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-sm text-slate-600 dark:text-slate-300">
           📝 <span className="font-semibold">Notes:</span> {pb.notes}
         </div>
       )}
 
       {lapAnalysis.length > 0 && (
-        <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
+        <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white">
             ⏱️ Performance Analysis ({pb.split_mode === 'laps' ? 'Laps' : 'Fixed Distance'})
           </h2>
@@ -250,7 +250,7 @@ export default function PbDetailPage() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+      <div className="glass-card bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
         <button
           onClick={() => setIsEditing((v) => !v)}
           className="w-full text-left px-5 py-4 text-sm font-bold text-slate-900 dark:text-white flex items-center justify-between"

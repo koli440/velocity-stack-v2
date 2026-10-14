@@ -291,7 +291,7 @@ export default function ActivityDetailPage() {
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
-          <div className="w-full max-w-sm space-y-4 bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl">
+          <div className="glass-modal w-full max-w-sm space-y-4 bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl">
             <h2 className="text-base font-black text-slate-900 dark:text-white">Delete this activity?</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               This permanently deletes &quot;{activity.title || 'Velodrome Session'}&quot; and all linked data (curves, analysis, photos). This cannot be undone.
@@ -372,7 +372,7 @@ export default function ActivityDetailPage() {
 
       {/* 2b. GPS route map (only for activities with a satellite recording, e.g. road rides) */}
       {Array.isArray(activity.time_series?.latitude) && activity.time_series.latitude.length > 1 && (
-        <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+        <div className="glass-card bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
           <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>🗺️</span> Route Map
           </h3>
@@ -412,7 +412,7 @@ export default function ActivityDetailPage() {
 
       {/* 5. Bottom panel: Quick track and gearing setup (own activities only) */}
       {!sharedView && (
-      <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+      <div className="glass-card bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <span>⚙️</span> Track & Gearing Setup for this Ride
         </h3>
