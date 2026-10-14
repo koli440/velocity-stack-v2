@@ -3,6 +3,7 @@
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
+import { MAP_TILES } from '@/lib/mapTiles'
 
 // Custom icons for the route's start / finish
 const startIcon = new L.Icon({
@@ -55,8 +56,9 @@ export default function ActivityMap({ latitude = [], longitude = [] }) {
         style={{ height: '100%', width: '100%', background: '#0F172A' }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution={MAP_TILES.attribution}
+          url={MAP_TILES.url}
+          maxZoom={MAP_TILES.maxZoom}
         />
         <Polyline positions={points} pathOptions={{ color: '#f97316', weight: 4, opacity: 0.9 }} />
         <Marker position={start} icon={startIcon}>
