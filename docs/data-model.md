@@ -50,3 +50,17 @@ activity whose `file_sha256` matches, or whose `start_time` and `elapsed_time_s`
 activity of the same user - unless the new source outranks it (`activity_source_priority()`: intervals 3 > strava 2 >
 other 1), so an Intervals.icu import can replace a Strava copy. Existing rows are never checked.
 Client mirror: `sourcePriority` / `resolveDuplicate` in `src/lib/activityDuplicates.js`.
+
+## Server-side activity import
+Both the Intervals.icu modal and (later) background sync share one pipeline, `importActivity()` in
+`src/lib/server/importActivity.js`: provider adapter fetch -> analyze (`.fit` via `/api/analyze`, else
+`analyzeStreams()` in `src/lib/streamAnalysis.js`) -> `planImport()` (same external id => skip; duplicate =>
+`resolveDuplicate`: `upgrade` inserts the new copy then deletes the lower-priority one, `skip` inserts nothing) ->
+insert `activities` + `activity_curves`. `POST /api/sync/intervals` (`action: 'list' | 'import'`) validates the
+Supabase bearer token (`getRequestUser`), reads credentials from the caller's own `profile_secrets` row (never from
+the request body) and returns `409 { duplicate: true }` for a skipped duplicate, else
+`{ success, status: 'imported'|'upgraded', activityId, replacedId }`.
+
+Provider adapter contract: `{ source, fetchActivity(externalId, { gearing, analyzeFit }) -> { title, startDateLocal,
+summary, curves, time_series } }` (see `src/lib/server/intervalsProvider.js`). Env vars for future steps (hosting
+settings only, never committed): see `.env.example`.

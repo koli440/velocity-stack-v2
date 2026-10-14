@@ -1,0 +1,134 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { planImport, importActivity } from '../server/importActivity.js'
+import { analyzeStreams, computeDurationalCurve, computeNormalizedPower } from '../streamAnalysis.js'
+import { filterRides } from '../server/intervalsProvider.js'
+
+const T = '2026-10-01T10:00:00Z'
+
+test('planImport: no match inserts', () => {
+  assert.equal(planImport({ source: 'intervals', externalId: '1', startTime: T, elapsedTimeS: 100 }, []).action, 'insert')
+})
+
+test('planImport: same external id skips', () => {
+  const ex = [{ id: 'a', source: 'intervals', external_source: 'intervals', external_id: '1' }]
+  assert.equal(planImport({ source: 'intervals', externalId: 1 }, ex).action, 'skip')
+})
+
+test('planImport: intervals upgrades strava copy, strava skips intervals/manual', () => {
+  const strava = [{ id: 's', source: 'strava', start_time: T, elapsed_time_s: 100 }]
+  const cand = { startTime: T, elapsedTimeS: 102 }
+  const up = planImport({ ...cand, source: 'intervals', externalId: '9' }, strava)
+  assert.equal(up.action, 'upgrade')
+  assert.equal(up.existing.id, 's')
+  const intervals = [{ id: 'i', source: 'intervals', start_time: T, elapsed_time_s: 100 }]
+  assert.equal(planImport({ ...cand, source: 'strava', externalId: '9' }, intervals).action, 'skip')
+  assert.equal(planImport({ ...cand, source: 'intervals', externalId: '9' }, [{ ...strava[0], source: 'intervals' }]).action, 'skip')
+})
+
+function fakeSupabase({ existing = [], insertError = null } = {}) {
+  const calls = { inserts: [], deletes: [] }
+  const client = {
+    calls,
+    from(table) {
+      return {
+        select() {
+          return { eq: () => Promise.resolve({ data: table === 'activities' ? existing : [], error: null }), }
+        },
+        insert(rows) {
+          calls.inserts.push({ table, rows })
+          const chain = {
+            select: () => ({ single: () => Promise.resolve(insertError ? { data: null, error: insertError } : { data: { id: 'new1' }, error: null }) }),
+            then: (r) => r({ error: null }),
+          }
+          return chain
+        },
+        delete() {
+          return { eq: (_c, id) => { calls.deletes.push({ table, id }); return Promise.resolve({ error: null }) } }
+        },
+      }
+    },
+  }
+  return client
+}
+
+const provider = {
+  source: 'intervals',
+  fetchActivity: async () => ({
+    title: 'Ride',
+    startDateLocal: '2026-10-01T12:00:00',
+    summary: { start_time: T, elapsed_time_s: 100, avg_power_w: 200 },
+    curves: { Power: { '5s': 300 } },
+    time_series: {},
+  }),
+}
+const profile = { default_chainring: 50, default_cog: 15 }
+
+test('importActivity inserts activity and curves', async () => {
+  const supabase = fakeSupabase()
+  const r = await importActivity({ supabase, userId: 'u1', provider, externalId: '42', profile })
+  assert.equal(r.status, 'imported')
+  assert.equal(supabase.calls.inserts[0].table, 'activities')
+  assert.equal(supabase.calls.inserts[0].rows[0].user_id, 'u1')
+  assert.equal(supabase.calls.inserts[0].rows[0].external_id, '42')
+  assert.equal(supabase.calls.inserts[1].table, 'activity_curves')
+})
+
+test('importActivity upgrades: inserts new then deletes lower-priority copy', async () => {
+  const supabase = fakeSupabase({ existing: [{ id: 'old', source: 'strava', start_time: T, elapsed_time_s: 100 }] })
+  const r = await importActivity({ supabase, userId: 'u1', provider, externalId: '42', profile })
+  assert.equal(r.status, 'upgraded')
+  assert.equal(r.replacedId, 'old')
+  assert.deepEqual(supabase.calls.deletes, [{ table: 'activities', id: 'old' }])
+})
+
+test('importActivity skips duplicates without inserting', async () => {
+  const supabase = fakeSupabase({ existing: [{ id: 'old', source: 'manual', start_time: T, elapsed_time_s: 100 }] })
+  // manual (1) < intervals (3) would upgrade; use an equal-priority copy instead
+  supabase.calls.inserts.length = 0
+  const s2 = fakeSupabase({ existing: [{ id: 'old', source: 'intervals', start_time: T, elapsed_time_s: 100 }] })
+  const r = await importActivity({ supabase: s2, userId: 'u1', provider, externalId: '43', profile })
+  assert.equal(r.status, 'skipped')
+  assert.equal(s2.calls.inserts.length, 0)
+})
+
+test('importActivity maps unique violation to skipped and rejects missing user', async () => {
+  const supabase = fakeSupabase({ insertError: { code: '23505', message: 'dup' } })
+  const r = await importActivity({ supabase, userId: 'u1', provider, externalId: '1', profile })
+  assert.equal(r.status, 'skipped')
+  await assert.rejects(importActivity({ supabase, userId: null, provider, externalId: '1', profile }), { status: 401 })
+})
+
+test('computeDurationalCurve / computeNormalizedPower', () => {
+  assert.deepEqual(computeDurationalCurve([1, 2, 3, 4, 5], [1, 2]), { '1s': 5, '2s': 4.5 })
+  assert.equal(computeNormalizedPower([200, 200], 30), null)
+  assert.equal(computeNormalizedPower(new Array(60).fill(200)), 200)
+})
+
+test('analyzeStreams builds summary from streams; null when empty', () => {
+  assert.equal(analyzeStreams([]), null)
+  const n = 40
+  const r = analyzeStreams(
+    [
+      { type: 'watts', data: new Array(n).fill(250) },
+      { type: 'cadence', data: new Array(n).fill(90) },
+      { type: 'velocity_smooth', data: new Array(n).fill(10) },
+    ],
+    {}
+  )
+  assert.equal(r.summary.avg_power_w, 250)
+  assert.equal(r.summary.speed_source, 'sensor')
+  assert.equal(r.summary.elapsed_time_s, n - 1)
+  assert.ok(r.curves.Power['5s'] === 250)
+})
+
+test('analyzeStreams derives speed from cadence for fixed gear, else unavailable', () => {
+  const streams = [{ type: 'cadence', data: new Array(10).fill(100) }]
+  assert.equal(analyzeStreams(streams, { chainring: 50, cog: 15, isFixedGear: true }).summary.speed_source, 'derived_from_cadence')
+  assert.equal(analyzeStreams(streams, {}).summary.speed_source, 'unavailable')
+})
+
+test('filterRides keeps only rides', () => {
+  const out = filterRides([{ id: 1, type: 'Ride' }, { id: 2, type: 'Run' }, { id: 3, type: 'VirtualRide' }])
+  assert.deepEqual(out.map((r) => r.id), [1, 3])
+})
