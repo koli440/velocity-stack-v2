@@ -16,6 +16,7 @@
 // user preferences - theme_preference, ftp_w, ...), not in localStorage.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { formatTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 
 function formatDuration(totalSeconds) {
@@ -188,7 +189,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
         group: 'Time & Distance',
         label: 'Start Time',
         value: startTime
-          ? new Date(startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          ? formatTime(startTime)
           : '—',
       },
       { id: 'distance', group: 'Time & Distance', label: 'Distance', value: formatDistance(activity?.distance_m), hint: speedHint },

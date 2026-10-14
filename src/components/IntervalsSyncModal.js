@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { formatDateTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
@@ -285,7 +286,7 @@ export default function IntervalsSyncModal({
             <div className="space-y-2">
               {activitiesList.map((ride) => {
                 const isImporting = importingId === ride.id
-                const rideDate = new Date(ride.start_date_local).toLocaleDateString('en-US', {
+                const rideDate = formatDateTime(ride.start_date_local, {
                   day: 'numeric',
                   month: 'short',
                   year: 'numeric',

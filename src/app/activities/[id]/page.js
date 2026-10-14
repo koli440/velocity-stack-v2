@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { formatDateTime } from '../../../lib/dateFormat'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
@@ -239,7 +240,7 @@ export default function ActivityDetailPage() {
     )
   }
 
-  const actDate = new Date(activity.activity_date || activity.created_at).toLocaleDateString('en-US', {
+  const actDate = formatDateTime(activity.activity_date || activity.created_at, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',

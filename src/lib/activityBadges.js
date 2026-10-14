@@ -183,7 +183,7 @@ export function computeActivityBadges(activities = [], personalBests = [], confi
       add('MILESTONE', `${sessionCount}th session`)
     } else {
       const crossed = DISTANCE_MILESTONES_KM.filter((m) => prevDistanceKm < m && distanceKm >= m)
-      if (crossed.length) add('MILESTONE', `${crossed[crossed.length - 1].toLocaleString('en-US')} km total`)
+      if (crossed.length) add('MILESTONE', `${crossed[crossed.length - 1].toLocaleString()} km total`)
     }
 
     badges.sort((a, b) => a.priority - b.priority)

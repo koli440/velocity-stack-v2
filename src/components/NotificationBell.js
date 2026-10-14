@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { formatDateTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
 import { authorName } from '../lib/social'
@@ -75,7 +76,7 @@ export default function NotificationBell({ userId }) {
               <div>
                 {describeNotification(n, n.actor)}
                 <span className="block text-[10px] font-normal text-slate-400">
-                  {new Date(n.created_at).toLocaleString()}
+                  {formatDateTime(n.created_at)}
                 </span>
               </div>
             </div>

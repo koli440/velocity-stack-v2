@@ -1,6 +1,7 @@
 'use client'
 
 import BotBadge from './BotBadge'
+import { formatDate } from '../lib/dateFormat'
 import Avatar from './Avatar'
 import Link from 'next/link'
 import Icon from './ActivityIcons'
@@ -121,7 +122,7 @@ export default function ActivityFeed({
         <p className="text-xs text-slate-400 py-6 text-center">{emptyMessage}</p>
       )}
 
-      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {activities.map((act) => {
           const badges = hydrateBadges(act.badges)
           const cover = coverPhotos?.get(act.id)
@@ -157,7 +158,7 @@ export default function ActivityFeed({
                   <div className="flex items-center gap-2">
                     {!isOwnFeed && act.author && <AuthorLine author={act.author} />}
                     <span className="ml-auto shrink-0 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                      {new Date(act.activity_date || act.created_at).toLocaleDateString('en-US')}
+                      {formatDate(act.activity_date || act.created_at)}
                     </span>
                   </div>
                 )}
