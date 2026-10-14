@@ -12,10 +12,10 @@ import {
 
 const UID = '11111111-1111-1111-1111-111111111111'
 
-test('validateAvatarFile enforces type and 2 MB limit', () => {
+test('validateAvatarFile enforces type and 10 MB limit', () => {
   assert.equal(validateAvatarFile(null), 'No file selected')
   assert.match(validateAvatarFile({ type: 'image/gif', size: 10 }), /JPG, PNG or WebP/)
-  assert.match(validateAvatarFile({ type: 'image/png', size: MAX_AVATAR_BYTES + 1 }), /2 MB/)
+  assert.match(validateAvatarFile({ type: 'image/png', size: MAX_AVATAR_BYTES + 1 }), /10 MB/)
   assert.equal(validateAvatarFile({ type: 'image/webp', size: MAX_AVATAR_BYTES }), null)
   assert.equal(validateAvatarFile({ type: 'image/jpeg', size: 1 }), null)
 })
@@ -98,4 +98,10 @@ test('migration configures the public avatars bucket with own-folder policies', 
   }
   assert.match(sql, /auth\.uid\(\)::text = \(storage\.foldername\(name\)\)\[1\]/)
   assert.match(sql, /p\.avatar_url\s*\n\s*FROM public\.profiles p/)
+})
+
+test('follow-up migration raises avatars bucket limit to 10 MB', () => {
+  const sql = readFileSync(new URL('../../../supabase/migrations/20261023000000_avatar_size_limit.sql', import.meta.url), 'utf8')
+  assert.match(sql, /file_size_limit = 10485760/)
+  assert.match(sql, /image\/jpeg.*image\/png.*image\/webp/)
 })
