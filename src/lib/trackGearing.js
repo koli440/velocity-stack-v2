@@ -74,3 +74,29 @@ export function gearInches(chainring, cog, wheelSizeInches) {
 export function speedAtCadence(gearInchesValue, cadence) {
   return (Number(gearInchesValue) * 0.0254 * Math.PI * Number(cadence) * 60) / 1000
 }
+
+/**
+ * Finds other chainring/cog combos whose gear inches are close to the selected gear.
+ * @param {number} chainring
+ * @param {number} cog
+ * @param {number} wheelSize - wheel diameter in inches
+ * @param {{tolerance?: number, limit?: number}} [opts] - tolerance is a fraction of gear inches
+ * @returns {{chainring: number, cog: number, gearInches: number, ratio: number, diff: number}[]}
+ */
+export function similarGears(chainring, cog, wheelSize, { tolerance = 0.03, limit = 12 } = {}) {
+  const target = gearInches(chainring, cog, wheelSize)
+  if (!Number.isFinite(target) || target <= 0) return []
+  const results = []
+  for (let c = 38; c <= 70; c++) {
+    for (let r = 10; r <= 24; r++) {
+      if (c === Number(chainring) && r === Number(cog)) continue
+      const g = gearInches(c, r, wheelSize)
+      const diff = g - target
+      if (Math.abs(diff) / target <= tolerance) {
+        results.push({ chainring: c, cog: r, gearInches: g, ratio: c / r, diff })
+      }
+    }
+  }
+  results.sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff))
+  return results.slice(0, limit)
+}
