@@ -76,7 +76,7 @@ export async function DELETE(req, { params }) {
 
     const { data: existing, error: fetchError } = await supabase
       .from('analysis_templates')
-      .select('id, user_id')
+      .select('id, user_id, visibility')
       .eq('slug', slug)
       .single()
 
@@ -86,6 +86,13 @@ export async function DELETE(req, { params }) {
 
     if (existing.user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    if (existing.visibility !== 'private') {
+      return NextResponse.json(
+        { error: 'Only private templates can be deleted. Make it private first.' },
+        { status: 409 }
+      )
     }
 
     const { error } = await supabase.from('analysis_templates').delete().eq('slug', slug)
