@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
-import { fetchRidersPage, riderName, riderInitial, formatLastActive } from '../lib/riders'
+import { fetchRidersPage, riderName, formatLastActive } from '../lib/riders'
 import BotBadge from './BotBadge'
+import Avatar from './Avatar'
 
 export default function RosterPanel() {
   const [riders, setRiders] = useState([])
@@ -33,9 +34,7 @@ export default function RosterPanel() {
         <div className="space-y-3">
           {riders.map((r) => (
             <Link key={r.id} href={`/riders/${r.id}`} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200">
-                {riderInitial(r)}
-              </div>
+              <Avatar url={r.avatar_url} name={riderName(r)} />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white leading-tight">
                   <span className="truncate">{riderName(r)}</span>

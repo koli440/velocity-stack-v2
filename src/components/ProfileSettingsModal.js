@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import VelodromePicker from './VelodromePicker'
 import PrivacyZonePanel from './PrivacyZonePanel'
+import Avatar from './Avatar'
+import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../lib/avatars'
 
 export default function ProfileSettingsModal({
   isOpen,
@@ -26,6 +28,9 @@ export default function ProfileSettingsModal({
   const [intervalsAthleteId, setIntervalsAthleteId] = useState('')
   const [intervalsApiKey, setIntervalsApiKey] = useState('')
   const [discoverableByEmail, setDiscoverableByEmail] = useState(true)
+  const [avatarUrl, setAvatarUrl] = useState(null)
+  const [avatarBusy, setAvatarBusy] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
 
   useEffect(() => {
     if (!user?.id || !isOpen) return
@@ -49,6 +54,7 @@ export default function ProfileSettingsModal({
         setFtpWatts(data.ftp_w ? String(data.ftp_w) : '')
         setThemePref(data.theme_preference || 'dark')
         setDiscoverableByEmail(data.discoverable_by_email !== false)
+        setAvatarUrl(data.avatar_url || null)
       }
       const { data: secrets } = await supabase
         .from('profile_secrets')
@@ -62,6 +68,33 @@ export default function ProfileSettingsModal({
 
     loadProfile()
   }, [user, isOpen])
+
+  // Image changes are saved immediately (independent of the Save button).
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const invalid = validateAvatarFile(file)
+    if (invalid) {
+      setAvatarError(invalid)
+      return
+    }
+    setAvatarBusy(true)
+    setAvatarError('')
+    const { url, error } = await uploadAvatar(supabase, { userId: user.id, file })
+    setAvatarBusy(false)
+    if (error) setAvatarError(error.message)
+    else setAvatarUrl(url)
+  }
+
+  const handleAvatarRemove = async () => {
+    setAvatarBusy(true)
+    setAvatarError('')
+    const { error } = await removeAvatar(supabase, { userId: user.id })
+    setAvatarBusy(false)
+    if (error) setAvatarError(error.message)
+    else setAvatarUrl(null)
+  }
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -118,6 +151,41 @@ export default function ProfileSettingsModal({
         </h2>
 
         <form onSubmit={handleSave} className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Avatar
+              url={avatarUrl}
+              name={nickname || [firstName, lastName].filter(Boolean).join(' ')}
+              size="w-16 h-16"
+              textSize="text-xl"
+            />
+            <div className="space-y-1">
+              <div className="flex gap-2">
+                <label className="cursor-pointer px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition">
+                  {avatarBusy ? 'Working…' : avatarUrl ? 'Replace image' : 'Upload image'}
+                  <input
+                    type="file"
+                    accept={ALLOWED_AVATAR_TYPES.join(',')}
+                    onChange={handleAvatarChange}
+                    disabled={avatarBusy}
+                    className="hidden"
+                  />
+                </label>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={handleAvatarRemove}
+                    disabled={avatarBusy}
+                    className="px-3 py-1.5 rounded-xl border border-rose-500/30 text-[11px] font-bold text-rose-500 hover:bg-rose-500/10 transition"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-400">JPG, PNG or WebP, max 2 MB.</p>
+              {avatarError && <p className="text-[11px] text-rose-500">{avatarError}</p>}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">

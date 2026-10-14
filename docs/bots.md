@@ -24,6 +24,15 @@ No external credentials, GitHub secrets or workflows are required.
   a bot the bot follows back unless a block exists between them.
 - The migration backfills 60 days.
 
+## Avatars
+
+Each persona has a generated avatar (`public/avatars/bots/<persona>.png`, produced by
+`node scripts/generate-bot-avatars.mjs`). Migration `20261022000000_profile_images.sql` sets
+`profiles.avatar_url = '/avatars/bots/<persona>.png'` for the bot profiles.
+They are bundled app assets rather than objects in the `avatars` storage bucket because uploading to
+storage needs the service-role key, which this project does not use outside migrations. The
+`avatar_url` CHECK constraint only allows this path form for `is_bot` rows.
+
 ## Operations (SQL only)
 
 ```sql
