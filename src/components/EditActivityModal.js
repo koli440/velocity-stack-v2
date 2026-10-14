@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Portal from './Portal'
 import VelodromePicker from './VelodromePicker'
 import { VISIBILITY_OPTIONS } from '../lib/social'
 import {
@@ -14,7 +15,7 @@ import {
 const inputClass =
   'w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-orange-500'
 
-export default function EditActivityModal({ isOpen, onClose, activity, tracks = [], client, onSaved }) {
+function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client, onSaved }) {
   const [title, setTitle] = useState('')
   const [trackId, setTrackId] = useState('')
   const [visibility, setVisibility] = useState('private')
@@ -137,5 +138,13 @@ export default function EditActivityModal({ isOpen, onClose, activity, tracks = 
         </div>
       </form>
     </div>
+  )
+}
+
+export default function EditActivityModal(props) {
+  return (
+    <Portal>
+      <EditActivityModalInner {...props} />
+    </Portal>
   )
 }

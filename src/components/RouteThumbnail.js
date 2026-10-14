@@ -5,8 +5,10 @@ import Icon from './ActivityIcons'
 
 // Renders the persisted `activities.route_preview`: a GPS route, a power sparkline for
 // indoor sessions, or a track-oval glyph when there is nothing to draw.
-export default function RouteThumbnail({ preview, className = '' }) {
-  const box = `flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ${className}`
+export default function RouteThumbnail({ preview, className = '', hero = false }) {
+  const box = hero
+    ? `flex items-center justify-center text-slate-300 ${className}`
+    : `flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ${className}`
   const viewBox = `0 0 ${ROUTE_PREVIEW_SIZE} ${ROUTE_PREVIEW_SIZE}`
 
   if (preview?.kind === 'route' && isValidRoutePoints(preview.points)) {
@@ -18,8 +20,9 @@ export default function RouteThumbnail({ preview, className = '' }) {
           <polyline
             points={routePreviewToPath(preview.points)}
             fill="none"
-            stroke="#f97316"
-            strokeWidth="3"
+            stroke={hero ? '#00F5A0' : '#f97316'}
+            strokeWidth={hero ? '2.5' : '3'}
+            style={hero ? { filter: 'drop-shadow(0 0 3px #00F5A0)' } : undefined}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -37,8 +40,9 @@ export default function RouteThumbnail({ preview, className = '' }) {
           <polyline
             points={sparklineToPath(preview.values)}
             fill="none"
-            stroke="#a855f7"
-            strokeWidth="3"
+            stroke={hero ? '#d8b4fe' : '#a855f7'}
+            strokeWidth={hero ? '2.5' : '3'}
+            style={hero ? { filter: 'drop-shadow(0 0 3px #a855f7)' } : undefined}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -49,7 +53,7 @@ export default function RouteThumbnail({ preview, className = '' }) {
 
   return (
     <div className={`${box} text-slate-400`} aria-label="No route data" role="img">
-      <Icon name="track" size={32} />
+      <Icon name="track" size={hero ? 48 : 32} />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Portal from './Portal'
 import { useRouter } from 'next/navigation'
 import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 import FitUploader from './FitUploader'
@@ -14,7 +15,7 @@ const CHOICES = [
 ]
 
 // Top-banner "Add / Sync" flow: asks what to do, then shows the chosen existing flow.
-export default function AddSessionModal({ isOpen, onClose, user, tracks = [] }) {
+function AddSessionModalInner({ isOpen, onClose, user, tracks = [] }) {
   const router = useRouter()
   const [flow, setFlow] = useState(null)
   const firstChoice = useRef(null)
@@ -111,5 +112,13 @@ export default function AddSessionModal({ isOpen, onClose, user, tracks = [] }) 
         ))}
       </div>
     </div>
+  )
+}
+
+export default function AddSessionModal(props) {
+  return (
+    <Portal>
+      <AddSessionModalInner {...props} />
+    </Portal>
   )
 }

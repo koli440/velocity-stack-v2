@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Portal from './Portal'
 import { supabase } from '../lib/supabase'
 import VelodromePicker from './VelodromePicker'
 import PrivacyZonePanel from './PrivacyZonePanel'
@@ -8,7 +9,7 @@ import Avatar from './Avatar'
 import { readGlassPref, writeGlassPref } from '../lib/glass'
 import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../lib/avatars'
 
-export default function ProfileSettingsModal({
+function ProfileSettingsModalInner({
   isOpen,
   onClose,
   user,
@@ -366,5 +367,12 @@ export default function ProfileSettingsModal({
         </form>
       </div>
     </div>
+  )
+}
+export default function ProfileSettingsModal(props) {
+  return (
+    <Portal>
+      <ProfileSettingsModalInner {...props} />
+    </Portal>
   )
 }

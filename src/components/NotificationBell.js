@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { formatDateTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
 import { authorName } from '../lib/social'
@@ -64,7 +65,7 @@ export default function NotificationBell({ userId }) {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-72 z-30 p-3 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder shadow-lg space-y-2">
+        <div className="glass-popover absolute right-0 mt-2 w-72 z-30 p-3 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder shadow-lg space-y-2">
           {items.length === 0 && <p className="text-xs text-slate-400">No notifications yet.</p>}
           {items.map((n) => (
             <div
@@ -75,7 +76,7 @@ export default function NotificationBell({ userId }) {
               <div>
                 {describeNotification(n, n.actor)}
                 <span className="block text-[10px] font-normal text-slate-400">
-                  {new Date(n.created_at).toLocaleString()}
+                  {formatDateTime(n.created_at)}
                 </span>
               </div>
             </div>

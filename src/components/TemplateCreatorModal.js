@@ -6,6 +6,7 @@
 // Also used to edit an existing template the current user owns.
 
 import { useEffect, useMemo, useState } from 'react'
+import Portal from './Portal'
 import { getAuthHeader } from '../lib/supabase'
 import { parseIntervalDsl } from '../lib/intervalDsl'
 import { DSL_GUIDE_PATH } from '../lib/dslGuide'
@@ -37,7 +38,7 @@ function formatValueLabel(step) {
   return step.keyBy === 'distance' ? formatDistanceLabel(step.targetDistanceM) : formatDurationLabel(step.targetDurationSec)
 }
 
-export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editingTemplate = null }) {
+function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate = null }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('road')
@@ -246,5 +247,13 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
         </div>
       </div>
     </div>
+  )
+}
+
+export default function TemplateCreatorModal(props) {
+  return (
+    <Portal>
+      <TemplateCreatorModalInner {...props} />
+    </Portal>
   )
 }

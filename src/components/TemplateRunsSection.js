@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Portal from './Portal'
+import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { computeBaselines } from '../lib/templateBaselines'
@@ -12,10 +14,6 @@ function formatMetric(value, suffix = '') {
   if (value === null || value === undefined) return '—'
   if (typeof value === 'number') return `${Math.round(value * 10) / 10}${suffix}`
   return `${value}${suffix}`
-}
-
-function formatDate(value) {
-  return value ? new Date(value).toLocaleDateString('cs-CZ') : ''
 }
 
 function DeltaBadge({ current, previous, label }) {
@@ -263,7 +261,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
                       {run.analysis_templates?.name || 'Template'}
                     </b>
                     <span className="text-[10px] text-slate-400">
-                      run {new Date(run.updated_at).toLocaleString('cs-CZ')}
+                      run {formatDateTime(run.updated_at)}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-wider">
@@ -390,7 +388,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
       )}
 
       {addOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAddOpen(false)}>
+        <Portal><div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAddOpen(false)}>
           <div className="w-full max-w-md bg-white dark:bg-surface-darkCard rounded-3xl p-6 space-y-4 border border-slate-200 dark:border-surface-darkBorder" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Add template run</h3>
             <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -428,7 +426,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
               </div>
             </div>
           </div>
-        </div>
+        </div></Portal>
       )}
 
       <TemplateCreatorModal

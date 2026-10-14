@@ -42,6 +42,48 @@ body {
   html.dark[data-glass="on"] .glass-dense { background-color: rgba(21, 29, 42, 0.62); }
   html.dark[data-glass="on"] .glass-modal { background-color: rgba(21, 29, 42, 0.5); }
 
+  /* Site-wide glass: every solid surface that uses the standard card/tile classes
+     (not only .glass-card) picks up the liquid-glass look while the toggle is on. */
+  html[data-glass="on"] :is(.bg-white, .dark\:bg-surface-darkCard, .bg-slate-50, .bg-slate-100):not(.rounded-full, .glass-popover, .glass-card, .glass-dense, .glass-modal, .bg-white\/25, .bg-white\/15, .bg-white\/50, .bg-white\/80) {
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    backdrop-filter: blur(20px) saturate(1.5);
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+  html[data-glass="on"] :is(.bg-slate-50, .bg-slate-100):not(.rounded-full, .glass-popover, .glass-card, .glass-dense, .glass-modal) {
+    background-color: rgba(255, 255, 255, 0.22);
+  }
+  html.dark[data-glass="on"] :is(.bg-white, .dark\:bg-surface-darkCard, .bg-slate-50, .bg-slate-100, .dark\:bg-slate-900, .dark\:bg-slate-800, .dark\:bg-slate-950):not(.rounded-full, .glass-popover, .glass-card, .glass-dense, .glass-modal, .bg-white\/25, .bg-white\/15, .bg-white\/50, .bg-white\/80) {
+    background-color: rgba(21, 29, 42, 0.3);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+  html.dark[data-glass="on"] :is(.bg-slate-50, .bg-slate-100, .dark\:bg-slate-900, .dark\:bg-slate-800, .dark\:bg-slate-950):not(.rounded-full, .glass-popover, .glass-card, .glass-dense, .glass-modal) {
+    background-color: rgba(255, 255, 255, 0.07);
+  }
+  /* Dropdowns, popovers and modal panels stay near-opaque so text is always readable. */
+  html[data-glass="on"] :is(.glass-popover, .fixed.inset-0 > :is(.bg-white, .dark\:bg-surface-darkCard)) {
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+    background-color: rgba(255, 255, 255, 0.94);
+    border-color: rgba(15, 23, 42, 0.12);
+    color: #0f172a;
+  }
+  html.dark[data-glass="on"] :is(.glass-popover, .fixed.inset-0 > :is(.bg-white, .dark\:bg-surface-darkCard)) {
+    background-color: rgba(15, 23, 42, 0.95);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #f8fafc;
+  }
+  html[data-glass="on"] select option { background-color: #ffffff; color: #0f172a; }
+  html.dark[data-glass="on"] select option { background-color: #0f172a; color: #f8fafc; }
+
+  /* Same contrast tinting as .glass-card for the broadened surfaces. */
+  html[data-glass="on"] :is(.bg-white, .dark\:bg-surface-darkCard) :is(.text-slate-400, .text-slate-500) {
+    color: #334155;
+  }
+  html.dark[data-glass="on"] :is(.bg-white, .dark\:bg-surface-darkCard) :is(.text-slate-400, .text-slate-500) {
+    color: #cbd5e1;
+  }
+
   /* Tinted text so secondary copy keeps its contrast over the photo. */
   html[data-glass="on"] :is(.glass-card, .glass-dense, .glass-modal) {
     color: #0f172a;

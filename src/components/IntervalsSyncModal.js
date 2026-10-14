@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Portal from './Portal'
+import { formatDateTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import { parseJsonResponse } from '../lib/httpJson'
 import VelodromePicker from './VelodromePicker'
 
-export default function IntervalsSyncModal({
+function IntervalsSyncModalInner({
   isOpen,
   onClose,
   currentUser,
@@ -285,7 +287,7 @@ export default function IntervalsSyncModal({
             <div className="space-y-2">
               {activitiesList.map((ride) => {
                 const isImporting = importingId === ride.id
-                const rideDate = new Date(ride.start_date_local).toLocaleDateString('en-US', {
+                const rideDate = formatDateTime(ride.start_date_local, {
                   day: 'numeric',
                   month: 'short',
                   year: 'numeric',
@@ -350,5 +352,12 @@ export default function IntervalsSyncModal({
         </div>
       </div>
     </div>
+  )
+}
+export default function IntervalsSyncModal(props) {
+  return (
+    <Portal>
+      <IntervalsSyncModalInner {...props} />
+    </Portal>
   )
 }

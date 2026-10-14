@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Portal from './Portal'
 import { supabase } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import { loadExistingActivityFingerprints } from '../lib/activityDuplicates'
@@ -13,7 +14,7 @@ const STATUS_META = {
   error: { icon: '❌', label: 'Failed' },
 }
 
-export default function BulkImportModal({
+function BulkImportModalInner({
   isOpen,
   onClose,
   currentUser,
@@ -320,5 +321,13 @@ export default function BulkImportModal({
         </div>
       </div>
     </div>
+  )
+}
+
+export default function BulkImportModal(props) {
+  return (
+    <Portal>
+      <BulkImportModalInner {...props} />
+    </Portal>
   )
 }

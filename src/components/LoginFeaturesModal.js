@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Portal from './Portal'
 import Link from 'next/link'
 
 /* ---------- Static visuals (no data/auth needed) ---------- */
@@ -175,7 +176,7 @@ const FEATURES = [
 
 const FOCUSABLE = 'a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])'
 
-export default function LoginFeaturesModal({ open, onClose }) {
+function LoginFeaturesModalInner({ open, onClose }) {
   const [active, setActive] = useState(0)
   const dialogRef = useRef(null)
   const onCloseRef = useRef(onClose)
@@ -344,5 +345,13 @@ export default function LoginFeaturesModal({ open, onClose }) {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginFeaturesModal(props) {
+  return (
+    <Portal>
+      <LoginFeaturesModalInner {...props} />
+    </Portal>
   )
 }
