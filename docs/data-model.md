@@ -10,7 +10,7 @@
 
 ## Profile image
 `profiles.avatar_url` holds the public URL of the rider's image in the public `avatars` storage bucket
-(`<user_id>/avatar-<timestamp>.<ext>`; max 2 MB, JPEG/PNG/WebP, enforced by the bucket). Storage RLS lets
+(`<user_id>/avatar-<timestamp>.<ext>`; max 10 MB, JPEG/PNG/WebP, enforced by the bucket; limit raised from 2 MB by `20261023000000_avatar_size_limit.sql`). Storage RLS lets
 a rider insert/replace/delete only objects under their own `<user_id>/` prefix, and a CHECK constraint only
 accepts URLs pointing at that folder. Images are uploaded as-is and cropped with CSS (`Avatar` component,
 square + `object-cover` + rounded); without an image an initials placeholder is shown. `avatar_url` is

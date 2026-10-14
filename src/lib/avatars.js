@@ -3,7 +3,7 @@
 // 20261022000000_profile_images.sql). Images are uploaded as-is and cropped with CSS.
 
 export const AVATAR_BUCKET = 'avatars'
-export const MAX_AVATAR_BYTES = 2 * 1024 * 1024
+export const MAX_AVATAR_BYTES = 10 * 1024 * 1024
 export const ALLOWED_AVATAR_TYPES = Object.freeze(['image/jpeg', 'image/png', 'image/webp'])
 
 const EXTENSIONS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
@@ -12,7 +12,7 @@ const EXTENSIONS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'web
 export function validateAvatarFile(file) {
   if (!file) return 'No file selected'
   if (!ALLOWED_AVATAR_TYPES.includes(file.type)) return 'Only JPG, PNG or WebP images are allowed'
-  if (file.size > MAX_AVATAR_BYTES) return 'Image is larger than 2 MB'
+  if (file.size > MAX_AVATAR_BYTES) return 'Image is larger than 10 MB'
   return null
 }
 

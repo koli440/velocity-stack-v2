@@ -181,7 +181,7 @@ export default function ProfileSettingsModal({
                   </button>
                 )}
               </div>
-              <p className="text-[10px] text-slate-400">JPG, PNG or WebP, max 2 MB.</p>
+              <p className="text-[10px] text-slate-400">JPG, PNG or WebP, max 10 MB.</p>
               {avatarError && <p className="text-[11px] text-rose-500">{avatarError}</p>}
             </div>
           </div>
