@@ -124,7 +124,7 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div className="bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+      <div className="glass-modal bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black text-slate-900 dark:text-white">
             🏆 Add New Personal Best

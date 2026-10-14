@@ -97,7 +97,7 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl p-6 space-y-5">
+      <div className="glass-modal w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl p-6 space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
             <span>✏️</span> {editingTemplate ? 'Edit Template' : 'Create Template'}
