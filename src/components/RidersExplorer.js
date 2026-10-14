@@ -9,11 +9,11 @@ import {
   fetchRidersPage,
   mergeRiderPages,
   riderName,
-  riderInitial,
   formatLastActive,
   formatRideCount,
 } from '../lib/riders'
 import BotBadge from './BotBadge'
+import Avatar from './Avatar'
 import RiderFollowButton from './RiderFollowButton'
 
 // Shared hook: debounced search + "bots only" filter + offset pagination.
@@ -70,9 +70,7 @@ export function useRiderDiscovery() {
 export function RiderCard({ rider, userId, onStatusChange }) {
   return (
     <li className="flex items-center gap-3 p-3 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder">
-      <span className="w-10 h-10 shrink-0 rounded-full bg-orange-500/20 text-orange-500 text-sm font-black flex items-center justify-center">
-        {riderInitial(rider)}
-      </span>
+      <Avatar url={rider.avatar_url} name={riderName(rider)} size="w-10 h-10" textSize="text-sm" />
       <div className="min-w-0 flex-1 space-y-0.5">
         <div className="flex items-center gap-2">
           <Link

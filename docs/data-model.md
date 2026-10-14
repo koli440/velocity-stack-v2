@@ -3,10 +3,18 @@
 | Layer | Contents | Who can read |
 |-------|----------|--------------|
 | `auth.users` | Credentials only (email, password, metadata used once at signup) | Auth service |
-| `public.profiles` | Identity (`first_name`, `last_name`, `nickname`), training defaults, `theme_preference`, privacy zone, `require_follow_approval`, `discoverable_by_email`, `is_bot`, `bot_persona` | Own row only (RLS) |
+| `public.profiles` | Identity (`first_name`, `last_name`, `nickname`), training defaults, `theme_preference`, privacy zone, `require_follow_approval`, `discoverable_by_email`, `avatar_url`, `is_bot`, `bot_persona` | Own row only (RLS) |
 | `public.profile_secrets` | `intervals_athlete_id`, `intervals_api_key` | Own row only (RLS) |
-| `public.public_profiles` (view) | `id, display_name, nickname, first_name, last_name, require_follow_approval, is_bot` (blocked riders filtered out) | Authenticated riders |
+| `public.public_profiles` (view) | `id, display_name, nickname, first_name, last_name, require_follow_approval, is_bot, avatar_url` (blocked riders filtered out) | Authenticated riders |
 | `search_riders` / `get_rider_profile` (SECURITY DEFINER RPCs) | Ranked search and profile with follow state, ride counts, last ride | Authenticated riders |
+
+## Profile image
+`profiles.avatar_url` holds the public URL of the rider's image in the public `avatars` storage bucket
+(`<user_id>/avatar-<timestamp>.<ext>`; max 2 MB, JPEG/PNG/WebP, enforced by the bucket). Storage RLS lets
+a rider insert/replace/delete only objects under their own `<user_id>/` prefix, and a CHECK constraint only
+accepts URLs pointing at that folder. Images are uploaded as-is and cropped with CSS (`Avatar` component,
+square + `object-cover` + rounded); without an image an initials placeholder is shown. `avatar_url` is
+returned by `public_profiles`, `search_riders` and `get_rider_profile`. Migration `20261022000000_profile_images.sql`.
 
 ## Display name
 `display_name = nickname`, else `first_name + last_name`, else `'Rider'`.

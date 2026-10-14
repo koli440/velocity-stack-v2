@@ -23,7 +23,7 @@ export const DEFAULT_VISIBILITY = 'public'
 
 export const RIDER_SEARCH_LIMIT = 10
 
-const PROFILE_COLUMNS = 'id, display_name, nickname, first_name, last_name, require_follow_approval, is_bot'
+const PROFILE_COLUMNS = 'id, display_name, nickname, first_name, last_name, require_follow_approval, is_bot, avatar_url'
 
 export function isValidVisibility(value) {
   return VISIBILITY_OPTIONS.some((o) => o.value === value)

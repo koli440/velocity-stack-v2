@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import ThemeToggle from './ThemeToggle'
+import Avatar from './Avatar'
 import NotificationBell from './NotificationBell'
 import AddSessionModal from './AddSessionModal'
 import { OPEN_ADD_SESSION_EVENT } from '../lib/navigation'
@@ -21,6 +22,9 @@ export default function TopNav({
     window.addEventListener(OPEN_ADD_SESSION_EVENT, open)
     return () => window.removeEventListener(OPEN_ADD_SESSION_EVENT, open)
   }, [])
+
+  const displayName =
+    profile?.nickname || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || user?.email?.split('@')[0]
 
   return (
     <>
@@ -65,10 +69,8 @@ export default function TopNav({
             onClick={onOpenSettings}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition shadow-2xs"
           >
-            <span>👤</span>
-            <span className="hidden sm:inline">
-              {profile?.nickname || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || user.email?.split('@')[0]}
-            </span>
+            <Avatar url={profile?.avatar_url} name={displayName} size="w-6 h-6" textSize="text-[10px]" />
+            <span className="hidden sm:inline">{displayName}</span>
           </button>
           <NotificationBell userId={user.id} />
           </div>

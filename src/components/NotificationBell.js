@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Avatar from './Avatar'
+import { authorName } from '../lib/social'
 import {
   fetchNotifications,
   markAllNotificationsRead,
@@ -67,12 +69,15 @@ export default function NotificationBell({ userId }) {
           {items.map((n) => (
             <div
               key={n.id}
-              className={`text-xs ${n.read_at ? 'text-slate-500' : 'font-bold text-slate-900 dark:text-white'}`}
+              className={`flex items-start gap-2 text-xs ${n.read_at ? 'text-slate-500' : 'font-bold text-slate-900 dark:text-white'}`}
             >
-              {describeNotification(n, n.actor)}
-              <span className="block text-[10px] font-normal text-slate-400">
-                {new Date(n.created_at).toLocaleString()}
-              </span>
+              <Avatar url={n.actor?.avatar_url} name={authorName(n.actor)} size="w-6 h-6" textSize="text-[10px]" />
+              <div>
+                {describeNotification(n, n.actor)}
+                <span className="block text-[10px] font-normal text-slate-400">
+                  {new Date(n.created_at).toLocaleString()}
+                </span>
+              </div>
             </div>
           ))}
         </div>

@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
-import { fetchRiderProfile, riderName, riderInitial, formatLastActive, formatRideCount } from '../../../lib/riders'
+import { fetchRiderProfile, riderName, formatLastActive, formatRideCount } from '../../../lib/riders'
 import { SHARED_FEED_COLUMNS } from '../../../lib/activityPagination'
 import BotBadge from '../../../components/BotBadge'
+import Avatar from '../../../components/Avatar'
 import RiderFollowButton from '../../../components/RiderFollowButton'
 import ActivityFeed from '../../../components/ActivityFeed'
 
@@ -28,7 +29,7 @@ export default function RiderProfilePage() {
       .order('activity_date', { ascending: false })
       .order('id', { ascending: false })
       .limit(20)
-    setActivities((data || []).map((a) => ({ ...a, author: { id, display_name: profile.display_name, is_bot: profile.is_bot } })))
+    setActivities((data || []).map((a) => ({ ...a, author: { id, display_name: profile.display_name, is_bot: profile.is_bot, avatar_url: profile.avatar_url } })))
   }
 
   useEffect(() => {
@@ -66,9 +67,7 @@ export default function RiderProfilePage() {
       ) : (
         <>
           <div className="flex items-center gap-4 p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder">
-            <span className="w-14 h-14 shrink-0 rounded-full bg-orange-500/20 text-orange-500 text-xl font-black flex items-center justify-center">
-              {riderInitial(rider)}
-            </span>
+            <Avatar url={rider.avatar_url} name={riderName(rider)} size="w-14 h-14" textSize="text-xl" />
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-black text-slate-900 dark:text-white truncate">{riderName(rider)}</h1>

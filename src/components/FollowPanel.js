@@ -1,6 +1,7 @@
 'use client'
 
 import BotBadge from './BotBadge'
+import Avatar from './Avatar'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import {
@@ -43,6 +44,7 @@ function SmallButton({ onClick, children, tone = 'default' }) {
 function Row({ rider, children }) {
   return (
     <li className="flex items-center justify-between gap-2 text-xs">
+      <Avatar url={rider?.avatar_url} name={authorName(rider)} size="w-6 h-6" textSize="text-[10px]" />
       <span className="font-bold text-slate-700 dark:text-slate-200 truncate">{authorName(rider)}</span>
       {rider?.is_bot && <BotBadge />}
       <span className="flex gap-1 ml-auto">{children}</span>
