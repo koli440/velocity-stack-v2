@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react'
 import Portal from './Portal'
 import { formatDateTime } from '../lib/dateFormat'
-import { supabase } from '../lib/supabase'
-import { buildActivityInsert } from '../lib/activityRecord'
-import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
+import { supabase, getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import VelodromePicker from './VelodromePicker'
 
@@ -68,12 +66,8 @@ function IntervalsSyncModalInner({
         // 2. Call the API route to list rides
         const res = await fetch('/api/sync/intervals', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'list',
-            athleteId: profile.intervals_athlete_id,
-            apiKey: profile.intervals_api_key,
-          }),
+          headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+          body: JSON.stringify({ action: 'list' }),
         })
 
         const data = await parseJsonResponse(res)
@@ -94,41 +88,24 @@ function IntervalsSyncModalInner({
 
   if (!isOpen) return null
 
-  // Import the specific selected ride
+  // Import the specific selected ride. The server fetches, analyzes, de-duplicates (upgrading a
+  // lower-priority copy of the same ride when applicable) and saves it; credentials and the user
+  // identity are resolved server-side from the session.
   const handleImportSelected = async (selectedRide) => {
     if (!currentUser?.id) return
     setImportingId(selectedRide.id)
     setErrorMsg(null)
 
     try {
-      const [{ data: base }, { data: secrets }] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('default_chainring, default_cog, crank_length_mm, ftp_w')
-          .eq('id', currentUser.id)
-          .single(),
-        supabase
-          .from('profile_secrets')
-          .select('intervals_athlete_id, intervals_api_key')
-          .eq('user_id', currentUser.id)
-          .maybeSingle(),
-      ])
-      const profile = { ...(base || {}), ...(secrets || {}) }
-
-      // 1. Call the API route to import the streams and curves (we pass the full ride ID)
       const res = await fetch('/api/sync/intervals', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({
           action: 'import',
-          athleteId: profile.intervals_athlete_id,
-          apiKey: profile.intervals_api_key,
           activityId: selectedRide.id,
-          // Track bikes are fixed-gear without a speed sensor - the server uses these values
-          // to derive speed from cadence if the ride contains no real speedometer data or
-          // GPS route, and the user confirmed via the checkbox that the bike is indeed without freewheel.
-          chainring: profile.default_chainring || 58,
-          cog: profile.default_cog || 14,
+          trackId: selectedTrackId || null,
+          // Used server-side to derive speed from cadence only when the ride has no speed
+          // sensor or GPS route and the user confirmed the bike is fixed-gear.
           isFixedGear,
         }),
       })
@@ -138,63 +115,8 @@ function IntervalsSyncModalInner({
         throw new Error(result.error || 'Import failed.')
       }
 
-      const { summary = {}, curves = {}, time_series = {} } = result
-
-      // 1b. Guard against re-importing a ride that's already in the vault (issue #41) - this
-      // path has no raw .fit file to hash, so duplicates are caught by matching start time +
-      // duration against the athlete's existing activities instead.
-      const existingFingerprints = await loadExistingActivityFingerprints(supabase, currentUser.id)
-      const duplicate = findDuplicate(
-        { startTime: summary.start_time, elapsedTimeS: summary.elapsed_time_s },
-        existingFingerprints
-      )
-      if (duplicate) {
-        throw new Error(
-          'This ride appears to already be in your vault (matching start time/duration). Import blocked to avoid a duplicate.'
-        )
-      }
-
-      // 2. Insert into the activities table (same mapping logic as a manual upload, see
-      // src/lib/activityRecord.js — both import paths produce an identical set of metrics)
-      const newActivity = buildActivityInsert(summary, {
-        title: selectedRide.name || 'Intervals.icu Sync',
-        userId: currentUser.id,
-        trackId: selectedTrackId,
-        chainring: profile.default_chainring || 58,
-        cog: profile.default_cog || 14,
-        crankLengthMm: profile.crank_length_mm || 165.0,
-        timeSeries: time_series,
-        curvesData: curves,
-        source: 'intervals',
-        externalSource: 'intervals',
-        externalId: selectedRide.id,
-        processingStatus: 'baseline_completed',
-        ftpWatts: profile.ftp_w ?? null,
-        fallbackActivityDate: selectedRide.start_date_local,
-      })
-
-      const { data: actData, error: actErr } = await supabase
-        .from('activities')
-        .insert([newActivity])
-        .select()
-        .single()
-
-      if (actErr) throw actErr
-
-      // 3. Insert the load curves into activity_curves
-      const curveInserts = Object.entries(curves).map(([curveType, curveData]) => ({
-        activity_id: actData.id,
-        curve_type: curveType,
-        data: curveData,
-      }))
-
-      if (curveInserts.length > 0) {
-        await supabase.from('activity_curves').insert(curveInserts)
-      }
-
-      // 4. Successful completion and redirection
       if (onImportSuccess) {
-        onImportSuccess(actData.id)
+        onImportSuccess(result.activityId)
       }
     } catch (err) {
       setErrorMsg(err.message)
