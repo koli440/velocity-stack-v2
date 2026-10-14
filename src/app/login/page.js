@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
+import LoginFeaturesModal from '../../components/LoginFeaturesModal'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
+  const [showInfo, setShowInfo] = useState(false)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -93,6 +95,14 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <button
+          type="button"
+          onClick={() => setShowInfo(true)}
+          className="w-full py-3 rounded-xl border border-dashed border-emerald-500 dark:border-brand-neon text-emerald-600 dark:text-brand-neon font-bold text-xs hover:bg-emerald-500/10 transition"
+        >
+          ✨ What's inside Velocity Stack?
+        </button>
+
         <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800/80">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Don't have an athlete account?{' '}
@@ -105,6 +115,7 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+      <LoginFeaturesModal open={showInfo} onClose={() => setShowInfo(false)} />
     </div>
   )
 }
