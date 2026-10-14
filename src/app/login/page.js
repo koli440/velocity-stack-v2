@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
+import LoginFeaturesModal from '../../components/LoginFeaturesModal'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
+  const [infoOpen, setInfoOpen] = useState(false)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -92,6 +94,15 @@ export default function LoginPage() {
             {loading ? 'Authenticating...' : 'Sign In to Cockpit'}
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={() => setInfoOpen(true)}
+          className="w-full py-3 rounded-xl border border-dashed border-emerald-500 dark:border-brand-neon text-emerald-600 dark:text-brand-neon font-bold text-xs hover:bg-emerald-500/10 transition"
+        >
+          ✨ What&apos;s inside Velocity Stack?
+        </button>
+        <LoginFeaturesModal open={infoOpen} onClose={() => setInfoOpen(false)} />
 
         <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800/80">
           <p className="text-xs text-slate-500 dark:text-slate-400">
