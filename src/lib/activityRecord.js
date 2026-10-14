@@ -21,6 +21,9 @@ import { zoneSignature } from './privacyZone.js'
  * @param {object} [meta.curvesData]
  * @param {string|null} [meta.rawFileUrl]
  * @param {string|null} [meta.fileSha256]
+ * @param {string} [meta.source] - 'manual' | 'intervals' | 'strava'
+ * @param {string|null} [meta.externalSource]
+ * @param {string|number|null} [meta.externalId]
  * @param {string} [meta.processingStatus]
  * @param {number|null} [meta.ftpWatts] - athlete FTP, used to derive intensity_factor/training_load
  * @param {object|null} [meta.privacyZone] - owner's GPS privacy zone, applied to route_preview
@@ -38,6 +41,9 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     curvesData = {},
     rawFileUrl = null,
     fileSha256 = null,
+    source = 'manual',
+    externalSource = null,
+    externalId = null,
     processingStatus = 'baseline_completed',
     ftpWatts = null,
     privacyZone = null,
@@ -94,6 +100,9 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     raw_file_url: rawFileUrl,
     file_sha256: fileSha256,
     processing_status: processingStatus,
+    source,
+    external_source: externalId != null ? externalSource : null,
+    external_id: externalId != null ? String(externalId) : null,
     // Point-in-time FTP snapshot (issue #14): persisted as a raw column so
     // %FTP-based template evaluation always uses the FTP that was valid when
     // the ride happened, never the athlete's current (possibly very

@@ -40,3 +40,13 @@ Backfilling nicknames from e-mail local-parts makes that part publicly visible a
 ## Migration
 `20261020000000_profile_model.sql` backfills names (metadata, `full_name` split, e-mail local-part)
 and copies `intervals_*` into `profile_secrets` **before** dropping the old columns; it is idempotent.
+
+## Activity provenance and duplicates
+`20261025000000_activity_sources.sql` adds to `public.activities`: `source` (`manual`|`intervals`|`strava`|`bot`,
+default `manual`), `external_source` and `external_id` (platform activity id; both set or both null).
+`uq_activities_user_external` is a unique partial index on `(user_id, external_source, external_id)` where
+`external_id IS NOT NULL`. The `BEFORE INSERT` trigger `guard_activity_duplicate()` rejects (SQLSTATE `23505`) a new
+activity whose `file_sha256` matches, or whose `start_time` and `elapsed_time_s` are both within 5s, of an existing
+activity of the same user - unless the new source outranks it (`activity_source_priority()`: intervals 3 > strava 2 >
+other 1), so an Intervals.icu import can replace a Strava copy. Existing rows are never checked.
+Client mirror: `sourcePriority` / `resolveDuplicate` in `src/lib/activityDuplicates.js`.

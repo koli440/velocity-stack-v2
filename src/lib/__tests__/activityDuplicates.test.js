@@ -112,3 +112,31 @@ test('loadExistingActivityFingerprints returns an empty array when there is no d
   const result = await loadExistingActivityFingerprints(client, 'user-1')
   assert.deepEqual(result, [])
 })
+
+import { sourcePriority, resolveDuplicate } from '../activityDuplicates.js'
+import { buildActivityInsert } from '../activityRecord.js'
+
+test('sourcePriority ranks intervals > strava > manual', () => {
+  assert.ok(sourcePriority('intervals') > sourcePriority('strava'))
+  assert.ok(sourcePriority('strava') > sourcePriority('manual'))
+  assert.equal(sourcePriority(null), sourcePriority('manual'))
+})
+
+test('resolveDuplicate upgrades only when the candidate outranks the existing copy', () => {
+  assert.equal(resolveDuplicate({ source: 'intervals' }, { source: 'strava' }), 'upgrade')
+  assert.equal(resolveDuplicate({ source: 'intervals' }, { source: 'manual' }), 'upgrade')
+  assert.equal(resolveDuplicate({ source: 'strava' }, { source: 'manual' }), 'upgrade')
+  assert.equal(resolveDuplicate({ source: 'strava' }, { source: 'intervals' }), 'skip')
+  assert.equal(resolveDuplicate({ source: 'manual' }, { source: 'manual' }), 'skip')
+})
+
+test('buildActivityInsert sets source and external ids', () => {
+  const manual = buildActivityInsert({}, { title: 't', userId: 'u' })
+  assert.equal(manual.source, 'manual')
+  assert.equal(manual.external_source, null)
+  assert.equal(manual.external_id, null)
+  const icu = buildActivityInsert({}, { title: 't', userId: 'u', source: 'intervals', externalSource: 'intervals', externalId: 42 })
+  assert.equal(icu.source, 'intervals')
+  assert.equal(icu.external_source, 'intervals')
+  assert.equal(icu.external_id, '42')
+})
