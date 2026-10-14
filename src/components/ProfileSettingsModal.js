@@ -5,6 +5,7 @@ import Portal from './Portal'
 import { supabase } from '../lib/supabase'
 import VelodromePicker from './VelodromePicker'
 import PrivacyZonePanel from './PrivacyZonePanel'
+import ConnectionsPanel from './ConnectionsPanel'
 import Avatar from './Avatar'
 import { readGlassPref, writeGlassPref } from '../lib/glass'
 import { fetchRequireFollowApproval, setRequireFollowApproval } from '../lib/social'
@@ -27,9 +28,6 @@ function ProfileSettingsModalInner({
   const [ftpWatts, setFtpWatts] = useState('')
   const [themePref, setThemePref] = useState('dark')
 
-  // Intervals.icu data
-  const [intervalsAthleteId, setIntervalsAthleteId] = useState('')
-  const [intervalsApiKey, setIntervalsApiKey] = useState('')
   const [discoverableByEmail, setDiscoverableByEmail] = useState(true)
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarBusy, setAvatarBusy] = useState(false)
@@ -66,13 +64,6 @@ function ProfileSettingsModalInner({
         setDiscoverableByEmail(data.discoverable_by_email !== false)
         setAvatarUrl(data.avatar_url || null)
       }
-      const { data: secrets } = await supabase
-        .from('profile_secrets')
-        .select('intervals_athlete_id, intervals_api_key')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      setIntervalsAthleteId(secrets?.intervals_athlete_id || '')
-      setIntervalsApiKey(secrets?.intervals_api_key || '')
       const approval = await fetchRequireFollowApproval(supabase, user.id)
       setRequireApproval(!!approval.value)
       setLoading(false)
@@ -139,15 +130,7 @@ function ProfileSettingsModalInner({
       updated_at: new Date().toISOString(),
     }
 
-    let { error } = await supabase.from('profiles').upsert(updates)
-    if (!error) {
-      ;({ error } = await supabase.from('profile_secrets').upsert({
-        user_id: user.id,
-        intervals_athlete_id: intervalsAthleteId.trim() || null,
-        intervals_api_key: intervalsApiKey.trim() || null,
-        updated_at: new Date().toISOString(),
-      }))
-    }
+    const { error } = await supabase.from('profiles').upsert(updates)
     setLoading(false)
 
     if (error) {
@@ -338,46 +321,7 @@ function ProfileSettingsModalInner({
             </p>
           </div>
 
-          {/* Section for Intervals.icu */}
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🔄</span>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                Intervals.icu API Credentials
-              </h3>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              Credentials for manually importing workouts from Garmin & Wahoo devices.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                  Athlete ID (e.g. i228280)
-                </label>
-                <input
-                  type="text"
-                  value={intervalsAthleteId}
-                  onChange={(e) => setIntervalsAthleteId(e.target.value)}
-                  placeholder="iXXXXX"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                  API Key
-                </label>
-                <input
-                  type="password"
-                  value={intervalsApiKey}
-                  onChange={(e) => setIntervalsApiKey(e.target.value)}
-                  placeholder="From intervals.icu settings"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-            </div>
-          </div>
+          <ConnectionsPanel userId={user?.id} />
 
           <PrivacyZonePanel userId={user?.id} />
 

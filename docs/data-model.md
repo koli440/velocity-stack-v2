@@ -3,7 +3,7 @@
 | Layer | Contents | Who can read |
 |-------|----------|--------------|
 | `auth.users` | Credentials only (email, password, metadata used once at signup) | Auth service |
-| `public.profiles` | Identity (`first_name`, `last_name`, `nickname`), training defaults, `theme_preference`, privacy zone, `require_follow_approval`, `discoverable_by_email`, `avatar_url`, `is_bot`, `bot_persona` | Own row only (RLS) |
+| `public.profiles` | Identity (`first_name`, `last_name`, `nickname`), training defaults, `theme_preference`, privacy zone, `require_follow_approval`, `discoverable_by_email`, `avatar_url`, `is_bot`, `bot_persona` | Own row only (RLS); legacy, kept for backward compatibility (see Connections) |
 | `public.profile_secrets` | `intervals_athlete_id`, `intervals_api_key` | Own row only (RLS) |
 | `public.public_profiles` (view) | `id, display_name, nickname, first_name, last_name, require_follow_approval, is_bot, avatar_url` (blocked riders filtered out) | Authenticated riders |
 | `search_riders` / `get_rider_profile` (SECURITY DEFINER RPCs) | Ranked search and profile with follow state, ride counts, last ride | Authenticated riders |
@@ -64,3 +64,22 @@ the request body) and returns `409 { duplicate: true }` for a skipped duplicate,
 Provider adapter contract: `{ source, fetchActivity(externalId, { gearing, analyzeFit }) -> { title, startDateLocal,
 summary, curves, time_series } }` (see `src/lib/server/intervalsProvider.js`). Env vars for future steps (hosting
 settings only, never committed): see `.env.example`.
+
+## Connections (`20261026000000_connections.sql`)
+`public.connections` (unique `(user_id, provider)`, provider `intervals`|`strava`): `external_athlete_id`, secrets
+`api_key` (Intervals), `access_token`/`refresh_token`/`token_expires_at` (Strava), `status`
+(`active`|`error`|`disconnected`), `last_error`, `last_synced_at`, `backfill_days` (default 30, NULL = full history),
+`created_at`, `updated_at`. RLS: own rows; clients have `SELECT` only on the non-secret columns (column grants), so
+secrets are readable only with the service role. Existing `profile_secrets` Intervals credentials are copied in
+idempotently (`profile_secrets` is not dropped; the sync route falls back to it when `SUPABASE_SERVICE_ROLE_KEY` is
+not configured, and `POST /api/connections/intervals` then mirrors the key there).
+
+Own-row `SECURITY DEFINER` functions (execute for `authenticated`): `connect_intervals(p_athlete_id, p_api_key,
+p_backfill_days default 30)`, `disconnect_connection(p_provider)` (clears all secrets, status `disconnected`; also clears
+legacy `profile_secrets` Intervals fields), `set_connection_backfill(p_provider, p_backfill_days)`,
+`record_connection_result(p_provider, p_error default null)` (null = success: status `active`, `last_synced_at = now()`).
+
+API: `POST|PATCH|DELETE /api/connections/intervals` (connect after validating against Intervals.icu / set backfill /
+disconnect). `/api/sync/intervals` `list` uses `backfill_days` (`backfillOldest()` in `src/lib/connections.js`).
+Server helper: `loadIntervalsConnection({ supabase, userId }) -> { athleteId, apiKey, backfillDays, status, source }`
+in `src/lib/server/connections.js`; `getServiceClient()` returns null without `SUPABASE_SERVICE_ROLE_KEY`.

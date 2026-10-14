@@ -35,6 +35,24 @@ export function filterRides(activities) {
     }))
 }
 
+/** Verify credentials against the Intervals.icu API. Throws ImportError (401/403 => bad credentials). */
+export async function validateIntervalsCredentials({ athleteId, apiKey, fetchImpl = fetch }) {
+  if (!athleteId || !apiKey) throw new ImportError('Athlete ID and API key are required', 400)
+  let res
+  try {
+    res = await fetchImpl(`${BASE_URL}/athlete/${encodeURIComponent(athleteId)}`, {
+      headers: { Authorization: intervalsAuthHeader(apiKey) },
+      cache: 'no-store',
+    })
+  } catch {
+    throw new ImportError('Could not reach Intervals.icu. Try again in a moment.', 502)
+  }
+  if (res.status === 401 || res.status === 403 || res.status === 404) {
+    throw new ImportError('Intervals.icu rejected these credentials. Check the Athlete ID and API key.', 400)
+  }
+  if (!res.ok) throw new ImportError(`Intervals.icu API error (${res.status})`, 502)
+}
+
 /**
  * @param {{ athleteId: string, apiKey: string, fetchImpl?: typeof fetch }} opts
  */
