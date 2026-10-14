@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildRoutePreview, simplifyPoints, ROUTE_PREVIEW_SIZE } from '../routePreview.js'
+import { isValidRoutePoints, routePreviewToPath, buildRoutePreview, simplifyPoints, ROUTE_PREVIEW_SIZE } from '../routePreview.js'
 
 test('returns null without enough valid points', () => {
   assert.equal(buildRoutePreview([], []), null)
@@ -56,4 +56,14 @@ test('buildFeedPreview returns a none sentinel when nothing is drawable', () => 
   assert.deepEqual(buildFeedPreview({ watts: [0, 0, 0] }), { kind: 'none' })
   assert.deepEqual(buildFeedPreview(undefined), { kind: 'none' })
   assert.equal(sparklineToPath([1]), '')
+})
+
+test('malformed route points are rejected and never throw', () => {
+  assert.equal(isValidRoutePoints([[1, 2], [3, 4]]), true)
+  assert.equal(isValidRoutePoints([1, 2, 3, 4]), false) // flat array (old bot data)
+  assert.equal(isValidRoutePoints([[1, 2], [3]]), false)
+  assert.equal(isValidRoutePoints([[1, 'a'], [3, 4]]), false)
+  assert.equal(isValidRoutePoints(null), false)
+  assert.equal(routePreviewToPath([1, 2, [3, 4]]), '3,4')
+  assert.equal(routePreviewToPath(undefined), '')
 })

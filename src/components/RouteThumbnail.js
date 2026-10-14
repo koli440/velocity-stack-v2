@@ -1,6 +1,6 @@
 'use client'
 
-import { routePreviewToPath, sparklineToPath, ROUTE_PREVIEW_SIZE } from '../lib/routePreview'
+import { isValidRoutePoints, routePreviewToPath, sparklineToPath, ROUTE_PREVIEW_SIZE } from '../lib/routePreview'
 import Icon from './ActivityIcons'
 
 // Renders the persisted `activities.route_preview`: a GPS route, a power sparkline for
@@ -9,7 +9,7 @@ export default function RouteThumbnail({ preview, className = '' }) {
   const box = `flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ${className}`
   const viewBox = `0 0 ${ROUTE_PREVIEW_SIZE} ${ROUTE_PREVIEW_SIZE}`
 
-  if (preview?.kind === 'route' && preview.points?.length >= 2) {
+  if (preview?.kind === 'route' && isValidRoutePoints(preview.points)) {
     const [sx, sy] = preview.points[0]
     const [ex, ey] = preview.points[preview.points.length - 1]
     return (
