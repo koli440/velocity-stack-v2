@@ -8,6 +8,7 @@ import {
   hasSpeedSignal,
   gearInches,
   speedAtCadence,
+  similarGears,
 } from '../trackGearing.js'
 
 test('gearDevelopmentM matches the gear-inches formula used elsewhere in the app', () => {
@@ -65,4 +66,17 @@ test('speedAtCadence agrees with deriveSpeedFromCadence for the same gear and wh
   const viaGeneric = Math.round(speedAtCadence(gi, 90) * 10) / 10
   const [viaTrack] = deriveSpeedFromCadence([90], 58, 14)
   assert.equal(viaGeneric, viaTrack)
+})
+
+test('similarGears returns nearby combos sorted by closeness, excluding the selected gear', () => {
+  const target = gearInches(52, 14, 27)
+  const res = similarGears(52, 14, 27)
+  assert.ok(res.length > 0)
+  assert.ok(!res.some((g) => g.chainring === 52 && g.cog === 14))
+  for (const g of res) assert.ok(Math.abs(g.gearInches - target) / target <= 0.03)
+  for (let i = 1; i < res.length; i++) assert.ok(Math.abs(res[i].diff) >= Math.abs(res[i - 1].diff))
+})
+
+test('similarGears returns [] for invalid input', () => {
+  assert.deepEqual(similarGears(52, 0, 27), [])
 })
