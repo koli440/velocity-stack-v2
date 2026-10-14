@@ -104,8 +104,18 @@ export function buildRoutePreview(latitude, longitude, { maxPoints = 60 } = {}) 
   }
 }
 
+export function isValidRoutePoint(p) {
+  return Array.isArray(p) && p.length === 2 && Number.isFinite(p[0]) && Number.isFinite(p[1])
+}
+
+/** True only for an array of >= 2 [x, y] number pairs; malformed data must never crash the feed. */
+export function isValidRoutePoints(points) {
+  return Array.isArray(points) && points.length >= 2 && points.every(isValidRoutePoint)
+}
+
 export function routePreviewToPath(points) {
-  return points.map(([x, y]) => `${x},${y}`).join(' ')
+  if (!Array.isArray(points)) return ''
+  return points.filter(isValidRoutePoint).map(([x, y]) => `${x},${y}`).join(' ')
 }
 
 const SPARKLINE_POINTS = 40
