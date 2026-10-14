@@ -7,7 +7,7 @@ import Icon from './ActivityIcons'
 import BadgePill from './BadgePill'
 import RouteThumbnail from './RouteThumbnail'
 import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
-import { VISIBILITY_OPTIONS, authorName } from '../lib/social'
+import { authorName } from '../lib/social'
 
 // Left accent color by intensity factor.
 function intensityAccent(intensityFactor) {
@@ -58,7 +58,7 @@ function AuthorLine({ author }) {
     <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
       <Avatar url={author.avatar_url} name={name} size="w-5 h-5" textSize="text-[10px]" />
       {author.id ? (
-        <Link href={`/riders/${author.id}`} className="hover:text-orange-500 transition">
+        <Link href={`/riders/${author.id}`} className="relative z-10 hover:text-orange-500 transition">
           {name}
         </Link>
       ) : (
@@ -92,12 +92,10 @@ function BadgeRow({ badges }) {
 export default function ActivityFeed({
   activities = [],
   isOwnFeed = true,
-  onChangeVisibility,
   coverPhotos = null,
   title = 'Recent Sessions',
   emptyMessage = null,
   onAddWorkout,
-  onDeleteActivity,
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
@@ -126,7 +124,7 @@ export default function ActivityFeed({
         {activities.map((act) => (
           <div
             key={act.id}
-            className={`p-4 rounded-2xl border border-l-4 bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder ${intensityAccent(act.intensity_factor)} transition flex flex-col sm:flex-row items-stretch sm:items-center gap-4`}
+            className={`p-4 rounded-2xl border border-l-4 relative bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder hover:border-orange-500/60 ${intensityAccent(act.intensity_factor)} transition flex flex-col sm:flex-row items-stretch sm:items-center gap-4`}
           >
             <Link href={`/activities/${act.id}`} tabIndex={-1} className="block w-full h-24 sm:w-24 sm:h-24 shrink-0">
               {coverPhotos?.get(act.id)?.url ? (
@@ -141,7 +139,7 @@ export default function ActivityFeed({
               {hydrateBadges(act.badges).length > 0 && <BadgeRow badges={hydrateBadges(act.badges)} />}
               <Link
                 href={`/activities/${act.id}`}
-                className="text-sm font-black text-slate-900 dark:text-white hover:text-orange-500 transition"
+                className="text-sm font-black text-slate-900 dark:text-white hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"
               >
                 {act.title || 'Velodrome Session'}
               </Link>
@@ -183,39 +181,6 @@ export default function ActivityFeed({
               )}
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
-              <Link
-                href={`/activities/${act.id}`}
-                className="py-2 px-3 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 transition"
-              >
-                Detail →
-              </Link>
-              {isOwnFeed && onChangeVisibility && (
-                <select
-                  value={act.visibility || 'private'}
-                  onChange={(e) => onChangeVisibility(act, e.target.value)}
-                  aria-label="Who can see this activity"
-                  title={VISIBILITY_OPTIONS.find((o) => o.value === (act.visibility || 'private'))?.hint}
-                  className="py-2 px-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300"
-                >
-                  {VISIBILITY_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {onDeleteActivity && isOwnFeed && (
-                <button
-                  type="button"
-                  onClick={() => onDeleteActivity(act)}
-                  aria-label="Delete activity"
-                  className="py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-xs font-bold text-rose-500 transition"
-                >
-                  Delete
-                </button>
-              )}
-            </div>
           </div>
         ))}
       </div>
