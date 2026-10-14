@@ -1,32 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { deleteActivity } from '../lib/activityActions'
 import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
 import { syncFeedData, syncFeedDataIfNeeded } from '../lib/feedSync'
 import { fetchFollowingFeedPage, fetchDiscoverFeedPage, fetchBlockedIds, setActivityVisibility } from '../lib/social'
 import FollowPanel from './FollowPanel'
-import NotificationBell from './NotificationBell'
-import PrivacyZonePanel from './PrivacyZonePanel'
 import { fetchCoverPhotos, removeActivityPhotoFiles } from '../lib/activityPhotos'
+import { OPEN_ADD_SESSION_EVENT, ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 import RosterPanel from './RosterPanel'
-import TelemetryCards from './TelemetryCards'
-import FitUploader from './FitUploader'
 import ActivityFeed from './ActivityFeed'
 import RidersExplorer from './RidersExplorer'
-import IntervalsSyncModal from './IntervalsSyncModal'
-import BulkImportModal from './BulkImportModal'
 
-export default function Dashboard({ tracks = [], initialActivities = [] }) {
-  const router = useRouter()
+export default function Dashboard({ initialActivities = [] }) {
   const [user, setUser] = useState(null)
   const [activities, setActivities] = useState(initialActivities)
-  const [currentTracks, setCurrentTracks] = useState(tracks)
-  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false)
-  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false)
-  const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false)
   // Dynamic loading of activities (issue #46): with thousands of activities per user,
   // we only ever hold one page in memory at a time and fetch more on demand.
   const [hasMoreActivities, setHasMoreActivities] = useState(
@@ -159,6 +148,13 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     }
   }
 
+  // Imports/uploads/privacy-zone changes made from the top banner or settings refresh the feed.
+  useEffect(() => {
+    const handler = () => user?.id && reloadActivities(user.id)
+    window.addEventListener(ACTIVITIES_CHANGED_EVENT, handler)
+    return () => window.removeEventListener(ACTIVITIES_CHANGED_EVENT, handler)
+  })
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -199,8 +195,6 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
     if (user?.id) syncFeedData(supabase, user.id).then(() => reloadActivities(user.id))
   }
 
-  const latestActivity = activities[0] || null
-
   return (
     <div className="flex flex-col xl:flex-row gap-6 items-start">
       {/* Main Cockpit */}
@@ -214,11 +208,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
               Live tracking & neuromuscular session analysis
             </p>
           </div>
-          <NotificationBell userId={user?.id} />
         </div>
-
-        {/* Telemetry tiles */}
-        <TelemetryCards lastActivity={latestActivity} />
 
         {/* Feed scope */}
         <div className="flex gap-2" role="tablist" aria-label="Feed scope">
@@ -254,7 +244,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
         ) : scope === 'mine' ? (
           <ActivityFeed
             activities={activities}
-            onAddWorkout={() => setIsWorkoutModalOpen(true)}
+            onAddWorkout={() => window.dispatchEvent(new Event(OPEN_ADD_SESSION_EVENT))}
             onDeleteActivity={handleDeleteActivity}
             onChangeVisibility={handleChangeVisibility}
             coverPhotos={coverPhotos}
@@ -293,104 +283,10 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
 
       {/* Right panel */}
       <div className="w-full xl:w-80 shrink-0 space-y-3">
-        <button
-          onClick={() => router.push('/gears')}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-bold transition border border-sky-500/30 shadow-xs"
-        >
-          <span>🔧</span> Gear Architect
-        </button>
-
-        <button
-          onClick={() => router.push('/pursuit')}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold transition border border-amber-500/30 shadow-xs"
-        >
-          <span>⏱️</span> Pursuit Strategist
-        </button>
-
-        <button
-          onClick={() => router.push('/pb-vault')}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold transition border border-amber-500/30 shadow-xs"
-        >
-          <span>🏆</span> PB Vault
-        </button>
-
-        <button
-          onClick={() => setIsSyncModalOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold transition border border-purple-500/30 shadow-xs"
-        >
-          <span>🔄</span> Sync Intervals.icu
-        </button>
-
-        <button
-          onClick={() => setIsBulkImportModalOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition border border-emerald-500/30 shadow-xs"
-        >
-          <span>📦</span> Import History
-        </button>
-
-        <button
-          onClick={() => router.push('/aero-lab')}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-bold transition border border-sky-500/30 shadow-xs"
-        >
-          <span>🧪</span> Aero Lab
-        </button>
-
         <FollowPanel userId={user?.id} onChanged={reloadSocialFeeds} />
 
-        <PrivacyZonePanel userId={user?.id} onChanged={() => reloadActivities(user.id)} />
-
-        <RosterPanel onAddWorkout={() => setIsWorkoutModalOpen(true)} />
+        <RosterPanel />
       </div>
-
-      {/* Modal for manual .FIT file upload */}
-      {isWorkoutModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <FitUploader
-              tracks={currentTracks}
-              currentUser={user}
-              onClose={() => setIsWorkoutModalOpen(false)}
-              onSaved={(newId) => {
-                setIsWorkoutModalOpen(false)
-                if (newId) {
-                  router.push(`/activities/${newId}`)
-                } else if (user?.id) {
-                  reloadActivities(user.id)
-                }
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Modal for selecting and importing from Intervals.icu */}
-      <IntervalsSyncModal
-        isOpen={isSyncModalOpen}
-        onClose={() => setIsSyncModalOpen(false)}
-        currentUser={user}
-        tracks={currentTracks}
-        onImportSuccess={(newActivityId) => {
-          setIsSyncModalOpen(false)
-          if (newActivityId) {
-            router.push(`/activities/${newActivityId}`)
-          } else if (user?.id) {
-            reloadActivities(user.id)
-          }
-        }}
-      />
-
-      {/* Modal for bulk-importing a historical .zip/.fit archive (issue #36) */}
-      {isBulkImportModalOpen && (
-        <BulkImportModal
-          isOpen={isBulkImportModalOpen}
-          onClose={() => setIsBulkImportModalOpen(false)}
-          currentUser={user}
-          tracks={currentTracks}
-          onImportComplete={() => {
-            if (user?.id) reloadActivities(user.id)
-          }}
-        />
-      )}
     </div>
   )
 }

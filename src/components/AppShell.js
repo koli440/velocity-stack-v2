@@ -16,6 +16,7 @@ export default function AppShell({ children }) {
 
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [tracks, setTracks] = useState([])
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -68,6 +69,11 @@ export default function AppShell({ children }) {
     return () => subscription.unsubscribe()
   }, [router, isAuthPage, isPublicPage, setTheme])
 
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('tracks').select('*').order('name').then(({ data }) => setTracks(data || []))
+  }, [user?.id])
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/login')
@@ -103,6 +109,7 @@ export default function AppShell({ children }) {
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onSignOut={handleSignOut}
+          tracks={tracks}
         />
 
         {/* Dynamic page content (Dashboard, Activity Detail, Maps, etc.) */}
@@ -122,7 +129,7 @@ export default function AppShell({ children }) {
           if (user?.id) fetchProfile(user.id)
         }}
         user={user}
-        tracks={[]}
+        tracks={tracks}
       />
     </div>
   )

@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { fetchRidersPage, riderName, riderInitial, formatLastActive } from '../lib/riders'
 import BotBadge from './BotBadge'
 
-export default function RosterPanel({ onAddWorkout }) {
+export default function RosterPanel() {
   const [riders, setRiders] = useState([])
 
   useEffect(() => {
@@ -20,15 +20,7 @@ export default function RosterPanel({ onAddWorkout }) {
   }, [])
 
   return (
-    <aside className="w-80 shrink-0 space-y-6">
-      {/* Button to open the modal */}
-      <button
-        onClick={onAddWorkout}
-        className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg transition transform active:scale-95"
-      >
-        + Add Workout / Session
-      </button>
-
+    <aside className="w-full space-y-6">
       {/* Recently active riders (real data, see search_riders) */}
       <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
         <div className="flex justify-between items-center">
@@ -54,24 +46,6 @@ export default function RosterPanel({ onAddWorkout }) {
             </Link>
           ))}
           {riders.length === 0 && <p className="text-[11px] text-slate-400">No riders to show yet.</p>}
-        </div>
-      </div>
-
-      {/* Quick Stats & Hydration */}
-      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-3">
-        <h3 className="font-bold text-slate-900 dark:text-white text-sm">Quick Stats & Hydration</h3>
-        
-        <div className="grid grid-cols-2 gap-3 text-center">
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-100 dark:border-slate-800">
-            <span className="text-lg">💧</span>
-            <div className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1">Hydration</div>
-            <div className="text-[11px] text-emerald-500 font-semibold">Optimal</div>
-          </div>
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-100 dark:border-slate-800">
-            <span className="text-lg">⚡</span>
-            <div className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1">Fatigue</div>
-            <div className="text-[11px] text-slate-400">Low (12%)</div>
-          </div>
         </div>
       </div>
     </aside>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchPrivacyZone, savePrivacyZone } from '../lib/social'
 import { backfillRoutePreviews } from '../lib/feedSync'
+import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 import { DEFAULT_ZONE_RADIUS_M, MIN_ZONE_RADIUS_M, MAX_ZONE_RADIUS_M, validateZone } from '../lib/privacyZone'
 
 // GPS privacy zone settings (issue #49). Other riders never get raw GPS (restricted view);
@@ -51,6 +52,7 @@ export default function PrivacyZonePanel({ userId, onChanged }) {
     setStatus({ ok: saved ? `Zone saved · ${rebuilt} previews updated` : `Zone disabled · ${rebuilt} previews updated` })
     setBusy(false)
     onChanged?.()
+    window.dispatchEvent(new Event(ACTIVITIES_CHANGED_EVENT))
   }
 
   const save = () => {

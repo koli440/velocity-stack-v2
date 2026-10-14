@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import VelodromePicker from './VelodromePicker'
+import PrivacyZonePanel from './PrivacyZonePanel'
 
 export default function ProfileSettingsModal({
   isOpen,
@@ -265,6 +266,8 @@ export default function ProfileSettingsModal({
               </div>
             </div>
           </div>
+
+          <PrivacyZonePanel userId={user?.id} />
 
           <button
             type="submit"

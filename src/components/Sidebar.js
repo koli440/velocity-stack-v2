@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { NAV_ITEMS, isNavItemActive } from '../lib/navigation'
 
 export default function Sidebar({
   isOpen = false,
@@ -10,23 +11,12 @@ export default function Sidebar({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [ridesOpen, setRidesOpen] = useState(true)
   const [isCoach, setIsCoach] = useState(true)
 
   const handleNavigate = (path) => {
     router.push(path)
     if (onClose) onClose() // close the mobile drawer after clicking
   }
-
-  const isHomeActive = pathname === '/'
-  const isVelodromeActive = pathname.startsWith('/velodromes')
-  const isGearsActive = pathname.startsWith('/gears')
-  const isPursuitActive = pathname.startsWith('/pursuit')
-  const isRidersActive = pathname.startsWith('/riders')
-  const isPbVaultActive = pathname.startsWith('/pb-vault')
-  const isAeroLabActive = pathname.startsWith('/aero-lab')
-  const isAboutActive = pathname.startsWith('/about')
-  const isFeedbackActive = pathname.startsWith('/feedback')
 
   const navItemClass = (active) =>
     `w-full text-left flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
@@ -77,77 +67,22 @@ export default function Sidebar({
 
           {/* Navigation */}
           <nav className="space-y-1">
-            <button
-              onClick={() => handleNavigate('/')}
-              className={navItemClass(isHomeActive)}
-            >
-              <span>🏠</span> Home Cockpit
-            </button>
-
-            {/* Collapsible Rides section */}
-            <div>
+            {NAV_ITEMS.map((item) => (
               <button
-                onClick={() => setRidesOpen(!ridesOpen)}
-                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60 transition"
+                key={item.key}
+                onClick={() => {
+                  if (item.action === 'settings') {
+                    if (onClose) onClose()
+                    if (onOpenSettings) onOpenSettings()
+                  } else {
+                    handleNavigate(item.href)
+                  }
+                }}
+                className={navItemClass(isNavItemActive(item, pathname))}
               >
-                <span className="flex items-center gap-3">
-                  <span>🚴</span> Rides
-                </span>
-                <span className="text-xs">{ridesOpen ? '▾' : '▸'}</span>
+                <span>{item.icon}</span> {item.label}
               </button>
-
-              {ridesOpen && (
-                <div className="ml-8 mt-1 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 pl-3">
-                 
-                  <span className="block px-4 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed">
-                    Road (Soon)
-                  </span>
-                </div>
-              )}
-            </div>
-             <button onClick={() => handleNavigate('/velodromes')} className={navItemClass(isVelodromeActive)}>
-              Velodromes
-            </button>
-            <button onClick={() => handleNavigate('/gears')} className={navItemClass(isGearsActive)}>
-              <span>🔧</span> Gear Architect
-            </button>
-            <button onClick={() => handleNavigate('/pursuit')} className={navItemClass(isPursuitActive)}>
-              <span>⏱️</span> Pursuit Strategist
-            </button>
-            <button onClick={() => handleNavigate('/riders')} className={navItemClass(isRidersActive)}>
-              <span>🔎</span> Riders
-            </button>
-            <button onClick={() => handleNavigate('/pb-vault')} className={navItemClass(isPbVaultActive)}>
-              <span>🏆</span> PB Vault
-            </button>
-            <button onClick={() => handleNavigate('/aero-lab')} className={navItemClass(isAeroLabActive)}>
-              <span>🧪</span> Aero Lab
-            </button>
-            <button className={navItemClass(false)}>
-              <span>🏋️</span> Gym
-            </button>
-            <button className={navItemClass(false)}>
-              <span>📈</span> Analytics
-            </button>
-            <button className={navItemClass(false)}>
-              <span>👥</span> Team
-            </button>
-            <button onClick={() => handleNavigate('/feedback')} className={navItemClass(isFeedbackActive)}>
-              <span>💡</span> Feedback
-            </button>
-            <button onClick={() => handleNavigate('/about')} className={navItemClass(isAboutActive)}>
-              <span>📖</span> About
-            </button>
-
-            <button
-              onClick={() => {
-                if (onClose) onClose()
-                if (onOpenSettings) onOpenSettings()
-              }}
-              className={navItemClass(false)}
-            >
-              <span>⚙️</span> Settings
-            </button>
+            ))}
           </nav>
         </div>
 
