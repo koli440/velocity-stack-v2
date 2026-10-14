@@ -89,6 +89,11 @@ export default function AppShell({ children }) {
     return () => subscription.unsubscribe()
   }, [router, isAuthPage, isPublicPage, setTheme])
 
+  // Returning from the Strava OAuth flow: reopen settings so the Connections card can show the result.
+  useEffect(() => {
+    if (user?.id && new URLSearchParams(window.location.search).has('strava')) setIsSettingsOpen(true)
+  }, [user?.id])
+
   useEffect(() => {
     if (!user?.id) return
     supabase.from('tracks').select('*').order('name').then(({ data }) => setTracks(data || []))

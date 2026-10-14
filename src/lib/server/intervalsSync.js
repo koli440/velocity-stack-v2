@@ -1,12 +1,13 @@
 // src/lib/server/intervalsSync.js
-// Background Intervals.icu sync for one or more connections (#109 step 4). Runs with the service client.
+// Background Intervals.icu / Strava sync for one or more connections (#109 steps 4-5). Runs with the service client.
 // Bounded per invocation (fetch cap per connection + wall-clock deadline); unfinished work resumes on the
 // next run through the cursor stored in connections.last_synced_at. One failing connection never blocks others.
 
 import { createIntervalsProvider } from './intervalsProvider.js'
+import { createStravaProviderForConnection } from './stravaProvider.js'
 import { importActivity, loadImportProfile } from './importActivity.js'
 import { loadExistingActivityFingerprints } from '../activityDuplicates.js'
-import { selectNewRides, syncWindowStart, classifySyncError } from '../syncPlan.js'
+import { selectNewRides, syncWindowStart, classifySyncError, PROVIDER_LABELS } from '../syncPlan.js'
 
 export const MAX_FETCHES_PER_CONNECTION = 8
 
@@ -17,8 +18,13 @@ function toIso(localDate, fallback) {
   return Number.isNaN(d.getTime()) ? fallback : d.toISOString()
 }
 
+// Strava needs the service client (token refresh persists new tokens) and the whole connection row.
+function defaultCreateProvider(args, conn, service) {
+  return conn.provider === 'strava' ? createStravaProviderForConnection(service, conn) : createIntervalsProvider(args)
+}
+
 /**
- * Sync a single connection row {user_id, external_athlete_id, api_key, backfill_days, last_synced_at}.
+ * Sync a single connection row {provider, user_id, external_athlete_id, api_key|refresh_token, backfill_days, last_synced_at}.
  * Never throws; returns counters plus `error`/`fatal` when it stopped early.
  */
 export async function syncConnection(service, conn, deps = {}) {
@@ -27,17 +33,18 @@ export async function syncConnection(service, conn, deps = {}) {
     now = () => new Date(),
     deadline = Infinity,
     maxFetches = MAX_FETCHES_PER_CONNECTION,
-    createProvider = createIntervalsProvider,
+    createProvider = defaultCreateProvider,
     importFn = importActivity,
   } = deps
   const startedAt = now()
+  const providerName = conn.provider || 'intervals'
   const result = { userId: conn.user_id, imported: 0, upgraded: 0, skipped: 0, failed: 0, complete: true }
   let cursor = null
   let fatalMessage = null
   let softMessage = null
 
   try {
-    const provider = createProvider({ athleteId: conn.external_athlete_id, apiKey: conn.api_key })
+    const provider = await createProvider({ athleteId: conn.external_athlete_id, apiKey: conn.api_key }, conn, service)
     const oldest = syncWindowStart({
       lastSyncedAt: conn.last_synced_at,
       backfillDays: conn.backfill_days,
@@ -69,10 +76,10 @@ export async function syncConnection(service, conn, deps = {}) {
         else if (out.status === 'upgraded') result.upgraded++
         else result.skipped++
       } catch (err) {
-        const c = classifySyncError(err)
+        const c = classifySyncError(err, providerName)
         if (c.fatal || err?.status === 429) {
           if (c.fatal) fatalMessage = c.message
-          else softMessage = 'Intervals.icu rate limit reached, continuing on the next run.'
+          else softMessage = `${PROVIDER_LABELS[providerName]} rate limit reached, continuing on the next run.`
           result.complete = false
           break
         }
@@ -82,9 +89,9 @@ export async function syncConnection(service, conn, deps = {}) {
       cursor = ride.start_date_local || cursor
     }
   } catch (err) {
-    const c = classifySyncError(err)
+    const c = classifySyncError(err, providerName)
     if (c.fatal) fatalMessage = c.message
-    else softMessage = c.message
+    else softMessage = err?.status === 429 ? `${PROVIDER_LABELS[providerName]} rate limit reached, continuing on the next run.` : c.message
     result.complete = false
   }
 
@@ -103,7 +110,7 @@ export async function syncConnection(service, conn, deps = {}) {
   try {
     await service.rpc('record_connection_result_for', {
       p_user_id: conn.user_id,
-      p_provider: 'intervals',
+      p_provider: providerName,
       p_error: result.error,
       p_fatal: result.fatal,
       p_synced_at: syncedAt,
