@@ -81,12 +81,14 @@ export function sourcePriority(source) {
 
 /**
  * Decides what to do with an incoming activity that duplicates an existing one:
- * 'upgrade' when the incoming source outranks the existing copy (replace it), else 'skip'.
+ * 'upgrade' when the incoming source outranks an existing auto-imported (Strava) copy (replace it), else 'skip'.
+ * Manual and bot activities are never replaced: deleting them would also drop their kudos, comments and photos.
  *
  * @param {{ source?: string|null }} candidate
  * @param {{ source?: string|null }} existing
  * @returns {'upgrade'|'skip'}
  */
 export function resolveDuplicate(candidate, existing) {
-  return sourcePriority(candidate?.source) > sourcePriority(existing?.source) ? 'upgrade' : 'skip'
+  const replaceable = existing?.source === 'strava'
+  return replaceable && sourcePriority(candidate?.source) > sourcePriority(existing?.source) ? 'upgrade' : 'skip'
 }

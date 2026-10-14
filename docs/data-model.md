@@ -47,15 +47,18 @@ default `manual`), `external_source` and `external_id` (platform activity id; bo
 `uq_activities_user_external` is a unique partial index on `(user_id, external_source, external_id)` where
 `external_id IS NOT NULL`. The `BEFORE INSERT` trigger `guard_activity_duplicate()` rejects (SQLSTATE `23505`) a new
 activity whose `file_sha256` matches, or whose `start_time` and `elapsed_time_s` are both within 5s, of an existing
-activity of the same user - unless the new source outranks it (`activity_source_priority()`: intervals 3 > strava 2 >
-other 1), so an Intervals.icu import can replace a Strava copy. Existing rows are never checked.
+activity of the same user - unless the new source outranks an existing **Strava** copy (`activity_source_priority()`:
+intervals 3 > strava 2 > other 1), so an Intervals.icu import can replace a Strava copy. Manual and bot activities are
+never replaced (deleting them would cascade to kudos/comments/photos), so a matching import is skipped instead.
+`20261029000000_activity_guard_replace_strava_only.sql` tightened the guard to this rule (the first version let imports
+outrank manual rows). Existing rows are never checked.
 Client mirror: `sourcePriority` / `resolveDuplicate` in `src/lib/activityDuplicates.js`.
 
 ## Server-side activity import
 Both the Intervals.icu modal and (later) background sync share one pipeline, `importActivity()` in
 `src/lib/server/importActivity.js`: provider adapter fetch -> analyze (`.fit` via `/api/analyze`, else
 `analyzeStreams()` in `src/lib/streamAnalysis.js`) -> `planImport()` (same external id => skip; duplicate =>
-`resolveDuplicate`: `upgrade` inserts the new copy then deletes the lower-priority one, `skip` inserts nothing) ->
+`resolveDuplicate`: `upgrade` inserts the new copy then deletes the Strava copy it outranks, `skip` inserts nothing) ->
 insert `activities` + `activity_curves`. `POST /api/sync/intervals` (`action: 'list' | 'import'`) validates the
 Supabase bearer token (`getRequestUser`), reads credentials from the caller's own `profile_secrets` row (never from
 the request body) and returns `409 { duplicate: true }` for a skipped duplicate, else
@@ -131,5 +134,8 @@ Endpoint `POST /api/sync/intervals/run` (`maxDuration` 60 s, needs `SUPABASE_SER
   `authorized=false` are verified against Strava before the connection's tokens are cleared (status `disconnected`).
   Webhook subscription: created automatically on the first rider connect, or `POST /api/webhooks/strava/subscribe`
   (signed in, or `x-sync-token`); idempotent (Strava allows one subscription per app).
-- Priority: Intervals.icu (3) > Strava (2) > manual (1). Strava arriving after Intervals is dropped before fetching
-  (`selectNewRides`) or skipped by the DB guard; Intervals arriving after Strava replaces the Strava copy (`upgraded`).
+- Priority: Intervals.icu (3) > Strava (2) > manual (1), but only Strava copies are ever replaced. Strava arriving after
+  Intervals (or after a manual upload) is dropped before fetching (`selectNewRides`) or skipped by the DB guard; Intervals
+  arriving after Strava replaces the Strava copy (`upgraded`).
+
+See [integrations.md](integrations.md) for the user-facing flow, env vars and setup.

@@ -48,3 +48,19 @@ export function connectionStatusLabel(conn) {
 export function isConnected(conn) {
   return !!conn && conn.status !== 'disconnected'
 }
+
+export const STALE_SYNC_MINUTES = 60
+
+/**
+ * Sync-health indicator for a connected row: { level: 'ok'|'warn'|'error', text } or null when not connected.
+ * Cron runs every 15 minutes, so an active connection that has not synced for an hour is flagged.
+ */
+export function syncHealth(conn, now = new Date()) {
+  if (!isConnected(conn)) return null
+  if (conn.status === 'error') return { level: 'error', text: 'Sync stopped' }
+  if (!conn.last_synced_at) return { level: 'warn', text: 'Waiting for the first sync' }
+  const ageMin = (now.getTime() - new Date(conn.last_synced_at).getTime()) / 60000
+  if (Number.isNaN(ageMin)) return { level: 'warn', text: 'Waiting for the first sync' }
+  if (ageMin > STALE_SYNC_MINUTES) return { level: 'warn', text: 'Sync looks delayed' }
+  return { level: 'ok', text: 'Syncing normally' }
+}

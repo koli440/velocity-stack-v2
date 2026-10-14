@@ -10,7 +10,7 @@
 // `analyzeFile`/`supabase` doubles in unit tests without a browser or network access.
 
 import { buildActivityInsert } from './activityRecord.js'
-import { findDuplicate } from './activityDuplicates'
+import { findDuplicate } from './activityDuplicates.js'
 
 const FIT_EXTENSION_RE = /\.fit$/i
 const FIT_GZ_EXTENSION_RE = /\.fit\.gz$/i

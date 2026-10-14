@@ -38,3 +38,15 @@ test('status helpers', () => {
   assert.equal(isConnected({ status: 'error' }), true)
   assert.equal(isConnected({ status: 'disconnected' }), false)
 })
+
+import { syncHealth } from '../connections.js'
+
+test('syncHealth flags stopped, never-synced and stale connections', () => {
+  const now = new Date('2026-10-14T12:00:00Z')
+  assert.equal(syncHealth(null, now), null)
+  assert.equal(syncHealth({ status: 'disconnected' }, now), null)
+  assert.equal(syncHealth({ status: 'error' }, now).level, 'error')
+  assert.equal(syncHealth({ status: 'active', last_synced_at: null }, now).level, 'warn')
+  assert.equal(syncHealth({ status: 'active', last_synced_at: '2026-10-14T10:00:00Z' }, now).level, 'warn')
+  assert.equal(syncHealth({ status: 'active', last_synced_at: '2026-10-14T11:50:00Z' }, now).level, 'ok')
+})
