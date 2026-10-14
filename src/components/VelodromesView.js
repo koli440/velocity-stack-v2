@@ -117,19 +117,19 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
 
       {/* KPI Indicators */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Tracks</div>
           <div className="text-3xl font-black text-slate-900 dark:text-white mt-1">{totalTracks}</div>
         </div>
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Indoor Ovals</div>
           <div className="text-3xl font-black text-amber-500 dark:text-amber-400 mt-1">{indoorCount}</div>
         </div>
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Outdoor Tracks</div>
           <div className="text-3xl font-black text-sky-500 dark:text-sky-400 mt-1">{outdoorCount}</div>
         </div>
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Countries</div>
           <div className="text-3xl font-black text-emerald-500 dark:text-brand-neon mt-1">{uniqueCountries}</div>
         </div>
@@ -137,7 +137,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
 
       {/* Form for adding a track */}
       {showAddModal && (
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-emerald-500/40 shadow-md space-y-4">
+        <form onSubmit={handleSubmit} className="glass-dense bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-emerald-500/40 shadow-md space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
             🏁 Add New Track Oval
           </h3>
@@ -250,7 +250,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
       </section>
 
       {/* Filter controls */}
-      <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
+      <div className="glass-dense bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <input
             type="text"
@@ -315,7 +315,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
           {filteredTracks.map(t => (
             <div
               key={t.id}
-              className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder hover:border-slate-400 dark:hover:border-slate-600 transition shadow-sm flex flex-col justify-between"
+              className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder hover:border-slate-400 dark:hover:border-slate-600 transition shadow-sm flex flex-col justify-between"
             >
               <div>
                 <div className="flex justify-between items-start gap-2 mb-2">
@@ -365,7 +365,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         </div>
       ) : (
         /* Table */
-        <div className="overflow-x-auto bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        <div className="glass-dense overflow-x-auto bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
           <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
             <thead className="bg-slate-50 dark:bg-slate-900/60 text-[11px] uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-800">
               <tr>

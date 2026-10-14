@@ -66,7 +66,7 @@ export default function ReportBugPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-surface-darkBorder dark:bg-surface-darkCard"
+        className="glass-dense space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-surface-darkBorder dark:bg-surface-darkCard"
       >
         <div>
           <label htmlFor="bug-title" className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">

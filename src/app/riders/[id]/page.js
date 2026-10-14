@@ -66,7 +66,7 @@ export default function RiderProfilePage() {
         <p className="text-sm text-slate-500">Rider not found.</p>
       ) : (
         <>
-          <div className="flex items-center gap-4 p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder">
+          <div className="glass-card flex items-center gap-4 p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder">
             <Avatar url={rider.avatar_url} name={riderName(rider)} size="w-14 h-14" textSize="text-xl" />
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex items-center gap-2">

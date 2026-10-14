@@ -95,7 +95,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
   if (!isOwner && photos.length === 0) return null
 
   return (
-    <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
+    <div className="glass-dense bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
           Photos ({photos.length})

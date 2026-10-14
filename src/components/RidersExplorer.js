@@ -69,7 +69,7 @@ export function useRiderDiscovery() {
 
 export function RiderCard({ rider, userId, onStatusChange }) {
   return (
-    <li className="flex items-center gap-3 p-3 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder">
+    <li className="glass-card flex items-center gap-3 p-3 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder">
       <Avatar url={rider.avatar_url} name={riderName(rider)} size="w-10 h-10" textSize="text-sm" />
       <div className="min-w-0 flex-1 space-y-0.5">
         <div className="flex items-center gap-2">

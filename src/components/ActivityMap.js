@@ -47,7 +47,7 @@ export default function ActivityMap({ latitude = [], longitude = [] }) {
   const bounds = L.latLngBounds(points)
 
   return (
-    <div className="h-[380px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-surface-darkBorder shadow-xs relative z-0">
+    <div className="glass-dense h-[380px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-surface-darkBorder shadow-xs relative z-0">
       <MapContainer
         bounds={bounds}
         boundsOptions={{ padding: [24, 24] }}

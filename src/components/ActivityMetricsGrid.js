@@ -53,7 +53,7 @@ const DEFAULT_GROUP_COLOR = { border: 'border-l-slate-300 dark:border-l-slate-70
 function MetricCard({ label, value, hint, badge, accent = DEFAULT_GROUP_COLOR }) {
   return (
     <div
-      className={`p-3 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder border-l-4 ${accent.border} space-y-0.5`}
+      className={`glass-card p-3 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder border-l-4 ${accent.border} space-y-0.5`}
     >
       <div className="flex items-center justify-between gap-1">
         <span className={`text-[10px] uppercase font-bold block ${accent.label}`}>{label}</span>
@@ -297,7 +297,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-64 max-h-80 overflow-y-auto rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder shadow-lg z-20 p-2 space-y-1">
+            <div className="glass-modal absolute right-0 mt-2 w-64 max-h-80 overflow-y-auto rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder shadow-lg z-20 p-2 space-y-1">
               {metrics.map((m) => {
                 const isHidden = hiddenIds.includes(m.id)
                 return (

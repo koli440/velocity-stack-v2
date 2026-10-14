@@ -138,7 +138,7 @@ export default function AeroLabPage() {
         </div>
       )}
 
-      <details className="bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm p-5">
+      <details className="glass-card bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm p-5">
         <summary className="text-sm font-black uppercase tracking-wide text-slate-900 dark:text-white cursor-pointer">
           📖 READ FIRST: Testing Protocol &amp; Best Practices
         </summary>
@@ -192,11 +192,11 @@ export default function AeroLabPage() {
             Loading your tests...
           </div>
         ) : aeroTests.length === 0 ? (
-          <div className="bg-white dark:bg-surface-darkCard p-8 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-center text-sm text-slate-500 dark:text-slate-400">
+          <div className="glass-card bg-white dark:bg-surface-darkCard p-8 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-center text-sm text-slate-500 dark:text-slate-400">
             No saved tests found. Perform and save your first test above!
           </div>
         ) : (
-          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-6">
+          <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-6">
             <div>
               <h3 className="text-xs uppercase font-bold text-slate-400 mb-2">
                 CdA Comparison (lower is better)

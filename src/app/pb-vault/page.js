@@ -151,12 +151,12 @@ export default function PbVaultPage() {
           Loading your vault...
         </div>
       ) : personalBests.length === 0 ? (
-        <div className="bg-white dark:bg-surface-darkCard p-8 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-center text-sm text-slate-500 dark:text-slate-400">
+        <div className="glass-card bg-white dark:bg-surface-darkCard p-8 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-center text-sm text-slate-500 dark:text-slate-400">
           Your vault is empty. Add your first PB above!
         </div>
       ) : (
         <>
-          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
+          <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
             <label className="block space-y-1.5 max-w-xs">
               <span className="text-xs uppercase font-bold text-slate-400">
                 Filter by discipline
