@@ -7,7 +7,7 @@ import { parseIntervalDsl } from '../../../lib/intervalDsl'
 // caller's own templates, and other users' public templates.
 export async function GET(req) {
   try {
-    const { supabase } = await getRequestUser(req)
+    const { supabase, user } = await getRequestUser(req)
     const { data, error } = await supabase
       .from('analysis_templates')
       .select('*')
@@ -18,7 +18,18 @@ export async function GET(req) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ success: true, templates: data })
+    // Owner display names (authenticated callers only; public_profiles is not exposed to anon).
+    const owners = {}
+    const ownerIds = [...new Set((data || []).map((t) => t.user_id).filter(Boolean))]
+    if (user && ownerIds.length) {
+      const { data: profiles } = await supabase
+        .from('public_profiles')
+        .select('id, display_name')
+        .in('id', ownerIds)
+      for (const p of profiles || []) owners[p.id] = p.display_name
+    }
+
+    return NextResponse.json({ success: true, templates: data, owners })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

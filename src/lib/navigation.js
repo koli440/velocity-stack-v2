@@ -5,6 +5,7 @@ export const NAV_ITEMS = [
   { key: 'gears', label: 'Gear Architect', icon: '🔧', href: '/gears' },
   { key: 'pursuit', label: 'Pursuit Strategist', icon: '⏱️', href: '/pursuit' },
   { key: 'aero-lab', label: 'Aero Lab', icon: '🧪', href: '/aero-lab' },
+  { key: 'templates', label: 'Templates', icon: '📋', href: '/templates' },
   { key: 'velodromes', label: 'Velodromes', icon: '🏟️', href: '/velodromes' },
   { key: 'about', label: 'About', icon: '📖', href: '/about' },
   { key: 'feedback', label: 'Feedback', icon: '💡', href: '/feedback' },
