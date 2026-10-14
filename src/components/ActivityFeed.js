@@ -63,7 +63,13 @@ function AuthorLine({ author }) {
           {name.charAt(0).toUpperCase()}
         </span>
       )}
-      {name}
+      {author.id ? (
+        <Link href={`/riders/${author.id}`} className="hover:text-orange-500 transition">
+          {name}
+        </Link>
+      ) : (
+        name
+      )}
       {author.is_bot && <BotBadge />}
     </div>
   )

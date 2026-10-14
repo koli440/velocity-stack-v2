@@ -1,13 +1,23 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { supabase } from '../lib/supabase'
+import { fetchRidersPage, riderName, riderInitial, formatLastActive } from '../lib/riders'
+import BotBadge from './BotBadge'
+
 export default function RosterPanel({ onAddWorkout }) {
-  const riders = [
-    { name: 'Jan M.', status: 'Training on Track', state: 'track' },
-    { name: 'Petr K.', status: 'Training on Track', state: 'track' },
-    { name: 'Kam J.', status: 'In Gym', state: 'gym' },
-    { name: 'Jonir J.', status: 'Training on Track', state: 'track' },
-    { name: 'Ranon X.', status: 'In Gym', state: 'gym' },
-  ]
+  const [riders, setRiders] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    fetchRidersPage(supabase, { limit: 5 }).then(({ riders: page }) => {
+      if (!cancelled) setRiders(page)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <aside className="w-80 shrink-0 space-y-6">
@@ -19,36 +29,31 @@ export default function RosterPanel({ onAddWorkout }) {
         + Add Workout / Session
       </button>
 
-      {/* Active Riders */}
+      {/* Recently active riders (real data, see search_riders) */}
       <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-slate-900 dark:text-white text-sm">Active Riders</h3>
-          <span className="text-xs text-slate-400">•••</span>
+          <Link href="/riders" className="text-xs font-bold text-orange-500 hover:text-orange-600">
+            View all
+          </Link>
         </div>
 
         <div className="space-y-3">
-          {riders.map((r, i) => (
-            <div key={i} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200">
-                  {r.name.slice(0, 2)}
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
-                    {r.name}
-                  </div>
-                  <div className="text-[11px] text-slate-400">{r.status}</div>
-                </div>
+          {riders.map((r) => (
+            <Link key={r.id} href={`/riders/${r.id}`} className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200">
+                {riderInitial(r)}
               </div>
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  r.state === 'track'
-                    ? 'bg-emerald-500 dark:bg-brand-neon animate-pulse'
-                    : 'bg-amber-400'
-                }`}
-              ></span>
-            </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                  <span className="truncate">{riderName(r)}</span>
+                  {r.is_bot && <BotBadge />}
+                </div>
+                <div className="text-[11px] text-slate-400">{formatLastActive(r.last_activity_date)}</div>
+              </div>
+            </Link>
           ))}
+          {riders.length === 0 && <p className="text-[11px] text-slate-400">No riders to show yet.</p>}
         </div>
       </div>
 

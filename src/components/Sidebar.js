@@ -22,6 +22,7 @@ export default function Sidebar({
   const isVelodromeActive = pathname.startsWith('/velodromes')
   const isGearsActive = pathname.startsWith('/gears')
   const isPursuitActive = pathname.startsWith('/pursuit')
+  const isRidersActive = pathname.startsWith('/riders')
   const isPbVaultActive = pathname.startsWith('/pb-vault')
   const isAeroLabActive = pathname.startsWith('/aero-lab')
   const isAboutActive = pathname.startsWith('/about')
@@ -112,6 +113,9 @@ export default function Sidebar({
             </button>
             <button onClick={() => handleNavigate('/pursuit')} className={navItemClass(isPursuitActive)}>
               <span>⏱️</span> Pursuit Strategist
+            </button>
+            <button onClick={() => handleNavigate('/riders')} className={navItemClass(isRidersActive)}>
+              <span>🔎</span> Riders
             </button>
             <button onClick={() => handleNavigate('/pb-vault')} className={navItemClass(isPbVaultActive)}>
               <span>🏆</span> PB Vault

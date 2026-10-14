@@ -15,6 +15,7 @@ import RosterPanel from './RosterPanel'
 import TelemetryCards from './TelemetryCards'
 import FitUploader from './FitUploader'
 import ActivityFeed from './ActivityFeed'
+import RidersExplorer from './RidersExplorer'
 import IntervalsSyncModal from './IntervalsSyncModal'
 import BulkImportModal from './BulkImportModal'
 
@@ -225,6 +226,7 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
             ['mine', 'My sessions'],
             ['following', 'Following'],
             ['discover', 'Discover'],
+            ['riders', 'Riders'],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -247,7 +249,9 @@ export default function Dashboard({ tracks = [], initialActivities = [] }) {
           ))}
         </div>
 
-        {scope === 'mine' ? (
+        {scope === 'riders' ? (
+          <RidersExplorer userId={user?.id} onFollowChanged={reloadSocialFeeds} />
+        ) : scope === 'mine' ? (
           <ActivityFeed
             activities={activities}
             onAddWorkout={() => setIsWorkoutModalOpen(true)}
