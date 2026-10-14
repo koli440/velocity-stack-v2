@@ -18,8 +18,6 @@ import {
   fetchOutgoingRequestIds,
   approveFollowRequest,
   removeFollowRequest,
-  fetchRequireFollowApproval,
-  setRequireFollowApproval,
   fetchProfilesByIds,
   authorName,
 } from '../lib/social'
@@ -72,18 +70,16 @@ export default function FollowPanel({ userId, onChanged }) {
   const [incoming, setIncoming] = useState([])
   const [outgoingIds, setOutgoingIds] = useState([])
   const [counts, setCounts] = useState({ followers: 0, following: 0 })
-  const [requireApproval, setRequireApproval] = useState(false)
   const [error, setError] = useState(null)
 
   const load = async () => {
-    const [f, fr, b, inc, out, c, setting] = await Promise.all([
+    const [f, fr, b, inc, out, c] = await Promise.all([
       fetchFollowingIds(supabase, userId),
       fetchFollowerIds(supabase, userId),
       fetchBlockedIds(supabase, userId),
       fetchIncomingRequestIds(supabase, userId),
       fetchOutgoingRequestIds(supabase, userId),
       fetchFollowCounts(supabase, userId),
-      fetchRequireFollowApproval(supabase, userId),
     ])
     const { profiles } = await fetchProfilesByIds(supabase, [...f.ids, ...fr.ids, ...b.ids, ...inc.ids])
     const toProfiles = (ids) => ids.map((id) => profiles.get(id) || { id })
@@ -93,7 +89,6 @@ export default function FollowPanel({ userId, onChanged }) {
     setIncoming(toProfiles(inc.ids))
     setOutgoingIds(out.ids)
     setCounts({ followers: c.followers, following: c.following })
-    setRequireApproval(setting.value)
   }
 
   useEffect(() => {
@@ -175,15 +170,6 @@ export default function FollowPanel({ userId, onChanged }) {
           ))}
         </ul>
       )}
-
-      <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-        <input
-          type="checkbox"
-          checked={requireApproval}
-          onChange={(e) => run(() => setRequireFollowApproval(supabase, { userId, value: e.target.checked }))}
-        />
-        <span>Require my approval for new followers (existing followers are kept)</span>
-      </label>
 
       {incoming.length > 0 && (
         <Section title={`Follow requests (${incoming.length})`}>

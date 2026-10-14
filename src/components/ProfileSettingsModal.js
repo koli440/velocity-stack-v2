@@ -7,6 +7,7 @@ import VelodromePicker from './VelodromePicker'
 import PrivacyZonePanel from './PrivacyZonePanel'
 import Avatar from './Avatar'
 import { readGlassPref, writeGlassPref } from '../lib/glass'
+import { fetchRequireFollowApproval, setRequireFollowApproval } from '../lib/social'
 import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../lib/avatars'
 
 function ProfileSettingsModalInner({
@@ -33,6 +34,7 @@ function ProfileSettingsModalInner({
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarBusy, setAvatarBusy] = useState(false)
   const [avatarError, setAvatarError] = useState('')
+  const [requireApproval, setRequireApproval] = useState(false)
   const [glassEnabled, setGlassEnabled] = useState(true)
 
   useEffect(() => {
@@ -71,6 +73,8 @@ function ProfileSettingsModalInner({
         .maybeSingle()
       setIntervalsAthleteId(secrets?.intervals_athlete_id || '')
       setIntervalsApiKey(secrets?.intervals_api_key || '')
+      const approval = await fetchRequireFollowApproval(supabase, user.id)
+      setRequireApproval(!!approval.value)
       setLoading(false)
     }
 
@@ -102,6 +106,17 @@ function ProfileSettingsModalInner({
     setAvatarBusy(false)
     if (error) setAvatarError(error.message)
     else setAvatarUrl(null)
+  }
+
+  // Saved immediately (independent of the Save button), as in the former follow panel.
+  const handleRequireApprovalChange = async (checked) => {
+    const previous = requireApproval
+    setRequireApproval(checked)
+    const { error } = await setRequireFollowApproval(supabase, { userId: user.id, value: checked })
+    if (error) {
+      setRequireApproval(previous)
+      alert('Error while saving follow setting: ' + error.message)
+    }
   }
 
   const handleSave = async (e) => {
@@ -250,6 +265,15 @@ function ProfileSettingsModalInner({
               onChange={(e) => setDiscoverableByEmail(e.target.checked)}
             />
             <span>Let riders find me by typing my exact e-mail address (your e-mail is never shown)</span>
+          </label>
+
+          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={requireApproval}
+              onChange={(e) => handleRequireApprovalChange(e.target.checked)}
+            />
+            <span>Require my approval for new followers (existing followers are kept)</span>
           </label>
 
           <div>
