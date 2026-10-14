@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Portal from './Portal'
 import { getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import {
@@ -15,7 +16,7 @@ import VelodromePicker from './VelodromePicker'
 // "Add New Personal Best" form - migrated from v1's expander in pages/30_PB_vault.py. Collects
 // discipline + track + time (as separate Min/Sec inputs, like v1) plus optional gear and lap/
 // split times, then posts to /api/personal-bests.
-export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
+function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
   const [discipline, setDiscipline] = useState(DISCIPLINES[0].name)
   const [trackId, setTrackId] = useState('')
   const [eventName, setEventName] = useState('')
@@ -327,5 +328,13 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function AddPbModal(props) {
+  return (
+    <Portal>
+      <AddPbModalInner {...props} />
+    </Portal>
   )
 }

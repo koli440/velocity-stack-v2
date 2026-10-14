@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Portal from './Portal'
 import { formatDateTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
@@ -8,7 +9,7 @@ import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activity
 import { parseJsonResponse } from '../lib/httpJson'
 import VelodromePicker from './VelodromePicker'
 
-export default function IntervalsSyncModal({
+function IntervalsSyncModalInner({
   isOpen,
   onClose,
   currentUser,
@@ -351,5 +352,12 @@ export default function IntervalsSyncModal({
         </div>
       </div>
     </div>
+  )
+}
+export default function IntervalsSyncModal(props) {
+  return (
+    <Portal>
+      <IntervalsSyncModalInner {...props} />
+    </Portal>
   )
 }

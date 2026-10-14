@@ -11,7 +11,7 @@ export default function AppBackground() {
           alt=""
           loading="lazy"
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover object-center scale-105 blur-[5px] brightness-75 saturate-[1.25]"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_35%] blur-[3px] brightness-75 saturate-[1.25]"
         />
       </picture>
       <div className="absolute inset-0 bg-slate-100/50 dark:bg-slate-950/40" />

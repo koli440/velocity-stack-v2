@@ -130,7 +130,7 @@ export default function VelodromePicker({
       {open && (
         <ul
           role="listbox"
-          className="absolute z-40 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
+          className="glass-popover absolute z-40 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
         >
           {emptyLabel && (
             <li

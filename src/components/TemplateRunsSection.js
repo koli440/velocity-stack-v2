@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Portal from './Portal'
 import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -387,7 +388,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
       )}
 
       {addOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAddOpen(false)}>
+        <Portal><div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAddOpen(false)}>
           <div className="w-full max-w-md bg-white dark:bg-surface-darkCard rounded-3xl p-6 space-y-4 border border-slate-200 dark:border-surface-darkBorder" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Add template run</h3>
             <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -425,7 +426,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
               </div>
             </div>
           </div>
-        </div>
+        </div></Portal>
       )}
 
       <TemplateCreatorModal
