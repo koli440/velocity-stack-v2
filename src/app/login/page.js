@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import LoginFeaturesModal from '../../components/LoginFeaturesModal'
+import AuthBackground from '../../components/AuthBackground'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -34,8 +35,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100 dark:bg-surface-dark transition-colors">
-      <div className="bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-3xl w-full max-w-md p-8 shadow-2xl space-y-6">
+    <div className="relative min-h-screen flex items-center justify-center p-4">
+      <AuthBackground />
+      <div className="bg-white/80 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-3xl w-full max-w-md p-8 shadow-2xl space-y-6">
         {/* Logo */}
         <div className="text-center space-y-2">
           <div className="inline-flex h-12 w-12 rounded-2xl bg-emerald-500 dark:bg-brand-neon items-center justify-center font-black text-white dark:text-slate-950 text-xl shadow-md">
