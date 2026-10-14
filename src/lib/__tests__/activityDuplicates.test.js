@@ -97,7 +97,10 @@ test('loadExistingActivityFingerprints queries activities scoped to the given us
   const result = await loadExistingActivityFingerprints(client, 'user-1')
 
   assert.equal(client.calls.table, 'activities')
-  assert.equal(client.calls.selectedColumns, 'file_sha256, start_time, elapsed_time_s')
+  assert.equal(
+    client.calls.selectedColumns,
+    'id, file_sha256, start_time, elapsed_time_s, source, external_source, external_id'
+  )
   assert.equal(client.calls.userId, 'user-1')
   assert.deepEqual(result, rows)
 })
@@ -122,10 +125,11 @@ test('sourcePriority ranks intervals > strava > manual', () => {
   assert.equal(sourcePriority(null), sourcePriority('manual'))
 })
 
-test('resolveDuplicate upgrades only when the candidate outranks the existing copy', () => {
+test('resolveDuplicate upgrades only a Strava copy outranked by the candidate; manual/bot are never replaced', () => {
   assert.equal(resolveDuplicate({ source: 'intervals' }, { source: 'strava' }), 'upgrade')
-  assert.equal(resolveDuplicate({ source: 'intervals' }, { source: 'manual' }), 'upgrade')
-  assert.equal(resolveDuplicate({ source: 'strava' }, { source: 'manual' }), 'upgrade')
+  assert.equal(resolveDuplicate({ source: 'intervals' }, { source: 'manual' }), 'skip')
+  assert.equal(resolveDuplicate({ source: 'strava' }, { source: 'manual' }), 'skip')
+  assert.equal(resolveDuplicate({ source: 'intervals' }, { source: 'bot' }), 'skip')
   assert.equal(resolveDuplicate({ source: 'strava' }, { source: 'intervals' }), 'skip')
   assert.equal(resolveDuplicate({ source: 'manual' }, { source: 'manual' }), 'skip')
 })

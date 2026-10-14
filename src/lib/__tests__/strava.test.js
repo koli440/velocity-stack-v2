@@ -124,7 +124,8 @@ test('selectNewRides: Strava rides duplicating an Intervals ride are dropped, ot
   ]
   assert.deepEqual(selectNewRides(rides, existing, 'strava').map((r) => r.id), [])
   const manual = [{ id: 'c', source: 'manual', start_time: '2026-10-02T08:00:00Z', elapsed_time_s: 1800 }]
-  assert.deepEqual(selectNewRides(rides, manual, 'strava').map((r) => r.id), [1, 2])
+  // Manual uploads are never replaced, so a Strava copy of the same ride is not fetched either.
+  assert.deepEqual(selectNewRides(rides, manual, 'strava').map((r) => r.id), [1])
 })
 
 test('Strava error classification and due selection', () => {

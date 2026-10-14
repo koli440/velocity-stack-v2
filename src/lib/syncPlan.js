@@ -75,15 +75,16 @@ export function manualCooldownRemaining(lastAttemptAt, now = new Date(), cooldow
   return elapsed >= cooldownS ? 0 : Math.ceil(cooldownS - elapsed)
 }
 
-/** Summary line for the UI after a manual sync. */
+/** Summary line for the UI after a manual sync (counts first, then why it stopped, if it did). */
 export function describeSyncResult(r) {
   if (!r) return ''
-  if (r.error) return r.error
   const parts = []
   if (r.imported) parts.push(`${r.imported} imported`)
   if (r.upgraded) parts.push(`${r.upgraded} upgraded`)
   if (r.skipped) parts.push(`${r.skipped} already there`)
   if (r.failed) parts.push(`${r.failed} failed`)
-  if (!parts.length) return 'Up to date'
-  return parts.join(', ') + (r.complete === false ? ' (more to come)' : '')
+  const counts = parts.join(', ')
+  if (r.error) return counts ? `${counts}. ${r.error}` : r.error
+  if (!counts) return 'Up to date'
+  return counts + (r.complete === false ? ' (more to come)' : '')
 }

@@ -8,6 +8,7 @@ import {
   DEFAULT_BACKFILL_DAYS,
   connectionStatusLabel,
   isConnected,
+  syncHealth,
 } from '../lib/connections'
 import { describeSyncResult } from '../lib/syncPlan'
 
@@ -34,6 +35,14 @@ async function callIntervals(method, body) {
   const data = await parseJsonResponse(res)
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return data
+}
+
+const HEALTH_CLS = { ok: 'text-emerald-500', warn: 'text-amber-500', error: 'text-red-500' }
+
+function HealthLine({ conn }) {
+  const h = syncHealth(conn)
+  if (!h) return null
+  return <p className={`text-[11px] font-bold ${HEALTH_CLS[h.level]}`}>● {h.text}</p>
 }
 
 const STRAVA_FLAGS = {
@@ -167,10 +176,12 @@ function StravaCard({ userId }) {
             Athlete {conn.external_athlete_id || '—'} · Last sync:{' '}
             {conn.last_synced_at ? new Date(conn.last_synced_at).toLocaleString() : 'never'}
           </p>
+          <HealthLine conn={conn} />
           {conn.last_error && (
-            <p className="text-[11px] text-red-500">
-              Last error: {conn.last_error}
-              {conn.status === 'error' ? ' Reconnect Strava to continue syncing.' : ''}
+            <p className={`text-[11px] ${conn.status === 'error' ? 'text-red-500' : 'text-amber-500'}`}>
+              {conn.status === 'error' ? 'Sync stopped: ' : 'Last sync issue: '}
+              {conn.last_error}
+              {conn.status === 'error' ? ' Use Reconnect below to continue syncing.' : ' It will retry automatically.'}
             </p>
           )}
           <div>
@@ -253,6 +264,7 @@ export default function ConnectionsPanel({ userId }) {
   const [athleteId, setAthleteId] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [backfill, setBackfill] = useState(String(DEFAULT_BACKFILL_DAYS))
+  const [reconnecting, setReconnecting] = useState(false)
 
   const load = useCallback(async () => {
     if (!userId) return
@@ -315,6 +327,7 @@ export default function ConnectionsPanel({ userId }) {
 
   const backfillPayload = (v) => (v === 'full' ? null : Number(v))
   const connected = isConnected(conn)
+  const showSummary = connected && !reconnecting
 
   return (
     <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
@@ -345,13 +358,20 @@ export default function ConnectionsPanel({ userId }) {
           Import rides from Garmin & Wahoo devices via your Intervals.icu account.
         </p>
 
-        {connected ? (
+        {showSummary ? (
           <div className="space-y-2">
             <p className="text-[11px] text-slate-500 dark:text-slate-300">
               Athlete {conn.external_athlete_id || '—'} · Last sync:{' '}
               {conn.last_synced_at ? new Date(conn.last_synced_at).toLocaleString() : 'never'}
             </p>
-            {conn.last_error && <p className="text-[11px] text-red-500">Last error: {conn.last_error}</p>}
+            <HealthLine conn={conn} />
+            {conn.last_error && (
+              <p className={`text-[11px] ${conn.status === 'error' ? 'text-red-500' : 'text-amber-500'}`}>
+                {conn.status === 'error' ? 'Sync stopped: ' : 'Last sync issue: '}
+                {conn.last_error}
+                {conn.status === 'error' ? ' Use Reconnect below with a valid API key.' : ' It will retry automatically.'}
+              </p>
+            )}
             <div>
               <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Import history</label>
               <select
@@ -374,11 +394,25 @@ export default function ConnectionsPanel({ userId }) {
             <p className="text-[11px] text-slate-400">New rides are imported automatically about every 15 minutes.</p>
             {syncMsg && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
             <div className="flex items-center gap-4">
+              {conn.status === 'error' && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setReconnecting(true)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider disabled:opacity-50"
+                >
+                  Reconnect
+                </button>
+              )}
               <button
                 type="button"
                 disabled={busy}
                 onClick={syncNow}
-                className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider disabled:opacity-50"
+                className={
+                  conn.status === 'error'
+                    ? 'text-[11px] font-bold uppercase text-slate-500 hover:text-slate-400 disabled:opacity-50'
+                    : 'px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider disabled:opacity-50'
+                }
               >
                 {busy ? 'Working...' : 'Sync now'}
               </button>
@@ -436,12 +470,23 @@ export default function ConnectionsPanel({ userId }) {
                   await callIntervals('POST', { athleteId, apiKey, backfillDays: backfillPayload(backfill) })
                   setApiKey('')
                   setAthleteId('')
+                  setReconnecting(false)
                 })
               }
               className="px-3 py-2 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider disabled:opacity-50"
             >
-              {busy ? 'Connecting...' : 'Connect'}
+              {busy ? 'Connecting...' : reconnecting ? 'Reconnect' : 'Connect'}
             </button>
+            {reconnecting && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setReconnecting(false)}
+                className="ml-3 text-[11px] font-bold uppercase text-slate-500 hover:text-slate-400 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         )}
         {error && <p className="text-[11px] text-red-500">{error}</p>}

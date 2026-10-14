@@ -50,6 +50,7 @@ test('describeSyncResult', () => {
   assert.equal(describeSyncResult({ imported: 2, skipped: 1, complete: false }), '2 imported, 1 already there (more to come)')
   assert.equal(describeSyncResult({}), 'Up to date')
   assert.equal(describeSyncResult({ error: 'boom' }), 'boom')
+  assert.equal(describeSyncResult({ imported: 3, error: 'rate limit' }), '3 imported. rate limit')
 })
 
 function fakeService() {
