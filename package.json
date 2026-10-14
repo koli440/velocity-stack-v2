@@ -7,11 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test src",
-    "test:bots": "node --test scripts/bots/__tests__/generate-ride.test.mjs scripts/bots/__tests__/follow-back.test.mjs",
-    "bots:check": "node scripts/bots/check-follow.mjs",
-    "bots:daily": "node scripts/bots/daily.mjs",
-    "bots:reset": "node scripts/bots/reset.mjs"
+    "test": "node --test src"
   },
   "dependencies": {
   "@supabase/supabase-js": "^2.40.0",
@@ -26,7 +22,6 @@
   "next-themes": "^0.3.0"
 },
   "devDependencies": {
-    "@garmin/fitsdk": "^21.0.0",
     "autoprefixer": "^10.0.1",
     "postcss": "^8",
     "tailwindcss": "^3.3.0"
