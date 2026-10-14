@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { deleteActivity } from '../lib/activityActions'
 import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
 import { syncFeedData, syncFeedDataIfNeeded } from '../lib/feedSync'
-import { fetchFollowingFeedPage, fetchDiscoverFeedPage, fetchBlockedIds, setActivityVisibility } from '../lib/social'
+import { fetchFollowingFeedPage, fetchDiscoverFeedPage, fetchBlockedIds } from '../lib/social'
 import FollowPanel from './FollowPanel'
-import { fetchCoverPhotos, removeActivityPhotoFiles } from '../lib/activityPhotos'
+import { fetchCoverPhotos } from '../lib/activityPhotos'
 import { OPEN_ADD_SESSION_EVENT, ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 import RosterPanel from './RosterPanel'
 import ActivityFeed from './ActivityFeed'
@@ -90,15 +89,6 @@ export default function Dashboard({ initialActivities = [] }) {
     if (scope === 'discover') loadDiscover(0)
   }
 
-  const handleChangeVisibility = async (activity, visibility) => {
-    const { error } = await setActivityVisibility(supabase, { activityId: activity.id, visibility })
-    if (error) {
-      alert('Could not change visibility: ' + error.message)
-      return
-    }
-    setActivities((prev) => prev.map((a) => (a.id === activity.id ? { ...a, visibility } : a)))
-  }
-
   // Resets back to the first page, e.g. after login or a sync/import.
   const reloadActivities = async (userId) => {
     const targetId = userId || user?.id
@@ -175,26 +165,6 @@ export default function Dashboard({ initialActivities = [] }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Permanent deletion of the activity (issue #18): removes the record from activities (cascading
-  // to linked curves/template_executions) and any archived .fit file from Storage.
-  const handleDeleteActivity = async (activity) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to permanently delete activity "${activity.title || 'Velodrome Session'}"? This action cannot be undone.`
-    )
-    if (!confirmed) return
-
-    await removeActivityPhotoFiles(supabase, activity.id).catch(() => {})
-    const { error } = await deleteActivity(supabase, activity)
-    if (error) {
-      alert('Error while deleting activity: ' + error.message)
-      return
-    }
-
-    setActivities((prev) => prev.filter((a) => a.id !== activity.id))
-    // Deleting changes records/milestones of later sessions.
-    if (user?.id) syncFeedData(supabase, user.id).then(() => reloadActivities(user.id))
-  }
-
   return (
     <div className="flex flex-col xl:flex-row gap-6 items-start">
       {/* Main Cockpit */}
@@ -245,8 +215,6 @@ export default function Dashboard({ initialActivities = [] }) {
           <ActivityFeed
             activities={activities}
             onAddWorkout={() => window.dispatchEvent(new Event(OPEN_ADD_SESSION_EVENT))}
-            onDeleteActivity={handleDeleteActivity}
-            onChangeVisibility={handleChangeVisibility}
             coverPhotos={coverPhotos}
             hasMore={hasMoreActivities}
             isLoadingMore={isLoadingMore}

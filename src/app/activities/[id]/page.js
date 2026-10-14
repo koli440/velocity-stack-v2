@@ -6,12 +6,14 @@ import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { deleteActivity } from '../../../lib/activityActions'
+import { syncFeedData } from '../../../lib/feedSync'
 import { removeActivityPhotoFiles } from '../../../lib/activityPhotos'
 import DurationalCurvesChart from '../../../components/DurationalCurvesChart'
 import ActivityStreamsChart from '../../../components/ActivityStreamsChart'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
 import TemplateRunsSection from '../../../components/TemplateRunsSection'
 import VelodromePicker from '../../../components/VelodromePicker'
+import EditActivityModal from '../../../components/EditActivityModal'
 
 // Leaflet requires window/document -> dynamic import without SSR
 import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
@@ -46,6 +48,8 @@ export default function ActivityDetailPage() {
   const [trackId, setTrackId] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   // true when another rider's activity is opened through the restricted shared_activities view
   const [sharedView, setSharedView] = useState(false)
 
@@ -193,21 +197,19 @@ export default function ActivityDetailPage() {
   // Permanent deletion of the activity (issue #18): deletes the DB record (cascading curves/analysis)
   // and any archived .fit file, then returns the user to the Cockpit.
   const handleDeleteActivity = async () => {
-    const confirmed = window.confirm(
-      'Are you sure you want to permanently delete this activity? This action is irreversible and will remove all linked data (curves, analysis).'
-    )
-    if (!confirmed) return
-
     setDeleting(true)
     await removeActivityPhotoFiles(supabase, activity.id).catch(() => {})
     const { error } = await deleteActivity(supabase, activity)
     setDeleting(false)
+    setShowDeleteConfirm(false)
 
     if (error) {
       alert('Error while deleting activity: ' + error.message)
       return
     }
 
+    // Deleting changes records/milestones of later sessions (best effort).
+    if (activity.user_id) await syncFeedData(supabase, activity.user_id).catch(() => {})
     router.push('/')
   }
 
@@ -263,16 +265,72 @@ export default function ActivityDetailPage() {
         </div>
 
         {!sharedView && (
-        <button
-          type="button"
-          onClick={handleDeleteActivity}
-          disabled={deleting}
-          className="py-2 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
-        >
-          {deleting ? 'Deleting...' : '🗑 Delete Activity'}
-        </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowEdit(true)}
+              className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wider transition"
+            >
+              ✏️ Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deleting}
+              className="py-2 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
+            >
+              🗑 Delete Activity
+            </button>
+          </div>
         )}
       </div>
+
+      {activity.description && (
+        <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{activity.description}</p>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
+          <div className="w-full max-w-sm space-y-4 bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl">
+            <h2 className="text-base font-black text-slate-900 dark:text-white">Delete this activity?</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              This permanently deletes &quot;{activity.title || 'Velodrome Session'}&quot; and all linked data (curves, analysis, photos). This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteActivity}
+                disabled={deleting}
+                className="py-2 px-4 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <EditActivityModal
+        isOpen={showEdit}
+        onClose={() => setShowEdit(false)}
+        activity={activity}
+        tracks={tracks}
+        client={supabase}
+        onSaved={(updates) => {
+          setActivity((prev) => ({ ...prev, ...updates }))
+          setChainring(updates.chainring ? String(updates.chainring) : '58')
+          setCog(updates.cog ? String(updates.cog) : '14')
+          setTrackId(updates.track_id || '')
+        }}
+      />
 
       {/* 2. Contextual badges for gear and setup */}
       {(activity.bike_model || activity.handlebar_setup || activity.helmet || activity.tracks || activity.perceived_exertion) && (
