@@ -118,7 +118,7 @@ export default function DurationalCurvesChart({
     })
 
   return (
-    <div className="w-full bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+    <div className="glass-dense w-full bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
       {/* Top bar with tabs */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>

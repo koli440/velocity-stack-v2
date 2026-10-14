@@ -212,7 +212,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
   const btn = 'py-2 px-3 rounded-xl font-black text-[11px] uppercase tracking-wider transition whitespace-nowrap'
 
   return (
-    <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
+    <div className="glass-dense bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
           <span>🧪</span> Template Runs <span className="text-slate-400">({runs.length})</span>

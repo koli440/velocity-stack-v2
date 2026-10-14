@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import VelodromePicker from './VelodromePicker'
 import PrivacyZonePanel from './PrivacyZonePanel'
 import Avatar from './Avatar'
+import { readGlassPref, writeGlassPref } from '../lib/glass'
 import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../lib/avatars'
 
 export default function ProfileSettingsModal({
@@ -31,6 +32,12 @@ export default function ProfileSettingsModal({
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarBusy, setAvatarBusy] = useState(false)
   const [avatarError, setAvatarError] = useState('')
+  const [glassEnabled, setGlassEnabled] = useState(true)
+
+  useEffect(() => {
+    if (!isOpen) return
+    setGlassEnabled(readGlassPref())
+  }, [isOpen])
 
   useEffect(() => {
     if (!user?.id || !isOpen) return
@@ -138,7 +145,7 @@ export default function ProfileSettingsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl">
+      <div className="glass-modal relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
@@ -222,6 +229,18 @@ export default function ProfileSettingsModal({
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
             />
           </div>
+
+          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={glassEnabled}
+              onChange={(e) => {
+                setGlassEnabled(e.target.checked)
+                writeGlassPref(e.target.checked)
+              }}
+            />
+            <span>Background photo &amp; glass effects</span>
+          </label>
 
           <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
             <input

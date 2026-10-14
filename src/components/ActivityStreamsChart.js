@@ -104,7 +104,7 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
   const lastPoint = data[data.length - 1]
 
   return (
-    <div className="w-full bg-white dark:bg-surface-darkCard p-4 sm:p-5 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+    <div className="glass-dense w-full bg-white dark:bg-surface-darkCard p-4 sm:p-5 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div>
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">

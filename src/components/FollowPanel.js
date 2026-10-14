@@ -151,7 +151,7 @@ export default function FollowPanel({ userId, onChanged }) {
   if (!userId) return null
 
   return (
-    <div className="p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder space-y-3">
+    <div className="glass-card p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder space-y-3">
       <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 dark:text-white">Riders</h3>
       <p className="text-[11px] text-slate-500">
         <strong>{counts.followers}</strong> followers · <strong>{counts.following}</strong> following

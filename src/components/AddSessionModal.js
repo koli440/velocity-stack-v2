@@ -84,7 +84,7 @@ export default function AddSessionModal({ isOpen, onClose, user, tracks = [] }) 
         aria-modal="true"
         aria-labelledby="add-session-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 shadow-xl space-y-3"
+        className="glass-modal w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 shadow-xl space-y-3"
       >
         <div className="flex items-center justify-between">
           <h2 id="add-session-title" className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">

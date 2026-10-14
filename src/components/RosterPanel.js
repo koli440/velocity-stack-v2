@@ -23,7 +23,7 @@ export default function RosterPanel() {
   return (
     <aside className="w-full space-y-6">
       {/* Recently active riders (real data, see search_riders) */}
-      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
+      <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-slate-900 dark:text-white text-sm">Active Riders</h3>
           <Link href="/riders" className="text-xs font-bold text-orange-500 hover:text-orange-600">

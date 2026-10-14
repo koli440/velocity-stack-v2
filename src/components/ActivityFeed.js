@@ -124,7 +124,7 @@ export default function ActivityFeed({
         {activities.map((act) => (
           <div
             key={act.id}
-            className={`p-4 rounded-2xl border border-l-4 relative bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder hover:border-orange-500/60 ${intensityAccent(act.intensity_factor)} transition flex flex-col sm:flex-row items-stretch sm:items-center gap-4`}
+            className={`glass-card p-4 rounded-2xl border border-l-4 relative bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder hover:border-orange-500/60 ${intensityAccent(act.intensity_factor)} transition flex flex-col sm:flex-row items-stretch sm:items-center gap-4`}
           >
             <Link href={`/activities/${act.id}`} tabIndex={-1} className="block w-full h-24 sm:w-24 sm:h-24 shrink-0">
               {coverPhotos?.get(act.id)?.url ? (
