@@ -9,53 +9,54 @@ import RouteThumbnail from './RouteThumbnail'
 import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
 import { authorName } from '../lib/social'
 
-// Left accent color by intensity factor.
-function intensityAccent(intensityFactor) {
-  if (!intensityFactor) return 'border-l-slate-300 dark:border-l-slate-700'
-  if (intensityFactor >= 0.95) return 'border-l-rose-500'
-  if (intensityFactor >= 0.75) return 'border-l-amber-500'
-  return 'border-l-emerald-500'
+// Intensity bar fill width (0-100%) driven by intensity_factor (IF ~1.0+ = full).
+function intensityPct(intensityFactor) {
+  if (!intensityFactor) return 0
+  return Math.max(6, Math.min(100, Math.round(intensityFactor * 100)))
 }
 
-function MetricPill({ icon, className, children }) {
+function Stat({ value, unit, tone }) {
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${className}`}>
-      <Icon name={icon} size={11} />
-      {children}
-    </span>
+    <div className="min-w-0">
+      <b className={`block text-lg font-black tracking-tight leading-tight ${tone}`}>{value}</b>
+      <span className="text-[9px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">{unit}</span>
+    </div>
   )
 }
 
 function formatMovingTime(sec) {
   if (!sec) return null
-  const m = Math.floor(sec / 60)
-  const s = Math.round(sec % 60)
-  return `${m}m ${s < 10 ? '0' : ''}${s}s`
+  const total = Math.round(sec)
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  const pad = (n) => String(n).padStart(2, '0')
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`
 }
 
 function formatDistance(meters) {
   if (!meters) return null
-  return `${(meters / 1000).toFixed(1)} km`
+  return (meters / 1000).toFixed(1)
 }
 
 function CoverPhoto({ cover }) {
   return (
-    <div className="relative w-full h-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+    <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={cover.url} alt="Activity cover" loading="lazy" className="w-full h-full object-cover" />
+      <img src={cover.url} alt="Activity cover" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
       {cover.count > 1 && (
-        <span className="absolute bottom-1 right-1 text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-950/70 text-white">
+        <span className="absolute bottom-2.5 right-2.5 z-[2] text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-950/70 text-white">
           +{cover.count - 1}
         </span>
       )}
-    </div>
+    </>
   )
 }
 
 function AuthorLine({ author }) {
   const name = authorName(author)
   return (
-    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+    <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 min-w-0">
       <Avatar url={author.avatar_url} name={name} size="w-5 h-5" textSize="text-[10px]" />
       {author.id ? (
         <Link href={`/riders/${author.id}`} className="relative z-10 hover:text-orange-500 transition">
@@ -80,7 +81,7 @@ function BadgeRow({ badges }) {
       {extra.length > 0 && (
         <span
           title={extra.map((b) => b.label).join(', ')}
-          className="text-[10px] font-bold text-slate-400"
+          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-950/60 text-white"
         >
           +{extra.length}
         </span>
@@ -120,69 +121,80 @@ export default function ActivityFeed({
         <p className="text-xs text-slate-400 py-6 text-center">{emptyMessage}</p>
       )}
 
-      <div className="space-y-3">
-        {activities.map((act) => (
-          <div
-            key={act.id}
-            className={`glass-card p-4 rounded-2xl border border-l-4 relative bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder hover:border-orange-500/60 ${intensityAccent(act.intensity_factor)} transition flex flex-col sm:flex-row items-stretch sm:items-center gap-4`}
-          >
-            <Link href={`/activities/${act.id}`} tabIndex={-1} className="block w-full h-24 sm:w-24 sm:h-24 shrink-0">
-              {coverPhotos?.get(act.id)?.url ? (
-                <CoverPhoto cover={coverPhotos.get(act.id)} />
-              ) : (
-                <RouteThumbnail preview={act.route_preview} className="w-full h-full" />
-              )}
-            </Link>
-
-            <div className="space-y-1 flex-1 min-w-0">
-              {!isOwnFeed && act.author && <AuthorLine author={act.author} />}
-              {hydrateBadges(act.badges).length > 0 && <BadgeRow badges={hydrateBadges(act.badges)} />}
-              <Link
-                href={`/activities/${act.id}`}
-                className="text-sm font-black text-slate-900 dark:text-white hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"
-              >
-                {act.title || 'Velodrome Session'}
-              </Link>
-
-              <div className="text-xs text-slate-400 flex items-center gap-3">
-                <span>{new Date(act.activity_date || act.created_at).toLocaleDateString('en-US')}</span>
-                {act.chainring && act.cog && (
-                  <span className="inline-flex items-center gap-1"><Icon name="gear" size={11} />{act.chainring}×{act.cog}</span>
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
+        {activities.map((act) => {
+          const badges = hydrateBadges(act.badges)
+          const cover = coverPhotos?.get(act.id)
+          const dist = formatDistance(act.distance_m)
+          const time = formatMovingTime(act.moving_time_s)
+          const stats = [
+            dist && { value: dist, unit: 'km' },
+            time && { value: time, unit: 'time' },
+            act.avg_power_w && { value: Math.round(act.avg_power_w), unit: 'W avg', tone: 'text-purple-700 dark:text-purple-300' },
+            act.avg_hr && { value: Math.round(act.avg_hr), unit: 'bpm avg', tone: 'text-rose-700 dark:text-rose-300' },
+          ].filter(Boolean)
+          return (
+            <div
+              key={act.id}
+              className="glass-card group relative overflow-hidden rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder hover:border-orange-500/60 hover:-translate-y-0.5 transition duration-200"
+            >
+              <div className="relative h-36 sm:h-40 bg-gradient-to-br from-teal-800 to-slate-900">
+                {cover?.url ? (
+                  <CoverPhoto cover={cover} />
+                ) : (
+                  <RouteThumbnail hero preview={act.route_preview} className="absolute inset-0 w-full h-full p-3" />
                 )}
-                {act.tracks?.name && (
-                  <span className="inline-flex items-center gap-1"><Icon name="pin" size={11} />{act.tracks.name}</span>
+                <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-slate-950/75 to-transparent pointer-events-none" />
+                {badges.length > 0 && (
+                  <div className="absolute top-2.5 left-2.5 right-2.5 z-[2]">
+                    <BadgeRow badges={badges} />
+                  </div>
                 )}
               </div>
 
-              {/* Quick metric badges (issue #11): only the ones the activity actually has */}
-              {(act.distance_m || act.moving_time_s || act.avg_power_w || act.avg_hr) && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  {formatDistance(act.distance_m) && (
-                    <MetricPill icon="distance" className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                      {formatDistance(act.distance_m)}
-                    </MetricPill>
-                  )}
-                  {formatMovingTime(act.moving_time_s) && (
-                    <MetricPill icon="clock" className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                      {formatMovingTime(act.moving_time_s)}
-                    </MetricPill>
-                  )}
-                  {act.avg_power_w && (
-                    <MetricPill icon="power" className="bg-purple-500/10 text-purple-400">
-                      {Math.round(act.avg_power_w)} W avg
-                    </MetricPill>
-                  )}
-                  {act.avg_hr && (
-                    <MetricPill icon="heart" className="bg-rose-500/10 text-rose-400">
-                      {Math.round(act.avg_hr)} bpm avg
-                    </MetricPill>
-                  )}
-                </div>
-              )}
-            </div>
+              <div className="p-4 pb-3.5">
+                {(
+                  <div className="flex items-center gap-2">
+                    {!isOwnFeed && act.author && <AuthorLine author={act.author} />}
+                    <span className="ml-auto shrink-0 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                      {new Date(act.activity_date || act.created_at).toLocaleDateString('en-US')}
+                    </span>
+                  </div>
+                )}
+                <Link
+                  href={`/activities/${act.id}`}
+                  className="mt-2 block text-base font-black text-slate-900 dark:text-white group-hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"
+                >
+                  {act.title || 'Velodrome Session'}
+                </Link>
 
-          </div>
-        ))}
+                {(act.tracks?.name || (act.chainring && act.cog)) && (
+                  <div className="text-xs text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-3">
+                    {act.tracks?.name && <span>{act.tracks.name}</span>}
+                    {act.chainring && act.cog && (
+                      <span className="inline-flex items-center gap-1"><Icon name="gear" size={11} />{act.chainring}×{act.cog}</span>
+                    )}
+                  </div>
+                )}
+
+                {stats.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-slate-900 dark:text-white">
+                    {stats.map((st) => (
+                      <Stat key={st.unit} {...st} />
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-3 h-[3px] rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500"
+                    style={{ width: `${intensityPct(act.intensity_factor)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {hasMore && onLoadMore && (
