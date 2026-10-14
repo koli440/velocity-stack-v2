@@ -89,7 +89,7 @@ in `src/lib/server/connections.js`; `getServiceClient()` returns null without `S
 
 ## Automatic Intervals.icu sync (`20261027000000_intervals_auto_sync.sql`)
 - `public.sync_settings(key, value, updated_at)` — service-role-only (RLS on, no client grants). Rows: `cron_token`
-  (random, generated in the migration, never in the repo) and `app_base_url` (`https://velocity-stack-v2.vercel.app`;
+  (random, generated in the migration, never in the repo) and `app_base_url` (`https://www.velocity-stack.app`, set by `20261030000000_app_base_url_canonical_host.sql`;
   edit the row to repoint; if empty/missing the cron job is a no-op).
 - `connections.last_attempt_at` — claim/ordering column for sync runs (not exposed to clients).
 - `sync_trigger_intervals()` (SECURITY DEFINER, not executable by clients): if an active Intervals connection exists,
