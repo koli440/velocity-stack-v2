@@ -83,3 +83,28 @@ API: `POST|PATCH|DELETE /api/connections/intervals` (connect after validating ag
 disconnect). `/api/sync/intervals` `list` uses `backfill_days` (`backfillOldest()` in `src/lib/connections.js`).
 Server helper: `loadIntervalsConnection({ supabase, userId }) -> { athleteId, apiKey, backfillDays, status, source }`
 in `src/lib/server/connections.js`; `getServiceClient()` returns null without `SUPABASE_SERVICE_ROLE_KEY`.
+
+## Automatic Intervals.icu sync (`20261027000000_intervals_auto_sync.sql`)
+- `public.sync_settings(key, value, updated_at)` — service-role-only (RLS on, no client grants). Rows: `cron_token`
+  (random, generated in the migration, never in the repo) and `app_base_url` (`https://velocity-stack-v2.vercel.app`;
+  edit the row to repoint; if empty/missing the cron job is a no-op).
+- `connections.last_attempt_at` — claim/ordering column for sync runs (not exposed to clients).
+- `sync_trigger_intervals()` (SECURITY DEFINER, not executable by clients): if an active Intervals connection exists,
+  `net.http_post` (pg_net) to `{app_base_url}/api/sync/intervals/run` with header `x-sync-token: <cron_token>`.
+  pg_cron job `intervals-sync`, `*/15 * * * *`.
+- `record_connection_result_for(p_user_id, p_provider, p_error default null, p_fatal default false,
+  p_synced_at default null)` — service_role only. Success clears the error; `p_fatal` sets status `error` (cron then
+  skips it until the user reconnects or runs a manual sync); non-fatal only records `last_error`; `p_synced_at` moves the
+  cursor. Reusable for Strava (`p_provider = 'strava'`).
+- `set_connection_backfill` now also resets `last_synced_at`/`last_attempt_at` so a changed window is re-imported.
+
+Endpoint `POST /api/sync/intervals/run` (`maxDuration` 60 s, needs `SUPABASE_SERVICE_ROLE_KEY`, 503 otherwise):
+- cron mode: header `x-sync-token` verified against `sync_settings.cron_token`; processes up to 10 active connections not
+  attempted in the last 10 min, least recently attempted first.
+- manual mode: `Authorization: Bearer <user token>`; syncs only the caller's connection, 429 within 60 s of the last attempt.
+- Per connection (`src/lib/server/intervalsSync.js`): list rides since `last_synced_at` minus 2 days (first run:
+  `backfillOldest(backfill_days)`), drop rides already imported by external id, import oldest-first via `importActivity`
+  (duplicates skipped, Strava copies upgraded), at most 8 fetches and a 45 s deadline per invocation. Unfinished work resumes
+  next run: the cursor moves to the last processed ride; a complete run sets it to the run start. 401/403/404 => status
+  `error` with a message; other failures keep the status and only set `last_error`. One failing connection or ride never
+  blocks others. Pure logic: `src/lib/syncPlan.js`.
