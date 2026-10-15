@@ -1,7 +1,7 @@
 // Run with: node --test src/lib/__tests__/supabaseServer.test.js
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { noStoreFetch } from '../supabaseServer.js'
+import { noStoreFetch } from '../noStoreFetch.js'
 
 test('noStoreFetch forces cache: no-store and keeps other init', async () => {
   const orig = globalThis.fetch

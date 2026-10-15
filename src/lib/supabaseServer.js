@@ -12,15 +12,10 @@
 // header. This lets RLS policies resolve auth.uid() correctly and lets us
 // validate the token via supabase.auth.getUser(token).
 import { createClient } from '@supabase/supabase-js'
+import { noStoreFetch } from './noStoreFetch'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-// Next 14 patches fetch and caches GETs in route handlers (Data Cache); supabase-js
-// reads go through fetch, so force every request-scoped query to bypass it.
-export function noStoreFetch(input, init = {}) {
-  return fetch(input, { ...init, cache: 'no-store' })
-}
 
 /**
  * Build a request-scoped Supabase client bound to the caller's bearer token
