@@ -208,16 +208,20 @@ function evaluateStandingStart(template, timeSeries, detection) {
 function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW) {
   const { watts = [], speed = [] } = timeSeries
   const manifest = template.manifest || {}
-  const repsTarget = manifest.repeat_count || null
+  const repsTarget = manifest.repeat_count ? manifest.repeat_count * (manifest.set_count || 1) : null
 
   const rawEfforts = detection.efforts || []
 
   // Group the flat efforts list back into reps: each rep is the (ordered)
   // run of steps the DSL declares — typically [work] or [work, recovery].
   const stepsPerRep = (manifest.steps || []).length || 1
+  const setCount = manifest.set_count || null
+  // Set recoveries (issue #126) sit between reps and are not part of any rep.
+  const setRecoveries = rawEfforts.filter((e) => e.role === 'set_recovery')
+  const repEffortsFlat = rawEfforts.filter((e) => e.role !== 'set_recovery')
   const reps = []
-  for (let i = 0; i < rawEfforts.length; i += stepsPerRep) {
-    reps.push(rawEfforts.slice(i, i + stepsPerRep))
+  for (let i = 0; i < repEffortsFlat.length; i += stepsPerRep) {
+    reps.push(repEffortsFlat.slice(i, i + stepsPerRep))
   }
 
   // A "multi-step block" has more than one work step per repeat (or more than
@@ -226,7 +230,7 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
   const workStepsPerRep = manifestSteps.filter((s) => s.role === 'work').length
   const isMultiStep = workStepsPerRep > 1 || manifestSteps.length > 2
 
-  const efforts = reps.flatMap((repEfforts, repIdx) =>
+  const repEffortsOut = reps.flatMap((repEfforts, repIdx) =>
     repEfforts.map((e, stepIdx) => ({
       ...e,
       rep: repIdx + 1,
@@ -236,6 +240,15 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
       pacing_index: pacingIndex(e.avg_power != null ? watts : speed, e.start_sec, e.end_sec),
     }))
   )
+  const efforts = setCount
+    ? [
+        ...repEffortsOut,
+        ...setRecoveries.map((e) => ({
+          ...e,
+          pacing_index: pacingIndex(e.avg_power != null ? watts : speed, e.start_sec, e.end_sec),
+        })),
+      ].sort((a, b) => a.start_sec - b.start_sec)
+    : repEffortsOut
 
   const workEfforts = efforts.filter((e) => e.role === 'work')
   const workSpeeds = workEfforts.map((e) => e.avg_speed_kmh).filter((s) => typeof s === 'number')
@@ -270,11 +283,32 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
       })
     : null
 
+  const setSummaries = setCount
+    ? Array.from({ length: setCount }, (_, i) => {
+        const inSet = reps.filter((r) => r[0]?.set === i + 1)
+        const powers = inSet
+          .flatMap((r) => r.filter((e) => e.role === 'work' && typeof e.avg_power === 'number'))
+          .map((e) => e.avg_power)
+        return {
+          set: i + 1,
+          reps_detected: inSet.length,
+          avg_power: powers.length ? Math.round(avg(powers)) : null,
+        }
+      })
+    : null
+
   return {
     efforts,
     summary: {
       reps_detected: reps.length,
       reps_target: repsTarget,
+      ...(setCount
+        ? {
+            sets_target: setCount,
+            sets_detected: setSummaries.filter((s) => s.reps_detected > 0).length,
+            set_summaries: setSummaries,
+          }
+        : {}),
       dropoff_pct: dropoff,
       avg_power: workPowers.length ? Math.round(avg(workPowers)) : null,
       ...(stepSummaries ? { step_summaries: stepSummaries } : {}),
@@ -340,6 +374,8 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
           hrMaxBpm,
           warmupSec: manifest.warmup_sec || null,
           cooldownSec: manifest.cooldown_sec || null,
+          setCount: manifest.set_count || null,
+          setRecovery: manifest.set_recovery || null,
         }
       : {}),
   })

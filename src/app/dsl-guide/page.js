@@ -59,7 +59,7 @@ recovery 2min ±50% @ <55%FTP`}
       </div>
 
       <div className={CARD}>
-        <h2 className={H2}>Warm-up, cool-down, multi-step blocks and contiguous steps</h2>
+        <h2 className={H2}>Warm-up, cool-down, sets, multi-step blocks and contiguous steps</h2>
         <ul className="space-y-2 mb-3">
           {DSL_OPTIONS.map((o) => (
             <li key={o.syntax}>
@@ -71,6 +71,11 @@ recovery 2min ±50% @ <55%FTP`}
           A repeat can contain several <code className={CODE}>work</code>/<code className={CODE}>recovery</code>{' '}
           lines. They are matched one after another in the order written; prefix a step with{' '}
           <code className={CODE}>then</code> to require it to start right where the previous one ended.
+        </p>
+        <p className="mt-2">
+          Write <code className={CODE}>3 sets of 5x</code> on the first line for sets: the block repeats 5 times per
+          set, three times. An optional <code className={CODE}>set recovery</code> line is the rest searched for
+          between sets.
         </p>
       </div>
 

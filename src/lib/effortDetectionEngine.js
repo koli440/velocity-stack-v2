@@ -24,6 +24,8 @@ export function analyzeSessionEfforts({
   repeatCount = null,
   ftpAtActivityW = null,
   hrMaxBpm = null,
+  setCount = null,
+  setRecovery = null,
   warmupSec = null,
   cooldownSec = null,
 }) {
@@ -46,6 +48,8 @@ export function analyzeSessionEfforts({
       hrMaxBpm,
       warmupSec,
       cooldownSec,
+      setCount,
+      setRecovery,
     })
   }
 
@@ -506,9 +510,12 @@ export function detectCustomIntervalSequence({
   hrMaxBpm = null,
   warmupSec = null,
   cooldownSec = null,
+  setCount = null,
+  setRecovery = null,
 }) {
-  const usesHr = steps.some((s) => s.bandType === 'hr_bpm' || s.bandType === 'pct_hrmax')
-  const usesCadence = steps.some((s) => s.bandType === 'cadence_rpm')
+  const allSteps = setRecovery ? [...steps, setRecovery] : steps
+  const usesHr = allSteps.some((s) => s.bandType === 'hr_bpm' || s.bandType === 'pct_hrmax')
+  const usesCadence = allSteps.some((s) => s.bandType === 'cadence_rpm')
   const hr = usesHr ? heartrate : []
   const cad = usesCadence ? cadence : []
   if ((!watts.length && !speed.length && !hr.length && !cad.length) || !steps.length) {
@@ -536,7 +543,7 @@ export function detectCustomIntervalSequence({
   // %HRmax bands need a reference: the supplied max HR, else the highest HR in the stream.
   const effectiveHrMax = hrMaxBpm || (hasHr ? Math.max(...hr.map((v) => v || 0)) : null)
 
-  const hasDistanceStep = steps.some((s) => s.keyBy === 'distance')
+  const hasDistanceStep = allSteps.some((s) => s.keyBy === 'distance')
   if (hasDistanceStep && !speedPrefix) {
     return {
       pattern: 'custom_intervals',
@@ -558,7 +565,7 @@ export function detectCustomIntervalSequence({
   // A lone "best" step repeated N times means "the N best non-overlapping
   // efforts": take the global best, block it out, and search the whole
   // activity again (rather than only looking after the previous one).
-  const single = steps.length === 1 && steps[0].bandType === 'best' ? steps[0] : null
+  const single = !setCount && steps.length === 1 && steps[0].bandType === 'best' ? steps[0] : null
   const ranked = []
   if (single) {
     const blocked = []
@@ -574,7 +581,9 @@ export function detectCustomIntervalSequence({
     ranked.sort((a, b) => a[0].found.start - b[0].found.start)
   }
 
-  for (let rep = 0; rep < repeatCount; rep++) {
+  const setsN = setCount || 1
+  const totalReps = repeatCount * setsN
+  for (let rep = 0; rep < totalReps; rep++) {
     const repWindows = []
     let repCursor = cursor
 
@@ -609,6 +618,8 @@ export function detectCustomIntervalSequence({
     // collected however many complete reps we could ("at least N" semantics).
     if (!repWindows.length) break
 
+    const setIdx = Math.floor(rep / repeatCount)
+    const setTag = setCount ? { set: setIdx + 1, rep_in_set: (rep % repeatCount) + 1 } : {}
     repWindows.forEach(({ step, found }) => {
       const avgPower = found.avgPower != null ? Math.round(found.avgPower) : null
       const avgSpeedKmh = found.avgSpeedKmh != null ? Math.round(found.avgSpeedKmh * 10) / 10 : null
@@ -618,6 +629,7 @@ export function detectCustomIntervalSequence({
       const effort = {
         id: `custom_${step.role}_${found.start}`,
         role: step.role,
+        ...setTag,
         start_sec: found.start,
         end_sec: found.end,
         duration_sec: found.end - found.start,
@@ -643,6 +655,37 @@ export function detectCustomIntervalSequence({
     })
 
     cursor = repCursor
+
+    // End of a set (but not the last): look for the set recovery after the final rep.
+    if (setCount && (rep + 1) % repeatCount === 0 && rep + 1 < totalReps) {
+      if (setRecovery) {
+        const isDistance = setRecovery.keyBy === 'distance'
+        const found = isDistance
+          ? setRecovery.bandType === 'best'
+            ? findBestWindowDistance(P, cursor, setRecovery, [])
+            : findThresholdWindowDistance(P, cursor, setRecovery, ftpAtActivityW, effectiveHrMax)
+          : setRecovery.bandType === 'best'
+          ? findBestWindowDuration(P, cursor, setRecovery, [])
+          : findThresholdWindowDuration(P, cursor, setRecovery, ftpAtActivityW, effectiveHrMax)
+        // Without the set recovery the next set cannot be located: stop here.
+        if (!found) break
+        const avgPower = found.avgPower != null ? Math.round(found.avgPower) : null
+        const avgSpeedKmh = found.avgSpeedKmh != null ? Math.round(found.avgSpeedKmh * 10) / 10 : null
+        efforts.push({
+          id: `custom_set_recovery_${found.start}`,
+          role: 'set_recovery',
+          set: setIdx + 1,
+          start_sec: found.start,
+          end_sec: found.end,
+          duration_sec: found.end - found.start,
+          avg_power: avgPower,
+          max_power: hasWatts && avgPower != null ? Math.max(...watts.slice(found.start, found.end)) : null,
+          band_type: setRecovery.bandType,
+          ...(avgSpeedKmh != null ? { avg_speed_kmh: avgSpeedKmh } : {}),
+        })
+        cursor = found.end
+      }
+    }
   }
 
   return { pattern: 'custom_intervals', efforts }

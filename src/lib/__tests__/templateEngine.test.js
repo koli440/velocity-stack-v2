@@ -202,3 +202,28 @@ test('evaluateTemplate (custom_intervals): over-unders from DSL text via the man
   assert.deepEqual(r.summary.step_summaries.map((s) => s.avg_power), [250, 300, 250, 100])
   assert.equal(r.summary.dropoff_pct, 0)
 })
+
+test('evaluateTemplate (custom_intervals): sets summary, set recoveries excluded from work stats', async () => {
+  const { parseIntervalDsl, buildIntervalManifest } = await import('../intervalDsl.js')
+  const dsl = '2 sets of 3x\nwork 30sec ±0% @ 299-315W\nrecovery 30sec ±0% @ <70W\nset recovery 2min ±0% @ <50W'
+  const manifest = buildIntervalManifest(parseIntervalDsl(dsl))
+  const setBlock = (w) => [...Array.from({ length: 3 }, () => [...repeatWatts(w, 30), ...repeatWatts(60, 30)]).flat()]
+  const watts = [...repeatWatts(100, 30), ...setBlock(300), ...repeatWatts(40, 120), ...setBlock(310)]
+  const r = evaluateTemplate({ slug: 'sets', manifest }, { watts })
+  assert.equal(r.summary.reps_detected, 6)
+  assert.equal(r.summary.reps_target, 6)
+  assert.equal(r.summary.sets_target, 2)
+  assert.equal(r.summary.sets_detected, 2)
+  assert.deepEqual(r.summary.set_summaries.map((s) => [s.set, s.reps_detected, s.avg_power]), [[1, 3, 300], [2, 3, 310]])
+  assert.equal(r.summary.avg_power, 305)
+  assert.equal(r.efforts.filter((e) => e.role === 'set_recovery').length, 1)
+  assert.deepEqual(r.efforts.filter((e) => e.role === 'work').map((e) => e.rep), [1, 2, 3, 4, 5, 6])
+  const starts = r.efforts.map((e) => e.start_sec)
+  assert.deepEqual(starts, [...starts].sort((a, b) => a - b))
+})
+
+test('evaluateTemplate (custom_intervals): no set fields for non-set templates (regression)', () => {
+  const r = evaluateTemplate(customTemplate(), { watts: buildTwoCycleStream() }, 220)
+  assert.equal(r.summary.sets_target, undefined)
+  assert.equal(r.summary.set_summaries, undefined)
+})

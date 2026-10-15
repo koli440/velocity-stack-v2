@@ -11,6 +11,8 @@ export const DSL_STEP_PARTS = [
 ]
 
 export const DSL_OPTIONS = [
+  { syntax: '3 sets of 5x', meaning: 'First line: 3 sets, each with 5 repeats of the block. Reps are numbered within each set.' },
+  { syntax: 'set recovery 5min ±30% @ <55%FTP', meaning: 'Optional, only with sets: the rest searched for between sets (never after the last one). Same syntax as a step, but without then.' },
   { syntax: 'then work 1min ...', meaning: 'Prefix a step with "then" to make it start exactly where the previous step ended (over-unders, pyramids, ramps). Not allowed on the first step.' },
   { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (min or sec). At most once.' },
   { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity. At most once.' },
@@ -30,7 +32,7 @@ export const DSL_BANDS = [
 ]
 
 export const DSL_RULES = [
-  'Line 1 must be the repeat count: "4x", "1x", etc. (1 or greater).',
+  'Line 1 must be the repeat count: "4x", "1x", etc. (1 or greater), or "3 sets of 5x" for sets.',
   'Every following line is one step (or a warmup/cooldown line); at least one "work" step is required.',
   'A repeat can have several work/recovery steps; they are matched in the order written.',
   'Step values must be greater than 0; tolerance must be 0-100%.',
@@ -111,6 +113,11 @@ export const DSL_GUIDE_EXAMPLES = [
     dsl: '1x\nwork 1min ±5% @ 50-60%FTP\nthen work 1min ±5% @ 60-70%FTP\nthen work 1min ±5% @ 70-80%FTP\nthen work 1min ±5% @ >80%FTP',
   },
   {
+    title: 'Sets: 3 sets of 5 short efforts',
+    description: 'Five 30-second efforts with 30 seconds easy, repeated in three sets separated by 5 minutes of rest.',
+    dsl: '3 sets of 5x\nwork 30sec ±20% @ 120-140%FTP\nrecovery 30sec ±50% @ <55%FTP\nset recovery 5min ±30% @ <55%FTP',
+  },
+  {
     title: 'Pursuit pacing: best power over 4 x 1km',
     description: 'Distance-keyed steps need an explicit metric after "best".',
     dsl: '4x\nwork 1km ±5% @ best power\nrecovery 2min ±50% @ <55%FTP',
@@ -142,5 +149,9 @@ export const DSL_COMMON_MISTAKES = [
   {
     dsl: '1x\nthen work 3min ±5% @ 90-110%FTP',
     fix: '"then" needs a preceding step; remove it from the first step.',
+  },
+  {
+    dsl: '3x\nwork 1min ±5% @ best\nset recovery 5min ±30% @ <55%FTP',
+    fix: '"set recovery" needs a sets line first, e.g. "3 sets of 3x".',
   },
 ]
