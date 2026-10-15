@@ -368,11 +368,12 @@ function stepBandMatches({ avgPower, avgSpeedKmh, avgHr, avgCadence }, step, ftp
 }
 
 /** Earliest duration-keyed window (duration within tolerance) whose metric satisfies the step's band. */
-function findThresholdWindowDuration(P, cursor, step, ftpAtActivityW, hrMaxBpm) {
+function findThresholdWindowDuration(P, cursor, step, ftpAtActivityW, hrMaxBpm, exact = false) {
   const n = P.n
   const { durMin, durMax } = durationRange(step)
 
-  for (let s = cursor; s + durMin <= n; s++) {
+  const sLimit = exact ? cursor + 1 : Infinity
+  for (let s = cursor; s + durMin <= n && s < sLimit; s++) {
     for (let d = durMin; d <= durMax && s + d <= n; d++) {
       const metrics = computeMetrics(P, s, s + d)
       if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm)) {
@@ -388,14 +389,15 @@ function overlaps(blocked, s, e) {
   return blocked.some(([bs, be]) => s < be && e > bs)
 }
 
-function findBestWindowDuration(P, cursor, step, blocked = []) {
+function findBestWindowDuration(P, cursor, step, blocked = [], exact = false) {
   const metricPrefix = step.bestMetric === 'speed' ? P.speed : P.watts
   if (!metricPrefix) return null
   const n = P.n
   const { durMin, durMax } = durationRange(step)
 
   let best = null
-  for (let s = cursor; s + durMin <= n; s++) {
+  const sLimit = exact ? cursor + 1 : Infinity
+  for (let s = cursor; s + durMin <= n && s < sLimit; s++) {
     for (let d = durMin; d <= durMax && s + d <= n; d++) {
       if (blocked.length && overlaps(blocked, s, s + d)) continue
       const value = windowAvg(metricPrefix, s, s + d)
@@ -416,7 +418,7 @@ function findBestWindowDuration(P, cursor, step, blocked = []) {
  * oldest second from a window can only shrink its distance (speed >= 0),
  * so a longer window is needed to reach the same distance target.
  */
-function findThresholdWindowDistance(P, cursor, step, ftpAtActivityW, hrMaxBpm) {
+function findThresholdWindowDistance(P, cursor, step, ftpAtActivityW, hrMaxBpm, exact = false) {
   const speedPrefix = P.speed
   if (!speedPrefix) return null
   const n = P.n
@@ -424,7 +426,8 @@ function findThresholdWindowDistance(P, cursor, step, ftpAtActivityW, hrMaxBpm) 
 
   let eLo = cursor
   let eHi = cursor
-  for (let s = cursor; s < n; s++) {
+  const sLimit = exact ? cursor + 1 : Infinity
+  for (let s = cursor; s < n && s < sLimit; s++) {
     if (eLo < s + 1) eLo = s + 1
     if (eHi < s + 1) eHi = s + 1
     while (eLo <= n && metersAt(speedPrefix, s, eLo) < distMin) eLo++
@@ -447,7 +450,7 @@ function findThresholdWindowDistance(P, cursor, step, ftpAtActivityW, hrMaxBpm) 
 }
 
 /** Single best distance-keyed window (distance within tolerance), optimising `step.bestMetric`. */
-function findBestWindowDistance(P, cursor, step, blocked = []) {
+function findBestWindowDistance(P, cursor, step, blocked = [], exact = false) {
   const speedPrefix = P.speed
   if (!speedPrefix) return null
   const metricPrefix = step.bestMetric === 'speed' ? speedPrefix : P.watts
@@ -458,7 +461,8 @@ function findBestWindowDistance(P, cursor, step, blocked = []) {
   let eLo = cursor
   let eHi = cursor
   let best = null
-  for (let s = cursor; s < n; s++) {
+  const sLimit = exact ? cursor + 1 : Infinity
+  for (let s = cursor; s < n && s < sLimit; s++) {
     if (eLo < s + 1) eLo = s + 1
     if (eHi < s + 1) eHi = s + 1
     while (eLo <= n && metersAt(speedPrefix, s, eLo) < distMin) eLo++
@@ -581,13 +585,15 @@ export function detectCustomIntervalSequence({
 
     for (const step of single ? [] : steps) {
       const isDistance = step.keyBy === 'distance'
+      // `then` steps must start exactly where the previous step in this repeat ended.
+      const exact = Boolean(step.contiguous) && repWindows.length > 0
       const found = isDistance
         ? step.bandType === 'best'
-          ? findBestWindowDistance(P, repCursor, step)
-          : findThresholdWindowDistance(P, repCursor, step, ftpAtActivityW, effectiveHrMax)
+          ? findBestWindowDistance(P, repCursor, step, [], exact)
+          : findThresholdWindowDistance(P, repCursor, step, ftpAtActivityW, effectiveHrMax, exact)
         : step.bandType === 'best'
-        ? findBestWindowDuration(P, repCursor, step)
-        : findThresholdWindowDuration(P, repCursor, step, ftpAtActivityW, effectiveHrMax)
+        ? findBestWindowDuration(P, repCursor, step, [], exact)
+        : findThresholdWindowDuration(P, repCursor, step, ftpAtActivityW, effectiveHrMax, exact)
 
       if (!found) {
         repWindows.length = 0

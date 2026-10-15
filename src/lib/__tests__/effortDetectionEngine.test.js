@@ -457,3 +457,61 @@ test('multi-step block: two work steps + recovery per repeat are matched in orde
   assert.deepEqual(efforts.map((e) => e.avg_power).slice(0, 3), [200, 300, 80])
   for (let i = 1; i < efforts.length; i++) assert.ok(efforts[i].start_sec >= efforts[i - 1].end_sec)
 })
+
+// ---- contiguous steps: over-unders, pyramids, ramps (issue #125) ----
+
+const S = (sec, band, extra = {}) => ({ role: 'work', keyBy: 'duration', targetDurationSec: sec, durationTolerancePct: 0, bandType: 'watts', powerMin: band[0], powerMax: band[1], ...extra })
+
+test('over-unders: contiguous under/over/under steps are matched back-to-back, once per repeat', () => {
+  const rep = [...repeatWatts(250, 120), ...repeatWatts(300, 60), ...repeatWatts(250, 120), ...repeatWatts(100, 240)]
+  const watts = [...repeatWatts(100, 30), ...rep, ...rep]
+  const steps = [S(120, [245, 255]), S(60, [295, 305], { contiguous: true }), S(120, [245, 255], { contiguous: true }), { ...S(240, [null, 110]), role: 'recovery' }]
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 2 })
+  assert.equal(efforts.length, 8)
+  assert.deepEqual(efforts.map((e) => e.duration_sec), [120, 60, 120, 240, 120, 60, 120, 240])
+  assert.ok(efforts[0].start_sec >= 20 && efforts[0].start_sec <= 30)
+  efforts.slice(0, 3).concat(efforts.slice(4, 7)).forEach((e, i) => {
+    const expected = [250, 300, 250][i % 3]
+    assert.ok(Math.abs(e.avg_power - expected) <= 10, `${e.avg_power} vs ${expected}`)
+  })
+  for (let i = 1; i < 4; i++) assert.equal(efforts[i].start_sec, efforts[i - 1].end_sec)
+  for (let i = 5; i < 8; i++) assert.equal(efforts[i].start_sec, efforts[i - 1].end_sec)
+})
+
+test('contiguous steps do not skip ahead: a gap between steps rejects the repeat, a plain step would match', () => {
+  const watts = [...repeatWatts(250, 120), ...repeatWatts(100, 30), ...repeatWatts(300, 60)]
+  const strict = [S(120, [245, 255]), S(60, [295, 305], { contiguous: true })]
+  assert.deepEqual(detectCustomIntervalSequence({ watts, steps: strict, repeatCount: 1 }).efforts, [])
+  const loose = [S(120, [245, 255]), S(60, [295, 305])]
+  const r = detectCustomIntervalSequence({ watts, steps: loose, repeatCount: 1 })
+  assert.equal(r.efforts.length, 2)
+  assert.ok(r.efforts[1].start_sec >= 145 && r.efforts[1].start_sec <= 150)
+})
+
+test('pyramid: ascending then descending contiguous steps', () => {
+  const watts = [...repeatWatts(100, 20), ...repeatWatts(200, 60), ...repeatWatts(250, 120), ...repeatWatts(300, 180), ...repeatWatts(250, 120), ...repeatWatts(200, 60), ...repeatWatts(100, 20)]
+  const steps = [S(60, [195, 205]), S(120, [245, 255], { contiguous: true }), S(180, [295, 305], { contiguous: true }), S(120, [245, 255], { contiguous: true }), S(60, [195, 205], { contiguous: true })]
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 1 })
+  assert.equal(efforts.length, 5)
+  efforts.forEach((e, i) => assert.ok(Math.abs(e.avg_power - [200, 250, 300, 250, 200][i]) <= 10))
+  for (let i = 1; i < efforts.length; i++) assert.equal(efforts[i].start_sec, efforts[i - 1].end_sec)
+  assert.deepEqual(efforts.map((e) => e.duration_sec), [60, 120, 180, 120, 60])
+})
+
+test('ramp: stepwise ascending targets; stops matching when a step is not reached', () => {
+  const mk = (top) => [...repeatWatts(150, 60), ...repeatWatts(200, 60), ...repeatWatts(250, 60), ...repeatWatts(top, 60)]
+  const steps = [S(60, [145, 155]), S(60, [195, 205], { contiguous: true }), S(60, [245, 255], { contiguous: true }), S(60, [295, 305], { contiguous: true })]
+  assert.equal(detectCustomIntervalSequence({ watts: mk(300), steps, repeatCount: 1 }).efforts.length, 4)
+  assert.equal(detectCustomIntervalSequence({ watts: mk(270), steps, repeatCount: 1 }).efforts.length, 0)
+})
+
+test('contiguous steps work on distance-keyed and best steps', () => {
+  const speed = [...repeatWatts(36, 100), ...repeatWatts(18, 100)] // 10 m/s then 5 m/s
+  const steps = [
+    { role: 'work', keyBy: 'distance', targetDistanceM: 500, durationTolerancePct: 0, bandType: 'speed_kmh', powerMin: 35, powerMax: 37 },
+    { role: 'work', keyBy: 'distance', targetDistanceM: 250, durationTolerancePct: 0, bandType: 'best', bestMetric: 'speed', powerMin: null, powerMax: null, contiguous: true },
+  ]
+  const { efforts } = detectCustomIntervalSequence({ watts: repeatWatts(200, 200), speed, steps, repeatCount: 1 })
+  assert.equal(efforts.length, 2)
+  assert.equal(efforts[1].start_sec, efforts[0].end_sec)
+})

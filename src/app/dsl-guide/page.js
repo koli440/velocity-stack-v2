@@ -59,7 +59,7 @@ recovery 2min ±50% @ <55%FTP`}
       </div>
 
       <div className={CARD}>
-        <h2 className={H2}>Warm-up, cool-down and multi-step blocks</h2>
+        <h2 className={H2}>Warm-up, cool-down, multi-step blocks and contiguous steps</h2>
         <ul className="space-y-2 mb-3">
           {DSL_OPTIONS.map((o) => (
             <li key={o.syntax}>
@@ -69,7 +69,8 @@ recovery 2min ±50% @ <55%FTP`}
         </ul>
         <p>
           A repeat can contain several <code className={CODE}>work</code>/<code className={CODE}>recovery</code>{' '}
-          lines. They are matched one after another in the order written.
+          lines. They are matched one after another in the order written; prefix a step with{' '}
+          <code className={CODE}>then</code> to require it to start right where the previous one ended.
         </p>
       </div>
 

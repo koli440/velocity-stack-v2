@@ -189,3 +189,16 @@ test('evaluateTemplate (custom_intervals): classic work/recovery output has no m
   assert.equal(r.summary.step_summaries, undefined)
   assert.ok(r.efforts.every((e) => e.step_index === undefined))
 })
+
+test('evaluateTemplate (custom_intervals): over-unders from DSL text via the manifest builder', async () => {
+  const { parseIntervalDsl, buildIntervalManifest } = await import('../intervalDsl.js')
+  const dsl = '2x\nwork 2min ±0% @ 245-255W\nthen work 1min ±0% @ 295-305W\nthen work 2min ±0% @ 245-255W\nrecovery 4min ±0% @ <110W'
+  const manifest = buildIntervalManifest(parseIntervalDsl(dsl))
+  const rep = [...repeatWatts(250, 120), ...repeatWatts(300, 60), ...repeatWatts(250, 120), ...repeatWatts(100, 240)]
+  const r = evaluateTemplate({ slug: 'ou', manifest }, { watts: [...rep, ...rep] })
+  assert.equal(r.summary.reps_detected, 2)
+  assert.equal(r.efforts.length, 8)
+  assert.deepEqual(r.efforts.slice(0, 4).map((e) => e.step_index), [1, 2, 3, 4])
+  assert.deepEqual(r.summary.step_summaries.map((s) => s.avg_power), [250, 300, 250, 100])
+  assert.equal(r.summary.dropoff_pct, 0)
+})
