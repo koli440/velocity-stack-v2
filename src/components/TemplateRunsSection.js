@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Portal from './Portal'
-import { selectedSummaryKeys } from '../lib/summaryMetrics'
+import { selectedSummaryKeys, WKG_CONTEXT_KEYS } from '../lib/summaryMetrics'
 import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -47,6 +47,7 @@ function EffortCards({ efforts }) {
             {eff.avg_power != null && <div>Avg W: <b className={val}>{eff.avg_power}</b></div>}
             {eff.max_power != null && <div>Max W: <b className={val}>{eff.max_power}</b></div>}
             {eff.avg_speed_kmh != null && <div>Avg speed: <b className={val}>{eff.avg_speed_kmh} km/h</b></div>}
+            {eff.avg_wkg != null && <div>Avg W/kg: <b className={val}>{eff.avg_wkg}</b></div>}
             {eff.pct_of_ftp != null && <div>% FTP: <b className={val}>{eff.pct_of_ftp}%</b></div>}
             {eff.pacing_index != null && <div>Pacing: <b className={val}>{eff.pacing_index}%</b></div>}
             {eff.dropoff_pct != null && <div>Drop-off: <b className={val}>{eff.dropoff_pct}%</b></div>}
@@ -268,7 +269,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
             const metricKeys = selectedSummaryKeys(templates.find((t) => t.id === run.template_id)?.manifest?.summary_metrics)
             const entries = [
               ...summaryEntries.slice(0, 4),
-              ...summaryEntries.slice(4).filter(([key]) => metricKeys.includes(key)),
+              ...summaryEntries.slice(4).filter(([key]) => metricKeys.includes(key) || WKG_CONTEXT_KEYS.includes(key)),
             ]
             const hasEfforts = Array.isArray(run.efforts) && run.efforts.length > 0
             return (

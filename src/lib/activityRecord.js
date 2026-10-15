@@ -8,6 +8,7 @@
 import { buildFeedPreview } from './routePreview.js'
 import { zoneSignature } from './privacyZone.js'
 import { ftpAt } from './ftpHistory.js'
+import { weightAt } from './weightHistory.js'
 
 /**
  * @param {object} summary - output of api/analyze.py's `analyze_fit_file().summary`
@@ -28,6 +29,8 @@ import { ftpAt } from './ftpHistory.js'
  * @param {string} [meta.processingStatus]
  * @param {Array|null} [meta.ftpHistory] - athlete FTP history; the FTP valid on the activity's date
  *   is snapshotted (issue #142). Takes precedence over ftpWatts.
+ * @param {Array|null} [meta.weightHistory] - athlete body weight history; the weight valid on the
+ *   activity's date is snapshotted (issue #143). When omitted, the DB trigger resolves it.
  * @param {number|null} [meta.ftpWatts] - fallback FTP when no history is supplied, used to derive
  *   intensity_factor/training_load
  * @param {object|null} [meta.privacyZone] - owner's GPS privacy zone, applied to route_preview
@@ -51,6 +54,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     processingStatus = 'baseline_completed',
     ftpWatts: fallbackFtp = null,
     ftpHistory = null,
+    weightHistory = null,
     privacyZone = null,
     fallbackActivityDate = new Date().toISOString(),
   } = meta
@@ -114,5 +118,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     // Point-in-time FTP snapshot (issues #14, #142): the FTP valid on the ride's date (from the
     // athlete's FTP history), never the current one. When null, the DB trigger resolves it.
     ftp_at_activity_w: ftpWatts ?? null,
+    // Weight snapshot (issue #143), same model as the FTP snapshot; null lets the DB trigger resolve it.
+    weight_at_activity_kg: Array.isArray(weightHistory) ? weightAt(weightHistory, activityDate) : null,
   }
 }

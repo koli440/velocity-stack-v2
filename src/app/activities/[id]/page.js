@@ -16,6 +16,7 @@ import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
 import TemplateRunsSection from '../../../components/TemplateRunsSection'
 import VelodromePicker from '../../../components/VelodromePicker'
 import EditActivityModal from '../../../components/EditActivityModal'
+import { weightFromActivity } from '../../../lib/weightHistory'
 
 // Leaflet requires window/document -> dynamic import without SSR
 import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
@@ -404,6 +405,7 @@ export default function ActivityDetailPage() {
         masterCurves={masterCurves}
         baselineCurves={baselineCurves}
         baselineLoading={baselineLoading}
+        weightKg={sharedView ? null : weightFromActivity(activity)}
         onPeriodChange={handleBaselinePeriodChange}
       />
 

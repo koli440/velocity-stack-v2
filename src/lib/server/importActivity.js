@@ -87,6 +87,7 @@ export async function importActivity({
     processingStatus: 'baseline_completed',
     ftpWatts: prof.ftp_w ?? null,
     ftpHistory: prof.ftp_history ?? null,
+    weightHistory: prof.weight_history ?? null,
     fallbackActivityDate: fetched.startDateLocal || undefined,
   })
 
@@ -135,7 +136,11 @@ export async function loadImportProfile(supabase, userId) {
     .from('ftp_history')
     .select('effective_from, ftp_w')
     .eq('user_id', userId)
-  return { ...(data || {}), ftp_history: ftpRows || [] }
+  const { data: weightRows } = await supabase
+    .from('weight_history')
+    .select('effective_from, weight_kg')
+    .eq('user_id', userId)
+  return { ...(data || {}), ftp_history: ftpRows || [], weight_history: weightRows || [] }
 }
 
 export { DUPLICATE_MESSAGE }

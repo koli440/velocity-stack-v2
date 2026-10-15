@@ -19,6 +19,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import { activityLtSummary } from '../lib/lactateThresholds'
+import { weightFromActivity } from '../lib/weightHistory'
+import { ftpFromActivity } from '../lib/ftpHistory'
+import { wattsPerKg } from '../lib/wkg'
 
 function formatDuration(totalSeconds) {
   if (totalSeconds == null) return '—'
@@ -120,6 +123,29 @@ function ltMetrics(summary) {
   hr.forEach((z) =>
     out.push({ id: `lt_hr_${z.id}`, group: 'Heart Rate & Cadence', label: `Time ${z.label} (HR)`, value: formatDuration(z.seconds) })
   )
+  return out
+}
+
+// Power-to-weight (issue #143): uses the activity's own weight / FTP / LT snapshots; empty without a weight.
+function wkgMetrics(activity, ltSummary, powerCurve, windows) {
+  const kg = weightFromActivity(activity)
+  if (!kg) return []
+  const fmt = (w) => {
+    const v = wattsPerKg(w, kg)
+    return v == null ? '—' : `${v.toFixed(2)} W/kg`
+  }
+  const hint = `At ${kg} kg`
+  const out = [
+    { id: 'weight', group: 'Power', label: 'Body Weight', value: `${kg} kg`, hint: 'Weight at activity date' },
+    { id: 'avg_wkg', group: 'Power', label: 'Avg W/kg', value: fmt(activity?.avg_power_w), hint },
+    { id: 'np_wkg', group: 'Power', label: 'Normalized W/kg', value: fmt(activity?.normalized_power_w), hint },
+    ...windows.map((win) => ({ id: `avg_wkg_${win}`, group: 'Power', label: `Avg W/kg @${win}`, value: fmt(powerCurve[win]), hint })),
+  ]
+  const ftp = ftpFromActivity(activity)
+  if (ftp) out.push({ id: 'ftp_wkg', group: 'Power', label: 'FTP W/kg', value: fmt(ftp), hint: `${ftp} W at activity date` })
+  const lt = ltSummary?.lt
+  if (lt?.lt1Power) out.push({ id: 'lt1_wkg', group: 'Power', label: 'LT1 W/kg', value: fmt(lt.lt1Power), hint: `${lt.lt1Power} W` })
+  if (lt?.lt2Power) out.push({ id: 'lt2_wkg', group: 'Power', label: 'LT2 W/kg', value: fmt(lt.lt2Power), hint: `${lt.lt2Power} W` })
   return out
 }
 
@@ -281,6 +307,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
         badge: pbBadge(activity?.peak_torque_nm, torqueMaster1s),
       },
       ...ltMetrics(ltSummary),
+      ...wkgMetrics(activity, ltSummary, powerCurve, powerWindows),
     ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activity, ltSummary, hasFtp, powerCurve, speedHint, startTime, powerMaster5s, cadenceMaster1s, speedMaster5s, torqueMaster1s])
