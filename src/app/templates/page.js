@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase, getAuthHeader } from '../../lib/supabase'
 import { parseJsonResponse } from '../../lib/httpJson'
@@ -11,6 +12,9 @@ import {
   templatePermissions,
   visibleTabs,
 } from '../../lib/templateMenu'
+import { metricLabel, orderMetricKeys } from '../../lib/templateStats'
+
+const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/0$/, ''))
 
 const TAB_LABELS = { mine: 'Mine', favorites: 'Favorites', public: 'Public', system: 'System' }
 
@@ -28,6 +32,10 @@ export default function TemplatesPage() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [sort, setSort] = useState('name')
+  const [stats, setStats] = useState({})
+  const [statsLoading, setStatsLoading] = useState(true)
+  const [statsError, setStatsError] = useState(null)
+  const [expanded, setExpanded] = useState(new Set())
   const [modal, setModal] = useState({ open: false, template: null })
 
   const load = useCallback(async () => {
@@ -57,6 +65,26 @@ export default function TemplatesPage() {
     }
   }, [])
 
+  const loadStats = useCallback(async () => {
+    setStatsLoading(true)
+    setStatsError(null)
+    try {
+      const authHeader = await getAuthHeader()
+      if (!authHeader.Authorization) {
+        setStats({})
+        return
+      }
+      const res = await fetch('/api/templates/stats', { headers: authHeader, cache: 'no-store' })
+      const json = await parseJsonResponse(res)
+      if (!res.ok || json.error) throw new Error(json.error || 'Failed to load usage statistics.')
+      setStats(json.stats || {})
+    } catch (err) {
+      setStatsError(err.message)
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const id = session?.user?.id || null
@@ -64,8 +92,9 @@ export default function TemplatesPage() {
       setTab(id ? 'mine' : 'public')
       setAuthReady(true)
       load()
+      loadStats()
     })
-  }, [load])
+  }, [load, loadStats])
 
   const tabs = visibleTabs(userId)
 
@@ -73,7 +102,11 @@ export default function TemplatesPage() {
     () => filterByTab(templates, tab, { userId, favoriteIds }),
     [templates, tab, userId, favoriteIds]
   )
-  const shown = useMemo(() => searchTemplates(tabItems, { query, category, sort }), [tabItems, query, category, sort])
+  const shown = useMemo(() => {
+    const list = searchTemplates(tabItems, { query, category, sort: sort === 'usage' ? 'name' : sort })
+    if (sort !== 'usage') return list
+    return [...list].sort((a, b) => (stats[b.id]?.count || 0) - (stats[a.id]?.count || 0))
+  }, [tabItems, query, category, sort, stats])
   const categories = useMemo(() => ['all', ...new Set(templates.map((t) => t.category).filter(Boolean))], [templates])
 
   const api = async (url, method, body) => {
@@ -136,6 +169,66 @@ export default function TemplatesPage() {
 
   const ownerLabel = (t) => (!t.user_id ? 'System' : t.user_id === userId ? 'You' : owners[t.user_id] || 'Community')
 
+  const toggleExpanded = (id) =>
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const renderStats = (t) => {
+    if (statsLoading) return <p className="text-[11px] text-slate-400">Loading your usage…</p>
+    if (statsError) return <p className="text-[11px] text-red-500">Usage stats unavailable.</p>
+    const st = stats[t.id]
+    if (!st) return <p className="text-[11px] text-slate-400">Not used yet.</p>
+    const keys = orderMetricKeys(Object.keys(st.metrics))
+    const open = expanded.has(t.id)
+    return (
+      <div className="rounded-xl bg-slate-50 dark:bg-slate-900/40 p-3 space-y-2 text-[11px]">
+        <p className="font-bold text-slate-700 dark:text-slate-200">
+          Used {st.count} {st.count === 1 ? 'time' : 'times'}
+          {st.last_run_at && <span className="font-normal text-slate-400"> · last {new Date(st.last_run_at).toLocaleDateString()}</span>}
+        </p>
+        {keys.length > 0 && (
+          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-slate-500 dark:text-slate-400">
+            {keys.map((k) => (
+              <div key={k} className="flex justify-between gap-2">
+                <span>{metricLabel(k)}</span>
+                <span className="font-mono text-slate-700 dark:text-slate-200">
+                  {fmt(st.metrics[k].avg)}
+                  {st.metrics[k].best != null && st.metrics[k].n > 1 && <span className="text-slate-400"> / {fmt(st.metrics[k].best)}</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        {keys.length > 0 && <p className="text-[10px] text-slate-400">Average / best across runs</p>}
+        <button onClick={() => toggleExpanded(t.id)} className="font-bold text-emerald-500 hover:underline" aria-expanded={open}>
+          {open ? 'Hide activities' : `Show activities (${st.runs.length})`}
+        </button>
+        {open && (
+          <ul className="space-y-1.5">
+            {st.runs.map((r) => (
+              <li key={r.id} className="border-t border-slate-200 dark:border-slate-700 pt-1.5">
+                <Link href={`/activities/${r.activity_id}`} className="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-500">
+                  {r.title || 'Untitled activity'}
+                </Link>
+                {r.date && <span className="text-slate-400"> · {new Date(r.date).toLocaleDateString()}</span>}
+                <div className="text-slate-500 dark:text-slate-400">
+                  {orderMetricKeys(Object.keys(r.metrics))
+                    .slice(0, 6)
+                    .map((k) => `${metricLabel(k)} ${fmt(r.metrics[k])}`)
+                    .join(' · ')}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -180,6 +273,7 @@ export default function TemplatesPage() {
           <option value="name">Sort: Name</option>
           <option value="updated">Sort: Last updated</option>
           <option value="category">Sort: Category</option>
+          {userId && <option value="usage">Sort: Most used</option>}
         </select>
       </div>
 
@@ -228,6 +322,7 @@ export default function TemplatesPage() {
                   </span>
                 </div>
                 {t.description && <p className="text-xs text-slate-500 dark:text-slate-400">{t.description}</p>}
+                {userId && renderStats(t)}
                 <p className="text-[11px] text-slate-400 mt-auto">
                   By {ownerLabel(t)}
                   {(t.updated_at || t.created_at) && ` · Updated ${new Date(t.updated_at || t.created_at).toLocaleDateString()}`}
