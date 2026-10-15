@@ -10,6 +10,8 @@ import { fetchCoverPhotos } from '../lib/activityPhotos'
 import { OPEN_ADD_SESSION_EVENT, ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 import RosterPanel from './RosterPanel'
 import ActivityFeed from './ActivityFeed'
+import EmptyFeedCard from './EmptyFeedCard'
+import { stravaFlagMessage } from '../lib/emptyFeed'
 import RidersExplorer from './RidersExplorer'
 
 export default function Dashboard({ initialActivities = [] }) {
@@ -30,6 +32,18 @@ export default function Dashboard({ initialActivities = [] }) {
   const [hasMoreDiscover, setHasMoreDiscover] = useState(false)
   const [isLoadingDiscover, setIsLoadingDiscover] = useState(false)
   const [coverPhotos, setCoverPhotos] = useState(new Map())
+  const [activitiesLoaded, setActivitiesLoaded] = useState(initialActivities.length > 0)
+  const [stravaNotice, setStravaNotice] = useState(null)
+
+  // Result of the Strava OAuth round trip when it started from the welcome card (?strava=...).
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const flag = url.searchParams.get('strava')
+    if (!flag) return
+    setStravaNotice(stravaFlagMessage(flag))
+    url.searchParams.delete('strava')
+    window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+  }, [])
 
   // Signed cover-photo URLs for everything currently shown (one query + one signing call).
   useEffect(() => {
@@ -106,6 +120,7 @@ export default function Dashboard({ initialActivities = [] }) {
       if (!error) {
         setActivities(data)
         setHasMoreActivities(hasMore)
+        setActivitiesLoaded(true)
       }
     }
 
@@ -212,6 +227,16 @@ export default function Dashboard({ initialActivities = [] }) {
         {scope === 'riders' ? (
           <RidersExplorer userId={user?.id} onFollowChanged={reloadSocialFeeds} />
         ) : scope === 'mine' ? (
+          <>
+          {activities.length === 0 && (
+            <EmptyFeedCard
+              userId={user?.id}
+              activitiesLoaded={activitiesLoaded}
+              activityCount={activities.length}
+              onRefresh={() => user?.id && reloadActivities(user.id)}
+              notice={stravaNotice}
+            />
+          )}
           <ActivityFeed
             key="mine"
             activities={activities}
@@ -221,6 +246,7 @@ export default function Dashboard({ initialActivities = [] }) {
             isLoadingMore={isLoadingMore}
             onLoadMore={loadMoreActivities}
           />
+          </>
         ) : scope === 'discover' ? (
           <ActivityFeed
             key="discover"

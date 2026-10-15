@@ -15,7 +15,11 @@ export async function GET(req) {
     const { user } = await getRequestUser(req)
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const state = signState({ userId: user.id, secret: process.env.STRAVA_CLIENT_SECRET })
+    const state = signState({
+      userId: user.id,
+      returnTo: new URL(req.url).searchParams.get('return') === 'home' ? 'home' : undefined,
+      secret: process.env.STRAVA_CLIENT_SECRET,
+    })
     const url = buildAuthorizeUrl({
       clientId: process.env.STRAVA_CLIENT_ID,
       redirectUri: `${appOrigin(req)}/api/connections/strava/callback`,

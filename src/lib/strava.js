@@ -24,9 +24,11 @@ function mac(secret, data) {
   return createHmac('sha256', secret).update(data).digest('base64url')
 }
 
-export function signState({ userId, secret, now = Date.now(), ttlS = STATE_TTL_S, nonce = randomBytes(8).toString('hex') }) {
+export function signState({ userId, secret, now = Date.now(), ttlS = STATE_TTL_S, nonce = randomBytes(8).toString('hex'), returnTo }) {
   if (!userId || !secret) throw new Error('userId and secret are required')
-  const payload = b64(JSON.stringify({ u: userId, e: Math.floor(now / 1000) + ttlS, n: nonce }))
+  const body = { u: userId, e: Math.floor(now / 1000) + ttlS, n: nonce }
+  if (returnTo === 'home') body.r = 'home'
+  const payload = b64(JSON.stringify(body))
   return `${payload}.${mac(secret, payload)}`
 }
 
@@ -46,7 +48,12 @@ export function verifyState({ state, secret, now = Date.now() }) {
   }
   if (!data?.u || typeof data.e !== 'number') return { ok: false, reason: 'malformed' }
   if (data.e * 1000 < now) return { ok: false, reason: 'expired' }
-  return { ok: true, userId: data.u }
+  return data.r === 'home' ? { ok: true, userId: data.u, returnTo: 'home' } : { ok: true, userId: data.u }
+}
+
+/** Where the OAuth callback sends the browser: the dashboard when the flow started there, else Settings. */
+export function stravaReturnPath(returnTo) {
+  return returnTo === 'home' ? '/' : '/settings'
 }
 
 export function buildAuthorizeUrl({ clientId, redirectUri, state }) {

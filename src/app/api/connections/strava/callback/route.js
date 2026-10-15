@@ -3,19 +3,21 @@ import { getServiceClient } from '../../../../../lib/server/connections'
 import { exchangeCode } from '../../../../../lib/server/stravaProvider'
 import { ensureStravaWebhook } from '../../../../../lib/server/stravaSetup'
 import { appOrigin } from '../../../../../lib/server/appUrl'
-import { isStravaConfigured, verifyState, hasRequiredScope, tokensToColumns } from '../../../../../lib/strava'
+import { isStravaConfigured, verifyState, stravaReturnPath, hasRequiredScope, tokensToColumns } from '../../../../../lib/strava'
 
 export const dynamic = 'force-dynamic'
 
 // Strava redirects the browser here after the rider approves. Identity comes from the signed state.
 export async function GET(req) {
   const origin = appOrigin(req)
-  const back = (flag) => NextResponse.redirect(`${origin}/settings?strava=${encodeURIComponent(flag)}`)
+  let path = stravaReturnPath()
+  const back = (flag) => NextResponse.redirect(`${origin}${path}?strava=${encodeURIComponent(flag)}`)
   try {
     if (!isStravaConfigured()) return back('not_configured')
     const params = new URL(req.url).searchParams
     const checked = verifyState({ state: params.get('state'), secret: process.env.STRAVA_CLIENT_SECRET })
     if (!checked.ok) return back('invalid_state')
+    path = stravaReturnPath(checked.returnTo)
     if (params.get('error')) return back('denied')
     const code = params.get('code')
     if (!code) return back('error')
