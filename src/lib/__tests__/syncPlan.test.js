@@ -14,14 +14,14 @@ test('syncWindowStart: backfill on first run, cursor minus overlap afterwards', 
   assert.equal(syncWindowStart({ lastSyncedAt: '2026-10-13T10:00:00Z', backfillDays: 30, now }), '2026-10-11')
 })
 
-test('selectNewRides drops known external ids and sorts oldest first', () => {
+test('selectNewRides drops known external ids and sorts newest first', () => {
   const rides = [
     { id: 'b', start_date_local: '2026-10-02T08:00:00' },
     { id: 'a', start_date_local: '2026-10-01T08:00:00' },
     { id: 'c', start_date_local: '2026-10-03T08:00:00' },
   ]
   const existing = [{ external_source: 'intervals', external_id: 'b' }, { external_source: 'strava', external_id: 'c' }]
-  assert.deepEqual(selectNewRides(rides, existing).map((r) => r.id), ['a', 'c'])
+  assert.deepEqual(selectNewRides(rides, existing).map((r) => r.id), ['c', 'a'])
 })
 
 test('classifySyncError: auth errors are fatal', () => {
@@ -57,12 +57,14 @@ function fakeService() {
   const calls = []
   return { calls, rpc: async (n, a) => { calls.push([n, a]) }, from: () => ({ select: () => ({ eq: () => Object.assign(Promise.resolve({ data: [], error: null }), { maybeSingle: async () => ({ data: {} }) }) }) }) }
 }
-const conn = { user_id: 'u', external_athlete_id: 'i1', api_key: 'k', backfill_days: 30, last_synced_at: null }
+const conn = { user_id: 'u', external_athlete_id: 'i1', api_key: 'k', backfill_days: 30, last_synced_at: '2026-10-01T00:00:00Z', backfill_complete: true }
 
 test('syncConnection: imports, caps fetches and keeps a cursor', async () => {
   const svc = fakeService()
   const rides = [1, 2, 3].map((n) => ({ id: String(n), start_date_local: `2026-10-0${n}T08:00:00` }))
   const out = await syncConnection(svc, conn, {
+    concurrency: 1,
+    now: () => new Date('2026-10-04T00:00:00Z'),
     maxFetches: 2,
     createProvider: () => ({ source: 'intervals', listActivities: async () => rides }),
     importFn: async () => ({ status: 'imported' }),
@@ -70,7 +72,7 @@ test('syncConnection: imports, caps fetches and keeps a cursor', async () => {
   assert.equal(out.imported, 2)
   assert.equal(out.complete, false)
   const [, args] = svc.calls[0]
-  assert.equal(args.p_synced_at, '2026-10-02T08:00:00.000Z')
+  assert.equal(args.p_synced_at, null) // forward part unfinished: cursor stays
   assert.equal(args.p_error, null)
 })
 

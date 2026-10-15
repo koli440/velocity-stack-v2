@@ -12,6 +12,7 @@
 
 import { analyzeStreams } from '../streamAnalysis.js'
 import { ImportError } from './importErrors.js'
+import { newestFirst, rideTimeMs } from '../syncPlan.js'
 
 const BASE_URL = 'https://intervals.icu/api/v1'
 const STREAM_TYPES = 'watts,cadence,heartrate,velocity_smooth,latlng,altitude,distance'
@@ -75,6 +76,26 @@ export function createIntervalsProvider({ athleteId, apiKey, fetchImpl = fetch }
         throw new ImportError(`Intervals.icu API error (${res.status}): ${errText}`, res.status)
       }
       return filterRides(await res.json())
+    },
+
+    /**
+     * Rides in [oldest, before] newest-first. Intervals.icu has no paging, so the whole window comes in one
+     * (cheap, summary-only) request and is trimmed/sorted here; `exhausted` is always true.
+     * @param {{ oldest?: string, before?: string }} opts - oldest YYYY-MM-DD, before an ISO timestamp
+     */
+    async listWindow({ oldest, before } = {}) {
+      const beforeMs = before ? new Date(before).getTime() : null
+      const params = new URLSearchParams({ oldest: oldest || '1970-01-01' })
+      if (beforeMs != null && !Number.isNaN(beforeMs)) params.set('newest', new Date(beforeMs).toISOString().split('T')[0])
+      const res = await get(`${BASE_URL}/athlete/${athleteId}/activities?${params}`)
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new ImportError(`Intervals.icu API error (${res.status}): ${errText}`, res.status)
+      }
+      const rides = newestFirst(filterRides(await res.json())).filter(
+        (r) => beforeMs == null || Number.isNaN(beforeMs) || rideTimeMs(r) <= beforeMs
+      )
+      return { rides, exhausted: true, nextBefore: null }
     },
 
     async fetchActivity(externalId, { gearing = {}, analyzeFit } = {}) {

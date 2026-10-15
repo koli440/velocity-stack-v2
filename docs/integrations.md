@@ -16,7 +16,12 @@ Data model details: [data-model.md](data-model.md).
   through pg_net with the shared token from `public.sync_settings` (generated in the database, never in the repo).
 - Strava additionally pushes webhook events to `/api/webhooks/strava`, which trigger that rider's sync within seconds.
 - **Sync now** in the settings card runs the caller's own sync (60 s cooldown).
-- Each run is bounded (8 ride fetches per connection, 45 s); unfinished work resumes on the next run.
+- Each run is bounded by a 45 s time budget (Intervals.icu imports 4 rides in parallel). A run that ends with history
+  left and made progress immediately triggers the next one (max 20 in a chain); the 15-minute cron is the safety net.
+- Strava requests share one app-wide budget (200 reads/15 min, 2,000/day, tracked in the database from the response
+  headers). History import may use 60% of the 15-minute and 70% of the daily budget; the rest is reserved for live rides
+  (webhook/new rides), which are always synced first. Backfills are shared fairly between riders. When the budget is
+  spent, runs stop quietly and resume after the window resets (:00/:15/:30/:45, daily at midnight UTC).
 
 ## Failures and health
 Each card shows a health line (Syncing normally / Sync looks delayed after 60 min / Sync stopped) and the last error.
@@ -32,8 +37,10 @@ Each card shows a health line (Syncing normally / Sync looks delayed after 60 mi
 - Deleting a ride on Strava does not delete it in the app.
 
 ## Backfill
-Per connection: last 30 days (default), 90 days, 1 year or full history (`backfill_days` NULL). Changing it restarts the
-cursor so the new window is imported.
+Per connection: last 30 days (default), 90 days, 1 year or full history (`backfill_days` NULL). History is imported
+**newest to oldest** so recent rides appear first; the card shows "Importing history, newest first: X of Y rides".
+Changing the window restarts the backfill (rides already imported are skipped). New rides keep syncing during a backfill.
+Strava costs about one read per ride (list item data is reused; only the streams endpoint is called per ride).
 
 ## Configuration (hosting env settings, never committed)
 | Variable | Purpose |

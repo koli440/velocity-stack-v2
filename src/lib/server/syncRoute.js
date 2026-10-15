@@ -7,12 +7,23 @@ import { timingSafeEqual } from 'node:crypto'
 import { getRequestUser } from '../supabaseServer'
 import { getServiceClient } from './connections'
 import { runIntervalsSync } from './intervalsSync'
-import { pickDueConnections, manualCooldownRemaining, PROVIDER_LABELS } from '../syncPlan'
+import { loadStravaBudget } from './stravaBudget'
+import { appOrigin } from './appUrl'
+import { getSetting } from './stravaSetup'
+import {
+  pickDueConnections,
+  manualCooldownRemaining,
+  shouldChain,
+  PROVIDER_LABELS,
+  CHAIN_MIN_INTERVAL_S,
+  CRON_MIN_INTERVAL_S,
+  MAX_CHAIN_DEPTH,
+} from '../syncPlan'
 
 export const TIME_BUDGET_MS = 45000
 const CRON_BATCH = 10
 const COLUMNS =
-  'id, provider, user_id, external_athlete_id, api_key, access_token, refresh_token, token_expires_at, backfill_days, status, last_synced_at, last_attempt_at'
+  'id, provider, user_id, external_athlete_id, api_key, access_token, refresh_token, token_expires_at, backfill_days, status, last_synced_at, last_attempt_at, backfill_cursor, backfill_complete, backfill_imported'
 const CREDENTIAL_COLUMN = { intervals: 'api_key', strava: 'refresh_token' }
 
 // Absolute /api/analyze URL on this deployment (a background job has no browser origin).
@@ -56,6 +67,29 @@ export async function claim(service, rows) {
   return claimed
 }
 
+// Starts the next run right away (fire and forget): the request is sent before this response ends and the new
+// invocation runs on its own. The 15-minute cron stays the safety net if a link of the chain is lost.
+async function triggerNextRun(req, provider, token, body, depth) {
+  const run = fetch(`${appOrigin(req)}/api/sync/${provider}/run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-sync-token': token },
+    body: JSON.stringify({ ...body, chain: depth + 1 }),
+  }).catch(() => null)
+  await Promise.race([run, new Promise((r) => setTimeout(r, 1500))])
+}
+
+async function finishRun({ req, service, provider, results, budget, depth, token, body }) {
+  await budget?.flush()
+  const chain = shouldChain({
+    results,
+    depth,
+    provider,
+    budgetLeft: budget ? budget.canSpend('backfill', 5) : true,
+  })
+  if (chain && token) await triggerNextRun(req, provider, token, body, depth)
+  return chain
+}
+
 export async function handleSyncRequest(req, provider) {
   try {
     const service = getServiceClient()
@@ -76,6 +110,12 @@ export async function handleSyncRequest(req, provider) {
       }
       // Webhooks target one rider: { userId } restricts the run to that user's connection.
       const body = await req.json().catch(() => ({}))
+      const depth = Math.min(Math.max(Number.isInteger(body?.chain) ? body.chain : 0, 0), MAX_CHAIN_DEPTH)
+      const budget = provider === 'strava' ? await loadStravaBudget(service) : null
+      if (budget && !budget.canSpend('live', 2)) {
+        return NextResponse.json({ success: true, connections: 0, results: [], budget: 'exhausted' })
+      }
+      deps.budget = budget
       let query = service
         .from('connections')
         .select(COLUMNS)
@@ -87,9 +127,14 @@ export async function handleSyncRequest(req, provider) {
         .order('last_attempt_at', { ascending: true, nullsFirst: true })
         .limit(100)
       if (error) throw error
-      const due = await claim(service, pickDueConnections(data, { limit: CRON_BATCH }))
+      const minIntervalS = depth > 0 ? CHAIN_MIN_INTERVAL_S : CRON_MIN_INTERVAL_S
+      const due = await claim(service, pickDueConnections(data, { limit: CRON_BATCH, minIntervalS }))
       const results = await runIntervalsSync(service, due, deps)
-      return NextResponse.json({ success: true, connections: results.length, results: results.map(({ userId, ...r }) => r) })
+      const chained = await finishRun({
+        req, service, provider, results, budget, depth, token,
+        body: typeof body?.userId === 'string' ? { userId: body.userId } : {},
+      })
+      return NextResponse.json({ success: true, connections: results.length, chained, results: results.map(({ userId, ...r }) => r) })
     }
 
     const { user } = await getRequestUser(req)
@@ -109,11 +154,23 @@ export async function handleSyncRequest(req, provider) {
     if (wait > 0) {
       return NextResponse.json({ error: `Please wait ${wait}s before syncing again.`, retryAfter: wait }, { status: 429 })
     }
+    const budget = provider === 'strava' ? await loadStravaBudget(service) : null
+    if (budget && !budget.canSpend('live', 2)) {
+      return NextResponse.json(
+        { error: 'Strava request budget is used up for now. Syncing resumes automatically.', retryAfter: 60 },
+        { status: 429 }
+      )
+    }
+    deps.budget = budget
     const [claimed] = await claim(service, [row])
     if (!claimed) {
       return NextResponse.json({ error: 'A sync is already running.' }, { status: 429 })
     }
-    const [result] = await runIntervalsSync(service, [claimed], deps)
+    const results = await runIntervalsSync(service, [claimed], deps)
+    const [result] = results
+    // Continue a long backfill in the background so "Sync now" starts it instead of doing one slice.
+    const cronToken = results[0]?.more ? await getSetting(service, 'cron_token') : null
+    await finishRun({ req, service, provider, results, budget, depth: 0, token: cronToken, body: { userId: user.id } })
     const { userId, ...rest } = result
     return NextResponse.json({ success: !rest.error, ...rest })
   } catch (err) {
