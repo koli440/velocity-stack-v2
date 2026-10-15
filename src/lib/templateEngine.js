@@ -6,7 +6,7 @@
 // template-specific benchmark metrics (drop-off %, pacing index, recovery, …).
 
 import { analyzeSessionEfforts } from './effortDetectionEngine.js'
-import { applySummaryMetrics } from './summaryMetrics.js'
+import { applySummaryMetrics, attachWkg } from './summaryMetrics.js'
 import { computeLapSplits, lapSummary } from './lapSplits.js'
 
 function avg(arr) {
@@ -356,9 +356,11 @@ const EVALUATORS = {
  *   when omitted the highest value in the activity's heart rate stream is used.
  * @param {{lt1Power, lt1Hr, lt2Power, lt2Hr}|null} [lt] - the activity's lactate threshold
  *   snapshot (issue #121; see ltFromActivity); used by `%LT1`/`%LT2` bands and the LT time metrics.
+ * @param {number|null} [weightKg] - the activity's body weight snapshot (issue #143); adds W/kg
+ *   to efforts and the summary, and powers the W/kg summary metrics. Optional: null = no W/kg.
  * @returns {{ efforts: object[], summary: object }}
  */
-export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null, hrMaxBpm = null, lt = null) {
+export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null, hrMaxBpm = null, lt = null, weightKg = null) {
   const manifest = template.manifest || {}
   const pattern = manifest.pattern || 'repeated_bursts'
   const evaluator = EVALUATORS[pattern]
@@ -407,5 +409,6 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
     result.summary.reason = detection.message
   }
 
-  return applySummaryMetrics(manifest.summary_metrics, result, timeSeries, ftpAtActivityW, lt)
+  const withMetrics = applySummaryMetrics(manifest.summary_metrics, result, timeSeries, ftpAtActivityW, lt, weightKg)
+  return attachWkg(withMetrics, weightKg, ftpAtActivityW, lt)
 }

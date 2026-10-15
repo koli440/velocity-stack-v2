@@ -7,6 +7,7 @@ import VelodromePicker from './VelodromePicker'
 import PrivacyZonePanel from './PrivacyZonePanel'
 import LactateThresholdPanel from './LactateThresholdPanel'
 import FtpHistoryPanel from './FtpHistoryPanel'
+import WeightHistoryPanel from './WeightHistoryPanel'
 import ConnectionsPanel from './ConnectionsPanel'
 import Avatar from './Avatar'
 import { readGlassPref, writeGlassPref } from '../lib/glass'
@@ -305,6 +306,8 @@ function ProfileSettingsModalInner({
           </div>
 
           <FtpHistoryPanel userId={user?.id} />
+
+          <WeightHistoryPanel userId={user?.id} />
 
           <LactateThresholdPanel userId={user?.id} />
 

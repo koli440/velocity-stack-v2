@@ -132,6 +132,7 @@ export default function ActivityFeed({
             dist && { value: dist, unit: 'km' },
             time && { value: time, unit: 'time' },
             act.avg_power_w && { value: Math.round(act.avg_power_w), unit: 'W avg', tone: 'text-purple-700 dark:text-purple-300' },
+            act.avg_power_w && act.weight_at_activity_kg && { value: (act.avg_power_w / act.weight_at_activity_kg).toFixed(2), unit: 'W/kg', tone: 'text-purple-700 dark:text-purple-300' },
             act.avg_hr && { value: Math.round(act.avg_hr), unit: 'bpm avg', tone: 'text-rose-700 dark:text-rose-300' },
           ].filter(Boolean)
           return (

@@ -9,6 +9,7 @@
 // Plain JS (no Node-only APIs): the parser and the UI import the catalog.
 
 import { secondsInLtZone } from './lactateThresholds.js'
+import { wattsPerKg } from './wkg.js'
 
 /** Default HR recovery window (seconds) when `hr_recovery` has no explicit `(<n>sec)`. */
 export const DEFAULT_HR_RECOVERY_WINDOW_SEC = 60
@@ -24,6 +25,9 @@ export const SUMMARY_METRICS = {
   np: { key: 'np_w', label: 'Normalized power (W, 30s rolling; efforts of 30s or more)', agg: 'mean' },
   vi: { key: 'vi', label: 'Variability index (NP / average power)', agg: 'mean' },
   if: { key: 'intensity_factor', label: 'Intensity factor (NP / FTP)', agg: 'mean' },
+  avg_wkg: { key: 'avg_wkg', label: 'Average power-to-weight (W/kg; needs a weight)', agg: 'mean' },
+  max_wkg: { key: 'max_wkg', label: 'Peak power-to-weight (W/kg; needs a weight)', agg: 'max' },
+  np_wkg: { key: 'np_wkg', label: 'Normalized power-to-weight (W/kg; needs a weight)', agg: 'mean' },
   avg_hr: { key: 'avg_hr_bpm', label: 'Average heart rate (bpm)', agg: 'mean' },
   max_hr: { key: 'max_hr_bpm', label: 'Peak heart rate (bpm)', agg: 'max' },
   avg_cadence: { key: 'avg_cadence_rpm', label: 'Average cadence (rpm)', agg: 'mean' },
@@ -135,7 +139,7 @@ function hrRecoveryOf(hr, end, windowSec) {
   return Math.round(a - b)
 }
 
-function effortValue(metric, effort, streams, ftp, lt) {
+function effortValue(metric, effort, streams, ftp, lt, weightKg = null) {
   const { watts, hr, cadence, speed } = streams
   const { start_sec: s, end_sec: e } = effort
   const ltDef = SUMMARY_METRICS[metric.id]?.lt
@@ -163,6 +167,18 @@ function effortValue(metric, effort, streams, ftp, lt) {
     case 'if': {
       const np = normalizedPower(sliceStream(watts, s, e))
       return np && ftp ? round2(np / ftp) : null
+    }
+    case 'avg_wkg': {
+      const v = mean(sliceStream(watts, s, e))
+      return v == null ? null : wattsPerKg(v, weightKg)
+    }
+    case 'max_wkg': {
+      const v = nums(sliceStream(watts, s, e))
+      return v.length ? wattsPerKg(Math.max(...v), weightKg) : null
+    }
+    case 'np_wkg': {
+      const v = normalizedPower(sliceStream(watts, s, e))
+      return v == null ? null : wattsPerKg(v, weightKg)
     }
     case 'avg_hr': {
       const v = mean(nums(sliceStream(hr, s, e)).filter((x) => x > 0))
@@ -220,9 +236,10 @@ function aggregate(def, values) {
  * @param {object} timeSeries - { watts, heartrate, cadence, speed }
  * @param {number|null} ftp
  * @param {{lt1Power, lt1Hr, lt2Power, lt2Hr}|null} lt - the activity's lactate threshold snapshot
+ * @param {number|null} weightKg - the activity's body weight snapshot (W/kg metrics are null without it)
  * @returns the same result shape (a new object when metrics are applied).
  */
-export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null, lt = null) {
+export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null, lt = null, weightKg = null) {
   const selected = (Array.isArray(metrics) ? metrics : []).filter((m) => m && SUMMARY_METRICS[m.id])
   if (!selected.length || !result || !Array.isArray(result.efforts) || !result.efforts.length) return result
 
@@ -244,7 +261,7 @@ export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null
     const values = workIdx.map((i) => {
       const e = result.efforts[i]
       if (metric.id === 'dropoff') return null // filled in below, needs the whole series
-      return effortValue(metric, e, streams, ftp, lt)
+      return effortValue(metric, e, streams, ftp, lt, weightKg)
     })
 
     if (metric.id === 'dropoff') {
@@ -285,4 +302,31 @@ export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null
 /** Summary keys a manifest's selected metrics add (used by the UI to always show them). */
 export function selectedSummaryKeys(metrics) {
   return (Array.isArray(metrics) ? metrics : []).map((m) => summaryMetricKey(m)).filter(Boolean)
+}
+
+/** Summary keys always shown (when present) because they come from the athlete's weight snapshot. */
+export const WKG_CONTEXT_KEYS = ['avg_wkg', 'ftp_wkg', 'lt1_wkg', 'lt2_wkg']
+
+/**
+ * Power-to-weight context (issue #143): adds `avg_wkg` to every effort that has an average power,
+ * and `avg_wkg` (mean of the work efforts) plus the athlete's FTP / LT1 / LT2 in W/kg to the
+ * summary. Purely additive; without a weight the result is returned untouched.
+ */
+export function attachWkg(result, weightKg, ftp = null, lt = null) {
+  if (!weightKg || !result || !Array.isArray(result.efforts) || !result.efforts.length) return result
+  const efforts = result.efforts.map((e) => {
+    if (e.avg_wkg != null || typeof e.avg_power !== 'number') return e
+    const v = wattsPerKg(e.avg_power, weightKg)
+    return v == null ? e : { ...e, avg_wkg: v }
+  })
+  const summary = { ...(result.summary || {}) }
+  const work = efforts.filter((e) => e.role === undefined || e.role === 'work')
+  const wkgs = nums(work.map((e) => e.avg_wkg))
+  if (summary.avg_wkg == null && wkgs.length) summary.avg_wkg = round2(mean(wkgs))
+  const ref = { ftp_wkg: ftp, lt1_wkg: lt?.lt1Power, lt2_wkg: lt?.lt2Power }
+  for (const [k, watts] of Object.entries(ref)) {
+    const v = wattsPerKg(watts, weightKg)
+    if (summary[k] == null && v != null) summary[k] = v
+  }
+  return { ...result, efforts, summary }
 }

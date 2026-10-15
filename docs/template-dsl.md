@@ -351,6 +351,7 @@ metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
 | `np` | `np_w` | mean | Normalized power (30 s rolling average, 4th-power mean). `null` for efforts shorter than 30 s |
 | `vi` | `vi` | mean | Variability index = NP / average power |
 | `if` | `intensity_factor` | mean | NP / the activity's FTP snapshot; `null` without FTP |
+| `avg_wkg`, `max_wkg`, `np_wkg` | `avg_wkg`, `max_wkg`, `np_wkg` | mean, max, mean | Power divided by the activity's body-weight snapshot (W/kg); `null` without a weight |
 | `avg_hr`, `max_hr` | `avg_hr_bpm`, `max_hr_bpm` | mean, max | Needs a heart-rate stream |
 | `avg_cadence`, `max_cadence` | `avg_cadence_rpm`, `max_cadence_rpm` | mean, max | |
 | `avg_speed`, `max_speed` | `avg_speed_kmh`, `max_speed_kmh` | mean, max | |
@@ -361,6 +362,12 @@ metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
 | `hr_recovery` / `hr_recovery(<n>sec\|min)` | `hr_recovery_<n>s` | mean | bpm the HR drops `n` seconds after the effort ends (default 60 s); `null` if the stream ends first |
 | `time_below_lt1`, `time_lt1_lt2`, `time_above_lt2` | `time_below_lt1_s`, `time_lt1_lt2_s`, `time_above_lt2_s` | sum | Seconds of the effort's power below LT1 (`< LT1`), between (`LT1 <= p < LT2`) or above LT2 (`>= LT2`), using the activity's LT snapshot; `null` without the needed thresholds |
 | `time_below_lt1_hr`, `time_lt1_lt2_hr`, `time_above_lt2_hr` | `time_below_lt1_hr_s`, `time_lt1_lt2_hr_s`, `time_above_lt2_hr_s` | sum | Same, from the heart-rate stream and LT HR |
+
+**W/kg context (automatic).** When the activity has a body-weight snapshot (from the athlete's
+weight history, resolved on the activity date), every effort with an `avg_power` also gets
+`avg_wkg`, and the summary gets `avg_wkg` (mean of the work efforts) plus `ftp_wkg`, `lt1_wkg`
+and `lt2_wkg` where the FTP / LT snapshots exist. Without a weight nothing is added, so existing
+results are unchanged.
 
 Metrics that need a stream the activity lacks are `null`. Fields the engine already
 computed for a pattern (e.g. `avg_power`, `pacing_index`) are never overwritten.
