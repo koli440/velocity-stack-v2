@@ -243,3 +243,35 @@ test('buildIntervalManifest omits optional fields so legacy manifests are unchan
   assert.equal(m.cooldown_sec, 300)
   assert.equal(stringifyIntervalDsl(manifestToDslInput(m)), stringifyIntervalDsl(p))
 })
+
+// ---- over-unders, pyramids, ramps: contiguous ("then") steps (issue #125) ----
+
+test('"then" marks a step contiguous with the previous one; absent otherwise (legacy step shape unchanged)', () => {
+  const p = parseIntervalDsl('4x\nwork 2min ±5% @ 95-100%FTP\nthen work 1min ±5% @ 105-110%FTP\nthen work 2min ±5% @ 95-100%FTP\nrecovery 4min ±30% @ <55%FTP')
+  assert.deepEqual(p.errors, [])
+  assert.deepEqual(p.steps.map((s) => s.contiguous), [undefined, true, true, undefined])
+  assert.ok(!('contiguous' in p.steps[0]))
+  assert.ok(!('contiguous' in parseIntervalDsl('1x\nwork 5min ±10% @ best').steps[0]))
+})
+
+test('"then" is rejected on the first step of a repeat and is case-insensitive elsewhere', () => {
+  const bad = parseIntervalDsl('1x\nthen work 5min ±10% @ best')
+  assert.equal(bad.errors.length, 1)
+  assert.equal(bad.errors[0].line, 2)
+  assert.deepEqual(parseIntervalDsl('1x\nwork 1min ±5% @ >100%FTP\nTHEN recovery 1min ±5% @ <55%FTP').errors, [])
+})
+
+test('over-unders, pyramid and ramp round-trip stably', () => {
+  const cases = [
+    '3x\nwork 2min ±5% @ 95-100%FTP\nthen work 1min ±5% @ 105-110%FTP\nthen work 2min ±5% @ 95-100%FTP\nrecovery 4min ±30% @ <55%FTP',
+    '2x\nwork 1min ±5% @ 100-105%FTP\nthen work 2min ±5% @ 105-110%FTP\nthen work 3min ±5% @ 110-115%FTP\nthen work 2min ±5% @ 105-110%FTP\nthen work 1min ±5% @ 100-105%FTP\nrecovery 5min ±30% @ <55%FTP',
+    '1x\nwork 1min ±5% @ 50-60%FTP\nthen work 1min ±5% @ 60-70%FTP\nthen work 1min ±5% @ 70-80%FTP\nthen work 1min ±5% @ >80%FTP',
+  ]
+  for (const src of cases) {
+    const p = parseIntervalDsl(src)
+    assert.deepEqual(p.errors, [])
+    const text = stringifyIntervalDsl(p)
+    assert.equal(text, src)
+    assert.deepEqual(parseIntervalDsl(text).steps, p.steps)
+  }
+})

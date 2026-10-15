@@ -11,6 +11,7 @@ export const DSL_STEP_PARTS = [
 ]
 
 export const DSL_OPTIONS = [
+  { syntax: 'then work 1min ...', meaning: 'Prefix a step with "then" to make it start exactly where the previous step ended (over-unders, pyramids, ramps). Not allowed on the first step.' },
   { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (min or sec). At most once.' },
   { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity. At most once.' },
 ]
@@ -95,6 +96,21 @@ export const DSL_GUIDE_EXAMPLES = [
     dsl: '3x\nwork 2min ±10% @ 95-100%FTP\nwork 1min ±10% @ 105-110%FTP\nrecovery 3min ±30% @ <55%FTP',
   },
   {
+    title: 'Over-unders',
+    description: 'Back-to-back under/over/under steps, then a recovery; "then" keeps them contiguous.',
+    dsl: '4x\nwork 2min ±5% @ 95-100%FTP\nthen work 1min ±5% @ 105-110%FTP\nthen work 2min ±5% @ 95-100%FTP\nrecovery 4min ±30% @ <55%FTP',
+  },
+  {
+    title: 'Pyramid',
+    description: 'Ascending then descending steps with no rest in between.',
+    dsl: '1x\nwork 1min ±5% @ 100-105%FTP\nthen work 2min ±5% @ 105-110%FTP\nthen work 3min ±5% @ 110-115%FTP\nthen work 2min ±5% @ 105-110%FTP\nthen work 1min ±5% @ 100-105%FTP',
+  },
+  {
+    title: 'Ramp',
+    description: 'Stepwise increasing targets.',
+    dsl: '1x\nwork 1min ±5% @ 50-60%FTP\nthen work 1min ±5% @ 60-70%FTP\nthen work 1min ±5% @ 70-80%FTP\nthen work 1min ±5% @ >80%FTP',
+  },
+  {
     title: 'Pursuit pacing: best power over 4 x 1km',
     description: 'Distance-keyed steps need an explicit metric after "best".',
     dsl: '4x\nwork 1km ±5% @ best power\nrecovery 2min ±50% @ <55%FTP',
@@ -122,5 +138,9 @@ export const DSL_COMMON_MISTAKES = [
   {
     dsl: '1x\nwork 3min ±30% @ 110-90%FTP',
     fix: 'The minimum must be lower than the maximum.',
+  },
+  {
+    dsl: '1x\nthen work 3min ±5% @ 90-110%FTP',
+    fix: '"then" needs a preceding step; remove it from the first step.',
   },
 ]

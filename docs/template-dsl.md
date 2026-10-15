@@ -138,12 +138,58 @@ tags every effort with `step_index` (1-based position in the repeat), adds
 and `dropoff_pct` per **repeat** (duration-weighted mean of the repeat's work steps)
 instead of per step. Plain work(+recovery) templates are evaluated exactly as before.
 
+### Over-unders, pyramids and ramps (contiguous steps)
+
+By default each step is searched from where the previous one ended, but may start later
+(that is what lets a recovery be "somewhere after" its work). Prefix a step with `then`
+to require it to start **exactly** where the previous step in the same repeat ended.
+Chains of contiguous steps with different targets express over-unders, pyramids and ramps:
+
+Over-unders (2min under, 1min over, 2min under, then recover):
+
+```
+4x
+work 2min ±5% @ 95-100%FTP
+then work 1min ±5% @ 105-110%FTP
+then work 2min ±5% @ 95-100%FTP
+recovery 4min ±30% @ <55%FTP
+```
+
+Pyramid:
+
+```
+1x
+work 1min ±5% @ 100-105%FTP
+then work 2min ±5% @ 105-110%FTP
+then work 3min ±5% @ 110-115%FTP
+then work 2min ±5% @ 105-110%FTP
+then work 1min ±5% @ 100-105%FTP
+```
+
+Ramp (stepwise ascending targets):
+
+```
+1x
+work 1min ±5% @ 50-60%FTP
+then work 1min ±5% @ 60-70%FTP
+then work 1min ±5% @ 70-80%FTP
+then work 1min ±5% @ >80%FTP
+```
+
+`then` is not allowed on the first step of a repeat. If any step of a repeat cannot be
+matched, the whole repeat is dropped (partial repeats are never reported). `then` works
+with every band and with duration- and distance-keyed steps. Because windows are matched
+by their average within the tolerance, use a small tolerance (`±5%` or less) on contiguous
+steps so boundaries line up. A contiguous step is stored as `contiguous: true` on the
+step (omitted otherwise), and serialised back as a `then ` prefix.
+
 ### Validation rules
 
 - `repeatCount >= 1`.
 - Duration (or distance) must be `> 0`.
 - Tolerance must be between `0` and `100` (percent).
 - At least one `work` step is required.
+- `then` may not prefix the first step.
 - `warmup`/`cooldown` durations must be `> 0`, use `min`/`sec`, and appear at most once each.
 - For `%FTP`/`W`/`km/h`/`bpm`/`%HRmax`/`rpm` bands, bounds must be `>= 0`, and when both a min and max are
   given, `min < max`.

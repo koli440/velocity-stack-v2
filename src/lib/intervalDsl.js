@@ -44,6 +44,16 @@
 //   work 10min ±10% @ 90-100%FTP
 //   recovery 5min ±30% @ <55%FTP
 //
+// Prefix a step with `then` to require it to start exactly where the previous
+// step ended (issue #125) — for over-unders, pyramids and ramps, where the
+// steps of a repeat are back-to-back with different targets:
+//
+//   4x
+//   work 2min ±5% @ 95-100%FTP
+//   then work 1min ±5% @ 105-110%FTP
+//   then work 2min ±5% @ 95-100%FTP
+//   recovery 4min ±30% @ <55%FTP
+//
 // A repeat may contain any number of work/recovery steps, matched in the
 // order written (multi-step blocks).
 //
@@ -51,7 +61,7 @@
 // (API route validation) and client-side (live preview in the creator UI).
 
 const REPEAT_LINE_RE = /^(\d+)\s*x$/i
-const STEP_LINE_RE = /^(work|recovery)\s+(\d+(?:\.\d+)?)\s*(min|sec|km|m)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
+const STEP_LINE_RE = /^(then\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(min|sec|km|m)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
 const EXCLUDE_LINE_RE = /^(warm-?up|cool-?down)\s+(\d+(?:\.\d+)?)\s*(min|sec)$/i
 const RANGE_BAND_RE = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
 const MAX_BAND_RE = /^<\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
@@ -116,7 +126,7 @@ function parseBand(bandText) {
  * @returns {{
  *   repeatCount: number|null,
  *   warmupSec: number|null, cooldownSec: number|null,  // excluded head/tail of the activity
- *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
+ *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
  *   errors: Array<{line: number, message: string}>
  * }}
  */
@@ -172,13 +182,17 @@ export function parseIntervalDsl(text) {
         line: lineNo,
         message:
           `Could not parse step line "${line}". Expected format: ` +
-          '"work|recovery <value><min|sec|km|m> ±<tolerance>% @ <band>" (or "warmup <n>min|sec" / "cooldown <n>min|sec").',
+          '"[then] work|recovery <value><min|sec|km|m> ±<tolerance>% @ <band>" (or "warmup <n>min|sec" / "cooldown <n>min|sec").',
       })
       return
     }
 
-    const [, roleRaw, valueRaw, unitRaw, toleranceRaw, bandTextRaw] = m
+    const [, thenRaw, roleRaw, valueRaw, unitRaw, toleranceRaw, bandTextRaw] = m
     const role = roleRaw.toLowerCase()
+    const contiguous = Boolean(thenRaw)
+    if (contiguous && !steps.length) {
+      errors.push({ line: lineNo, message: '"then" needs a preceding step in the same repeat; remove it from the first step.' })
+    }
     const value = parseFloat(valueRaw)
     const unit = unitRaw.toLowerCase()
     const tolerance = parseFloat(toleranceRaw)
@@ -239,6 +253,7 @@ export function parseIntervalDsl(text) {
       bestMetric: band && band.bandType === 'best' ? bestMetric : null,
       powerMin: band ? band.powerMin : null,
       powerMax: band ? band.powerMax : null,
+      ...(contiguous ? { contiguous: true } : {}),
     })
   })
 
@@ -296,7 +311,7 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
   if (cooldownSec) lines.push(`cooldown ${formatDuration(cooldownSec)}`)
   steps.forEach((step) => {
     const valueText = step.keyBy === 'distance' ? formatDistance(step.targetDistanceM) : formatDuration(step.targetDurationSec)
-    lines.push(`${step.role} ${valueText} ±${formatNumber(step.durationTolerancePct)}% @ ${formatBand(step)}`)
+    lines.push(`${step.contiguous ? 'then ' : ''}${step.role} ${valueText} ±${formatNumber(step.durationTolerancePct)}% @ ${formatBand(step)}`)
   })
   return lines.join('\n')
 }
