@@ -118,3 +118,54 @@ export async function deleteLtEntry(supabase, { userId, id }) {
   const { error } = await supabase.from('lactate_threshold_history').delete().eq('id', id).eq('user_id', userId)
   return { error }
 }
+
+/**
+ * Seconds spent per LT zone in a ~1 Hz stream. Zones: below LT1 (v < lt1), between
+ * (lt1 <= v < lt2) and above LT2 (v >= lt2). With only one threshold known the stream is
+ * split into two zones around it. Returns [] when there is no stream or no threshold.
+ */
+export function lactateZoneBreakdown(stream, lt1, lt2) {
+  if (!Array.isArray(stream)) return []
+  const t1 = lt1 > 0 ? lt1 : null
+  const t2 = lt2 > 0 ? lt2 : null
+  if (t1 == null && t2 == null) return []
+  let below = 0
+  let between = 0
+  let above = 0
+  let any = false
+  for (const raw of stream) {
+    if (raw == null || !Number.isFinite(Number(raw))) continue
+    any = true
+    const v = Number(raw)
+    if (t1 != null && v < t1) below++
+    else if (t2 != null && v >= t2) above++
+    else if (t1 != null && t2 != null) between++
+    else if (t1 != null) above++
+    else below++
+  }
+  if (!any) return []
+  if (t1 != null && t2 != null) {
+    return [
+      { id: 'below_lt1', label: 'Below LT1', seconds: below },
+      { id: 'lt1_lt2', label: 'LT1–LT2', seconds: between },
+      { id: 'above_lt2', label: 'Above LT2', seconds: above },
+    ]
+  }
+  const name = t1 != null ? 'LT1' : 'LT2'
+  return [
+    { id: `below_${name.toLowerCase()}`, label: `Below ${name}`, seconds: below },
+    { id: `above_${name.toLowerCase()}`, label: `Above ${name}`, seconds: above },
+  ]
+}
+
+/** Summary for the activity page: threshold values plus time-in-zone for power and HR. */
+export function activityLtSummary(activity) {
+  const lt = ltFromActivity(activity)
+  if (!lt) return null
+  const ts = activity?.time_series || {}
+  return {
+    lt,
+    power: lactateZoneBreakdown(ts.watts, lt.lt1Power, lt.lt2Power),
+    hr: lactateZoneBreakdown(ts.heartrate, lt.lt1Hr, lt.lt2Hr),
+  }
+}

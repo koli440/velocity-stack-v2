@@ -394,7 +394,7 @@ export default function ActivityDetailPage() {
       <ActivityMetricsGrid activity={activity} curvesMap={curvesMap} masterCurves={masterCurves || {}} />
 
       {/* 3c. Telemetry chart over time/distance: speed, HR, power, cadence, torque (issue #12) */}
-      <ActivityStreamsChart timeSeries={activity.time_series} highlightWindows={highlightWindows} />
+      <ActivityStreamsChart timeSeries={activity.time_series} activity={activity} highlightWindows={highlightWindows} />
 
       {/* 4. Durational Curves Chart: current ride vs. a selectable baseline/"history
            curve" (all-time, last 30/90 days, this calendar year, last floating year,
