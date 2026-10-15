@@ -22,12 +22,13 @@ function templateFor(extra) {
   return { slug: 't', manifest: buildIntervalManifest(parsed) }
 }
 
-test('no metrics line: output identical to before (no extra fields)', () => {
+test('no metrics line: only default run metrics, no optional extras', () => {
   const plain = evaluateTemplate(templateFor(''), stream(), 250)
   const work = plain.efforts.filter((e) => e.role === 'work')
   assert.equal(work.length, 2)
-  assert.equal(work[0].np_w, undefined)
-  assert.equal(plain.summary.np_w, undefined)
+  assert.equal(work[0].vi, undefined)
+  assert.equal(work[0].np_w, 250)
+  assert.equal(plain.summary.vi, undefined)
 })
 
 test('np/vi/if/avg_hr/max_hr/work_kj per work effort and in summary', () => {
