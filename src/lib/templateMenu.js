@@ -101,3 +101,39 @@ export async function listFavoriteIds(supabase, user) {
   if (error) return { status: 400, error: error.message }
   return { status: 200, body: { success: true, favoriteIds: (data || []).map((r) => r.template_id) } }
 }
+
+// Distinct template ids, most recently executed first (rows must be pre-sorted desc).
+export function distinctRecentIds(rows, limit = 5) {
+  const seen = new Set()
+  for (const r of rows || []) {
+    if (r?.template_id && !seen.has(r.template_id)) seen.add(r.template_id)
+    if (seen.size >= limit) break
+  }
+  return [...seen]
+}
+
+// Templates the caller ran most recently across all of their activities.
+export async function listRecentTemplateIds(supabase, user, limit = 5) {
+  if (!user) return { status: 401, error: 'Unauthorized' }
+  const { data, error } = await supabase
+    .from('template_executions')
+    .select('template_id, updated_at')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(200)
+  if (error) return { status: 400, error: error.message }
+  return { status: 200, body: { success: true, recentIds: distinctRecentIds(data, limit) } }
+}
+
+// Groups templates by category (alphabetical, "Uncategorized" last); order inside is kept.
+export function groupByCategory(templates) {
+  const map = new Map()
+  for (const t of templates) {
+    const key = t.category || 'Uncategorized'
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(t)
+  }
+  return [...map.entries()]
+    .sort(([a], [b]) => (a === 'Uncategorized') - (b === 'Uncategorized') || a.localeCompare(b))
+    .map(([category, items]) => ({ category, items }))
+}
