@@ -1,27 +1,28 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Portal from './Portal'
-import { supabase } from '../lib/supabase'
-import VelodromePicker from './VelodromePicker'
-import PrivacyZonePanel from './PrivacyZonePanel'
-import LactateThresholdPanel from './LactateThresholdPanel'
-import FtpHistoryPanel from './FtpHistoryPanel'
-import WeightHistoryPanel from './WeightHistoryPanel'
-import ConnectionsPanel from './ConnectionsPanel'
-import Avatar from './Avatar'
-import { readGlassPref, writeGlassPref } from '../lib/glass'
-import { fetchRequireFollowApproval, setRequireFollowApproval } from '../lib/social'
-import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../lib/avatars'
-import Icon from './Icon'
+import { useRouter } from 'next/navigation'
+import { supabase } from '../../lib/supabase'
+import VelodromePicker from '../../components/VelodromePicker'
+import PrivacyZonePanel from '../../components/PrivacyZonePanel'
+import LactateThresholdPanel from '../../components/LactateThresholdPanel'
+import FtpHistoryPanel from '../../components/FtpHistoryPanel'
+import WeightHistoryPanel from '../../components/WeightHistoryPanel'
+import ConnectionsPanel from '../../components/ConnectionsPanel'
+import { PROFILE_UPDATED_EVENT } from '../../lib/navigation'
+import Icon from '../../components/Icon'
+import Avatar from '../../components/Avatar'
+import { readGlassPref, writeGlassPref } from '../../lib/glass'
+import { fetchRequireFollowApproval, setRequireFollowApproval } from '../../lib/social'
+import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../../lib/avatars'
 
-function ProfileSettingsModalInner({
-  isOpen,
-  onClose,
-  user,
-  tracks = [],
-}) {
+
+export default function SettingsPage() {
+  const router = useRouter()
+  const [user, setUser] = useState(null)
+  const [tracks, setTracks] = useState([])
   const [loading, setLoading] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [nickname, setNickname] = useState('')
@@ -39,12 +40,11 @@ function ProfileSettingsModalInner({
   const [glassEnabled, setGlassEnabled] = useState(true)
 
   useEffect(() => {
-    if (!isOpen) return
     setGlassEnabled(readGlassPref())
-  }, [isOpen])
+  }, [])
 
   useEffect(() => {
-    if (!user?.id || !isOpen) return
+    if (!user?.id) return
 
     const loadProfile = async () => {
       setLoading(true)
@@ -72,7 +72,7 @@ function ProfileSettingsModalInner({
     }
 
     loadProfile()
-  }, [user, isOpen])
+  }, [user?.id])
 
   // Image changes are saved immediately (independent of the Save button).
   const handleAvatarChange = async (e) => {
@@ -117,6 +117,7 @@ function ProfileSettingsModalInner({
     if (!user?.id) return
 
     setLoading(true)
+    setSaved(false)
     const updates = {
       id: user.id,
       first_name: firstName.trim() || null,
@@ -137,27 +138,33 @@ function ProfileSettingsModalInner({
     if (error) {
       alert('Error while saving profile: ' + error.message)
     } else {
-      onClose()
+      window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT))
+      setSaved(true)
     }
   }
 
-  if (!isOpen) return null
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUser(session.user)
+      else router.push('/login')
+    })
+    supabase.from('tracks').select('*').order('name').then(({ data }) => setTracks(data || []))
+  }, [router])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="glass-modal relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl">
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
-        >
-          <Icon name="close" size={18} />
-        </button>
+    <section className="max-w-3xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <Icon name="settings" /> Settings
+        </h1>
+        <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
+          Athlete profile, gear defaults, privacy and connections.
+        </p>
+      </div>
 
-        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-4">
-          Athlete Profile & Gear
-        </h2>
-
-        <form onSubmit={handleSave} className="space-y-4">
+      <form onSubmit={handleSave} className="space-y-6">
+        <section className="rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Profile</h2>
           <div className="flex items-center gap-4">
             <Avatar
               url={avatarUrl}
@@ -193,7 +200,7 @@ function ProfileSettingsModalInner({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
                 First Name
@@ -230,6 +237,9 @@ function ProfileSettingsModalInner({
             />
           </div>
 
+        </section>
+        <section className="rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Preferences</h2>
           <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
             <input
               type="checkbox"
@@ -260,6 +270,9 @@ function ProfileSettingsModalInner({
             <span>Require my approval for new followers (existing followers are kept)</span>
           </label>
 
+        </section>
+        <section className="rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Gear defaults</h2>
           <div>
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
               Home Velodrome
@@ -267,7 +280,7 @@ function ProfileSettingsModalInner({
             <VelodromePicker tracks={tracks} value={homeTrackId} onChange={setHomeTrackId} favoriteId={null} emptyLabel="-- No Home Track --" compact />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
                 Default Chainring
@@ -306,32 +319,28 @@ function ProfileSettingsModalInner({
             </div>
           </div>
 
+        </section>
+        <div className="space-y-6">
           <FtpHistoryPanel userId={user?.id} />
-
           <WeightHistoryPanel userId={user?.id} />
-
           <LactateThresholdPanel userId={user?.id} />
+        </div>
 
-          <ConnectionsPanel userId={user?.id} />
+        <ConnectionsPanel userId={user?.id} />
 
-          <PrivacyZonePanel userId={user?.id} />
+        <PrivacyZonePanel userId={user?.id} />
 
+        <div className="sticky bottom-4 flex items-center gap-3">
           <button
             type="submit"
-            disabled={loading}
-            className="w-full mt-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50"
+            disabled={loading || !user}
+            className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50"
           >
             {loading ? 'Saving profile...' : 'Save Changes'}
           </button>
-        </form>
-      </div>
-    </div>
-  )
-}
-export default function ProfileSettingsModal(props) {
-  return (
-    <Portal>
-      <ProfileSettingsModalInner {...props} />
-    </Portal>
+          {saved && <span className="text-xs font-bold text-emerald-500">Saved</span>}
+        </div>
+      </form>
+    </section>
   )
 }

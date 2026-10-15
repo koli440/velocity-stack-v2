@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import ThemeToggle from './ThemeToggle'
 import Avatar from './Avatar'
 import Icon from './Icon'
@@ -12,10 +13,10 @@ export default function TopNav({
   user,
   profile,
   onOpenMobileMenu,
-  onOpenSettings,
   onSignOut,
   tracks = [],
 }) {
+  const router = useRouter()
   const [addOpen, setAddOpen] = useState(false)
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function TopNav({
         {user && (
           <div className="flex items-center gap-1">
           <button
-            onClick={onOpenSettings}
+            onClick={() => router.push('/settings')}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition shadow-2xs"
           >
             <Avatar url={profile?.avatar_url} name={displayName} size="w-6 h-6" textSize="text-[10px]" />

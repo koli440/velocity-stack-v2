@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { NAV_ITEMS, isNavItemActive } from '../navigation.js'
 
 const read = (p) => readFileSync(new URL(`../../components/${p}`, import.meta.url), 'utf8')
@@ -19,6 +19,15 @@ test('placeholder menu entries are gone', () => {
   assert.ok(!/Gym|Analytics|Team|Rides/.test(read('Sidebar.js')))
 })
 
+test('settings is a normal link to /settings, the modal is gone', () => {
+  const s = NAV_ITEMS.find((i) => i.key === 'settings')
+  assert.equal(s.href, '/settings')
+  assert.equal(isNavItemActive(s, '/settings'), true)
+  assert.equal(isNavItemActive(s, '/about'), false)
+  assert.ok(!existsSync(new URL('../../components/ProfileSettingsModal.js', import.meta.url)))
+  assert.doesNotMatch(read('AppShell.js') + read('TopNav.js') + read('Sidebar.js'), /onOpenSettings|ProfileSettingsModal/)
+})
+
 test('home is only active on exactly /', () => {
   assert.equal(isNavItemActive(NAV_ITEMS[0], '/'), true)
   assert.equal(isNavItemActive(NAV_ITEMS[0], '/gears'), false)
@@ -26,7 +35,8 @@ test('home is only active on exactly /', () => {
 })
 
 test('privacy zone lives in settings, not on the dashboard', () => {
-  assert.match(read('ProfileSettingsModal.js'), /<PrivacyZonePanel/)
+  const page = readFileSync(new URL('../../app/settings/page.js', import.meta.url), 'utf8')
+  assert.match(page, /<PrivacyZonePanel/)
   assert.doesNotMatch(read('Dashboard.js'), /PrivacyZonePanel/)
 })
 

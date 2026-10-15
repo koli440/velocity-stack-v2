@@ -7,8 +7,8 @@ import { supabase } from '../lib/supabase'
 import Sidebar from './Sidebar'
 import TopNav from './TopNav'
 import Footer from './Footer'
-import ProfileSettingsModal from './ProfileSettingsModal'
 import AppBackground from './AppBackground'
+import { PROFILE_UPDATED_EVENT } from '../lib/navigation'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
 
 export default function AppShell({ children }) {
@@ -21,7 +21,6 @@ export default function AppShell({ children }) {
   const [tracks, setTracks] = useState([])
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [glassEnabled, setGlassEnabled] = useState(true)
 
   // Paths that don't need the Shell (Login and Register)
@@ -89,9 +88,12 @@ export default function AppShell({ children }) {
     return () => subscription.unsubscribe()
   }, [router, isAuthPage, isPublicPage, setTheme])
 
-  // Returning from the Strava OAuth flow: reopen settings so the Connections card can show the result.
+  // The settings page announces saves so the banner/theme pick up the new profile.
   useEffect(() => {
-    if (user?.id && new URLSearchParams(window.location.search).has('strava')) setIsSettingsOpen(true)
+    if (!user?.id) return
+    const refresh = () => fetchProfile(user.id)
+    window.addEventListener(PROFILE_UPDATED_EVENT, refresh)
+    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, refresh)
   }, [user?.id])
 
   useEffect(() => {
@@ -125,7 +127,6 @@ export default function AppShell({ children }) {
       <Sidebar
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* 2. Main application body */}
@@ -134,7 +135,6 @@ export default function AppShell({ children }) {
           user={user}
           profile={profile}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
           onSignOut={handleSignOut}
           tracks={tracks}
         />
@@ -147,17 +147,6 @@ export default function AppShell({ children }) {
         {/* 3. Global footer */}
         <Footer />
       </div>
-
-      {/* Global rider profile modal */}
-      <ProfileSettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => {
-          setIsSettingsOpen(false)
-          if (user?.id) fetchProfile(user.id)
-        }}
-        user={user}
-        tracks={tracks}
-      />
     </div>
   )
 }
