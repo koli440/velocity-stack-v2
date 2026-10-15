@@ -181,6 +181,7 @@ function parseBand(bandText) {
  *   setRecovery: step|null,                            // "set recovery ..." line (role 'recovery')
  *   warmupSec: number|null, cooldownSec: number|null,  // excluded head/tail of the activity
  *   metrics: Array<{id: string, windowSec: number|null}>,  // selected summary metrics (issue #127)
+ *   lapLengthM: number|null,                           // "lap 250m" track context (issue #129)
  *   pattern: 'repeated_bursts'|'flying_sprint'|'sustained_tt'|'standing_start'|null,  // fixed pattern (issue #128)
  *   patternOptions: object,                            // its manifest option keys (target_count, distance_m, ...)
  *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
@@ -197,6 +198,7 @@ export function parseIntervalDsl(text) {
   let cooldownSec = null
   let metrics = []
   let sawMetricsLine = false
+  let lapLengthM = null
   let pattern = null
   const patternOptions = {}
 
@@ -285,6 +287,12 @@ export function parseIntervalDsl(text) {
       } else {
         Object.assign(patternOptions, opt.values)
       }
+      return
+    }
+    if (opt && opt.option.name === 'lap') {
+      if (opt.error) errors.push({ line: lineNo, message: opt.error })
+      else if (lapLengthM != null) errors.push({ line: lineNo, message: 'Only one "lap" line is allowed.' })
+      else lapLengthM = opt.values.lap_length_m
       return
     }
     if (opt) {
@@ -396,7 +404,7 @@ export function parseIntervalDsl(text) {
     errors.push({ line: rawLines.length || 1, message: 'Template must contain at least one "work" step.' })
   }
 
-  return { repeatCount, setCount, setRecovery, steps, warmupSec, cooldownSec, metrics, pattern, patternOptions, errors }
+  return { repeatCount, setCount, setRecovery, steps, warmupSec, cooldownSec, metrics, pattern, patternOptions, lapLengthM, errors }
 }
 
 function parseMetricsList(listText, lineNo, errors) {
@@ -475,7 +483,7 @@ function metricsLine(metrics) {
  * @param {{repeatCount: number, steps: Array}} manifest
  * @returns {string}
  */
-export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {} } = {}) {
+export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {}, lapLengthM = null } = {}) {
   if (pattern) {
     const lines = [`pattern ${pattern}`, ...formatLegacyOptions(pattern, patternOptions)]
     if (metrics && metrics.length) lines.push(metricsLine(metrics))
@@ -490,6 +498,7 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
   }
   steps.forEach((step) => lines.push(stepLine(step, step.contiguous ? 'then ' : '')))
   if (setCount && setRecovery) lines.push(stepLine({ ...setRecovery, role: 'recovery' }, 'set '))
+  if (lapLengthM) lines.push(`lap ${formatDistance(lapLengthM)}`)
   if (metrics && metrics.length) {
     lines.push(metricsLine(metrics))
   }
@@ -501,7 +510,7 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
  * Optional fields are omitted when unused so manifests of templates that do not
  * use newer grammar are byte-identical to those saved before it existed.
  */
-export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {} }) {
+export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {}, lapLengthM = null }) {
   const summaryMetrics =
     metrics && metrics.length
       ? { summary_metrics: metrics.map((m) => ({ id: m.id, ...(m.windowSec ? { window_sec: m.windowSec } : {}) })) }
@@ -515,6 +524,7 @@ export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, co
     ...(cooldownSec ? { cooldown_sec: cooldownSec } : {}),
     ...(setCount ? { set_count: setCount } : {}),
     ...(setCount && setRecovery ? { set_recovery: setRecovery } : {}),
+    ...(lapLengthM ? { lap_length_m: lapLengthM } : {}),
     ...summaryMetrics,
   }
 }
@@ -538,6 +548,7 @@ export function manifestToDslInput(manifest = {}) {
     cooldownSec: manifest.cooldown_sec ?? null,
     setCount: manifest.set_count ?? null,
     setRecovery: manifest.set_recovery ?? null,
+    lapLengthM: manifest.lap_length_m ?? null,
     metrics: (manifest.summary_metrics || []).map((m) => ({ id: m.id, windowSec: m.window_sec ?? null })),
   }
 }

@@ -222,6 +222,7 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
                 ` with set recovery ${formatValueLabel(parsed.setRecovery)} ±${parsed.setRecovery.durationTolerancePct}% @ ${formatBandLabel(
                   parsed.setRecovery
                 )}`}
+              {parsed.lapLengthM > 0 && ` — ${parsed.lapLengthM} m laps`}
               {parsed.metrics?.length > 0 && ` — metrics: ${parsed.metrics.map((m) => m.id).join(', ')}`}
               {(parsed.warmupSec || parsed.cooldownSec) &&
                 ` (ignoring ${[

@@ -375,6 +375,26 @@ detector defaults. The five seeded system templates (`tpl_vo2max_3min`, `tpl_tra
 `tpl_track_pursuit`, `tpl_track_standing_start`, `tpl_road_z2_decoupling`) only had their
 `dsl_source` filled in; their manifests and results are untouched.
 
+## Track context: lap splits (`lap` line)
+
+`lap 250m` (or `lap 0.25km`) gives a template a lap length, at most once, after the
+steps. For every work effort the engine integrates the speed stream (km/h → m/s per
+second), interpolates each lap boundary inside its sample and reports:
+
+- per effort: `lap_length_m`, `lap_splits_sec` (seconds per full lap; a trailing partial
+  lap is dropped; `null` when the activity has no speed stream)
+- summary: `lap_length_m`, `lap_count`, `best_lap_sec`, `slowest_lap_sec`, `avg_lap_sec`
+
+```
+1x
+work 1km ±10% @ best speed
+lap 250m
+```
+
+Manifest key: `lap_length_m` (omitted when unused, so existing manifests are unchanged).
+Under `pattern sustained_tt` the same `lap` option keeps emitting the legacy
+`lap_splits_250m` field and now also `lap_splits_sec` measured from speed.
+
 ## Round-tripping
 
 Parsed manifests (`{ repeatCount, steps }`) can be converted back into editable DSL text

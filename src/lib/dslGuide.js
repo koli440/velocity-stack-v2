@@ -17,6 +17,7 @@ export const DSL_OPTIONS = [
   { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (min or sec). At most once.' },
   { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: 'Choose extra summary metrics per work effort and for the run: avg_power, max_power, np, vi, if, avg_hr, max_hr, avg_cadence, max_cadence, avg_speed, max_speed, work_kj, pacing, dropoff, decoupling, hr_recovery (optional window, default 60sec). At most once.' },
   { syntax: 'pattern repeated_bursts', meaning: 'Use instead of the repeat line to run a built-in detector: repeated_bursts, flying_sprint, sustained_tt or standing_start. Then add its option lines: count 3, duration 3min ±45sec, recovery window 1min (repeated_bursts); distance 200m (flying_sprint, standing_start); distances 2km, 3km, 4km, min duration 20min, lap 250m (sustained_tt). Only metrics is also allowed.' },
+  { syntax: 'lap 250m', meaning: 'Track context: report per-lap split times (full laps only, from the speed stream) for every work effort, plus lap_count, best_lap_sec, slowest_lap_sec and avg_lap_sec for the run. At most once; also valid under pattern sustained_tt.' },
   { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity. At most once.' },
 ]
 
@@ -144,9 +145,18 @@ export const DSL_GUIDE_EXAMPLES = [
     description: 'Sustained time trial over 2, 3 and 4 km with 250m lap splits and decoupling.',
     dsl: 'pattern sustained_tt\ndistances 2km, 3km, 4km\nlap 250m\nmetrics decoupling',
   },
+  {
+    title: 'Kilo with 250m lap splits',
+    description: 'Fastest 1km on the track, with a split time for every 250m lap.',
+    dsl: '1x\nwork 1km ±10% @ best speed\nlap 250m',
+  },
 ]
 
 export const DSL_COMMON_MISTAKES = [
+  {
+    dsl: '1x\nwork 1km ±10% @ best speed\nlap 250m\nlap 125m',
+    fix: 'Only one "lap" line is allowed.',
+  },
   {
     dsl: 'pattern flying_sprint\ncount 3',
     fix: 'That option does not belong to this pattern. flying_sprint only accepts "distance" (and metrics).',

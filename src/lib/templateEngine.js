@@ -7,6 +7,7 @@
 
 import { analyzeSessionEfforts } from './effortDetectionEngine.js'
 import { applySummaryMetrics } from './summaryMetrics.js'
+import { computeLapSplits, lapSummary } from './lapSplits.js'
 
 function avg(arr) {
   if (!arr || arr.length === 0) return null
@@ -119,7 +120,7 @@ function evaluateFlyingSprint(template, timeSeries, detection) {
 }
 
 function evaluateSustainedTT(template, timeSeries, detection) {
-  const { watts = [], heartrate = [] } = timeSeries
+  const { watts = [], heartrate = [], speed = [] } = timeSeries
   const manifest = template.manifest
   const effort = (detection.efforts || [])[0]
   if (!effort) return { efforts: [], summary: {} }
@@ -158,6 +159,7 @@ function evaluateSustainedTT(template, timeSeries, detection) {
     pacing_index: pacing,
     dropoff_pct: dropoff,
     lap_splits_250m: lapSplits,
+    ...(manifest.lap_length_m ? { lap_splits_sec: computeLapSplits(speed, start, end, manifest.lap_length_m)?.lap_splits_sec ?? null } : {}),
     pw_hr_decoupling_pct: pwHrDecoupling,
   }
 
@@ -251,6 +253,16 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
       ].sort((a, b) => a.start_sec - b.start_sec)
     : repEffortsOut
 
+  const lapLengthM = manifest.lap_length_m || null
+  if (lapLengthM) {
+    efforts.forEach((e) => {
+      if (e.role !== 'work') return
+      const lap = computeLapSplits(speed, e.start_sec, e.end_sec, lapLengthM)
+      e.lap_length_m = lapLengthM
+      e.lap_splits_sec = lap ? lap.lap_splits_sec : null
+    })
+  }
+
   const workEfforts = efforts.filter((e) => e.role === 'work')
   const workSpeeds = workEfforts.map((e) => e.avg_speed_kmh).filter((s) => typeof s === 'number')
   const isDistanceKeyed = workEfforts.some((e) => e.target_distance_m != null)
@@ -312,6 +324,9 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
         : {}),
       dropoff_pct: dropoff,
       avg_power: workPowers.length ? Math.round(avg(workPowers)) : null,
+      ...(lapLengthM
+        ? { lap_length_m: lapLengthM, ...lapSummary(workEfforts.map((e) => (e.lap_splits_sec ? { lap_splits_sec: e.lap_splits_sec } : null))) }
+        : {}),
       ...(stepSummaries ? { step_summaries: stepSummaries } : {}),
       ...(isDistanceKeyed
         ? {
