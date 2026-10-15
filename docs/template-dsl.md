@@ -349,6 +349,32 @@ metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
 Metrics that need a stream the activity lacks are `null`. Fields the engine already
 computed for a pattern (e.g. `avg_power`, `pacing_index`) are never overwritten.
 
+## Legacy patterns (`pattern` line)
+
+The four built-in detectors can be written in the DSL by replacing the repeat line with
+`pattern <name>` followed by option lines (any order, each at most once). Only `metrics`
+may be added; steps, `warmup` and `cooldown` are rejected.
+
+| Pattern | Options | Manifest keys |
+|---|---|---|
+| `repeated_bursts` | `count N`, `duration 3min ±45sec`, `recovery window 60sec` | `target_count`, `target_duration_sec`, `duration_tolerance_sec`, `recovery_window_sec` |
+| `flying_sprint` | `distance 200m` | `distance_m` |
+| `standing_start` | `distance 1km` | `distance_m` |
+| `sustained_tt` | `distances 2km, 3km, 4km`, `min duration 20min`, `lap 250m` | `distances_m`, `min_duration_sec`, `lap_length_m` |
+
+```
+pattern sustained_tt
+distances 2km, 3km, 4km
+lap 250m
+metrics decoupling
+```
+
+The manifest uses exactly the keys existing templates already store, so old templates and
+stored `template_executions` keep working unchanged. `pattern x` with no options uses the
+detector defaults. The five seeded system templates (`tpl_vo2max_3min`, `tpl_track_f200`,
+`tpl_track_pursuit`, `tpl_track_standing_start`, `tpl_road_z2_decoupling`) only had their
+`dsl_source` filled in; their manifests and results are untouched.
+
 ## Round-tripping
 
 Parsed manifests (`{ repeatCount, steps }`) can be converted back into editable DSL text

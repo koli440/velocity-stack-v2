@@ -16,6 +16,7 @@ export const DSL_OPTIONS = [
   { syntax: 'then work 1min ...', meaning: 'Prefix a step with "then" to make it start exactly where the previous step ended (over-unders, pyramids, ramps). Not allowed on the first step.' },
   { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (min or sec). At most once.' },
   { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: 'Choose extra summary metrics per work effort and for the run: avg_power, max_power, np, vi, if, avg_hr, max_hr, avg_cadence, max_cadence, avg_speed, max_speed, work_kj, pacing, dropoff, decoupling, hr_recovery (optional window, default 60sec). At most once.' },
+  { syntax: 'pattern repeated_bursts', meaning: 'Use instead of the repeat line to run a built-in detector: repeated_bursts, flying_sprint, sustained_tt or standing_start. Then add its option lines: count 3, duration 3min ±45sec, recovery window 1min (repeated_bursts); distance 200m (flying_sprint, standing_start); distances 2km, 3km, 4km, min duration 20min, lap 250m (sustained_tt). Only metrics is also allowed.' },
   { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity. At most once.' },
 ]
 
@@ -133,9 +134,23 @@ export const DSL_GUIDE_EXAMPLES = [
     description: 'One-shot distance step looking for the fastest 200m.',
     dsl: '1x\nwork 200m ±10% @ best speed',
   },
+  {
+    title: 'Built-in pattern: three 3-minute VO2max bursts',
+    description: 'Legacy fixed patterns are written with "pattern" and options instead of steps.',
+    dsl: 'pattern repeated_bursts\ncount 3\nduration 3min ±45sec\nrecovery window 1min',
+  },
+  {
+    title: 'Built-in pattern: track pursuit',
+    description: 'Sustained time trial over 2, 3 and 4 km with 250m lap splits and decoupling.',
+    dsl: 'pattern sustained_tt\ndistances 2km, 3km, 4km\nlap 250m\nmetrics decoupling',
+  },
 ]
 
 export const DSL_COMMON_MISTAKES = [
+  {
+    dsl: 'pattern flying_sprint\ncount 3',
+    fix: 'That option does not belong to this pattern. flying_sprint only accepts "distance" (and metrics).',
+  },
   {
     dsl: '1x\nwork 5min ±10% @ best\nmetrics np, speedy',
     fix: 'Unknown metric. Use the names listed under "metrics".',
