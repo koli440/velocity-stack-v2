@@ -1,0 +1,120 @@
+// Lactate thresholds (issue #121): LT1/LT2 as power (W) and heart rate (bpm), effective-dated.
+// An activity snapshots the entry valid at its date (columns *_at_activity*), set by a DB trigger.
+
+export const LT_SNAPSHOT_COLUMNS = [
+  'lt1_power_at_activity_w',
+  'lt1_hr_at_activity',
+  'lt2_power_at_activity_w',
+  'lt2_hr_at_activity',
+]
+
+const FIELD_LIMITS = {
+  lt1_power_w: [1, 2500],
+  lt2_power_w: [1, 2500],
+  lt1_hr: [30, 250],
+  lt2_hr: [30, 250],
+}
+
+function toIntOrNull(v) {
+  if (v === '' || v == null) return null
+  const n = Number(v)
+  return Number.isFinite(n) ? Math.round(n) : NaN
+}
+
+/** Validates a form entry; returns { error } or { entry } with numbers/nulls. */
+export function validateLtEntry(raw) {
+  const date = String(raw?.effective_from || '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) {
+    return { error: 'Enter a valid effective date' }
+  }
+  const entry = { effective_from: date }
+  for (const [key, [min, max]] of Object.entries(FIELD_LIMITS)) {
+    const v = toIntOrNull(raw?.[key])
+    if (Number.isNaN(v) || (v != null && (v < min || v > max))) {
+      const label = key.replace(/_w$/, '').replace('_', ' ').toUpperCase()
+      return { error: `${label} must be between ${min} and ${max}` }
+    }
+    entry[key] = v
+  }
+  if (Object.keys(FIELD_LIMITS).every((k) => entry[k] == null)) {
+    return { error: 'Enter at least one threshold value' }
+  }
+  if (entry.lt1_power_w != null && entry.lt2_power_w != null && entry.lt1_power_w >= entry.lt2_power_w) {
+    return { error: 'LT1 power must be lower than LT2 power' }
+  }
+  if (entry.lt1_hr != null && entry.lt2_hr != null && entry.lt1_hr >= entry.lt2_hr) {
+    return { error: 'LT1 HR must be lower than LT2 HR' }
+  }
+  return { entry }
+}
+
+function dayOf(date) {
+  if (date instanceof Date) return date.toISOString().slice(0, 10)
+  return String(date || '').slice(0, 10)
+}
+
+/** History entry valid on `date` (latest effective_from <= date), or null. */
+export function resolveLtAt(history, date) {
+  const day = dayOf(date)
+  if (!day || !Array.isArray(history)) return null
+  let best = null
+  for (const h of history) {
+    if (!h?.effective_from || h.effective_from > day) continue
+    if (!best || h.effective_from > best.effective_from) best = h
+  }
+  return best
+}
+
+/** Normalised thresholds: { lt1Power, lt1Hr, lt2Power, lt2Hr } (numbers or null), or null if none. */
+export function ltFromHistoryEntry(entry) {
+  if (!entry) return null
+  return normalizeLt({
+    lt1Power: entry.lt1_power_w,
+    lt1Hr: entry.lt1_hr,
+    lt2Power: entry.lt2_power_w,
+    lt2Hr: entry.lt2_hr,
+  })
+}
+
+/** Thresholds stored on an activity row (snapshot), or null when it has none. */
+export function ltFromActivity(activity) {
+  if (!activity) return null
+  return normalizeLt({
+    lt1Power: activity.lt1_power_at_activity_w,
+    lt1Hr: activity.lt1_hr_at_activity,
+    lt2Power: activity.lt2_power_at_activity_w,
+    lt2Hr: activity.lt2_hr_at_activity,
+  })
+}
+
+function normalizeLt(lt) {
+  const out = {}
+  for (const [k, v] of Object.entries(lt)) {
+    const n = v == null ? null : Number(v)
+    out[k] = Number.isFinite(n) && n > 0 ? n : null
+  }
+  return Object.values(out).some((v) => v != null) ? out : null
+}
+
+export async function fetchLtHistory(supabase, userId) {
+  const { data, error } = await supabase
+    .from('lactate_threshold_history')
+    .select('id, effective_from, lt1_power_w, lt1_hr, lt2_power_w, lt2_hr')
+    .eq('user_id', userId)
+    .order('effective_from', { ascending: false })
+  return { history: data || [], error }
+}
+
+export async function saveLtEntry(supabase, { userId, entry, id = null }) {
+  const row = { ...entry, user_id: userId }
+  const q = id
+    ? supabase.from('lactate_threshold_history').update(row).eq('id', id).eq('user_id', userId)
+    : supabase.from('lactate_threshold_history').upsert(row, { onConflict: 'user_id,effective_from' })
+  const { error } = await q
+  return { error }
+}
+
+export async function deleteLtEntry(supabase, { userId, id }) {
+  const { error } = await supabase.from('lactate_threshold_history').delete().eq('id', id).eq('user_id', userId)
+  return { error }
+}
