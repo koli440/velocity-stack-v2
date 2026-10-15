@@ -12,6 +12,7 @@ import {
   countSplits,
 } from '../lib/pbVault'
 import VelodromePicker from './VelodromePicker'
+import Icon from './Icon'
 
 // "Add New Personal Best" form - migrated from v1's expander in pages/30_PB_vault.py. Collects
 // discipline + track + time (as separate Min/Sec inputs, like v1) plus optional gear and lap/
@@ -128,13 +129,13 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
       <div className="glass-modal bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black text-slate-900 dark:text-white">
-            🏆 Add New Personal Best
+            <Icon name="trophy" /> Add New Personal Best
           </h2>
           <button
             onClick={handleClose}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-1"
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
         </div>
 
@@ -246,7 +247,7 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
 
         <details className="rounded-xl border border-slate-200 dark:border-slate-800 p-3.5">
           <summary className="text-xs uppercase font-bold text-slate-400 cursor-pointer">
-            ⏱️ Add Lap/Split Times (Optional)
+            <Icon name="stopwatch" /> Add Lap/Split Times (Optional)
           </summary>
           <div className="mt-3 space-y-3">
             <div className="flex gap-4 text-xs font-semibold text-slate-600 dark:text-slate-300">

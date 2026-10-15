@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { MAP_TILES } from '@/lib/mapTiles'
+import Icon from './Icon'
 
 // Fix for Leaflet's default icons with the Next.js bundler
 const customIcon = new L.Icon({
@@ -47,7 +48,7 @@ export default function VelodromeMap({ tracks = [] }) {
                   {track.country_code ? `[${track.country_code}] ` : ''}{track.surface} • {track.length_m} m
                 </div>
                 <div className="text-[11px] font-semibold text-orange-600">
-                  {track.is_indoor ? '🏟️ Indoor' : '☀️ Outdoor'} • {track.elevation_m} m a.s.l.
+                  {track.is_indoor ? <><Icon name="velodrome" /> Indoor</> : <><Icon name="sun" /> Outdoor</>} • {track.elevation_m} m a.s.l.
                 </div>
               </div>
             </Popup>

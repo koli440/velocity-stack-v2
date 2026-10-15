@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import ThemeToggle from './ThemeToggle'
 import Avatar from './Avatar'
+import Icon from './Icon'
 import NotificationBell from './NotificationBell'
 import AddSessionModal from './AddSessionModal'
 import { OPEN_ADD_SESSION_EVENT } from '../lib/navigation'
@@ -36,14 +37,15 @@ export default function TopNav({
           className="md:hidden p-2 rounded-xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard text-slate-700 dark:text-white"
           aria-label="Open navigation menu"
         >
-          ☰
+          <Icon name="menu" size={20} />
         </button>
 
-        <div className="w-full">
+        <div className="w-full relative">
+          <Icon name="search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="🔍 Search sessions, tracks, laps..."
-            className="w-full bg-slate-50 dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-xl px-3.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            placeholder="Search sessions, tracks, laps..."
+            className="w-full bg-slate-50 dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-xl pl-9 pr-3.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
           />
         </div>
       </div>

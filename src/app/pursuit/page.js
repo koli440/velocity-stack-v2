@@ -19,6 +19,7 @@ import {
   pacingStrategyLabel,
 } from '../../lib/pursuit'
 import VelodromePicker from '../../components/VelodromePicker'
+import Icon from '../../components/Icon'
 
 // Sorted, de-duplicated discipline categories (Endurance, Pursuit, Sprint). v1 defaulted the
 // category picker to index 1 of its alphabetically-sorted list, which lands on "Pursuit" here too.
@@ -197,7 +198,7 @@ export default function PursuitPage() {
     <div className="w-full space-y-6">
       <div>
         <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
-          ⏱️ Pursuit Strategist
+          <Icon name="stopwatch" /> Pursuit Strategist
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Tempo optimization: lock in a target time and work out the lap-by-lap pacing plan.
@@ -350,7 +351,7 @@ export default function PursuitPage() {
 
           {/* Splits table */}
           <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm overflow-x-auto">
-            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">📋 Splits</h2>
+            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3"><Icon name="clipboard" /> Splits</h2>
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-surface-darkBorder">
@@ -380,7 +381,7 @@ export default function PursuitPage() {
 
           {/* Tempo analysis */}
           <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
-            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">📈 Tempo Analysis</h2>
+            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3"><Icon name="trend" /> Tempo Analysis</h2>
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -412,7 +413,7 @@ export default function PursuitPage() {
           </div>
 
           <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
-            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">⚙️ Cadence (RPM)</h2>
+            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3"><Icon name="settings" /> Cadence (RPM)</h2>
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -445,7 +446,7 @@ export default function PursuitPage() {
 
           {/* Training notes */}
           <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-2 text-sm text-slate-600 dark:text-slate-300">
-            <h2 className="text-xs uppercase font-bold text-slate-400 mb-1">💡 Training Notes</h2>
+            <h2 className="text-xs uppercase font-bold text-slate-400 mb-1"><Icon name="bulb" /> Training Notes</h2>
             <p>
               1. <span className="font-bold">Standing start lap:</span> you need to rip it in{' '}
               <span className="font-bold">{strategy.firstLapTimeS}s</span>.

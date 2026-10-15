@@ -3,6 +3,7 @@
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Icon from './Icon'
 
 export default function ThemeToggle({ currentUser = null }) {
   const { theme, setTheme } = useTheme()
@@ -32,7 +33,7 @@ export default function ThemeToggle({ currentUser = null }) {
       className="p-2.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-slate-700 dark:text-slate-200 hover:opacity-80 transition flex items-center gap-2 text-xs font-semibold shadow-sm"
       title="Toggle Light / Dark mode"
     >
-      {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+      {theme === 'dark' ? <><Icon name="sun" size={16} /> Light</> : <><Icon name="moon" size={16} /> Dark</>}
     </button>
   )
 }

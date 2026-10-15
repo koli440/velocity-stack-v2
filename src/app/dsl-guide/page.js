@@ -6,6 +6,7 @@ import {
   DSL_RULES,
   DSL_STEP_PARTS,
 } from '../../lib/dslGuide'
+import Icon from '../../components/Icon'
 
 export const metadata = {
   title: 'DSL Syntax Guide | VelocityStack',
@@ -20,7 +21,7 @@ export default function DslGuidePage() {
   return (
     <section className="max-w-4xl mx-auto space-y-8 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
       <div>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white">📐 DSL Syntax Guide</h1>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white"><Icon name="ruler" /> DSL Syntax Guide</h1>
         <p className="mt-2 font-semibold text-slate-500 dark:text-slate-400">
           Describe an interval session as plain text; VelocityStack finds matching efforts in your rides.
         </p>

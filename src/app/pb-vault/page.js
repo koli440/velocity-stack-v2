@@ -15,6 +15,7 @@ import {
 } from 'recharts'
 import { formatTime, formatDate } from '../../lib/pbVault'
 import AddPbModal from '../../components/AddPbModal'
+import Icon from '../../components/Icon'
 
 // "PB Vault" - migrated from v1's pages/30_PB_vault.py. Requires an authenticated account
 // (v1's check_access("PB Vault") gate); unauthenticated visitors are redirected to /login, same
@@ -127,7 +128,7 @@ export default function PbVaultPage() {
     <div className="w-full space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">🏆 My PB Vault</h1>
+          <h1 className="text-xl font-extrabold text-slate-900 dark:text-white"><Icon name="trophy" /> My PB Vault</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Logged in as: <span className="font-semibold">{user?.email}</span>
           </p>
@@ -136,7 +137,7 @@ export default function PbVaultPage() {
           onClick={() => setIsAddModalOpen(true)}
           className="flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold uppercase tracking-wider shadow-lg transition active:scale-[0.98]"
         >
-          ➕ Add New Personal Best
+          <Icon name="plus" /> Add New Personal Best
         </button>
       </div>
 

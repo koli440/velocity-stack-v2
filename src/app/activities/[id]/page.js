@@ -20,6 +20,7 @@ import { weightFromActivity } from '../../../lib/weightHistory'
 
 // Leaflet requires window/document -> dynamic import without SSR
 import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
+import Icon from '../../../components/Icon'
 
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
   ssr: false,
@@ -274,7 +275,7 @@ export default function ActivityDetailPage() {
               onClick={() => setShowEdit(true)}
               className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wider transition"
             >
-              ✏️ Edit
+              <Icon name="edit" /> Edit
             </button>
             <button
               type="button"
@@ -282,7 +283,7 @@ export default function ActivityDetailPage() {
               disabled={deleting}
               className="py-2 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
             >
-              🗑 Delete Activity
+              <Icon name="trash" /> Delete Activity
             </button>
           </div>
         )}
@@ -340,7 +341,7 @@ export default function ActivityDetailPage() {
         <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
           {activity.tracks && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span>🏟️</span>
+              <span><Icon name="velodrome" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
                 {activity.tracks.name} ({activity.tracks.length_m} m)
               </span>
@@ -348,25 +349,25 @@ export default function ActivityDetailPage() {
           )}
           {activity.bike_model && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span>🚴</span>
+              <span><Icon name="bike" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{activity.bike_model}</span>
             </div>
           )}
           {activity.handlebar_setup && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span>🎯</span>
+              <span><Icon name="target" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{activity.handlebar_setup}</span>
             </div>
           )}
           {activity.helmet && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span>🪖</span>
+              <span><Icon name="helmet" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{activity.helmet}</span>
             </div>
           )}
           {activity.perceived_exertion && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-orange-500/10 text-orange-500 border border-orange-500/20 font-black">
-              <span>🔥</span>
+              <span><Icon name="flame" /></span>
               <span>RPE: {activity.perceived_exertion}/10</span>
             </div>
           )}
@@ -377,7 +378,7 @@ export default function ActivityDetailPage() {
       {Array.isArray(activity.time_series?.latitude) && activity.time_series.latitude.length > 1 && (
         <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
           <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <span>🗺️</span> Route Map
+            <Icon name="map" /> Route Map
           </h3>
           <ActivityMap
             latitude={activity.time_series.latitude}
@@ -418,7 +419,7 @@ export default function ActivityDetailPage() {
       {!sharedView && (
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <span>⚙️</span> Track & Gearing Setup for this Ride
+          <Icon name="settings" /> Track & Gearing Setup for this Ride
         </h3>
 
         <form onSubmit={handleUpdateGear} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
@@ -475,7 +476,7 @@ export default function ActivityDetailPage() {
 
           {saveSuccess && (
             <span className="font-bold text-emerald-500 animate-fade-in">
-              ✓ Setup saved
+              <Icon name="check" /> Setup saved
             </span>
           )}
         </div>

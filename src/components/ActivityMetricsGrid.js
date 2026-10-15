@@ -22,6 +22,7 @@ import { activityLtSummary } from '../lib/lactateThresholds'
 import { weightFromActivity } from '../lib/weightHistory'
 import { ftpFromActivity } from '../lib/ftpHistory'
 import { wattsPerKg } from '../lib/wkg'
+import Icon from './Icon'
 
 function formatDuration(totalSeconds) {
   if (totalSeconds == null) return '—'
@@ -95,7 +96,7 @@ function pbBadge(current, master) {
   if (isPB) {
     return (
       <span className="text-[9px] font-black py-0.5 px-1.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap">
-        🏆 PB
+        <Icon name="trophy" size={12} /> PB
       </span>
     )
   }
@@ -329,7 +330,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-          <span>📊</span> Activity Metrics
+          <Icon name="chart" /> Activity Metrics
         </h3>
 
         <div className="relative" ref={menuRef}>
@@ -338,7 +339,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
             onClick={() => setMenuOpen((v) => !v)}
             className="py-1.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[10px] uppercase tracking-wider transition flex items-center gap-1.5"
           >
-            <span>⚙️</span> Manage Metrics
+            <Icon name="settings" /> Manage Metrics
             {hiddenIds.length > 0 && (
               <span className="text-[9px] font-black py-0.5 px-1.5 rounded-full bg-orange-500/10 text-orange-500">
                 {hiddenIds.length} hidden

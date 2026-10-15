@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import Icon from '../../components/Icon'
 
 export const metadata = {
   title: 'About | VelocityStack',
@@ -12,7 +13,7 @@ export default function AboutPage() {
       {/* --- HERO --- */}
       <div>
         <h1 className="text-3xl font-black text-slate-900 dark:text-white">
-          📖 About VelocityStack
+          <Icon name="book" /> About VelocityStack
         </h1>
         <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
           Precision engineering for the track cycling community.
@@ -25,7 +26,7 @@ export default function AboutPage() {
         <div className="md:col-span-2 space-y-6 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-              🏁 The Mission
+              <Icon name="flag" /> The Mission
             </h2>
             <p>
               <strong className="text-slate-900 dark:text-white">VelocityStack</strong> was born
@@ -42,7 +43,7 @@ export default function AboutPage() {
 
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-              🛠️ What is here
+              <Icon name="settings" /> What is here
             </h2>
             <ul className="space-y-1.5 list-disc list-inside">
               <li>
@@ -94,7 +95,7 @@ export default function AboutPage() {
       {/* --- THE TECHNOLOGY --- */}
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-          🧬 Behind the Math
+          <Icon name="trend" /> Behind the Math
         </h2>
         <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
           Our calculations aren&apos;t just guesses. We use established aerodynamic models (like
@@ -107,7 +108,7 @@ export default function AboutPage() {
       {/* --- CALL TO ACTION --- */}
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-          ❤️ Support the Project
+          <Icon name="heart" /> Support the Project
         </h2>
         <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
           VelocityStack is currently in <strong className="text-slate-900 dark:text-white">Alpha</strong>.

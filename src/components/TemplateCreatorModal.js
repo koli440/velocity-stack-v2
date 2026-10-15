@@ -11,6 +11,7 @@ import { getAuthHeader } from '../lib/supabase'
 import { BAND_SUFFIXES, parseIntervalDsl } from '../lib/intervalDsl'
 import { DSL_GUIDE_PATH } from '../lib/dslGuide'
 import { formatLegacyOptions } from '../lib/legacyPatterns'
+import Icon from './Icon'
 
 const CATEGORIES = ['road', 'track', 'gym']
 
@@ -102,14 +103,14 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
       <div className="glass-modal w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl p-6 space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-            <span>✏️</span> {editingTemplate ? 'Edit Template' : 'Create Template'}
+            <Icon name="edit" /> {editingTemplate ? 'Edit Template' : 'Create Template'}
           </h2>
           <button
             type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-bold"
           >
-            ✕ Close
+            <Icon name="close" /> Close
           </button>
         </div>
 
@@ -250,7 +251,7 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
             rel="noopener noreferrer"
             className="text-[11px] font-black uppercase tracking-wider text-orange-500"
           >
-            📐 DSL Syntax Guide ↗
+            <Icon name="ruler" /> DSL Syntax Guide ↗
           </a>
         </div>
 

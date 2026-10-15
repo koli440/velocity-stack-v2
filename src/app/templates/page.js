@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase, getAuthHeader } from '../../lib/supabase'
 import { parseJsonResponse } from '../../lib/httpJson'
 import TemplateCreatorModal from '../../components/TemplateCreatorModal'
+import Icon from '../../components/Icon'
 import {
   filterByTab,
   searchTemplates,
@@ -216,7 +217,7 @@ export default function TemplatesPage() {
                       aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
                       className={`text-lg leading-none ${isFav ? 'text-amber-400' : 'text-slate-300 hover:text-amber-400'}`}
                     >
-                      {isFav ? '★' : '☆'}
+                      <Icon name="star" size={18} className={isFav ? 'fill-current' : ''} />
                     </button>
                   )}
                 </div>

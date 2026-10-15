@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { formatDateTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
+import Icon from './Icon'
 import { authorName } from '../lib/social'
 import {
   fetchNotifications,
@@ -57,7 +58,7 @@ export default function NotificationBell({ userId }) {
         aria-label={`Notifications${unread ? ` (${unread} unread)` : ''}`}
         className="relative p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-sm"
       >
-        🔔
+        <Icon name="bell" size={18} />
         {unread > 0 && (
           <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center">
             {unread > 9 ? '9+' : unread}

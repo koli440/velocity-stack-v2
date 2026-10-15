@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Icon from './Icon'
 
 export default function Footer() {
   return (
@@ -26,14 +27,14 @@ export default function Footer() {
             href="/feedback"
             className="hover:text-slate-900 dark:hover:text-white transition"
           >
-            💡 Feedback
+            <Icon name="bulb" /> Feedback
           </Link>
 
           <Link
             href="/report-bug"
             className="flex items-center gap-1.5 text-rose-500/90 dark:text-rose-400 hover:text-rose-600 font-semibold transition"
           >
-            <span>🐞</span> Report a Bug
+            <Icon name="bug" /> Report a Bug
           </Link>
 
           <span className="text-slate-400 font-mono text-[10px]">v0.4.2-beta</span>
