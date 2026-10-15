@@ -267,14 +267,17 @@ const EVALUATORS = {
  * @param {object} timeSeries - { watts, cadence, torque, speed, heartrate }
  * @param {number|null} [ftpAtActivityW] - the activity's own FTP snapshot (issue #14);
  *   only used by the `custom_intervals` pattern's %FTP-banded steps.
+ * @param {number|null} [hrMaxBpm] - reference max heart rate for `%HRmax` bands (issue #123);
+ *   when omitted the highest value in the activity's heart rate stream is used.
  * @returns {{ efforts: object[], summary: object }}
  */
-export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null) {
+export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null, hrMaxBpm = null) {
   const manifest = template.manifest || {}
   const pattern = manifest.pattern || 'repeated_bursts'
   const evaluator = EVALUATORS[pattern]
 
-  if (!timeSeries || (!timeSeries.watts?.length && !timeSeries.cadence?.length)) {
+  const hrOnlyCustom = pattern === 'custom_intervals' && timeSeries?.heartrate?.length
+  if (!timeSeries || (!timeSeries.watts?.length && !timeSeries.cadence?.length && !hrOnlyCustom)) {
     return { efforts: [], summary: { reason: 'Activity has no time_series data to evaluate.' } }
   }
 
@@ -295,7 +298,7 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
     discipline: disciplineHint,
     timeSeries,
     ...(pattern === 'custom_intervals'
-      ? { steps: manifest.steps || [], repeatCount: manifest.repeat_count || 1, ftpAtActivityW }
+      ? { steps: manifest.steps || [], repeatCount: manifest.repeat_count || 1, ftpAtActivityW, hrMaxBpm }
       : {}),
   })
 

@@ -37,7 +37,7 @@ recovery <value><unit> ±<tolerance>% @ <band>
 
 ### Power bands
 
-There are four kinds of band:
+There are six kinds of band:
 
 1. **Relative `%FTP` band** — evaluated against the *activity's own* FTP snapshot
    (`ftp_at_activity_w`), never the athlete's current/live FTP, so matching stays
@@ -56,7 +56,16 @@ There are four kinds of band:
    - Range: `40-50km/h`
    - Max only: `<35km/h`
    - Min only: `>45km/h`
-4. **`best` / `max` keyword** — no numeric threshold at all. Instead of checking against
+4. **Heart-rate band** (issue #123) — absolute `bpm` or relative `%HRmax`, same
+   range/min/max syntax: `150-165bpm`, `<120bpm`, `>170bpm`, `80-90%HRmax`, `<70%HRmax`.
+   The window's *average* heart rate must satisfy the band. `%HRmax` is relative to the
+   max HR recorded on the activity (`max_hr`), falling back to the highest value in the
+   heart-rate stream. Activities without a heart-rate stream report no match (with a
+   message) instead of failing.
+5. **Cadence band** (issue #123) — `rpm`, same range/min/max syntax: `90-100rpm`,
+   `<60rpm`, `>110rpm`. Matched against the average of the cadence stream (coasting
+   zeros included).
+6. **`best` / `max` keyword** — no numeric threshold at all. Instead of checking against
    a band, the detector locates the single highest-average window of approximately that
    size (duration or distance) in the stream. This is the right choice for structural,
    non-repeatable efforts (a decisive climb, a final sprint, a pursuit pacing block) or
@@ -65,6 +74,11 @@ There are four kinds of band:
    **power** (unchanged, for backward compatibility with templates saved before distance
    keying existed). On a **distance-keyed** step the metric must be spelled out
    explicitly, since there's no default: `best power` or `best speed`.
+
+HR and cadence bands can be freely mixed with power bands across steps of one template
+(e.g. `work ... @ 150-165bpm` followed by `recovery ... @ <120bpm`); each step is matched
+against its own stream. Efforts matched on an HR band report `avg_hr_bpm`; on a cadence
+band, `avg_cadence_rpm`.
 
 ### Distance-keyed steps
 
@@ -94,7 +108,7 @@ distance-keyed `work` step with a duration-keyed `recovery` step, as above).
 - Duration (or distance) must be `> 0`.
 - Tolerance must be between `0` and `100` (percent).
 - At least one `work` step is required.
-- For `%FTP`/`W`/`km/h` bands, bounds must be `>= 0`, and when both a min and max are
+- For `%FTP`/`W`/`km/h`/`bpm`/`%HRmax`/`rpm` bands, bounds must be `>= 0`, and when both a min and max are
   given, `min < max`.
 - A distance-keyed step's `best`/`max` band must specify a metric (`best power` or
   `best speed`); a bare `best`/`max` on a distance-keyed step is a validation error.
@@ -195,3 +209,17 @@ Parsed manifests (`{ repeatCount, steps }`) can be converted back into editable 
 with `stringifyIntervalDsl`, which the Template Creator UI uses when loading an existing
 template for editing. `stringifyIntervalDsl(parseIntervalDsl(text))` is stable — it
 reproduces an equivalent DSL string for any valid input.
+
+## Heart rate and cadence examples
+
+```
+3x
+work 10min ±10% @ 150-165bpm
+recovery 5min ±30% @ <70%HRmax
+```
+
+```
+4x
+work 5min ±15% @ 100-110rpm
+recovery 3min ±30% @ <70rpm
+```

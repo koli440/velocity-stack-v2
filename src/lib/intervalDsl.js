@@ -29,26 +29,44 @@
 //   1x
 //   work 200m ±10% @ best speed
 //
+// Bands can also target heart rate (`bpm`, `%HRmax`) or cadence (`rpm`):
+//
+//   3x
+//   work 10min ±10% @ 150-165bpm
+//   recovery 5min ±30% @ <70%HRmax
+//
 // Deliberately plain JS (no Node-only APIs) so it can run both server-side
 // (API route validation) and client-side (live preview in the creator UI).
 
 const REPEAT_LINE_RE = /^(\d+)\s*x$/i
 const STEP_LINE_RE = /^(work|recovery)\s+(\d+(?:\.\d+)?)\s*(min|sec|km|m)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
-const RANGE_BAND_RE = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(%FTP|W|km\/h)$/i
-const MAX_BAND_RE = /^<\s*(\d+(?:\.\d+)?)\s*(%FTP|W|km\/h)$/i
-const MIN_BAND_RE = /^>\s*(\d+(?:\.\d+)?)\s*(%FTP|W|km\/h)$/i
+const RANGE_BAND_RE = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
+const MAX_BAND_RE = /^<\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
+const MIN_BAND_RE = /^>\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
 const BEST_BAND_RE = /^(?:best|max)(?:\s+(power|speed))?$/i
+
+export const BAND_SUFFIXES = {
+  pct_ftp: '%FTP',
+  watts: 'W',
+  speed_kmh: 'km/h',
+  pct_hrmax: '%HRmax',
+  hr_bpm: 'bpm',
+  cadence_rpm: 'rpm',
+}
 
 function bandTypeForSuffix(suffix) {
   const s = suffix.toUpperCase()
   if (s === 'W') return 'watts'
   if (s === 'KM/H') return 'speed_kmh'
+  if (s === '%HRMAX') return 'pct_hrmax'
+  if (s === 'BPM') return 'hr_bpm'
+  if (s === 'RPM') return 'cadence_rpm'
   return 'pct_ftp'
 }
 
 /**
  * @param {string} bandText - the `@ <band>` portion of a step line, already trimmed.
- * @returns {{ bandType: 'pct_ftp'|'watts'|'speed_kmh'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null } | null}
+ * @returns {{ bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null } | null}
  *   null when the band syntax is not recognised.
  */
 function parseBand(bandText) {
@@ -84,7 +102,7 @@ function parseBand(bandText) {
  * @param {string} text
  * @returns {{
  *   repeatCount: number|null,
- *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
+ *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
  *   errors: Array<{line: number, message: string}>
  * }}
  */
@@ -153,7 +171,7 @@ export function parseIntervalDsl(text) {
         line: lineNo,
         message:
           `Unrecognised band "${bandTextRaw.trim()}". Expected "a-b%FTP", "<x%FTP", ">x%FTP", ` +
-          'the same with "W" or "km/h" instead of "%FTP", or "best"/"max" (with "power"/"speed" ' +
+          'the same with "W", "km/h", "bpm", "%HRmax" or "rpm" instead of "%FTP", or "best"/"max" (with "power"/"speed" ' +
           'required on distance-keyed steps).',
       })
     } else if (band.bandType === 'best') {
@@ -228,7 +246,7 @@ function formatBand({ bandType, bestMetric, powerMin, powerMax, keyBy }) {
     if (keyBy === 'distance' || bestMetric === 'speed') return `best ${bestMetric || 'power'}`
     return 'best'
   }
-  const suffix = bandType === 'watts' ? 'W' : bandType === 'speed_kmh' ? 'km/h' : '%FTP'
+  const suffix = BAND_SUFFIXES[bandType] || '%FTP'
   if (powerMin != null && powerMax != null) return `${formatNumber(powerMin)}-${formatNumber(powerMax)}${suffix}`
   if (powerMax != null) return `<${formatNumber(powerMax)}${suffix}`
   if (powerMin != null) return `>${formatNumber(powerMin)}${suffix}`

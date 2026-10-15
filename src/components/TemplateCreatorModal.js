@@ -8,14 +8,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import Portal from './Portal'
 import { getAuthHeader } from '../lib/supabase'
-import { parseIntervalDsl } from '../lib/intervalDsl'
+import { BAND_SUFFIXES, parseIntervalDsl } from '../lib/intervalDsl'
 import { DSL_GUIDE_PATH } from '../lib/dslGuide'
 
 const CATEGORIES = ['road', 'track', 'gym']
 
 function formatBandLabel(step) {
   if (step.bandType === 'best') return `best ${step.bestMetric || 'power'} effort`
-  const suffix = step.bandType === 'watts' ? 'W' : step.bandType === 'speed_kmh' ? 'km/h' : '% FTP'
+  const suffix = step.bandType === 'pct_ftp' ? '% FTP' : BAND_SUFFIXES[step.bandType] || '% FTP'
   if (step.powerMin != null && step.powerMax != null) return `${step.powerMin}-${step.powerMax}${suffix}`
   if (step.powerMax != null) return `<${step.powerMax}${suffix}`
   if (step.powerMin != null) return `>${step.powerMin}${suffix}`

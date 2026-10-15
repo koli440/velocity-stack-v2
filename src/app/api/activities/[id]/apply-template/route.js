@@ -24,7 +24,7 @@ export async function POST(req, { params }) {
 
     const { data: activity, error: actError } = await supabase
       .from('activities')
-      .select('id, user_id, time_series, ftp_at_activity_w')
+      .select('id, user_id, time_series, ftp_at_activity_w, max_hr')
       .eq('id', activityId)
       .single()
 
@@ -47,7 +47,7 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
-    const result = evaluateTemplate(template, activity.time_series || {}, activity.ftp_at_activity_w ?? null)
+    const result = evaluateTemplate(template, activity.time_series || {}, activity.ftp_at_activity_w ?? null, activity.max_hr ?? null)
 
     // A given template can only be run once per activity (unique constraint on
     // activity_id + template_id) — re-running replaces the prior result

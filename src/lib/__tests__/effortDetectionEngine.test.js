@@ -335,3 +335,56 @@ test('detectCustomIntervalSequence: repeated "best" stops when no room remains',
   })
   assert.equal(result.efforts.length, 2)
 })
+
+// ---- HR / cadence bands (issue #123) ----
+
+test('hr_bpm band matches work/recovery on a synthetic heart-rate stream', () => {
+  const hr = [...repeatWatts(100, 20), ...repeatWatts(160, 60), ...repeatWatts(110, 30), ...repeatWatts(162, 60), ...repeatWatts(105, 30)]
+  const steps = [
+    { role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'hr_bpm', powerMin: 150, powerMax: 170 },
+    { role: 'recovery', keyBy: 'duration', targetDurationSec: 30, durationTolerancePct: 10, bandType: 'hr_bpm', powerMin: null, powerMax: 120 },
+  ]
+  const { efforts } = detectCustomIntervalSequence({ heartrate: hr, steps, repeatCount: 2 })
+  assert.equal(efforts.length, 4)
+  assert.deepEqual(efforts.map((e) => e.role), ['work', 'recovery', 'work', 'recovery'])
+  assert.ok(efforts[0].start_sec >= 5 && efforts[0].start_sec <= 22)
+  assert.ok(efforts[0].avg_hr_bpm >= 150 && efforts[0].avg_hr_bpm <= 170)
+  assert.equal(efforts[0].avg_power, null)
+})
+
+test('pct_hrmax uses the supplied max HR, falling back to the stream max', () => {
+  const hr = [...repeatWatts(100, 30), ...repeatWatts(180, 60)]
+  const steps = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'pct_hrmax', powerMin: 90, powerMax: 100 }]
+  // stream max = 180, so 180bpm = 100%
+  assert.equal(detectCustomIntervalSequence({ heartrate: hr, steps, repeatCount: 1 }).efforts.length, 1)
+  // with HRmax 200 the 180bpm effort is only 90% (still in band); with 220 it is 82% (out of band)
+  assert.equal(detectCustomIntervalSequence({ heartrate: hr, steps, repeatCount: 1, hrMaxBpm: 200 }).efforts.length, 1)
+  assert.equal(detectCustomIntervalSequence({ heartrate: hr, steps, repeatCount: 1, hrMaxBpm: 220 }).efforts.length, 0)
+})
+
+test('cadence_rpm band matches on the cadence stream, independent of power', () => {
+  const cadence = [...repeatWatts(60, 20), ...repeatWatts(100, 60), ...repeatWatts(60, 20)]
+  const watts = repeatWatts(200, 100)
+  const steps = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'cadence_rpm', powerMin: 95, powerMax: 105 }]
+  const { efforts } = detectCustomIntervalSequence({ watts, cadence, steps, repeatCount: 1 })
+  assert.equal(efforts.length, 1)
+  assert.ok(efforts[0].avg_cadence_rpm >= 95 && efforts[0].avg_cadence_rpm <= 105)
+  assert.equal(efforts[0].avg_power, 200)
+})
+
+test('hr/cadence steps report a message instead of throwing when the stream is missing', () => {
+  const hrStep = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'hr_bpm', powerMin: 100, powerMax: null }]
+  const r1 = detectCustomIntervalSequence({ watts: repeatWatts(200, 100), steps: hrStep, repeatCount: 1 })
+  assert.deepEqual(r1.efforts, [])
+  assert.match(r1.message, /heart rate/)
+  const cadStep = [{ ...hrStep[0], bandType: 'cadence_rpm' }]
+  const r2 = detectCustomIntervalSequence({ watts: repeatWatts(200, 100), steps: cadStep, repeatCount: 1 })
+  assert.match(r2.message, /cadence/)
+})
+
+test('watts-only templates ignore hr/cadence streams (unchanged behaviour)', () => {
+  const steps = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'watts', powerMin: 190, powerMax: 210 }]
+  const base = detectCustomIntervalSequence({ watts: repeatWatts(200, 100), steps, repeatCount: 1 })
+  const withExtras = detectCustomIntervalSequence({ watts: repeatWatts(200, 100), heartrate: repeatWatts(150, 500), cadence: repeatWatts(90, 500), steps, repeatCount: 1 })
+  assert.deepEqual(withExtras, base)
+})
