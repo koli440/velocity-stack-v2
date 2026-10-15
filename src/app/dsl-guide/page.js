@@ -1,5 +1,6 @@
 import {
   DSL_BANDS,
+  DSL_OPTIONS,
   DSL_COMMON_MISTAKES,
   DSL_GUIDE_EXAMPLES,
   DSL_RULES,
@@ -55,6 +56,21 @@ recovery 2min ±50% @ <55%FTP`}
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className={CARD}>
+        <h2 className={H2}>Warm-up, cool-down and multi-step blocks</h2>
+        <ul className="space-y-2 mb-3">
+          {DSL_OPTIONS.map((o) => (
+            <li key={o.syntax}>
+              <code className={CODE}>{o.syntax}</code> — {o.meaning}
+            </li>
+          ))}
+        </ul>
+        <p>
+          A repeat can contain several <code className={CODE}>work</code>/<code className={CODE}>recovery</code>{' '}
+          lines. They are matched one after another in the order written.
+        </p>
       </div>
 
       <div className={CARD}>

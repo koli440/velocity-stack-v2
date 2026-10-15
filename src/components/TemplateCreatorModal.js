@@ -207,6 +207,13 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
                 )
                 .join(' → ')}
               ]
+              {(parsed.warmupSec || parsed.cooldownSec) &&
+                ` (ignoring ${[
+                  parsed.warmupSec ? `first ${formatDurationLabel(parsed.warmupSec)}` : null,
+                  parsed.cooldownSec ? `last ${formatDurationLabel(parsed.cooldownSec)}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' and ')})`}
             </p>
           )}
         </div>

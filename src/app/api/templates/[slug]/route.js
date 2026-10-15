@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
-import { parseIntervalDsl } from '../../../../lib/intervalDsl'
+import { buildIntervalManifest, parseIntervalDsl } from '../../../../lib/intervalDsl'
 
 // PATCH /api/templates/:slug - update a user-owned "custom_intervals" template
 // (issue #14 — Template Creator). System templates (user_id IS NULL) and
@@ -38,12 +38,13 @@ export async function PATCH(req, { params }) {
     if (visibility !== undefined) updates.visibility = visibility === 'public' ? 'public' : 'private'
 
     if (dslSource !== undefined) {
-      const { repeatCount, steps, errors } = parseIntervalDsl(dslSource)
+      const parsedDsl = parseIntervalDsl(dslSource)
+      const { errors } = parsedDsl
       if (errors.length) {
         return NextResponse.json({ error: 'Invalid interval DSL', errors }, { status: 400 })
       }
       updates.dsl_source = dslSource
-      updates.manifest = { pattern: 'custom_intervals', repeat_count: repeatCount, steps }
+      updates.manifest = buildIntervalManifest(parsedDsl)
     }
 
     const { data, error } = await supabase

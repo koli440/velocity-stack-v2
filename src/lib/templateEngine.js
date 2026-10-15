@@ -220,10 +220,17 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
     reps.push(rawEfforts.slice(i, i + stepsPerRep))
   }
 
+  // A "multi-step block" has more than one work step per repeat (or more than
+  // one recovery). Plain work(+recovery) templates keep the exact original output.
+  const manifestSteps = manifest.steps || []
+  const workStepsPerRep = manifestSteps.filter((s) => s.role === 'work').length
+  const isMultiStep = workStepsPerRep > 1 || manifestSteps.length > 2
+
   const efforts = reps.flatMap((repEfforts, repIdx) =>
-    repEfforts.map((e) => ({
+    repEfforts.map((e, stepIdx) => ({
       ...e,
       rep: repIdx + 1,
+      ...(isMultiStep ? { step_index: stepIdx + 1 } : {}),
       // Pace against whichever stream the effort was actually measured on
       // (distance-keyed "best speed" steps have no avg_power at all).
       pacing_index: pacingIndex(e.avg_power != null ? watts : speed, e.start_sec, e.end_sec),
@@ -231,10 +238,37 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
   )
 
   const workEfforts = efforts.filter((e) => e.role === 'work')
-  const workPowers = workEfforts.map((e) => e.avg_power).filter((p) => typeof p === 'number')
   const workSpeeds = workEfforts.map((e) => e.avg_speed_kmh).filter((s) => typeof s === 'number')
-  const dropoff = dropoffPct(workEfforts.map((e) => e.avg_power))
   const isDistanceKeyed = workEfforts.some((e) => e.target_distance_m != null)
+
+  // Per-rep power: the work effort's own average, or for multi-step reps the
+  // duration-weighted mean over the rep's work steps, so drop-off compares like with like.
+  const repPowers = reps
+    .map((repEfforts) => {
+      const work = repEfforts.filter((e) => e.role === 'work' && typeof e.avg_power === 'number')
+      if (!work.length) return null
+      if (work.length === 1) return work[0].avg_power
+      const totalDur = work.reduce((a, e) => a + (e.duration_sec || 0), 0)
+      return totalDur ? Math.round(work.reduce((a, e) => a + e.avg_power * (e.duration_sec || 0), 0) / totalDur) : null
+    })
+    .filter((p) => typeof p === 'number')
+  const dropoff = isMultiStep
+    ? dropoffPct(repPowers)
+    : dropoffPct(workEfforts.map((e) => e.avg_power))
+  const workPowers = isMultiStep ? repPowers : workEfforts.map((e) => e.avg_power).filter((p) => typeof p === 'number')
+
+  const stepSummaries = isMultiStep
+    ? manifestSteps.map((step, i) => {
+        const same = efforts.filter((e) => e.step_index === i + 1)
+        const powers = same.map((e) => e.avg_power).filter((p) => typeof p === 'number')
+        return {
+          step_index: i + 1,
+          role: step.role,
+          count: same.length,
+          avg_power: powers.length ? Math.round(avg(powers)) : null,
+        }
+      })
+    : null
 
   return {
     efforts,
@@ -243,6 +277,7 @@ function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW
       reps_target: repsTarget,
       dropoff_pct: dropoff,
       avg_power: workPowers.length ? Math.round(avg(workPowers)) : null,
+      ...(stepSummaries ? { step_summaries: stepSummaries } : {}),
       ...(isDistanceKeyed
         ? {
             target_distance_m: workEfforts[0]?.target_distance_m ?? null,
@@ -298,7 +333,14 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
     discipline: disciplineHint,
     timeSeries,
     ...(pattern === 'custom_intervals'
-      ? { steps: manifest.steps || [], repeatCount: manifest.repeat_count || 1, ftpAtActivityW, hrMaxBpm }
+      ? {
+          steps: manifest.steps || [],
+          repeatCount: manifest.repeat_count || 1,
+          ftpAtActivityW,
+          hrMaxBpm,
+          warmupSec: manifest.warmup_sec || null,
+          cooldownSec: manifest.cooldown_sec || null,
+        }
       : {}),
   })
 

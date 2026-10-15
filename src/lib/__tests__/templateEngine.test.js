@@ -153,3 +153,39 @@ test('evaluateTemplate (custom_intervals): heart-rate-banded template works on a
   assert.equal(result.summary.reps_detected, 2)
   assert.equal(result.efforts.filter((e) => e.role === 'work').length, 2)
 })
+
+test('evaluateTemplate (custom_intervals): manifest warmup_sec/cooldown_sec exclude the head and tail', () => {
+  const watts = [...repeatWatts(300, 60), ...repeatWatts(100, 200), ...repeatWatts(300, 60)]
+  const step = { role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 0, bandType: 'watts', powerMin: 290, powerMax: 310 }
+  const base = { pattern: 'custom_intervals', repeat_count: 2, steps: [step] }
+  assert.equal(evaluateTemplate({ slug: 'a', manifest: base }, { watts }).summary.reps_detected, 2)
+  assert.equal(evaluateTemplate({ slug: 'a', manifest: { ...base, warmup_sec: 60 } }, { watts }).summary.reps_detected, 1)
+  assert.equal(evaluateTemplate({ slug: 'a', manifest: { ...base, warmup_sec: 60, cooldown_sec: 60 } }, { watts }).summary.reps_detected, 0)
+})
+
+test('evaluateTemplate (custom_intervals): multi-step blocks get step_index, per-step summaries and rep-level drop-off', () => {
+  const block = (a, b) => [...repeatWatts(a, 60), ...repeatWatts(b, 30), ...repeatWatts(80, 60)]
+  const watts = [...block(200, 300), ...block(180, 270)]
+  const mk = (role, dur, min, max) => ({ role, keyBy: 'duration', targetDurationSec: dur, durationTolerancePct: 0, bandType: 'watts', powerMin: min, powerMax: max })
+  const template = {
+    slug: 'ms',
+    manifest: {
+      pattern: 'custom_intervals',
+      repeat_count: 2,
+      steps: [mk('work', 60, 170, 210), mk('work', 30, 260, 310), mk('recovery', 60, null, 90)],
+    },
+  }
+  const r = evaluateTemplate(template, { watts })
+  assert.equal(r.summary.reps_detected, 2)
+  assert.deepEqual(r.efforts.map((e) => [e.rep, e.step_index]), [[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+  assert.equal(r.summary.step_summaries.length, 3)
+  assert.equal(r.summary.step_summaries[1].avg_power, 285)
+  // rep power = (200*60+300*30)/90 = 233 vs (180*60+270*30)/90 = 210 -> drop-off ~9.9%
+  assert.ok(r.summary.dropoff_pct > 9 && r.summary.dropoff_pct < 11)
+})
+
+test('evaluateTemplate (custom_intervals): classic work/recovery output has no multi-step fields (regression)', () => {
+  const r = evaluateTemplate(customTemplate(), { watts: buildTwoCycleStream() }, 220)
+  assert.equal(r.summary.step_summaries, undefined)
+  assert.ok(r.efforts.every((e) => e.step_index === undefined))
+})

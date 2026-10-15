@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../lib/supabaseServer'
-import { parseIntervalDsl } from '../../../lib/intervalDsl'
+import { buildIntervalManifest, parseIntervalDsl } from '../../../lib/intervalDsl'
 
 // GET /api/templates - list all declarative analysis templates (Phase 2 manifests)
 // Visible rows are governed by RLS: system templates (user_id IS NULL), the
@@ -52,12 +52,13 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Missing name or dslSource' }, { status: 400 })
     }
 
-    const { repeatCount, steps, errors } = parseIntervalDsl(dslSource)
+    const parsedDsl = parseIntervalDsl(dslSource)
+    const { errors } = parsedDsl
     if (errors.length) {
       return NextResponse.json({ error: 'Invalid interval DSL', errors }, { status: 400 })
     }
 
-    const manifest = { pattern: 'custom_intervals', repeat_count: repeatCount, steps }
+    const manifest = buildIntervalManifest(parsedDsl)
     const slug = `custom_${user.id.slice(0, 8)}_${Date.now()}`
 
     const { data, error } = await supabase
