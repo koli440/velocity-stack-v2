@@ -67,6 +67,11 @@ BEGIN
     END IF;
     if_val := round(np / ftp, 3);
     tl_val := round(elapsed * np * if_val / (ftp * 3600) * 100, 1);
+    -- Column precision is NUMERIC(4,3) / NUMERIC(6,1); out-of-range values are left empty.
+    IF if_val >= 10 OR tl_val >= 100000 THEN
+        if_val := NULL;
+        tl_val := NULL;
+    END IF;
 END;
 $$;
 
