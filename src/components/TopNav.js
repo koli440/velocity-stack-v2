@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import ThemeToggle from './ThemeToggle'
 import Avatar from './Avatar'
 import Icon from './Icon'
+import SessionSearch from './SessionSearch'
 import NotificationBell from './NotificationBell'
 import AddSessionModal from './AddSessionModal'
 import { OPEN_ADD_SESSION_EVENT } from '../lib/navigation'
@@ -41,14 +42,7 @@ export default function TopNav({
           <Icon name="menu" size={20} />
         </button>
 
-        <div className="w-full relative">
-          <Icon name="search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search sessions, tracks, laps..."
-            className="w-full bg-slate-50 dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-xl pl-9 pr-3.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-          />
-        </div>
+        <SessionSearch userId={user?.id} tracks={tracks} />
       </div>
 
       {/* Right side: Profile, ThemeToggle and Sign Out */}
