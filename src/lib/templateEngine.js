@@ -354,9 +354,11 @@ const EVALUATORS = {
  *   only used by the `custom_intervals` pattern's %FTP-banded steps.
  * @param {number|null} [hrMaxBpm] - reference max heart rate for `%HRmax` bands (issue #123);
  *   when omitted the highest value in the activity's heart rate stream is used.
+ * @param {{lt1Power, lt1Hr, lt2Power, lt2Hr}|null} [lt] - the activity's lactate threshold
+ *   snapshot (issue #121; see ltFromActivity); used by `%LT1`/`%LT2` bands and the LT time metrics.
  * @returns {{ efforts: object[], summary: object }}
  */
-export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null, hrMaxBpm = null) {
+export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null, hrMaxBpm = null, lt = null) {
   const manifest = template.manifest || {}
   const pattern = manifest.pattern || 'repeated_bursts'
   const evaluator = EVALUATORS[pattern]
@@ -388,6 +390,7 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
           repeatCount: manifest.repeat_count || 1,
           ftpAtActivityW,
           hrMaxBpm,
+          lt,
           warmupSec: manifest.warmup_sec || null,
           cooldownSec: manifest.cooldown_sec || null,
           setCount: manifest.set_count || null,
@@ -400,5 +403,9 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
     ? evaluator(template, timeSeries, detection, ftpAtActivityW)
     : { efforts: detection.efforts || [], summary: {} }
 
-  return applySummaryMetrics(manifest.summary_metrics, result, timeSeries, ftpAtActivityW)
+  if (detection.message && !result.efforts?.length && result.summary && !result.summary.reason) {
+    result.summary.reason = detection.message
+  }
+
+  return applySummaryMetrics(manifest.summary_metrics, result, timeSeries, ftpAtActivityW, lt)
 }

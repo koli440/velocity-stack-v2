@@ -75,6 +75,17 @@ There are six kinds of band:
    keying existed). On a **distance-keyed** step the metric must be spelled out
    explicitly, since there's no default: `best power` or `best speed`.
 
+7. **Lactate-threshold band** (issue #121) — relative to the athlete's LT1/LT2, same
+   range/min/max syntax: `95-105%LT2`, `<100%LT1`, `>100%LT2` (power) and
+   `97-103%LT2HR`, `<100%LT1HR` (average heart rate). Evaluated against the *activity's own*
+   LT snapshot (`lt1_power_at_activity_w`, `lt1_hr_at_activity`, `lt2_power_at_activity_w`,
+   `lt2_hr_at_activity`, resolved from the effective-dated history at the activity's date),
+   never the current values. If the activity has no value for the threshold a step needs
+   (or no HR stream for an HR band), the run reports a message instead of failing. LT
+   bands are stored as `bandType` `pct_lt1`, `pct_lt2`, `pct_lt1_hr`, `pct_lt2_hr`; efforts
+   report `pct_of_lt1`/`pct_of_lt2` (and `avg_hr_bpm` for HR variants). Existing templates
+   are unaffected.
+
 HR and cadence bands can be freely mixed with power bands across steps of one template
 (e.g. `work ... @ 150-165bpm` followed by `recovery ... @ <120bpm`); each step is matched
 against its own stream. Efforts matched on an HR band report `avg_hr_bpm`; on a cadence
@@ -345,6 +356,8 @@ metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
 | `dropoff` | `dropoff_pct` | last rep vs best | Per effort: % below the best rep. Summary: last vs best |
 | `decoupling` | `pw_hr_decoupling_pct` | mean | Per effort, first vs second half W/bpm |
 | `hr_recovery` / `hr_recovery(<n>sec\|min)` | `hr_recovery_<n>s` | mean | bpm the HR drops `n` seconds after the effort ends (default 60 s); `null` if the stream ends first |
+| `time_below_lt1`, `time_lt1_lt2`, `time_above_lt2` | `time_below_lt1_s`, `time_lt1_lt2_s`, `time_above_lt2_s` | sum | Seconds of the effort's power below LT1 (`< LT1`), between (`LT1 <= p < LT2`) or above LT2 (`>= LT2`), using the activity's LT snapshot; `null` without the needed thresholds |
+| `time_below_lt1_hr`, `time_lt1_lt2_hr`, `time_above_lt2_hr` | `time_below_lt1_hr_s`, `time_lt1_lt2_hr_s`, `time_above_lt2_hr_s` | sum | Same, from the heart-rate stream and LT HR |
 
 Metrics that need a stream the activity lacks are `null`. Fields the engine already
 computed for a pattern (e.g. `avg_power`, `pacing_index`) are never overwritten.
@@ -415,3 +428,21 @@ recovery 5min ±30% @ <70%HRmax
 work 5min ±15% @ 100-110rpm
 recovery 3min ±30% @ <70rpm
 ```
+
+## Lactate threshold examples
+
+```
+4x
+work 8min ±15% @ 95-105%LT2
+recovery 4min ±40% @ <100%LT1
+metrics avg_power, time_lt1_lt2, time_above_lt2
+```
+
+```
+3x
+work 10min ±15% @ 97-103%LT2HR
+recovery 5min ±40% @ <100%LT1HR
+```
+
+System templates using LT bands: `sys_lt_lt2_intervals_4x8`, `sys_lt_lt2_hr_3x10`,
+`sys_lt_lt1_endurance_90`, `sys_lt_over_unders`.
