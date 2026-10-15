@@ -275,3 +275,51 @@ test('over-unders, pyramid and ramp round-trip stably', () => {
     assert.deepEqual(parseIntervalDsl(text).steps, p.steps)
   }
 })
+
+// ---- sets (issue #126) ----
+
+test('sets: "3 sets of 5x" with set recovery parses and round-trips', () => {
+  const src = '3 sets of 5x\nwork 30sec ±20% @ 120-140%FTP\nrecovery 30sec ±50% @ <55%FTP\nset recovery 5min ±30% @ <55%FTP'
+  const p = parseIntervalDsl(src)
+  assert.deepEqual(p.errors, [])
+  assert.equal(p.setCount, 3)
+  assert.equal(p.repeatCount, 5)
+  assert.equal(p.steps.length, 2)
+  assert.equal(p.setRecovery.targetDurationSec, 300)
+  assert.equal(stringifyIntervalDsl(p), src)
+  assert.equal(stringifyIntervalDsl(parseIntervalDsl(stringifyIntervalDsl(p))), src)
+})
+
+test('sets: set recovery is optional; "set of"/spacing variants normalise', () => {
+  const p = parseIntervalDsl('2 set of 4X\nwork 1min ±10% @ best')
+  assert.deepEqual(p.errors, [])
+  assert.equal(p.setCount, 2)
+  assert.equal(p.setRecovery, null)
+  assert.equal(stringifyIntervalDsl(p), '2 sets of 4x\nwork 1min ±10% @ best')
+})
+
+test('sets: legacy documents are unaffected (no set fields, identical manifest)', () => {
+  const p = parseIntervalDsl('4x\nwork 3min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP')
+  assert.equal(p.setCount, null)
+  assert.equal(p.setRecovery, null)
+  const m = buildIntervalManifest(p)
+  assert.deepEqual(Object.keys(m), ['pattern', 'repeat_count', 'steps'])
+})
+
+test('sets: validation errors', () => {
+  assert.ok(parseIntervalDsl('0 sets of 3x\nwork 1min ±5% @ best').errors.length)
+  assert.ok(parseIntervalDsl('3x\nwork 1min ±5% @ best\nset recovery 1min ±5% @ <55%FTP').errors.length)
+  assert.ok(parseIntervalDsl('2 sets of 3x\nwork 1min ±5% @ best\nset work 1min ±5% @ best').errors.length)
+  assert.ok(
+    parseIntervalDsl('2 sets of 3x\nwork 1min ±5% @ best\nset recovery 1min ±5% @ <55%FTP\nset recovery 1min ±5% @ <55%FTP').errors.length
+  )
+})
+
+test('sets: manifest builder/inverse round-trip', () => {
+  const src = '2 sets of 3x\nwarmup 10min\nwork 1min ±5% @ 100-120%FTP\nset recovery 4min ±20% @ <55%FTP'
+  const p = parseIntervalDsl(src)
+  const m = buildIntervalManifest(p)
+  assert.equal(m.set_count, 2)
+  assert.equal(m.set_recovery.role, 'recovery')
+  assert.equal(stringifyIntervalDsl(manifestToDslInput(m)), stringifyIntervalDsl(p))
+})

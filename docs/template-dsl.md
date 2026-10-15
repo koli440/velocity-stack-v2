@@ -183,9 +183,34 @@ by their average within the tolerance, use a small tolerance (`±5%` or less) on
 steps so boundaries line up. A contiguous step is stored as `contiguous: true` on the
 step (omitted otherwise), and serialised back as a `then ` prefix.
 
+### Sets
+
+Write `<S> sets of <N>x` on the first line (`set`/`sets`, case-insensitive) to repeat the
+block `N` times per set, `S` sets in total. An optional `set recovery` line (same syntax as
+a step, but no `then`) is searched for between sets, after the last rep of each set and never
+after the last set:
+
+```
+3 sets of 5x
+work 30sec ±20% @ 120-140%FTP
+recovery 30sec ±50% @ <55%FTP
+set recovery 5min ±30% @ <55%FTP
+```
+
+- Without a `set recovery` line, sets simply follow each other.
+- Sets are matched in order: if a set's recovery cannot be found, detection stops
+  after that set; an incomplete rep is dropped as usual.
+- Efforts get `set` and `rep_in_set` (`rep` stays the overall rep number); the set
+  recovery effort has role `set_recovery` and is excluded from work statistics.
+- The summary gains `sets_target`, `sets_detected` and `set_summaries`; `reps_target` is
+  sets × reps.
+- Stored as `set_count` and `set_recovery` on the manifest (omitted when unused), with
+  `repeat_count` being the reps per set. `1x`/`Nx` documents are unchanged.
+- A `set recovery` line requires a sets line, and may appear at most once.
+
 ### Validation rules
 
-- `repeatCount >= 1`.
+- `repeatCount >= 1` (and set count `>= 1` when using `S sets of Nx`).
 - Duration (or distance) must be `> 0`.
 - Tolerance must be between `0` and `100` (percent).
 - At least one `work` step is required.

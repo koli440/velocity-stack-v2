@@ -57,11 +57,20 @@
 // A repeat may contain any number of work/recovery steps, matched in the
 // order written (multi-step blocks).
 //
+// Sets (issue #126): `<S> sets of <N>x` repeats the block N times per set, S
+// sets, with an optional `set recovery` line (same syntax as a step, no `then`)
+// searched for between sets:
+//
+//   3 sets of 5x
+//   work 30sec ±20% @ 120-140%FTP
+//   recovery 30sec ±50% @ <55%FTP
+//   set recovery 5min ±30% @ <55%FTP
+//
 // Deliberately plain JS (no Node-only APIs) so it can run both server-side
 // (API route validation) and client-side (live preview in the creator UI).
 
-const REPEAT_LINE_RE = /^(\d+)\s*x$/i
-const STEP_LINE_RE = /^(then\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(min|sec|km|m)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
+const REPEAT_LINE_RE = /^(?:(\d+)\s*sets?\s*of\s*)?(\d+)\s*x$/i
+const STEP_LINE_RE = /^(then\s+|set\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(min|sec|km|m)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
 const EXCLUDE_LINE_RE = /^(warm-?up|cool-?down)\s+(\d+(?:\.\d+)?)\s*(min|sec)$/i
 const RANGE_BAND_RE = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
 const MAX_BAND_RE = /^<\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
@@ -124,7 +133,9 @@ function parseBand(bandText) {
  * Parse a full interval DSL document into a validated manifest.
  * @param {string} text
  * @returns {{
- *   repeatCount: number|null,
+ *   repeatCount: number|null,                          // reps per set when setCount is set
+ *   setCount: number|null,                             // "S sets of Nx"; null otherwise
+ *   setRecovery: step|null,                            // "set recovery ..." line (role 'recovery')
  *   warmupSec: number|null, cooldownSec: number|null,  // excluded head/tail of the activity
  *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
  *   errors: Array<{line: number, message: string}>
@@ -134,6 +145,8 @@ export function parseIntervalDsl(text) {
   const errors = []
   const steps = []
   let repeatCount = null
+  let setCount = null
+  let setRecovery = null
   let warmupSec = null
   let cooldownSec = null
 
@@ -148,13 +161,17 @@ export function parseIntervalDsl(text) {
     if (!sawRepeatLine) {
       const m = line.match(REPEAT_LINE_RE)
       if (!m) {
-        errors.push({ line: lineNo, message: `Expected a repeat count like "4x" or "1x", got "${line}".` })
+        errors.push({ line: lineNo, message: `Expected a repeat count like "4x", "1x" or "3 sets of 5x", got "${line}".` })
         sawRepeatLine = true // avoid cascading "expected repeat line" errors
         return
       }
-      repeatCount = parseInt(m[1], 10)
+      repeatCount = parseInt(m[2], 10)
       if (!(repeatCount >= 1)) {
         errors.push({ line: lineNo, message: 'Repeat count must be 1 or greater.' })
+      }
+      if (m[1] != null) {
+        setCount = parseInt(m[1], 10)
+        if (!(setCount >= 1)) errors.push({ line: lineNo, message: 'Set count must be 1 or greater.' })
       }
       sawRepeatLine = true
       return
@@ -187,9 +204,19 @@ export function parseIntervalDsl(text) {
       return
     }
 
-    const [, thenRaw, roleRaw, valueRaw, unitRaw, toleranceRaw, bandTextRaw] = m
+    const [, prefixRaw, roleRaw, valueRaw, unitRaw, toleranceRaw, bandTextRaw] = m
     const role = roleRaw.toLowerCase()
-    const contiguous = Boolean(thenRaw)
+    const isSetRecovery = Boolean(prefixRaw) && prefixRaw.trim().toLowerCase() === 'set'
+    const contiguous = Boolean(prefixRaw) && !isSetRecovery
+    if (isSetRecovery) {
+      if (role !== 'recovery') {
+        errors.push({ line: lineNo, message: '"set" can only prefix a recovery line: "set recovery <value> ±<tol>% @ <band>".' })
+      } else if (setCount == null) {
+        errors.push({ line: lineNo, message: '"set recovery" needs a first line like "3 sets of 5x".' })
+      } else if (setRecovery) {
+        errors.push({ line: lineNo, message: 'Only one "set recovery" line is allowed.' })
+      }
+    }
     if (contiguous && !steps.length) {
       errors.push({ line: lineNo, message: '"then" needs a preceding step in the same repeat; remove it from the first step.' })
     }
@@ -243,7 +270,7 @@ export function parseIntervalDsl(text) {
       }
     }
 
-    steps.push({
+    const stepObj = {
       role,
       keyBy,
       targetDurationSec,
@@ -254,7 +281,12 @@ export function parseIntervalDsl(text) {
       powerMin: band ? band.powerMin : null,
       powerMax: band ? band.powerMax : null,
       ...(contiguous ? { contiguous: true } : {}),
-    })
+    }
+    if (isSetRecovery) {
+      if (role === 'recovery' && !setRecovery) setRecovery = stepObj
+    } else {
+      steps.push(stepObj)
+    }
   })
 
   if (!sawRepeatLine) {
@@ -265,7 +297,7 @@ export function parseIntervalDsl(text) {
     errors.push({ line: rawLines.length || 1, message: 'Template must contain at least one "work" step.' })
   }
 
-  return { repeatCount, steps, warmupSec, cooldownSec, errors }
+  return { repeatCount, setCount, setRecovery, steps, warmupSec, cooldownSec, errors }
 }
 
 function formatDuration(targetDurationSec) {
@@ -305,14 +337,16 @@ function formatBand({ bandType, bestMetric, powerMin, powerMax, keyBy }) {
  * @param {{repeatCount: number, steps: Array}} manifest
  * @returns {string}
  */
-export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null } = {}) {
-  const lines = [`${repeatCount}x`]
+export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null } = {}) {
+  const lines = [setCount ? `${setCount} sets of ${repeatCount}x` : `${repeatCount}x`]
   if (warmupSec) lines.push(`warmup ${formatDuration(warmupSec)}`)
   if (cooldownSec) lines.push(`cooldown ${formatDuration(cooldownSec)}`)
-  steps.forEach((step) => {
+  const stepLine = (step, prefix) => {
     const valueText = step.keyBy === 'distance' ? formatDistance(step.targetDistanceM) : formatDuration(step.targetDurationSec)
-    lines.push(`${step.contiguous ? 'then ' : ''}${step.role} ${valueText} ±${formatNumber(step.durationTolerancePct)}% @ ${formatBand(step)}`)
-  })
+    return `${prefix}${step.role} ${valueText} ±${formatNumber(step.durationTolerancePct)}% @ ${formatBand(step)}`
+  }
+  steps.forEach((step) => lines.push(stepLine(step, step.contiguous ? 'then ' : '')))
+  if (setCount && setRecovery) lines.push(stepLine({ ...setRecovery, role: 'recovery' }, 'set '))
   return lines.join('\n')
 }
 
@@ -321,13 +355,15 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
  * Optional fields are omitted when unused so manifests of templates that do not
  * use newer grammar are byte-identical to those saved before it existed.
  */
-export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null }) {
+export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null }) {
   return {
     pattern: 'custom_intervals',
     repeat_count: repeatCount,
     steps,
     ...(warmupSec ? { warmup_sec: warmupSec } : {}),
     ...(cooldownSec ? { cooldown_sec: cooldownSec } : {}),
+    ...(setCount ? { set_count: setCount } : {}),
+    ...(setCount && setRecovery ? { set_recovery: setRecovery } : {}),
   }
 }
 
@@ -338,5 +374,7 @@ export function manifestToDslInput(manifest = {}) {
     steps: manifest.steps || [],
     warmupSec: manifest.warmup_sec ?? null,
     cooldownSec: manifest.cooldown_sec ?? null,
+    setCount: manifest.set_count ?? null,
+    setRecovery: manifest.set_recovery ?? null,
   }
 }

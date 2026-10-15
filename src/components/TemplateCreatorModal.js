@@ -197,6 +197,7 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
             </div>
           ) : (
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              {parsed.setCount ? `${parsed.setCount} sets × ` : ''}
               {parsed.repeatCount} × [
               {parsed.steps
                 .map(
@@ -207,6 +208,10 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
                 )
                 .join(' → ')}
               ]
+              {parsed.setRecovery &&
+                ` with set recovery ${formatValueLabel(parsed.setRecovery)} ±${parsed.setRecovery.durationTolerancePct}% @ ${formatBandLabel(
+                  parsed.setRecovery
+                )}`}
               {(parsed.warmupSec || parsed.cooldownSec) &&
                 ` (ignoring ${[
                   parsed.warmupSec ? `first ${formatDurationLabel(parsed.warmupSec)}` : null,

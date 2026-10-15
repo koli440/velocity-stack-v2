@@ -515,3 +515,64 @@ test('contiguous steps work on distance-keyed and best steps', () => {
   assert.equal(efforts.length, 2)
   assert.equal(efforts[1].start_sec, efforts[0].end_sec)
 })
+
+// ---- sets (issue #126) ----
+
+const R = (sec, band) => ({ role: 'recovery', keyBy: 'duration', targetDurationSec: sec, durationTolerancePct: 0, bandType: 'watts', powerMin: band[0], powerMax: band[1] })
+
+function setStream(sets, reps) {
+  const out = [...repeatWatts(100, 30)]
+  for (let s = 0; s < sets; s++) {
+    for (let r = 0; r < reps; r++) out.push(...repeatWatts(300, 30), ...repeatWatts(60, 30))
+    if (s < sets - 1) out.push(...repeatWatts(40, 120))
+  }
+  return out
+}
+
+test('sets: 3 sets of 4 reps with set recovery are tagged and separated', () => {
+  const steps = [S(30, [295, 305]), R(30, [null, 70])]
+  const setRecovery = R(120, [null, 50])
+  const { efforts } = detectCustomIntervalSequence({ watts: setStream(3, 4), steps, repeatCount: 4, setCount: 3, setRecovery })
+  const work = efforts.filter((e) => e.role === 'work')
+  const setRec = efforts.filter((e) => e.role === 'set_recovery')
+  assert.equal(work.length, 12)
+  assert.equal(setRec.length, 2)
+  assert.deepEqual(work.map((e) => [e.set, e.rep_in_set]), Array.from({ length: 12 }, (_, i) => [Math.floor(i / 4) + 1, (i % 4) + 1]))
+  assert.deepEqual(setRec.map((e) => e.set), [1, 2])
+  setRec.forEach((e) => assert.ok(e.duration_sec === 120 && e.avg_power <= 50))
+  for (let i = 1; i < efforts.length; i++) assert.ok(efforts[i].start_sec >= efforts[i - 1].end_sec)
+})
+
+test('sets: incomplete trailing set is dropped; missing set recovery stops detection', () => {
+  const steps = [S(30, [295, 305]), R(30, [null, 70])]
+  const setRecovery = R(120, [null, 50])
+  const two = detectCustomIntervalSequence({ watts: setStream(2, 4), steps, repeatCount: 4, setCount: 3, setRecovery })
+  assert.equal(two.efforts.filter((e) => e.role === 'work').length, 8)
+  const noGap = [...repeatWatts(100, 30), ...Array.from({ length: 8 }, () => [...repeatWatts(300, 30), ...repeatWatts(60, 30)]).flat()]
+  const r = detectCustomIntervalSequence({ watts: noGap, steps, repeatCount: 4, setCount: 2, setRecovery })
+  assert.equal(r.efforts.filter((e) => e.role === 'work').length, 4)
+  assert.equal(r.efforts.filter((e) => e.role === 'set_recovery').length, 0)
+})
+
+test('sets without set recovery line: sets follow each other; "best" is not short-circuited', () => {
+  const steps = [S(30, [295, 305]), R(30, [null, 70])]
+  const r = detectCustomIntervalSequence({ watts: setStream(2, 3), steps, repeatCount: 3, setCount: 2 })
+  assert.equal(r.efforts.filter((e) => e.role === 'work').length, 6)
+  assert.deepEqual([...new Set(r.efforts.map((e) => e.set))], [1, 2])
+  const best = [{ role: 'work', keyBy: 'duration', targetDurationSec: 30, durationTolerancePct: 0, bandType: 'best', bestMetric: 'power', powerMin: null, powerMax: null }]
+  const b = detectCustomIntervalSequence({ watts: setStream(2, 2), steps: best, repeatCount: 2, setCount: 2 })
+  assert.equal(b.efforts.length, 4)
+  assert.deepEqual(b.efforts.map((e) => e.set), [1, 1, 2, 2])
+})
+
+test('sets: warm-up/cool-down exclusion still applies', () => {
+  const steps = [S(30, [295, 305]), R(30, [null, 70])]
+  const watts = [...repeatWatts(300, 30), ...setStream(1, 2)] // decoy work inside the warm-up
+  const r = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, setCount: 1, warmupSec: 30 })
+  assert.ok(r.efforts[0].start_sec >= 30 && r.efforts[0].start_sec <= 60)
+})
+
+test('legacy (no sets) detection output has no set tags', () => {
+  const { efforts } = detectCustomIntervalSequence({ watts: setStream(1, 3), steps: [S(30, [295, 305])], repeatCount: 3 })
+  assert.ok(efforts.every((e) => e.set === undefined && e.rep_in_set === undefined))
+})
