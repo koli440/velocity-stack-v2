@@ -323,3 +323,42 @@ test('sets: manifest builder/inverse round-trip', () => {
   assert.equal(m.set_recovery.role, 'recovery')
   assert.equal(stringifyIntervalDsl(manifestToDslInput(m)), stringifyIntervalDsl(p))
 })
+
+test('metrics line parses, validates and round-trips (issue #127)', () => {
+  const dsl = '3x\nwork 10min ±10% @ 90-100%FTP\nrecovery 5min ±30% @ <55%FTP\nmetrics np, vi, hr_recovery(30sec), decoupling'
+  const parsed = parseIntervalDsl(dsl)
+  assert.deepEqual(parsed.errors, [])
+  assert.deepEqual(parsed.metrics, [
+    { id: 'np', windowSec: null },
+    { id: 'vi', windowSec: null },
+    { id: 'hr_recovery', windowSec: 30 },
+    { id: 'decoupling', windowSec: null },
+  ])
+  assert.equal(stringifyIntervalDsl(parsed), dsl)
+  assert.equal(stringifyIntervalDsl(parseIntervalDsl(stringifyIntervalDsl(parsed))), dsl)
+
+  const manifest = buildIntervalManifest(parsed)
+  assert.deepEqual(manifest.summary_metrics[2], { id: 'hr_recovery', window_sec: 30 })
+  assert.equal(stringifyIntervalDsl(manifestToDslInput(manifest)), dsl)
+})
+
+test('metrics line: colon, case, minutes window, anywhere after the repeat line', () => {
+  const parsed = parseIntervalDsl('1x\nMetrics: NP, HR_Recovery(1min)\nwork 5min ±10% @ best')
+  assert.deepEqual(parsed.errors, [])
+  assert.equal(stringifyIntervalDsl(parsed), '1x\nwork 5min ±10% @ best\nmetrics np, hr_recovery(1min)')
+})
+
+test('metrics line errors: unknown, duplicate, window on wrong metric, empty, repeated line', () => {
+  const base = '1x\nwork 5min ±10% @ best\n'
+  assert.match(parseIntervalDsl(base + 'metrics foo').errors[0].message, /Unknown metric "foo"/)
+  assert.match(parseIntervalDsl(base + 'metrics np, np').errors[0].message, /twice/)
+  assert.match(parseIntervalDsl(base + 'metrics np(30sec)').errors[0].message, /does not take a window/)
+  assert.match(parseIntervalDsl(base + 'metrics').errors[0].message, /at least one/)
+  assert.match(parseIntervalDsl(base + 'metrics np\nmetrics vi').errors[0].message, /Only one/)
+})
+
+test('templates without a metrics line keep byte-identical manifests', () => {
+  const parsed = parseIntervalDsl('4x\nwork 3min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP')
+  assert.deepEqual(parsed.metrics, [])
+  assert.equal('summary_metrics' in buildIntervalManifest(parsed), false)
+})
