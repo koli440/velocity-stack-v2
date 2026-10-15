@@ -140,8 +140,12 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
   const loadHistory = useCallback(async (slug) => {
     const authHeader = await getAuthHeader()
     const res = await fetch(`/api/templates/${slug}/history`, { headers: authHeader })
-    const data = await res.json()
-    if (res.ok) setHistoryBySlug((prev) => ({ ...prev, [slug]: data.executions || [] }))
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      setError(data.error || 'Failed to load template history')
+      return
+    }
+    setHistoryBySlug((prev) => ({ ...prev, [slug]: data.executions || [] }))
   }, [])
 
   const loadRuns = useCallback(async () => {
@@ -155,6 +159,10 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
       list.forEach((r) => r.analysis_templates?.slug && loadHistory(r.analysis_templates.slug))
     }
   }, [activityId, loadHistory])
+
+  useEffect(() => {
+    setHistoryBySlug({})
+  }, [activityId])
 
   useEffect(() => {
     loadTemplates()
@@ -224,6 +232,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete run')
       setRuns((prev) => prev.filter((r) => r.id !== run.id))
+      if (run.analysis_templates?.slug) loadHistory(run.analysis_templates.slug)
     } catch (err) {
       setError(err.message)
     }

@@ -12,6 +12,7 @@
 // header. This lets RLS policies resolve auth.uid() correctly and lets us
 // validate the token via supabase.auth.getUser(token).
 import { createClient } from '@supabase/supabase-js'
+import { noStoreFetch } from './noStoreFetch'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -25,7 +26,7 @@ export async function getRequestUser(req) {
   const token = authHeader.replace(/^Bearer\s+/i, '').trim()
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    global: { fetch: noStoreFetch, headers: token ? { Authorization: `Bearer ${token}` } : {} },
     auth: { persistSession: false },
   })
 
