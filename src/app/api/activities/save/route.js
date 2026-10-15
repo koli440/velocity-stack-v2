@@ -48,7 +48,8 @@ export async function POST(req) {
         raw_file_url: raw_file_url ?? null,
         file_sha256: file_sha256 ?? null,
         processing_status: 'baseline_completed',
-        activity_date: new Date().toISOString(),
+        activity_date: summary?.start_time || new Date().toISOString(),
+        start_time: summary?.start_time ?? null,
       })
       .select()
       .single()

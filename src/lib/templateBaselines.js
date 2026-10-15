@@ -19,17 +19,22 @@ function averageSummary(executions) {
   return out
 }
 
+// Baselines are ordered by when the ride happened, not when the run was created/imported.
+function ridden(h) {
+  return new Date(h.activities?.activity_date || h.created_at).getTime()
+}
+
 /**
- * @param {object[]} history - executions ({activity_id, summary, created_at}) of one template
- * @param {{activityId: string, runAt: string|Date}} run - the run being compared
+ * @param {object[]} history - executions ({activity_id, summary, created_at, activities?: {activity_date}}) of one template
+ * @param {{activityId: string, runAt: string|Date}} run - the run being compared (runAt = date of the ride)
  * @returns {{previous: object|null, allTime: {summary: object, count: number}, last90: {summary: object, count: number}}}
  */
 export function computeBaselines(history = [], { activityId, runAt }) {
   const runTime = new Date(runAt).getTime()
   const prior = history
-    .filter((h) => h.activity_id !== activityId && new Date(h.created_at).getTime() <= runTime)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-  const recent = prior.filter((h) => runTime - new Date(h.created_at).getTime() <= 90 * DAY_MS)
+    .filter((h) => h.activity_id !== activityId && ridden(h) <= runTime)
+    .sort((a, b) => ridden(b) - ridden(a))
+  const recent = prior.filter((h) => runTime - ridden(h) <= 90 * DAY_MS)
   return {
     previous: prior[0] || null,
     allTime: { summary: averageSummary(prior), count: prior.length },
