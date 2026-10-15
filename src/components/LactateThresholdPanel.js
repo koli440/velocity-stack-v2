@@ -84,7 +84,7 @@ export default function LactateThresholdPanel({ userId }) {
     'w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono'
 
   return (
-    <div className="p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder space-y-3">
+    <div className="glass-dense p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder space-y-3">
       <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 dark:text-white">
         Lactate thresholds
       </h3>

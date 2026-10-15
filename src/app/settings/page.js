@@ -163,7 +163,7 @@ export default function SettingsPage() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
-        <section className="rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
           <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Profile</h2>
           <div className="flex items-center gap-4">
             <Avatar
@@ -238,7 +238,7 @@ export default function SettingsPage() {
           </div>
 
         </section>
-        <section className="rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
           <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Preferences</h2>
           <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
             <input
@@ -271,7 +271,7 @@ export default function SettingsPage() {
           </label>
 
         </section>
-        <section className="rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
           <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Gear defaults</h2>
           <div>
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
@@ -326,7 +326,9 @@ export default function SettingsPage() {
           <LactateThresholdPanel userId={user?.id} />
         </div>
 
-        <ConnectionsPanel userId={user?.id} />
+        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6">
+          <ConnectionsPanel userId={user?.id} />
+        </section>
 
         <PrivacyZonePanel userId={user?.id} />
 
