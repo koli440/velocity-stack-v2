@@ -9,6 +9,9 @@ import {
   addFavorite,
   removeFavorite,
   listFavoriteIds,
+  distinctRecentIds,
+  listRecentTemplateIds,
+  groupByCategory,
 } from '../templateMenu.js'
 
 const ME = 'u1'
@@ -100,4 +103,34 @@ test('favorites API: remove scopes delete to caller', async () => {
 test('favorites API: list returns template ids', async () => {
   const r = await listFavoriteIds(fakeClient({ favs: [{ template_id: 'a' }, { template_id: 'b' }] }), { id: ME })
   assert.deepEqual(r.body.favoriteIds, ['a', 'b'])
+})
+
+test('recent: dedupes keeping most recent order and limits', () => {
+  const rows = ['a', 'b', 'a', 'c', 'd', 'e', 'f', 'g'].map((template_id) => ({ template_id }))
+  assert.deepEqual(distinctRecentIds(rows, 5), ['a', 'b', 'c', 'd', 'e'])
+  assert.deepEqual(distinctRecentIds(null), [])
+})
+test('recent: requires auth, scopes to caller, orders by updated_at desc', async () => {
+  assert.equal((await listRecentTemplateIds({}, null)).status, 401)
+  const calls = {}
+  const q = {
+    select: () => q,
+    eq: (c, v) => { calls.eq = [c, v]; return q },
+    order: (c, o) => { calls.order = [c, o]; return q },
+    limit: async () => ({ data: [{ template_id: 'x' }, { template_id: 'x' }, { template_id: 'y' }], error: null }),
+  }
+  const r = await listRecentTemplateIds({ from: (t) => { calls.table = t; return q } }, { id: ME })
+  assert.equal(calls.table, 'template_executions')
+  assert.deepEqual(calls.eq, ['user_id', ME])
+  assert.deepEqual(calls.order, ['updated_at', { ascending: false }])
+  assert.deepEqual(r.body.recentIds, ['x', 'y'])
+})
+test('recent: db error surfaces as 400', async () => {
+  const q = { select: () => q, eq: () => q, order: () => q, limit: async () => ({ data: null, error: { message: 'boom' } }) }
+  assert.equal((await listRecentTemplateIds({ from: () => q }, { id: ME })).status, 400)
+})
+test('groupByCategory: sorted groups, uncategorized last', () => {
+  const g = groupByCategory([{ id: 1, category: 'road' }, { id: 2 }, { id: 3, category: 'gym' }, { id: 4, category: 'road' }])
+  assert.deepEqual(g.map((x) => x.category), ['gym', 'road', 'Uncategorized'])
+  assert.equal(g[1].items.length, 2)
 })

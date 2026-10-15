@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Portal from './Portal'
+import TemplatePickerModal from './TemplatePickerModal'
 import { selectedSummaryKeys, DEFAULT_RUN_KEYS, LEGACY_STATIC_KEYS } from '../lib/summaryMetrics'
 import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
@@ -95,6 +95,8 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
   const [currentUserId, setCurrentUserId] = useState(null)
   const [creatorOpen, setCreatorOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState(null)
+  const [favoriteIds, setFavoriteIds] = useState(() => new Set())
+  const [recentIds, setRecentIds] = useState([])
 
   const loadTemplates = useCallback(async () => {
     const authHeader = await getAuthHeader()
@@ -102,6 +104,38 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
     const data = await res.json()
     if (res.ok) setTemplates(data.templates || [])
   }, [])
+
+  const loadPickerExtras = useCallback(async () => {
+    const authHeader = await getAuthHeader()
+    const [favRes, recentRes] = await Promise.all([
+      fetch('/api/templates/favorites', { headers: authHeader }),
+      fetch('/api/templates/recent', { headers: authHeader }),
+    ])
+    if (favRes.ok) setFavoriteIds(new Set((await favRes.json()).favoriteIds || []))
+    if (recentRes.ok) setRecentIds((await recentRes.json()).recentIds || [])
+  }, [])
+
+  const toggleFavorite = async (template) => {
+    const wasFavorite = favoriteIds.has(template.id)
+    const apply = (on) =>
+      setFavoriteIds((prev) => {
+        const next = new Set(prev)
+        on ? next.add(template.id) : next.delete(template.id)
+        return next
+      })
+    apply(!wasFavorite)
+    try {
+      const authHeader = await getAuthHeader()
+      const res = await fetch(`/api/templates/${template.slug}/favorite`, {
+        method: wasFavorite ? 'DELETE' : 'POST',
+        headers: authHeader,
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to update favorite')
+    } catch (err) {
+      apply(wasFavorite)
+      setError(err.message)
+    }
+  }
 
   const loadHistory = useCallback(async (slug) => {
     const authHeader = await getAuthHeader()
@@ -171,6 +205,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
       else setHiddenIds((prev) => { const n = new Set(prev); n.delete(data.execution.id); return n })
       await loadRuns()
       setAddOpen(false)
+      loadPickerExtras()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -194,8 +229,6 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
     }
   }
 
-  const pickedTemplate = templates.find((t) => t.id === pickedTemplateId) || null
-  const ownsPicked = !!(pickedTemplate && currentUserId && pickedTemplate.user_id === currentUserId)
 
   const deleteTemplate = async (template) => {
     if (!window.confirm(`Delete template "${template.name}"? This cannot be undone.`)) return
@@ -204,7 +237,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
       const res = await fetch(`/api/templates/${template.slug}`, { method: 'DELETE', headers: authHeader })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete template')
-      setPickedTemplateId('')
+      setPickedTemplateId((prev) => (prev === template.id ? '' : prev))
       loadTemplates()
     } catch (err) {
       setError(err.message)
@@ -221,6 +254,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
   const openAdd = () => {
     setPickedTemplateId((prev) => prev || templates[0]?.id || '')
     setAddOpen(true)
+    loadPickerExtras()
   }
 
   const runTemplateIds = new Set(runs.map((r) => r.template_id))
@@ -412,45 +446,24 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
       )}
 
       {addOpen && (
-        <Portal><div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAddOpen(false)}>
-          <div className="w-full max-w-md bg-white dark:bg-surface-darkCard rounded-3xl p-6 space-y-4 border border-slate-200 dark:border-surface-darkBorder" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Add template run</h3>
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {templates.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setPickedTemplateId(t.id)}
-                  className={`w-full text-left p-3 rounded-xl border ${pickedTemplateId === t.id ? 'border-orange-500' : 'border-slate-200 dark:border-slate-800'}`}
-                >
-                  <div className="text-xs font-black text-slate-900 dark:text-white">{t.name}{t.user_id ? ' (mine)' : ''}</div>
-                  {runTemplateIds.has(t.id) && <div className="text-[10px] text-slate-400">Already run on this activity — re-running replaces it</div>}
-                  {t.description && <div className="text-[10px] text-slate-400">{t.description}</div>}
-                </button>
-              ))}
-            </div>
-            {ownsPicked && (
-              <div className="flex gap-3 text-[10px] font-black uppercase tracking-wider">
-                <button type="button" className="text-orange-500" onClick={() => { setEditingTemplate(pickedTemplate); setCreatorOpen(true) }}>Edit template</button>
-                <button type="button" className="text-red-500" onClick={() => deleteTemplate(pickedTemplate)}>Delete template</button>
-              </div>
-            )}
-            <label className="flex items-center gap-2 text-[11px] text-slate-500">
-              <input type="checkbox" checked={showOnChart} onChange={(e) => setShowOnChart(e.target.checked)} /> Show on chart after run
-            </label>
-            <div className="flex items-center justify-between">
-              <button type="button" className="text-[10px] font-black uppercase tracking-wider text-slate-400" onClick={() => { setEditingTemplate(null); setCreatorOpen(true) }}>
-                + Create new template
-              </button>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setAddOpen(false)} className={`${btn} bg-slate-100 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200`}>Cancel</button>
-                <button type="button" disabled={running || !pickedTemplateId} onClick={() => runTemplate(pickedTemplateId, { hide: !showOnChart })} className={`${btn} bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50`}>
-                  {running ? 'Running…' : 'Run'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div></Portal>
+        <TemplatePickerModal
+          templates={templates}
+          userId={currentUserId}
+          runTemplateIds={runTemplateIds}
+          favoriteIds={favoriteIds}
+          recentIds={recentIds}
+          selectedId={pickedTemplateId}
+          onSelect={setPickedTemplateId}
+          showOnChart={showOnChart}
+          onShowOnChartChange={setShowOnChart}
+          running={running}
+          onToggleFavorite={toggleFavorite}
+          onRun={(id) => runTemplate(id, { hide: !showOnChart })}
+          onClose={() => setAddOpen(false)}
+          onCreate={() => { setEditingTemplate(null); setCreatorOpen(true) }}
+          onEdit={(t) => { setEditingTemplate(t); setCreatorOpen(true) }}
+          onDelete={deleteTemplate}
+        />
       )}
 
       <TemplateCreatorModal
