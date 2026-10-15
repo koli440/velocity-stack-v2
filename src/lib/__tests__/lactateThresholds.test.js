@@ -10,6 +10,8 @@ import {
   fetchLtHistory,
   saveLtEntry,
   deleteLtEntry,
+  lactateZoneBreakdown,
+  activityLtSummary,
 } from '../lactateThresholds.js'
 
 const history = [
@@ -102,4 +104,41 @@ test('migration is idempotent, RLS-protected and not leaked via shared view', ()
   }
   assert.match(sql, /DROP TRIGGER IF EXISTS trg_activities_lt_snapshot/)
   assert.ok(!/shared_activities/.test(sql))
+})
+
+test('lactateZoneBreakdown splits a stream into three zones', () => {
+  const z = lactateZoneBreakdown([100, 150, 200, 220, 300, null, undefined, 'x'], 150, 220)
+  assert.deepEqual(z.map((x) => [x.id, x.seconds]), [['below_lt1', 1], ['lt1_lt2', 2], ['above_lt2', 2]])
+})
+
+test('lactateZoneBreakdown with a single threshold gives two zones', () => {
+  assert.deepEqual(
+    lactateZoneBreakdown([100, 150, 200], 150, null).map((x) => [x.id, x.seconds]),
+    [['below_lt1', 1], ['above_lt1', 2]]
+  )
+  assert.deepEqual(
+    lactateZoneBreakdown([100, 150, 200], null, 150).map((x) => [x.id, x.seconds]),
+    [['below_lt2', 1], ['above_lt2', 2]]
+  )
+})
+
+test('lactateZoneBreakdown handles missing streams and thresholds', () => {
+  assert.deepEqual(lactateZoneBreakdown(null, 150, 220), [])
+  assert.deepEqual(lactateZoneBreakdown([100], null, null), [])
+  assert.deepEqual(lactateZoneBreakdown([null, null], 150, 220), [])
+})
+
+test('activityLtSummary uses the activity snapshot only', () => {
+  assert.equal(activityLtSummary({ time_series: { watts: [1] } }), null)
+  const s = activityLtSummary({
+    lt1_power_at_activity_w: 150,
+    lt2_power_at_activity_w: 220,
+    lt1_hr_at_activity: 130,
+    time_series: { watts: [100, 160, 250], heartrate: [120, 140] },
+  })
+  assert.equal(s.lt.lt1Power, 150)
+  assert.deepEqual(s.power.map((x) => x.seconds), [1, 1, 1])
+  assert.deepEqual(s.hr.map((x) => [x.id, x.seconds]), [['below_lt1', 1], ['above_lt1', 1]])
+  const noStreams = activityLtSummary({ lt1_power_at_activity_w: 150, time_series: {} })
+  assert.deepEqual(noStreams.power, [])
 })

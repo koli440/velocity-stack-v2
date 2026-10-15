@@ -18,6 +18,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
+import { activityLtSummary } from '../lib/lactateThresholds'
 
 function formatDuration(totalSeconds) {
   if (totalSeconds == null) return '—'
@@ -103,6 +104,25 @@ function pbBadge(current, master) {
   )
 }
 
+// Lactate thresholds valid on the activity's date (issue #121) and time spent around them.
+function ltMetrics(summary) {
+  if (!summary) return []
+  const { lt, power, hr } = summary
+  const pair = (a, b, unit) => (a == null && b == null ? null : `${a ?? '—'} / ${b ?? '—'} ${unit}`)
+  const out = []
+  const powerPair = pair(lt.lt1Power, lt.lt2Power, 'W')
+  const hrPair = pair(lt.lt1Hr, lt.lt2Hr, 'bpm')
+  if (powerPair) out.push({ id: 'lt_power', group: 'Power', label: 'LT1 / LT2 Power', value: powerPair, hint: 'Thresholds at activity date' })
+  if (hrPair) out.push({ id: 'lt_hr', group: 'Heart Rate & Cadence', label: 'LT1 / LT2 HR', value: hrPair, hint: 'Thresholds at activity date' })
+  power.forEach((z) =>
+    out.push({ id: `lt_power_${z.id}`, group: 'Power', label: `Time ${z.label} (power)`, value: formatDuration(z.seconds) })
+  )
+  hr.forEach((z) =>
+    out.push({ id: `lt_hr_${z.id}`, group: 'Heart Rate & Cadence', label: `Time ${z.label} (HR)`, value: formatDuration(z.seconds) })
+  )
+  return out
+}
+
 function pbHint(master, unit) {
   return master != null ? `Historical max: ${master} ${unit}` : undefined
 }
@@ -114,6 +134,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
   const startTime = activity?.start_time || activity?.activity_date
   const hasFtp = activity?.intensity_factor != null && activity?.training_load != null
   const speedHint = speedSourceHint(activity?.speed_source)
+  const ltSummary = useMemo(() => activityLtSummary(activity), [activity])
 
   // Historical maxima for the comparison badge (see former BenchmarkCards)
   const powerMaster5s = masterCurves?.Power?.['5s'] ?? null
@@ -259,9 +280,10 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
         hint: pbHint(torqueMaster1s, 'Nm'),
         badge: pbBadge(activity?.peak_torque_nm, torqueMaster1s),
       },
+      ...ltMetrics(ltSummary),
     ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activity, hasFtp, powerCurve, speedHint, startTime, powerMaster5s, cadenceMaster1s, speedMaster5s, torqueMaster1s])
+  }, [activity, ltSummary, hasFtp, powerCurve, speedHint, startTime, powerMaster5s, cadenceMaster1s, speedMaster5s, torqueMaster1s])
 
   if (!activity) return null
 
