@@ -152,7 +152,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
     })
 
   const baselinesFor = (run) =>
-    computeBaselines(historyBySlug[run.analysis_templates?.slug] || [], { activityId, runAt: run.updated_at })
+    computeBaselines(historyBySlug[run.analysis_templates?.slug] || [], { activityId, runAt: run.activities?.activity_date || run.updated_at })
 
   const runTemplate = async (templateId, { hide = false } = {}) => {
     setRunning(true)
@@ -348,10 +348,12 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
             className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs text-slate-900 dark:text-white font-semibold"
           >
             <option value="">Select a template…</option>
-            {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            {templates.filter((t) => runTemplateIds.has(t.id)).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
           {compareTemplate && (() => {
-            const rows = historyBySlug[compareTemplate.slug] || []
+            const rows = [...(historyBySlug[compareTemplate.slug] || [])].sort(
+              (a, b) => new Date(b.activities?.activity_date || b.created_at) - new Date(a.activities?.activity_date || a.created_at)
+            )
             const keys = [...new Set(rows.flatMap((r) => Object.keys(r.summary || {})))].slice(0, 5)
             if (rows.length === 0) return <p className="text-[11px] text-slate-400">No runs of this template yet.</p>
             const metric = keys.includes(compareMetric) ? compareMetric : keys[0]

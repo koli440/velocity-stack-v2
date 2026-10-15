@@ -139,7 +139,7 @@ export async function GET(req, { params }) {
 
     const { data, error } = await supabase
       .from('template_executions')
-      .select('*, analysis_templates(slug, name, category)')
+      .select('*, analysis_templates(slug, name, category), activities(activity_date)')
       .eq('activity_id', activityId)
       .order('updated_at', { ascending: false })
 
