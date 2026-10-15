@@ -8,6 +8,8 @@
 //
 // Plain JS (no Node-only APIs): the parser and the UI import the catalog.
 
+import { secondsInLtZone } from './lactateThresholds.js'
+
 /** Default HR recovery window (seconds) when `hr_recovery` has no explicit `(<n>sec)`. */
 export const DEFAULT_HR_RECOVERY_WINDOW_SEC = 60
 
@@ -32,6 +34,12 @@ export const SUMMARY_METRICS = {
   pacing: { key: 'pacing_index', label: 'Pacing index (2nd half / 1st half, %)', agg: 'mean' },
   dropoff: { key: 'dropoff_pct', label: 'Drop-off (% below the best rep; summary = last rep vs best)', agg: 'series' },
   decoupling: { key: 'pw_hr_decoupling_pct', label: 'Power:HR decoupling (%)', agg: 'mean' },
+  time_below_lt1: { key: 'time_below_lt1_s', label: 'Time below LT1 power (s)', agg: 'sum', lt: { stream: 'watts', zone: 'below_lt1', t1: 'lt1Power', t2: 'lt2Power' } },
+  time_lt1_lt2: { key: 'time_lt1_lt2_s', label: 'Time between LT1 and LT2 power (s)', agg: 'sum', lt: { stream: 'watts', zone: 'lt1_lt2', t1: 'lt1Power', t2: 'lt2Power' } },
+  time_above_lt2: { key: 'time_above_lt2_s', label: 'Time above LT2 power (s)', agg: 'sum', lt: { stream: 'watts', zone: 'above_lt2', t1: 'lt1Power', t2: 'lt2Power' } },
+  time_below_lt1_hr: { key: 'time_below_lt1_hr_s', label: 'Time below LT1 heart rate (s)', agg: 'sum', lt: { stream: 'hr', zone: 'below_lt1', t1: 'lt1Hr', t2: 'lt2Hr' } },
+  time_lt1_lt2_hr: { key: 'time_lt1_lt2_hr_s', label: 'Time between LT1 and LT2 heart rate (s)', agg: 'sum', lt: { stream: 'hr', zone: 'lt1_lt2', t1: 'lt1Hr', t2: 'lt2Hr' } },
+  time_above_lt2_hr: { key: 'time_above_lt2_hr_s', label: 'Time above LT2 heart rate (s)', agg: 'sum', lt: { stream: 'hr', zone: 'above_lt2', t1: 'lt1Hr', t2: 'lt2Hr' } },
   hr_recovery: { key: 'hr_recovery', label: 'HR recovery (bpm dropped N seconds after the effort)', agg: 'mean' },
 }
 
@@ -127,9 +135,13 @@ function hrRecoveryOf(hr, end, windowSec) {
   return Math.round(a - b)
 }
 
-function effortValue(metric, effort, streams, ftp) {
+function effortValue(metric, effort, streams, ftp, lt) {
   const { watts, hr, cadence, speed } = streams
   const { start_sec: s, end_sec: e } = effort
+  const ltDef = SUMMARY_METRICS[metric.id]?.lt
+  if (ltDef) {
+    return lt ? secondsInLtZone(sliceStream(streams[ltDef.stream], s, e), ltDef.zone, lt[ltDef.t1], lt[ltDef.t2]) : null
+  }
   switch (metric.id) {
     case 'avg_power': {
       const v = mean(sliceStream(watts, s, e))
@@ -207,9 +219,10 @@ function aggregate(def, values) {
  * @param {{efforts: object[], summary: object}} result
  * @param {object} timeSeries - { watts, heartrate, cadence, speed }
  * @param {number|null} ftp
+ * @param {{lt1Power, lt1Hr, lt2Power, lt2Hr}|null} lt - the activity's lactate threshold snapshot
  * @returns the same result shape (a new object when metrics are applied).
  */
-export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null) {
+export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null, lt = null) {
   const selected = (Array.isArray(metrics) ? metrics : []).filter((m) => m && SUMMARY_METRICS[m.id])
   if (!selected.length || !result || !Array.isArray(result.efforts) || !result.efforts.length) return result
 
@@ -231,7 +244,7 @@ export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null
     const values = workIdx.map((i) => {
       const e = result.efforts[i]
       if (metric.id === 'dropoff') return null // filled in below, needs the whole series
-      return effortValue(metric, e, streams, ftp)
+      return effortValue(metric, e, streams, ftp, lt)
     })
 
     if (metric.id === 'dropoff') {

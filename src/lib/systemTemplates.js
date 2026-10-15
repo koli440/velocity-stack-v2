@@ -1,7 +1,7 @@
 // System analysis templates catalog (issue #122). Source of truth for the
 // DSL strings seeded by supabase/migrations/20261101000000_system_templates_catalog.sql;
 // a unit test keeps the migration in sync with this list.
-import { parseIntervalDsl } from './intervalDsl.js'
+import { parseIntervalDsl, buildIntervalManifest } from './intervalDsl.js'
 
 export const SYSTEM_TEMPLATES = [
   {
@@ -117,6 +117,46 @@ export const SYSTEM_TEMPLATES = [
     dsl: '4x\nwork 200m ±10% @ best speed\nrecovery 10min ±40% @ <50%FTP',
   },
 ]
+
+// Lactate-threshold templates (issue #121), seeded by
+// 20261104000000_lactate_threshold_templates.sql. They need LT1/LT2 set in the profile
+// for the activity's date; otherwise the run reports a message instead of efforts.
+export const LT_SYSTEM_TEMPLATES = [
+  {
+    slug: 'sys_lt_lt2_intervals_4x8',
+    name: 'LT2 intervals 4x8',
+    description: '4 x 8 minutes at 95-105% of LT2 power with 4 minute recoveries below LT1. Reports time between LT1/LT2 and above LT2.',
+    category: 'road',
+    dsl: '4x\nwork 8min ±15% @ 95-105%LT2\nrecovery 4min ±40% @ <100%LT1\nmetrics avg_power, avg_hr, time_lt1_lt2, time_above_lt2',
+  },
+  {
+    slug: 'sys_lt_lt2_hr_3x10',
+    name: 'LT2 heart-rate blocks 3x10',
+    description: '3 x 10 minutes at 97-103% of LT2 heart rate with 5 minute recoveries below LT1 heart rate.',
+    category: 'road',
+    dsl: '3x\nwork 10min ±15% @ 97-103%LT2HR\nrecovery 5min ±40% @ <100%LT1HR\nmetrics avg_power, avg_hr, decoupling, time_lt1_lt2_hr, time_above_lt2_hr',
+  },
+  {
+    slug: 'sys_lt_lt1_endurance_90',
+    name: 'LT1 endurance 90min',
+    description: 'One 90 minute steady ride at 85-100% of LT1 power, reporting decoupling and time below/above LT1.',
+    category: 'road',
+    dsl: '1x\nwork 90min ±20% @ 85-100%LT1\nmetrics avg_power, avg_hr, decoupling, time_below_lt1, time_lt1_lt2',
+  },
+  {
+    slug: 'sys_lt_over_unders',
+    name: 'LT2 over-unders 3x(4+2)',
+    description: '3 x (4 minutes just under LT2 then 2 minutes just over), 5 minute recoveries below LT1.',
+    category: 'road',
+    dsl: '3x\nwork 4min ±10% @ 92-98%LT2\nthen work 2min ±10% @ 103-108%LT2\nrecovery 5min ±40% @ <100%LT1\nmetrics avg_power, time_lt1_lt2, time_above_lt2',
+  },
+]
+
+export function buildLtManifest(dsl) {
+  const parsed = parseIntervalDsl(dsl)
+  if (parsed.errors.length) throw new Error(`Invalid DSL: ${JSON.stringify(parsed.errors)}`)
+  return buildIntervalManifest(parsed)
+}
 
 export function buildManifest(dsl) {
   const { repeatCount, steps, errors } = parseIntervalDsl(dsl)

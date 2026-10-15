@@ -169,3 +169,24 @@ export function activityLtSummary(activity) {
     hr: lactateZoneBreakdown(ts.heartrate, lt.lt1Hr, lt.lt2Hr),
   }
 }
+
+/**
+ * Seconds a stream spends in one LT zone: `below_lt1` (v < LT1), `lt1_lt2` (LT1 <= v < LT2) or
+ * `above_lt2` (v >= LT2). Returns null when the zone's thresholds are unknown or the stream is empty.
+ */
+export function secondsInLtZone(stream, zone, lt1, lt2) {
+  const t1 = lt1 > 0 ? lt1 : null
+  const t2 = lt2 > 0 ? lt2 : null
+  if (!Array.isArray(stream) || !stream.length) return null
+  if ((zone === 'below_lt1' || zone === 'lt1_lt2') && t1 == null) return null
+  if ((zone === 'above_lt2' || zone === 'lt1_lt2') && t2 == null) return null
+  let count = 0
+  let any = false
+  for (const raw of stream) {
+    if (raw == null || !Number.isFinite(Number(raw))) continue
+    any = true
+    const v = Number(raw)
+    if (zone === 'below_lt1' ? v < t1 : zone === 'above_lt2' ? v >= t2 : v >= t1 && v < t2) count++
+  }
+  return any ? count : null
+}
