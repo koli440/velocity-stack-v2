@@ -388,3 +388,72 @@ test('watts-only templates ignore hr/cadence streams (unchanged behaviour)', () 
   const withExtras = detectCustomIntervalSequence({ watts: repeatWatts(200, 100), heartrate: repeatWatts(150, 500), cadence: repeatWatts(90, 500), steps, repeatCount: 1 })
   assert.deepEqual(withExtras, base)
 })
+
+// ---- warm-up / cool-down exclusion (issue #124) ----
+
+const W = (min, max, tol, band = 'watts') => ({ role: 'work', keyBy: 'duration', targetDurationSec: min, durationTolerancePct: tol, bandType: band, powerMin: max[0], powerMax: max[1] })
+
+test('warmup exclusion ignores a matching block inside the warm-up, cooldown ignores one at the end', () => {
+  // 60s@300W (a decoy "effort" in the warm-up) + 300s@150W + 60s@300W (decoy in cooldown)
+  const watts = [...repeatWatts(300, 60), ...repeatWatts(150, 300), ...repeatWatts(300, 60)]
+  const steps = [W(60, [290, 310], 0)]
+  const all = detectCustomIntervalSequence({ watts, steps, repeatCount: 2 })
+  assert.equal(all.efforts.length, 2)
+
+  const noWarm = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, warmupSec: 60 })
+  assert.equal(noWarm.efforts.length, 1)
+  assert.ok(noWarm.efforts[0].start_sec >= 350)
+
+  const noCool = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, cooldownSec: 60 })
+  assert.equal(noCool.efforts.length, 1)
+  assert.ok(noCool.efforts[0].end_sec <= 60)
+
+  const none = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, warmupSec: 60, cooldownSec: 60 })
+  assert.deepEqual(none.efforts, [])
+})
+
+test('warmup/cooldown also bound "best" searches (single and ranked) and distance steps', () => {
+  const watts = [...repeatWatts(400, 60), ...repeatWatts(200, 240), ...repeatWatts(250, 60), ...repeatWatts(450, 60)]
+  const best = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 0, bandType: 'best', bestMetric: 'power', powerMin: null, powerMax: null }]
+  const r = detectCustomIntervalSequence({ watts, steps: best, repeatCount: 1, warmupSec: 60, cooldownSec: 60 })
+  assert.equal(r.efforts[0].start_sec, 300)
+  assert.equal(r.efforts[0].avg_power, 250)
+
+  const speed = [...repeatWatts(50, 100), ...repeatWatts(20, 100), ...repeatWatts(30, 100)]
+  const dist = [{ role: 'work', keyBy: 'distance', targetDistanceM: 500, durationTolerancePct: 10, bandType: 'best', bestMetric: 'speed', powerMin: null, powerMax: null }]
+  const d = detectCustomIntervalSequence({ watts: repeatWatts(200, 300), speed, steps: dist, repeatCount: 1, warmupSec: 100 })
+  assert.ok(d.efforts[0].start_sec >= 100)
+  assert.ok(d.efforts[0].avg_speed_kmh <= 31)
+})
+
+test('exclusion consuming the whole activity yields no efforts without throwing', () => {
+  const r = detectCustomIntervalSequence({ watts: repeatWatts(300, 100), steps: [W(30, [200, 400], 10)], repeatCount: 1, warmupSec: 60, cooldownSec: 60 })
+  assert.deepEqual(r.efforts, [])
+})
+
+test('without warmup/cooldown results are identical to the legacy call shape', () => {
+  const watts = buildTwoCycleStream()
+  const steps = [W(60, [200, 240], 15), { ...W(30, [null, 100], 20), role: 'recovery' }]
+  assert.deepEqual(
+    detectCustomIntervalSequence({ watts, steps, repeatCount: 2, warmupSec: 0, cooldownSec: null }),
+    detectCustomIntervalSequence({ watts, steps, repeatCount: 2 })
+  )
+})
+
+// ---- multi-step blocks (issue #124) ----
+
+test('multi-step block: two work steps + recovery per repeat are matched in order', () => {
+  // 2 x [ 60s@200 , 30s@300 , 60s@80 ]
+  const block = [...repeatWatts(200, 60), ...repeatWatts(300, 30), ...repeatWatts(80, 60)]
+  const watts = [...block, ...block]
+  const steps = [
+    W(60, [190, 210], 0),
+    W(30, [290, 310], 0),
+    { ...W(60, [null, 90], 0), role: 'recovery' },
+  ]
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 2 })
+  assert.equal(efforts.length, 6)
+  assert.deepEqual(efforts.map((e) => e.role), ['work', 'work', 'recovery', 'work', 'work', 'recovery'])
+  assert.deepEqual(efforts.map((e) => e.avg_power).slice(0, 3), [200, 300, 80])
+  for (let i = 1; i < efforts.length; i++) assert.ok(efforts[i].start_sec >= efforts[i - 1].end_sec)
+})

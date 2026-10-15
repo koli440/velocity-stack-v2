@@ -10,6 +10,11 @@ export const DSL_STEP_PARTS = [
   { part: '@ <band>', meaning: 'Intensity target (power, speed, heart rate or cadence): a range, an upper/lower bound, or "best".' },
 ]
 
+export const DSL_OPTIONS = [
+  { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (min or sec). At most once.' },
+  { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity. At most once.' },
+]
+
 export const DSL_BANDS = [
   { syntax: '90-110%FTP', meaning: 'Range as a percentage of your FTP.' },
   { syntax: '<55%FTP', meaning: 'Upper bound only (at most 55% FTP) — typical for recoveries.' },
@@ -25,7 +30,8 @@ export const DSL_BANDS = [
 
 export const DSL_RULES = [
   'Line 1 must be the repeat count: "4x", "1x", etc. (1 or greater).',
-  'Every following line is one step; at least one "work" step is required.',
+  'Every following line is one step (or a warmup/cooldown line); at least one "work" step is required.',
+  'A repeat can have several work/recovery steps; they are matched in the order written.',
   'Step values must be greater than 0; tolerance must be 0-100%.',
   'In a range, the minimum must be lower than the maximum.',
   'The tolerance sign is "±" (plus-minus).',
@@ -77,6 +83,16 @@ export const DSL_GUIDE_EXAMPLES = [
     title: 'Cadence drills',
     description: 'High-cadence work bouts with low-cadence recoveries.',
     dsl: '4x\nwork 5min ±15% @ 100-110rpm\nrecovery 3min ±30% @ <70rpm',
+  },
+  {
+    title: 'Ignore warm-up and cool-down',
+    description: 'Skip the first 15 and last 10 minutes so openers and a final sprint do not count as reps.',
+    dsl: '3x\nwarmup 15min\ncooldown 10min\nwork 10min ±10% @ 90-100%FTP\nrecovery 5min ±30% @ <55%FTP',
+  },
+  {
+    title: 'Multi-step block',
+    description: 'Each repeat is a 2-minute tempo step, a 1-minute hard step, then a recovery.',
+    dsl: '3x\nwork 2min ±10% @ 95-100%FTP\nwork 1min ±10% @ 105-110%FTP\nrecovery 3min ±30% @ <55%FTP',
   },
   {
     title: 'Pursuit pacing: best power over 4 x 1km',

@@ -102,12 +102,49 @@ work 200m ±10% @ best speed
 Duration-keyed and distance-keyed steps can be mixed within the same template (e.g. a
 distance-keyed `work` step with a duration-keyed `recovery` step, as above).
 
+### Warm-up and cool-down exclusion
+
+Optional `warmup <n><min|sec>` and `cooldown <n><min|sec>` lines (anywhere after the
+repeat line, each at most once; `warm-up`/`cool-down` are accepted too) make the detector
+ignore the first / last part of the activity, so a hard warm-up opener or a final sprint
+can't be mistaken for a rep. They apply to every step kind (threshold, `best`,
+distance-keyed). They are stored in the manifest as `warmup_sec` / `cooldown_sec`
+(omitted when unused) and serialised back as `warmup ...` / `cooldown ...` lines directly
+after the repeat line.
+
+```
+3x
+warmup 15min
+cooldown 10min
+work 10min ±10% @ 90-100%FTP
+recovery 5min ±30% @ <55%FTP
+```
+
+### Multi-step blocks
+
+A repeat may contain **any number of** `work` and `recovery` lines, matched in the order
+written, one after another (each step searched from where the previous one ended):
+
+```
+3x
+work 2min ±10% @ 95-100%FTP
+work 1min ±10% @ 105-110%FTP
+recovery 3min ±30% @ <55%FTP
+```
+
+For a block with more than one work step (or more than two steps), evaluation additionally
+tags every effort with `step_index` (1-based position in the repeat), adds
+`summary.step_summaries` (per step: `role`, `count`, `avg_power`), and computes `avg_power`
+and `dropoff_pct` per **repeat** (duration-weighted mean of the repeat's work steps)
+instead of per step. Plain work(+recovery) templates are evaluated exactly as before.
+
 ### Validation rules
 
 - `repeatCount >= 1`.
 - Duration (or distance) must be `> 0`.
 - Tolerance must be between `0` and `100` (percent).
 - At least one `work` step is required.
+- `warmup`/`cooldown` durations must be `> 0`, use `min`/`sec`, and appear at most once each.
 - For `%FTP`/`W`/`km/h`/`bpm`/`%HRmax`/`rpm` bands, bounds must be `>= 0`, and when both a min and max are
   given, `min < max`.
 - A distance-keyed step's `best`/`max` band must specify a metric (`best power` or

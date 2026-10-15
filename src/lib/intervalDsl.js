@@ -35,11 +35,24 @@
 //   work 10min ±10% @ 150-165bpm
 //   recovery 5min ±30% @ <70%HRmax
 //
+// Warm-up and cool-down can be excluded from the search (issue #124): the
+// first/last N of the activity are ignored by the detector:
+//
+//   3x
+//   warmup 15min
+//   cooldown 10min
+//   work 10min ±10% @ 90-100%FTP
+//   recovery 5min ±30% @ <55%FTP
+//
+// A repeat may contain any number of work/recovery steps, matched in the
+// order written (multi-step blocks).
+//
 // Deliberately plain JS (no Node-only APIs) so it can run both server-side
 // (API route validation) and client-side (live preview in the creator UI).
 
 const REPEAT_LINE_RE = /^(\d+)\s*x$/i
 const STEP_LINE_RE = /^(work|recovery)\s+(\d+(?:\.\d+)?)\s*(min|sec|km|m)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
+const EXCLUDE_LINE_RE = /^(warm-?up|cool-?down)\s+(\d+(?:\.\d+)?)\s*(min|sec)$/i
 const RANGE_BAND_RE = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
 const MAX_BAND_RE = /^<\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
 const MIN_BAND_RE = /^>\s*(\d+(?:\.\d+)?)\s*(%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
@@ -102,6 +115,7 @@ function parseBand(bandText) {
  * @param {string} text
  * @returns {{
  *   repeatCount: number|null,
+ *   warmupSec: number|null, cooldownSec: number|null,  // excluded head/tail of the activity
  *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
  *   errors: Array<{line: number, message: string}>
  * }}
@@ -110,6 +124,8 @@ export function parseIntervalDsl(text) {
   const errors = []
   const steps = []
   let repeatCount = null
+  let warmupSec = null
+  let cooldownSec = null
 
   const rawLines = (text || '').split(/\r\n|\r|\n/)
   let sawRepeatLine = false
@@ -134,13 +150,29 @@ export function parseIntervalDsl(text) {
       return
     }
 
+    const ex = line.match(EXCLUDE_LINE_RE)
+    if (ex) {
+      const isWarmup = ex[1].toLowerCase().startsWith('warm')
+      const sec = parseFloat(ex[2]) * (ex[3].toLowerCase() === 'min' ? 60 : 1)
+      if (!(sec > 0)) {
+        errors.push({ line: lineNo, message: `${isWarmup ? 'Warm-up' : 'Cool-down'} duration must be greater than 0.` })
+      } else if ((isWarmup ? warmupSec : cooldownSec) != null) {
+        errors.push({ line: lineNo, message: `Only one ${isWarmup ? 'warmup' : 'cooldown'} line is allowed.` })
+      } else if (isWarmup) {
+        warmupSec = sec
+      } else {
+        cooldownSec = sec
+      }
+      return
+    }
+
     const m = line.match(STEP_LINE_RE)
     if (!m) {
       errors.push({
         line: lineNo,
         message:
           `Could not parse step line "${line}". Expected format: ` +
-          '"work|recovery <value><min|sec|km|m> ±<tolerance>% @ <band>".',
+          '"work|recovery <value><min|sec|km|m> ±<tolerance>% @ <band>" (or "warmup <n>min|sec" / "cooldown <n>min|sec").',
       })
       return
     }
@@ -218,7 +250,7 @@ export function parseIntervalDsl(text) {
     errors.push({ line: rawLines.length || 1, message: 'Template must contain at least one "work" step.' })
   }
 
-  return { repeatCount, steps, errors }
+  return { repeatCount, steps, warmupSec, cooldownSec, errors }
 }
 
 function formatDuration(targetDurationSec) {
@@ -258,11 +290,38 @@ function formatBand({ bandType, bestMetric, powerMin, powerMax, keyBy }) {
  * @param {{repeatCount: number, steps: Array}} manifest
  * @returns {string}
  */
-export function stringifyIntervalDsl({ repeatCount, steps = [] } = {}) {
+export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null } = {}) {
   const lines = [`${repeatCount}x`]
+  if (warmupSec) lines.push(`warmup ${formatDuration(warmupSec)}`)
+  if (cooldownSec) lines.push(`cooldown ${formatDuration(cooldownSec)}`)
   steps.forEach((step) => {
     const valueText = step.keyBy === 'distance' ? formatDistance(step.targetDistanceM) : formatDuration(step.targetDurationSec)
     lines.push(`${step.role} ${valueText} ±${formatNumber(step.durationTolerancePct)}% @ ${formatBand(step)}`)
   })
   return lines.join('\n')
+}
+
+/**
+ * Build the stored `analysis_templates.manifest` for a parsed DSL document.
+ * Optional fields are omitted when unused so manifests of templates that do not
+ * use newer grammar are byte-identical to those saved before it existed.
+ */
+export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null }) {
+  return {
+    pattern: 'custom_intervals',
+    repeat_count: repeatCount,
+    steps,
+    ...(warmupSec ? { warmup_sec: warmupSec } : {}),
+    ...(cooldownSec ? { cooldown_sec: cooldownSec } : {}),
+  }
+}
+
+/** Inverse of buildIntervalManifest: the `stringifyIntervalDsl` input for a stored manifest. */
+export function manifestToDslInput(manifest = {}) {
+  return {
+    repeatCount: manifest.repeat_count,
+    steps: manifest.steps || [],
+    warmupSec: manifest.warmup_sec ?? null,
+    cooldownSec: manifest.cooldown_sec ?? null,
+  }
 }

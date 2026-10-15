@@ -1,7 +1,7 @@
 // Run with: node --test src/lib/__tests__/intervalDsl.test.js
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseIntervalDsl, stringifyIntervalDsl } from '../intervalDsl.js'
+import { buildIntervalManifest, manifestToDslInput, parseIntervalDsl, stringifyIntervalDsl } from '../intervalDsl.js'
 
 test('parses a repeated %FTP-banded work/recovery template', () => {
   const { repeatCount, steps, errors } = parseIntervalDsl(
@@ -197,4 +197,49 @@ test('hr/cadence bands round-trip through stringify canonically', () => {
   const text = stringifyIntervalDsl(p)
   assert.equal(text, '3x\nwork 10min ±10% @ 150-165bpm\nrecovery 5min ±30% @ <70%HRmax\nrecovery 1min ±30% @ >90rpm')
   assert.equal(stringifyIntervalDsl(parseIntervalDsl(text)), text)
+})
+
+// ---- warm-up / cool-down exclusion and multi-step blocks (issue #124) ----
+
+test('parses warmup/cooldown lines (min/sec, hyphen variants, any position after repeat line)', () => {
+  const p = parseIntervalDsl('3x\nwarmup 15min\nwork 10min ±10% @ 90-100%FTP\nCool-Down 90sec\nrecovery 5min ±30% @ <55%FTP')
+  assert.deepEqual(p.errors, [])
+  assert.equal(p.warmupSec, 900)
+  assert.equal(p.cooldownSec, 90)
+  assert.equal(p.steps.length, 2)
+  assert.equal(parseIntervalDsl('1x\nwork 5min ±10% @ best').warmupSec, null)
+})
+
+test('warmup/cooldown validation: zero, duplicates, distance units', () => {
+  assert.ok(parseIntervalDsl('1x\nwarmup 0min\nwork 5min ±10% @ best').errors.length > 0)
+  assert.ok(parseIntervalDsl('1x\nwarmup 5min\nwarmup 6min\nwork 5min ±10% @ best').errors.length > 0)
+  assert.ok(parseIntervalDsl('1x\ncooldown 5km\nwork 5min ±10% @ best').errors.length > 0)
+  assert.ok(parseIntervalDsl('1x\nwarmup 5min').errors.length > 0) // still needs a work step
+})
+
+test('stringify emits warmup/cooldown canonically and round-trips; legacy output unchanged', () => {
+  const p = parseIntervalDsl('2x\ncooldown 10min\nwarm-up 20min\nwork 5min ±10% @ best')
+  const text = stringifyIntervalDsl(p)
+  assert.equal(text, '2x\nwarmup 20min\ncooldown 10min\nwork 5min ±10% @ best')
+  assert.equal(stringifyIntervalDsl(parseIntervalDsl(text)), text)
+  const legacy = '4x\nwork 3min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP'
+  assert.equal(stringifyIntervalDsl(parseIntervalDsl(legacy)), legacy)
+})
+
+test('multi-step blocks: several work/recovery lines per repeat keep order and round-trip', () => {
+  const src = '3x\nwork 2min ±10% @ 95-100%FTP\nwork 1min ±10% @ 105-110%FTP\nrecovery 3min ±30% @ <55%FTP'
+  const p = parseIntervalDsl(src)
+  assert.deepEqual(p.errors, [])
+  assert.deepEqual(p.steps.map((s) => s.role), ['work', 'work', 'recovery'])
+  assert.equal(stringifyIntervalDsl(p), src)
+})
+
+test('buildIntervalManifest omits optional fields so legacy manifests are unchanged; manifestToDslInput inverts it', () => {
+  const legacy = parseIntervalDsl('4x\nwork 3min ±30% @ 90-110%FTP')
+  assert.deepEqual(buildIntervalManifest(legacy), { pattern: 'custom_intervals', repeat_count: 4, steps: legacy.steps })
+  const p = parseIntervalDsl('4x\nwarmup 10min\ncooldown 5min\nwork 3min ±30% @ 90-110%FTP')
+  const m = buildIntervalManifest(p)
+  assert.equal(m.warmup_sec, 600)
+  assert.equal(m.cooldown_sec, 300)
+  assert.equal(stringifyIntervalDsl(manifestToDslInput(m)), stringifyIntervalDsl(p))
 })

@@ -24,6 +24,8 @@ export function analyzeSessionEfforts({
   repeatCount = null,
   ftpAtActivityW = null,
   hrMaxBpm = null,
+  warmupSec = null,
+  cooldownSec = null,
 }) {
   const { watts = [], cadence = [], torque = [], speed = [], heartrate = [] } = timeSeries
 
@@ -42,6 +44,8 @@ export function analyzeSessionEfforts({
       repeatCount: repeatCount || 1,
       ftpAtActivityW,
       hrMaxBpm,
+      warmupSec,
+      cooldownSec,
     })
   }
 
@@ -387,7 +391,7 @@ function overlaps(blocked, s, e) {
 function findBestWindowDuration(P, cursor, step, blocked = []) {
   const metricPrefix = step.bestMetric === 'speed' ? P.speed : P.watts
   if (!metricPrefix) return null
-  const n = metricPrefix.length - 1
+  const n = P.n
   const { durMin, durMax } = durationRange(step)
 
   let best = null
@@ -415,7 +419,7 @@ function findBestWindowDuration(P, cursor, step, blocked = []) {
 function findThresholdWindowDistance(P, cursor, step, ftpAtActivityW, hrMaxBpm) {
   const speedPrefix = P.speed
   if (!speedPrefix) return null
-  const n = speedPrefix.length - 1
+  const n = P.n
   const { distMin, distMax } = distanceRange(step)
 
   let eLo = cursor
@@ -448,7 +452,7 @@ function findBestWindowDistance(P, cursor, step, blocked = []) {
   if (!speedPrefix) return null
   const metricPrefix = step.bestMetric === 'speed' ? speedPrefix : P.watts
   if (!metricPrefix) return null
-  const n = speedPrefix.length - 1
+  const n = P.n
   const { distMin, distMax } = distanceRange(step)
 
   let eLo = cursor
@@ -496,6 +500,8 @@ export function detectCustomIntervalSequence({
   repeatCount = 1,
   ftpAtActivityW = null,
   hrMaxBpm = null,
+  warmupSec = null,
+  cooldownSec = null,
 }) {
   const usesHr = steps.some((s) => s.bandType === 'hr_bpm' || s.bandType === 'pct_hrmax')
   const usesCadence = steps.some((s) => s.bandType === 'cadence_rpm')
@@ -505,19 +511,23 @@ export function detectCustomIntervalSequence({
     return { pattern: 'custom_intervals', efforts: [] }
   }
 
-  const n = Math.max(watts.length, speed.length, hr.length, cad.length)
+  const totalN = Math.max(watts.length, speed.length, hr.length, cad.length)
+  // Warm-up/cool-down exclusion: only seconds in [start, n) are searched.
+  const start0 = Math.max(0, Math.floor(warmupSec || 0))
+  const n = Math.max(0, totalN - Math.floor(cooldownSec || 0))
+  if (start0 >= n) return { pattern: 'custom_intervals', efforts: [] }
   const hasWatts = watts.length > 0
   const hasSpeed = speed.some((v) => (v || 0) > 0)
   const hasHr = hr.some((v) => (v || 0) > 0)
   const hasCadence = cad.length > 0
-  const wattsPrefix = hasWatts ? buildPrefixSum(watts, n) : null
-  const speedPrefix = hasSpeed ? buildPrefixSum(speed.map((v) => Math.max(0, v || 0)), n) : null
+  const wattsPrefix = hasWatts ? buildPrefixSum(watts, totalN) : null
+  const speedPrefix = hasSpeed ? buildPrefixSum(speed.map((v) => Math.max(0, v || 0)), totalN) : null
   const P = {
     n,
     watts: wattsPrefix,
     speed: speedPrefix,
-    hr: hasHr ? buildPrefixSum(hr.map((v) => Math.max(0, v || 0)), n) : null,
-    cadence: hasCadence ? buildPrefixSum(cad.map((v) => Math.max(0, v || 0)), n) : null,
+    hr: hasHr ? buildPrefixSum(hr.map((v) => Math.max(0, v || 0)), totalN) : null,
+    cadence: hasCadence ? buildPrefixSum(cad.map((v) => Math.max(0, v || 0)), totalN) : null,
   }
   // %HRmax bands need a reference: the supplied max HR, else the highest HR in the stream.
   const effectiveHrMax = hrMaxBpm || (hasHr ? Math.max(...hr.map((v) => v || 0)) : null)
@@ -539,7 +549,7 @@ export function detectCustomIntervalSequence({
   }
 
   const efforts = []
-  let cursor = 0
+  let cursor = start0
 
   // A lone "best" step repeated N times means "the N best non-overlapping
   // efforts": take the global best, block it out, and search the whole
@@ -551,8 +561,8 @@ export function detectCustomIntervalSequence({
     for (let rep = 0; rep < repeatCount; rep++) {
       const found =
         single.keyBy === 'distance'
-          ? findBestWindowDistance(P, 0, single, blocked)
-          : findBestWindowDuration(P, 0, single, blocked)
+          ? findBestWindowDistance(P, start0, single, blocked)
+          : findBestWindowDuration(P, start0, single, blocked)
       if (!found) break
       blocked.push([found.start, found.end])
       ranked.push([{ step: single, found }])
