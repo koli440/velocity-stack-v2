@@ -372,11 +372,13 @@ metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
 | `time_below_lt1`, `time_lt1_lt2`, `time_above_lt2` | `time_below_lt1_s`, `time_lt1_lt2_s`, `time_above_lt2_s` | sum | Seconds of the effort's power below LT1 (`< LT1`), between (`LT1 <= p < LT2`) or above LT2 (`>= LT2`), using the activity's LT snapshot; `null` without the needed thresholds |
 | `time_below_lt1_hr`, `time_lt1_lt2_hr`, `time_above_lt2_hr` | `time_below_lt1_hr_s`, `time_lt1_lt2_hr_s`, `time_above_lt2_hr_s` | sum | Same, from the heart-rate stream and LT HR |
 
-**W/kg context (automatic).** When the activity has a body-weight snapshot (from the athlete's
-weight history, resolved on the activity date), every effort with an `avg_power` also gets
-`avg_wkg`, and the summary gets `avg_wkg` (mean of the work efforts) plus `ftp_wkg`, `lt1_wkg`
-and `lt2_wkg` where the FTP / LT snapshots exist. Without a weight nothing is added, so existing
-results are unchanged.
+**Default run metrics (automatic).** Every template run reports real per-run performance metrics
+without a `metrics` line, per work effort and in the summary where the data exists: `avg_wkg`
+(needs the activity's weight snapshot), `avg_power`, `np_w`, `avg_speed_kmh`, `avg_cadence_rpm` and
+`avg_hr_bpm`. Metrics missing a stream are simply omitted. The `metrics` line adds more (e.g. max
+values). Static athlete references (FTP / LT1 / LT2 in W/kg) are not run results and are no longer
+added to summaries; stored runs that still contain `ftp_wkg`, `lt1_wkg` or `lt2_wkg` render fine
+(the keys are hidden). The activity-level metrics grid keeps them as reference values.
 
 Metrics that need a stream the activity lacks are `null`. Fields the engine already
 computed for a pattern (e.g. `avg_power`, `pacing_index`) are never overwritten.

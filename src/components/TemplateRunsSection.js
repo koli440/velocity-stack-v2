@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Portal from './Portal'
-import { selectedSummaryKeys, WKG_CONTEXT_KEYS } from '../lib/summaryMetrics'
+import { selectedSummaryKeys, DEFAULT_RUN_KEYS, LEGACY_STATIC_KEYS } from '../lib/summaryMetrics'
 import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -47,6 +47,7 @@ function EffortCards({ efforts }) {
             {eff.target_distance_m != null && <div>Target: <b className={val}>{eff.target_distance_m}m</b></div>}
             {eff.avg_power != null && <div>Avg W: <b className={val}>{eff.avg_power}</b></div>}
             {eff.max_power != null && <div>Max W: <b className={val}>{eff.max_power}</b></div>}
+            {eff.avg_cadence_rpm != null && <div>Avg cadence: <b className={val}>{eff.avg_cadence_rpm} rpm</b></div>}
             {eff.avg_speed_kmh != null && <div>Avg speed: <b className={val}>{eff.avg_speed_kmh} km/h</b></div>}
             {eff.avg_wkg != null && <div>Avg W/kg: <b className={val}>{eff.avg_wkg}</b></div>}
             {eff.pct_of_ftp != null && <div>% FTP: <b className={val}>{eff.pct_of_ftp}%</b></div>}
@@ -269,8 +270,8 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
             const summaryEntries = Object.entries(run.summary || {})
             const metricKeys = selectedSummaryKeys(templates.find((t) => t.id === run.template_id)?.manifest?.summary_metrics)
             const entries = [
-              ...summaryEntries.slice(0, 4),
-              ...summaryEntries.slice(4).filter(([key]) => metricKeys.includes(key) || WKG_CONTEXT_KEYS.includes(key)),
+              ...summaryEntries.slice(0, 4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key)),
+              ...summaryEntries.slice(4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key) && (metricKeys.includes(key) || DEFAULT_RUN_KEYS.includes(key))),
             ]
             const hasEfforts = Array.isArray(run.efforts) && run.efforts.length > 0
             return (
