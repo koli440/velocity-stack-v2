@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import LoginFeaturesModal from '../../components/LoginFeaturesModal'
+import Icon from '../../components/Icon'
 import AuthBackground from '../../components/AuthBackground'
 
 export default function LoginPage() {
@@ -102,7 +103,7 @@ export default function LoginPage() {
           onClick={() => setShowInfo(true)}
           className="w-full py-3 rounded-xl border border-dashed border-emerald-300 text-emerald-300 font-bold text-xs hover:bg-emerald-500/10 transition"
         >
-          ✨ What's inside Velocity Stack?
+          <Icon name="sparkle" /> What's inside Velocity Stack?
         </button>
 
         <div className="text-center pt-2 border-t border-white/20">

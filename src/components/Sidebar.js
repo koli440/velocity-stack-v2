@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { NAV_ITEMS, isNavItemActive } from '../lib/navigation'
+import Icon from './Icon'
 
 export default function Sidebar({
   isOpen = false,
@@ -61,7 +62,7 @@ export default function Sidebar({
               onClick={onClose}
               className="md:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-1"
             >
-              ✕
+              <Icon name="close" size={18} />
             </button>
           </div>
 
@@ -80,7 +81,7 @@ export default function Sidebar({
                 }}
                 className={navItemClass(isNavItemActive(item, pathname))}
               >
-                <span>{item.icon}</span> {item.label}
+                <Icon name={item.icon} size={18} /> {item.label}
               </button>
             ))}
           </nav>

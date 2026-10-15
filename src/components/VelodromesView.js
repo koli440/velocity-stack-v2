@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
+import Icon from './Icon'
 
 // Dynamic import of the Leaflet map
 const VelodromeMap = dynamic(() => import('./VelodromeMap'), {
@@ -46,7 +47,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
 
       const json = await res.json()
       if (res.ok) {
-        alert('🏁 Velodrome added successfully!')
+        alert('Velodrome added successfully!')
         setShowAddModal(false)
         setFormData({
           name: '',
@@ -139,7 +140,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
       {showAddModal && (
         <form onSubmit={handleSubmit} className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-emerald-500/40 shadow-md space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-            🏁 Add New Track Oval
+            <Icon name="flag" /> Add New Track Oval
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -200,8 +201,8 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
                 onChange={e => setFormData({...formData, is_indoor: e.target.value === 'true'})}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
               >
-                <option value="true">🏟️ Indoor</option>
-                <option value="false">☀️ Outdoor</option>
+                <option value="true">Indoor</option>
+                <option value="false">Outdoor</option>
               </select>
             </div>
             <div>
@@ -240,7 +241,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
       <section className="space-y-2">
         <div className="flex justify-between items-center">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            🌍 Worldwide Radar
+            <Icon name="globe" /> Worldwide Radar
           </h2>
           <span className="text-xs text-slate-400">
             {tracks.filter(t => t.latitude).length} mapped
@@ -254,7 +255,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <input
             type="text"
-            placeholder="🔍 Search tracks..."
+            placeholder="Search tracks..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500 w-44"
@@ -266,8 +267,8 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
             className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500"
           >
             <option value="ALL">All Types</option>
-            <option value="INDOOR">🏟️ Indoor</option>
-            <option value="OUTDOOR">☀️ Outdoor</option>
+            <option value="INDOOR">Indoor</option>
+            <option value="OUTDOOR">Outdoor</option>
           </select>
 
           <select
@@ -357,7 +358,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
 
               {t.latitude && t.longitude && (
                 <div className="text-[11px] text-slate-400 font-mono pt-3 border-t border-slate-100 dark:border-slate-800/50 mt-3">
-                  📍 {t.latitude.toFixed(4)}, {t.longitude.toFixed(4)}
+                  <Icon name="pin" size={12} /> {t.latitude.toFixed(4)}, {t.longitude.toFixed(4)}
                 </div>
               )}
             </div>

@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { MAP_TILES } from '@/lib/mapTiles'
+import Icon from './Icon'
 
 // Custom icons for the route's start / finish
 const startIcon = new L.Icon({
@@ -63,12 +64,12 @@ export default function ActivityMap({ latitude = [], longitude = [] }) {
         <Polyline positions={points} pathOptions={{ color: '#f97316', weight: 4, opacity: 0.9 }} />
         <Marker position={start} icon={startIcon}>
           <Popup>
-            <div className="text-slate-900 text-xs font-bold">🏁 Start</div>
+            <div className="text-slate-900 text-xs font-bold"><Icon name="flag" /> Start</div>
           </Popup>
         </Marker>
         <Marker position={finish} icon={finishIcon}>
           <Popup>
-            <div className="text-slate-900 text-xs font-bold">🏁 Finish</div>
+            <div className="text-slate-900 text-xs font-bold"><Icon name="flag" /> Finish</div>
           </Popup>
         </Marker>
       </MapContainer>

@@ -13,6 +13,7 @@ import Avatar from './Avatar'
 import { readGlassPref, writeGlassPref } from '../lib/glass'
 import { fetchRequireFollowApproval, setRequireFollowApproval } from '../lib/social'
 import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../lib/avatars'
+import Icon from './Icon'
 
 function ProfileSettingsModalInner({
   isOpen,
@@ -149,7 +150,7 @@ function ProfileSettingsModalInner({
           onClick={onClose}
           className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
         >
-          ✕
+          <Icon name="close" size={18} />
         </button>
 
         <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-4">

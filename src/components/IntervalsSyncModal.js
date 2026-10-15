@@ -6,6 +6,7 @@ import { formatDateTime } from '../lib/dateFormat'
 import { supabase, getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import VelodromePicker from './VelodromePicker'
+import Icon from './Icon'
 
 function IntervalsSyncModalInner({
   isOpen,
@@ -147,11 +148,11 @@ function IntervalsSyncModalInner({
             onClick={onClose}
             className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
 
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-base">🔄</span>
+            <span className="text-base"><Icon name="refresh" size={18} /></span>
             <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white">
               Sync from Intervals.icu
             </h2>
@@ -186,13 +187,13 @@ function IntervalsSyncModalInner({
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3">
           {errorMsg && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold">
-              ⚠️ {errorMsg}
+              <Icon name="alert" /> {errorMsg}
             </div>
           )}
 
           {!hasCredentials && (
             <div className="text-center py-8 space-y-2">
-              <span className="text-3xl">🔑</span>
+              <span className="text-slate-400"><Icon name="key" size={30} /></span>
               <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
                 Missing Intervals.icu credentials
               </div>

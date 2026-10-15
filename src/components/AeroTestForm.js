@@ -19,6 +19,7 @@ import {
   calculateCdA,
 } from '../lib/aeroLab'
 import VelodromePicker from './VelodromePicker'
+import Icon from './Icon'
 
 const CRR_OPTIONS = [0.0015, 0.002, 0.0025, 0.0033]
 
@@ -137,7 +138,7 @@ export default function AeroTestForm({ tracks = [], onSaved }) {
   return (
     <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-5">
       <h2 className="text-sm font-black uppercase tracking-wide text-slate-900 dark:text-white">
-        💨 New Test
+        <Icon name="wind" /> New Test
       </h2>
 
       {errorMsg && (
@@ -253,7 +254,7 @@ export default function AeroTestForm({ tracks = [], onSaved }) {
           onToggle={(e) => setShowAdvancedEnv(e.target.open)}
         >
           <summary className="text-xs uppercase font-bold text-slate-400 cursor-pointer">
-            🌍 Advanced Environment (Optional)
+            <Icon name="globe" /> Advanced Environment (Optional)
           </summary>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="block space-y-1.5">
@@ -374,7 +375,7 @@ export default function AeroTestForm({ tracks = [], onSaved }) {
           disabled={saving}
           className="w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg transition active:scale-[0.98] disabled:opacity-50"
         >
-          {saving ? 'Saving...' : '💾 Save Test to Database'}
+          {saving ? 'Saving...' : <><Icon name="save" /> Save Test to Database</>}
         </button>
       </div>
     </div>

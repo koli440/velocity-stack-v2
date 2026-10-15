@@ -8,6 +8,7 @@ import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { computeBaselines } from '../lib/templateBaselines'
 import TemplateCreatorModal from './TemplateCreatorModal'
+import Icon from './Icon'
 
 const RUN_COLORS = ['#f59e0b', '#38bdf8', '#d946ef', '#34d399', '#f87171', '#a78bfa']
 
@@ -228,7 +229,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
     <div className="glass-dense bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-          <span>🧪</span> Template Runs <span className="text-slate-400">({runs.length})</span>
+          <Icon name="flask" /> Template Runs <span className="text-slate-400">({runs.length})</span>
         </h3>
         <button type="button" onClick={openAdd} className={`${btn} bg-orange-500 hover:bg-orange-600 text-white`}>
           + Add Run
