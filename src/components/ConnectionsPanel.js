@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase, getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
+import { getAuthHeader } from '../lib/supabase'
+import { callIntervals, callStrava, startStravaAuthorize, fetchConnection } from '../lib/connectionsClient'
+import { stravaFlagMessage } from '../lib/emptyFeed'
 import {
-  CONNECTION_PUBLIC_COLUMNS,
   DEFAULT_BACKFILL_DAYS,
   connectionStatusLabel,
   isConnected,
@@ -25,17 +26,6 @@ const inputCls =
 
 function backfillToValue(days) {
   return days === null || days === undefined ? 'full' : String(days)
-}
-
-async function callIntervals(method, body) {
-  const res = await fetch('/api/connections/intervals', {
-    method,
-    headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  const data = await parseJsonResponse(res)
-  if (!res.ok) throw new Error(data.error || 'Request failed')
-  return data
 }
 
 const HEALTH_CLS = { ok: 'text-emerald-500', warn: 'text-amber-500', error: 'text-red-500' }
@@ -62,26 +52,6 @@ function useBackfillRefresh(conn, load) {
   }, [importing, load])
 }
 
-const STRAVA_FLAGS = {
-  connected: ['Strava connected. Importing your rides…', false],
-  denied: ['Strava authorization was cancelled.', true],
-  missing_scope: ['Please allow access to your activities on Strava and try again.', true],
-  invalid_state: ['The Strava connection request expired. Please try again.', true],
-  not_configured: ['Strava is not configured on this deployment.', true],
-  error: ['Could not connect Strava. Please try again.', true],
-}
-
-async function callStrava(method, body) {
-  const res = await fetch('/api/connections/strava', {
-    method,
-    headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  const data = await parseJsonResponse(res)
-  if (!res.ok) throw new Error(data.error || 'Request failed')
-  return data
-}
-
 function StravaCard({ userId }) {
   const [conn, setConn] = useState(null)
   const [configured, setConfigured] = useState(null)
@@ -93,12 +63,7 @@ function StravaCard({ userId }) {
 
   const load = useCallback(async () => {
     if (!userId) return
-    const { data } = await supabase
-      .from('connections')
-      .select(CONNECTION_PUBLIC_COLUMNS)
-      .eq('user_id', userId)
-      .eq('provider', 'strava')
-      .maybeSingle()
+    const data = await fetchConnection(userId, 'strava')
     setConn(data)
     if (data) setBackfill(backfillToValue(data.backfill_days))
     setLoading(false)
@@ -121,9 +86,9 @@ function StravaCard({ userId }) {
     const url = new URL(window.location.href)
     const flag = url.searchParams.get('strava')
     if (!flag) return
-    const [msg, isErr] = STRAVA_FLAGS[flag] || STRAVA_FLAGS.error
-    if (isErr) setError(msg)
-    else setSyncMsg(msg)
+    const { text, isError } = stravaFlagMessage(flag)
+    if (isError) setError(text)
+    else setSyncMsg(text)
     url.searchParams.delete('strava')
     window.history.replaceState({}, '', url.pathname + url.search + url.hash)
   }, [])
@@ -141,13 +106,7 @@ function StravaCard({ userId }) {
     }
   }
 
-  const connect = () =>
-    run(async () => {
-      const res = await fetch('/api/connections/strava/authorize', { headers: await getAuthHeader() })
-      const data = await parseJsonResponse(res)
-      if (!res.ok || !data.url) throw new Error(data.error || 'Could not start Strava authorization')
-      window.location.href = data.url
-    })
+  const connect = () => run(() => startStravaAuthorize())
 
   const syncNow = () =>
     run(async () => {
@@ -286,24 +245,7 @@ export default function ConnectionsPanel({ userId }) {
 
   const load = useCallback(async () => {
     if (!userId) return
-    const { data } = await supabase
-      .from('connections')
-      .select(CONNECTION_PUBLIC_COLUMNS)
-      .eq('user_id', userId)
-      .eq('provider', 'intervals')
-      .maybeSingle()
-    let row = data
-    if (!row) {
-      // Legacy credentials not yet migrated to a connection still count as connected.
-      const { data: legacy } = await supabase
-        .from('profile_secrets')
-        .select('intervals_athlete_id, intervals_api_key')
-        .eq('user_id', userId)
-        .maybeSingle()
-      if (legacy?.intervals_athlete_id && legacy?.intervals_api_key) {
-        row = { status: 'active', external_athlete_id: legacy.intervals_athlete_id, backfill_days: DEFAULT_BACKFILL_DAYS }
-      }
-    }
+    const row = await fetchConnection(userId, 'intervals')
     setConn(row)
     if (row) setBackfill(backfillToValue(row.backfill_days))
     setLoading(false)
