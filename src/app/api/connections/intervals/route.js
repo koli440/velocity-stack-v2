@@ -86,3 +86,5 @@ export async function DELETE(req) {
     return fail(err)
   }
 }
+
+export const dynamic = 'force-dynamic'

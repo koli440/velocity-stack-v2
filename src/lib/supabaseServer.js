@@ -16,6 +16,12 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+// Next 14 patches fetch and caches GETs in route handlers (Data Cache); supabase-js
+// reads go through fetch, so force every request-scoped query to bypass it.
+export function noStoreFetch(input, init = {}) {
+  return fetch(input, { ...init, cache: 'no-store' })
+}
+
 /**
  * Build a request-scoped Supabase client bound to the caller's bearer token
  * (if any), plus the resolved + verified user (or null if missing/invalid).
@@ -25,7 +31,7 @@ export async function getRequestUser(req) {
   const token = authHeader.replace(/^Bearer\s+/i, '').trim()
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    global: { fetch: noStoreFetch, headers: token ? { Authorization: `Bearer ${token}` } : {} },
     auth: { persistSession: false },
   })
 
