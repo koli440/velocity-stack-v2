@@ -6,6 +6,7 @@
 // template-specific benchmark metrics (drop-off %, pacing index, recovery, …).
 
 import { analyzeSessionEfforts } from './effortDetectionEngine.js'
+import { applySummaryMetrics } from './summaryMetrics.js'
 
 function avg(arr) {
   if (!arr || arr.length === 0) return null
@@ -380,9 +381,9 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
       : {}),
   })
 
-  if (!evaluator) {
-    return { efforts: detection.efforts || [], summary: {} }
-  }
+  const result = evaluator
+    ? evaluator(template, timeSeries, detection, ftpAtActivityW)
+    : { efforts: detection.efforts || [], summary: {} }
 
-  return evaluator(template, timeSeries, detection, ftpAtActivityW)
+  return applySummaryMetrics(manifest.summary_metrics, result, timeSeries, ftpAtActivityW)
 }

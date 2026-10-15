@@ -311,6 +311,44 @@ A single pass, no recovery step: finds the single fastest ~200m window (180–22
 average speed anywhere in the ride — a flying-200-style effort where speed, not power,
 is what matters.
 
+## Summary metrics (`metrics` line)
+
+A `metrics` line (issue #127) lets a template choose extra figures. They are computed
+for every work effort (added to the effort as flat fields) and aggregated into the run
+summary under the same field name, so they show up in the template run cards, deltas and
+comparisons. A template without a `metrics` line produces exactly the same output as before.
+
+```
+3x
+work 10min ±10% @ 90-100%FTP
+recovery 5min ±30% @ <55%FTP
+metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
+```
+
+- At most one `metrics` line, anywhere after line 1; comma-separated; a trailing `:` after
+  `metrics` is accepted. Unknown or duplicate metrics are errors.
+- Stored in the manifest as `summary_metrics: [{ "id": "np" }, { "id": "hr_recovery", "window_sec": 30 }]`
+  (not `metrics`, which older seeded manifests use as a free-text list).
+
+| Metric | Field | Summary aggregate | Notes |
+| --- | --- | --- | --- |
+| `avg_power` | `avg_power` | mean | |
+| `max_power` | `max_power` | max | |
+| `np` | `np_w` | mean | Normalized power (30 s rolling average, 4th-power mean). `null` for efforts shorter than 30 s |
+| `vi` | `vi` | mean | Variability index = NP / average power |
+| `if` | `intensity_factor` | mean | NP / the activity's FTP snapshot; `null` without FTP |
+| `avg_hr`, `max_hr` | `avg_hr_bpm`, `max_hr_bpm` | mean, max | Needs a heart-rate stream |
+| `avg_cadence`, `max_cadence` | `avg_cadence_rpm`, `max_cadence_rpm` | mean, max | |
+| `avg_speed`, `max_speed` | `avg_speed_kmh`, `max_speed_kmh` | mean, max | |
+| `work_kj` | `work_kj` | sum | |
+| `pacing` | `pacing_index` | mean | Second-half / first-half average, % (100 = even) |
+| `dropoff` | `dropoff_pct` | last rep vs best | Per effort: % below the best rep. Summary: last vs best |
+| `decoupling` | `pw_hr_decoupling_pct` | mean | Per effort, first vs second half W/bpm |
+| `hr_recovery` / `hr_recovery(<n>sec\|min)` | `hr_recovery_<n>s` | mean | bpm the HR drops `n` seconds after the effort ends (default 60 s); `null` if the stream ends first |
+
+Metrics that need a stream the activity lacks are `null`. Fields the engine already
+computed for a pattern (e.g. `avg_power`, `pacing_index`) are never overwritten.
+
 ## Round-tripping
 
 Parsed manifests (`{ repeatCount, steps }`) can be converted back into editable DSL text

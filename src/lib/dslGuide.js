@@ -15,6 +15,7 @@ export const DSL_OPTIONS = [
   { syntax: 'set recovery 5min ±30% @ <55%FTP', meaning: 'Optional, only with sets: the rest searched for between sets (never after the last one). Same syntax as a step, but without then.' },
   { syntax: 'then work 1min ...', meaning: 'Prefix a step with "then" to make it start exactly where the previous step ended (over-unders, pyramids, ramps). Not allowed on the first step.' },
   { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (min or sec). At most once.' },
+  { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: 'Choose extra summary metrics per work effort and for the run: avg_power, max_power, np, vi, if, avg_hr, max_hr, avg_cadence, max_cadence, avg_speed, max_speed, work_kj, pacing, dropoff, decoupling, hr_recovery (optional window, default 60sec). At most once.' },
   { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity. At most once.' },
 ]
 
@@ -118,6 +119,11 @@ export const DSL_GUIDE_EXAMPLES = [
     dsl: '3 sets of 5x\nwork 30sec ±20% @ 120-140%FTP\nrecovery 30sec ±50% @ <55%FTP\nset recovery 5min ±30% @ <55%FTP',
   },
   {
+    title: 'Threshold with chosen metrics',
+    description: 'Report normalized power, variability, power:HR decoupling and HR recovery 30 seconds after each rep.',
+    dsl: '3x\nwork 10min ±10% @ 90-100%FTP\nrecovery 5min ±30% @ <55%FTP\nmetrics np, vi, decoupling, hr_recovery(30sec), dropoff, pacing',
+  },
+  {
     title: 'Pursuit pacing: best power over 4 x 1km',
     description: 'Distance-keyed steps need an explicit metric after "best".',
     dsl: '4x\nwork 1km ±5% @ best power\nrecovery 2min ±50% @ <55%FTP',
@@ -130,6 +136,10 @@ export const DSL_GUIDE_EXAMPLES = [
 ]
 
 export const DSL_COMMON_MISTAKES = [
+  {
+    dsl: '1x\nwork 5min ±10% @ best\nmetrics np, speedy',
+    fix: 'Unknown metric. Use the names listed under "metrics".',
+  },
   {
     dsl: 'work 3min ±30% @ 90-110%FTP',
     fix: 'Missing the repeat line. Start with "1x" or "4x".',

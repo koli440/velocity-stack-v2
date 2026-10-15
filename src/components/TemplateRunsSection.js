@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Portal from './Portal'
+import { selectedSummaryKeys } from '../lib/summaryMetrics'
 import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -49,7 +50,17 @@ function EffortCards({ efforts }) {
             {eff.pct_of_ftp != null && <div>% FTP: <b className={val}>{eff.pct_of_ftp}%</b></div>}
             {eff.pacing_index != null && <div>Pacing: <b className={val}>{eff.pacing_index}%</b></div>}
             {eff.dropoff_pct != null && <div>Drop-off: <b className={val}>{eff.dropoff_pct}%</b></div>}
-            {eff.hr_recovery_60s != null && <div>HR recovery: <b className={val}>{eff.hr_recovery_60s} bpm</b></div>}
+            {Object.keys(eff)
+              .filter((k) => /^hr_recovery_\d+s$/.test(k) && eff[k] != null)
+              .map((k) => (
+                <div key={k}>HR recovery ({k.replace(/\D/g, '')}s): <b className={val}>{eff[k]} bpm</b></div>
+              ))}
+            {eff.np_w != null && <div>NP: <b className={val}>{eff.np_w} W</b></div>}
+            {eff.vi != null && <div>VI: <b className={val}>{eff.vi}</b></div>}
+            {eff.intensity_factor != null && <div>IF: <b className={val}>{eff.intensity_factor}</b></div>}
+            {eff.avg_hr_bpm != null && <div>Avg HR: <b className={val}>{eff.avg_hr_bpm} bpm</b></div>}
+            {eff.pw_hr_decoupling_pct != null && <div>Pw:HR decoupling: <b className={val}>{eff.pw_hr_decoupling_pct}%</b></div>}
+            {eff.work_kj != null && <div>Work: <b className={val}>{eff.work_kj} kJ</b></div>}
             {eff.peak_torque != null && <div>Peak torque: <b className={val}>{eff.peak_torque} Nm</b></div>}
           </div>
         </div>
@@ -250,7 +261,12 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
             const baselines = baselinesFor(run)
             const prev = baselines.previous
             const expanded = expandedIds.has(run.id)
-            const entries = Object.entries(run.summary || {}).slice(0, 4)
+            const summaryEntries = Object.entries(run.summary || {})
+            const metricKeys = selectedSummaryKeys(templates.find((t) => t.id === run.template_id)?.manifest?.summary_metrics)
+            const entries = [
+              ...summaryEntries.slice(0, 4),
+              ...summaryEntries.slice(4).filter(([key]) => metricKeys.includes(key)),
+            ]
             const hasEfforts = Array.isArray(run.efforts) && run.efforts.length > 0
             return (
               <div key={run.id} className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3">

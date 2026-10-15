@@ -66,9 +66,21 @@
 //   recovery 30sec ±50% @ <55%FTP
 //   set recovery 5min ±30% @ <55%FTP
 //
+// Summary metrics (issue #127): a `metrics` line selects extra figures computed
+// per work effort and summarised for the run (see src/lib/summaryMetrics.js):
+//
+//   3x
+//   work 10min ±10% @ 90-100%FTP
+//   recovery 5min ±30% @ <55%FTP
+//   metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
+//
 // Deliberately plain JS (no Node-only APIs) so it can run both server-side
 // (API route validation) and client-side (live preview in the creator UI).
 
+import { SUMMARY_METRIC_IDS } from './summaryMetrics.js'
+
+const METRICS_LINE_RE = /^metrics\b\s*:?\s*(.*)$/i
+const METRIC_TOKEN_RE = /^([a-z_]+)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*(min|sec|s)\s*\))?$/i
 const REPEAT_LINE_RE = /^(?:(\d+)\s*sets?\s*of\s*)?(\d+)\s*x$/i
 const STEP_LINE_RE = /^(then\s+|set\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(min|sec|km|m)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
 const EXCLUDE_LINE_RE = /^(warm-?up|cool-?down)\s+(\d+(?:\.\d+)?)\s*(min|sec)$/i
@@ -137,6 +149,7 @@ function parseBand(bandText) {
  *   setCount: number|null,                             // "S sets of Nx"; null otherwise
  *   setRecovery: step|null,                            // "set recovery ..." line (role 'recovery')
  *   warmupSec: number|null, cooldownSec: number|null,  // excluded head/tail of the activity
+ *   metrics: Array<{id: string, windowSec: number|null}>,  // selected summary metrics (issue #127)
  *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
  *   errors: Array<{line: number, message: string}>
  * }}
@@ -149,6 +162,8 @@ export function parseIntervalDsl(text) {
   let setRecovery = null
   let warmupSec = null
   let cooldownSec = null
+  let metrics = []
+  let sawMetricsLine = false
 
   const rawLines = (text || '').split(/\r\n|\r|\n/)
   let sawRepeatLine = false
@@ -190,6 +205,18 @@ export function parseIntervalDsl(text) {
       } else {
         cooldownSec = sec
       }
+      return
+    }
+
+    const mm = line.match(METRICS_LINE_RE)
+    if (mm) {
+      if (sawMetricsLine) {
+        errors.push({ line: lineNo, message: 'Only one "metrics" line is allowed.' })
+        return
+      }
+      sawMetricsLine = true
+      const parsedMetrics = parseMetricsList(mm[1], lineNo, errors)
+      metrics = parsedMetrics
       return
     }
 
@@ -297,7 +324,42 @@ export function parseIntervalDsl(text) {
     errors.push({ line: rawLines.length || 1, message: 'Template must contain at least one "work" step.' })
   }
 
-  return { repeatCount, setCount, setRecovery, steps, warmupSec, cooldownSec, errors }
+  return { repeatCount, setCount, setRecovery, steps, warmupSec, cooldownSec, metrics, errors }
+}
+
+function parseMetricsList(listText, lineNo, errors) {
+  const out = []
+  const tokens = listText.split(',').map((t) => t.trim()).filter(Boolean)
+  if (!tokens.length) {
+    errors.push({ line: lineNo, message: `"metrics" needs at least one metric. Available: ${SUMMARY_METRIC_IDS.join(', ')}.` })
+    return out
+  }
+  for (const token of tokens) {
+    const t = token.match(METRIC_TOKEN_RE)
+    const id = t ? t[1].toLowerCase() : null
+    if (!t || !SUMMARY_METRIC_IDS.includes(id)) {
+      errors.push({ line: lineNo, message: `Unknown metric "${token}". Available: ${SUMMARY_METRIC_IDS.join(', ')}.` })
+      continue
+    }
+    let windowSec = null
+    if (t[2] != null) {
+      if (id !== 'hr_recovery') {
+        errors.push({ line: lineNo, message: `Metric "${id}" does not take a window; only hr_recovery(<n>sec) does.` })
+        continue
+      }
+      windowSec = parseFloat(t[2]) * (t[3].toLowerCase() === 'min' ? 60 : 1)
+      if (!(windowSec > 0)) {
+        errors.push({ line: lineNo, message: 'HR recovery window must be greater than 0.' })
+        continue
+      }
+    }
+    if (out.some((m) => m.id === id && m.windowSec === windowSec)) {
+      errors.push({ line: lineNo, message: `Metric "${id}" is listed twice.` })
+      continue
+    }
+    out.push({ id, windowSec })
+  }
+  return out
 }
 
 function formatDuration(targetDurationSec) {
@@ -337,7 +399,7 @@ function formatBand({ bandType, bestMetric, powerMin, powerMax, keyBy }) {
  * @param {{repeatCount: number, steps: Array}} manifest
  * @returns {string}
  */
-export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null } = {}) {
+export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [] } = {}) {
   const lines = [setCount ? `${setCount} sets of ${repeatCount}x` : `${repeatCount}x`]
   if (warmupSec) lines.push(`warmup ${formatDuration(warmupSec)}`)
   if (cooldownSec) lines.push(`cooldown ${formatDuration(cooldownSec)}`)
@@ -347,6 +409,9 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
   }
   steps.forEach((step) => lines.push(stepLine(step, step.contiguous ? 'then ' : '')))
   if (setCount && setRecovery) lines.push(stepLine({ ...setRecovery, role: 'recovery' }, 'set '))
+  if (metrics && metrics.length) {
+    lines.push(`metrics ${metrics.map((m) => (m.windowSec ? `${m.id}(${formatDuration(m.windowSec)})` : m.id)).join(', ')}`)
+  }
   return lines.join('\n')
 }
 
@@ -355,7 +420,7 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
  * Optional fields are omitted when unused so manifests of templates that do not
  * use newer grammar are byte-identical to those saved before it existed.
  */
-export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null }) {
+export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [] }) {
   return {
     pattern: 'custom_intervals',
     repeat_count: repeatCount,
@@ -364,6 +429,9 @@ export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, co
     ...(cooldownSec ? { cooldown_sec: cooldownSec } : {}),
     ...(setCount ? { set_count: setCount } : {}),
     ...(setCount && setRecovery ? { set_recovery: setRecovery } : {}),
+    ...(metrics && metrics.length
+      ? { summary_metrics: metrics.map((m) => ({ id: m.id, ...(m.windowSec ? { window_sec: m.windowSec } : {}) })) }
+      : {}),
   }
 }
 
@@ -376,5 +444,6 @@ export function manifestToDslInput(manifest = {}) {
     cooldownSec: manifest.cooldown_sec ?? null,
     setCount: manifest.set_count ?? null,
     setRecovery: manifest.set_recovery ?? null,
+    metrics: (manifest.summary_metrics || []).map((m) => ({ id: m.id, windowSec: m.window_sec ?? null })),
   }
 }
