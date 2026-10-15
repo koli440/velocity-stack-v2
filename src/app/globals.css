@@ -100,7 +100,7 @@ body {
   html.dark[data-glass="on"] :is(.glass-card, .glass-dense, .glass-modal) :is(.text-slate-400, .text-slate-500) {
     color: #cbd5e1;
   }
-  html.dark[data-glass="on"] :is(.glass-card, .glass-dense, .glass-modal) :is(.text-slate-300, .dark\:text-slate-300, .dark\:text-slate-400) {
+  html.dark[data-glass="on"] :is(.glass-card, .glass-dense, .glass-modal) :is(.text-slate-300, .dark\:text-slate-300, .dark\:text-slate-400, .text-slate-600, .text-slate-700, .dark\:text-slate-200) {
     color: #e2e8f0;
   }
 }
