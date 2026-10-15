@@ -31,6 +31,7 @@ export const DSL_BANDS = [
   { syntax: '80-90%HRmax', meaning: 'Heart rate as a percentage of the activity\'s max HR (the recorded max, or the highest value in the HR stream). Bounds work too.' },
   { syntax: '95-105%LT2', meaning: 'Power as a percentage of your LT2 (lactate threshold 2) power, taken from the activity\'s own LT snapshot for its date. Bounds (<100%LT1, >100%LT2) work too. Set LT values in your profile settings; without them the run reports a message.' },
   { syntax: '85-100%LT1', meaning: 'Same as above but relative to LT1 power. Use %LT1HR / %LT2HR (e.g. 97-103%LT2HR) for the average heart rate relative to LT1/LT2 heart rate.' },
+  { syntax: '3-3.5W/kg', meaning: 'Power per kilogram of body weight, using the weight valid on the activity\'s date (set it under body weight in your profile). Bounds (<2W/kg, >4W/kg) work too; a bare target like 3W/kg means 3 W/kg ±5% (stored as 2.85-3.15W/kg). Without a weight the run reports a message.' },
   { syntax: '90-100rpm', meaning: 'Average cadence range in rpm. Bounds (<60rpm, >110rpm) work too.' },
   { syntax: 'best  /  max', meaning: 'No threshold: find the single highest-average window of that length. On duration steps this means power.' },
   { syntax: 'best power  /  best speed', meaning: 'Required for "best"/"max" on distance steps, which have no default metric.' },
@@ -96,6 +97,11 @@ export const DSL_GUIDE_EXAMPLES = [
     title: 'Lactate threshold heart-rate blocks',
     description: 'Heart rate relative to LT2 / LT1 heart rate.',
     dsl: '3x\nwork 10min ±15% @ 97-103%LT2HR\nrecovery 5min ±40% @ <100%LT1HR\nmetrics time_lt1_lt2_hr, time_above_lt2_hr',
+  },
+  {
+    title: 'Power-to-weight blocks',
+    description: 'Work at a W/kg target. Needs a body weight in your profile.',
+    dsl: '2x\nwork 20min ±15% @ 3.5-4W/kg\nrecovery 5min ±40% @ <2W/kg\nmetrics avg_power, avg_wkg, np_wkg',
   },
   {
     title: 'Cadence drills',

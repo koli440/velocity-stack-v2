@@ -25,6 +25,7 @@ export function analyzeSessionEfforts({
   ftpAtActivityW = null,
   hrMaxBpm = null,
   lt = null,
+  weightKg = null,
   setCount = null,
   setRecovery = null,
   warmupSec = null,
@@ -48,6 +49,7 @@ export function analyzeSessionEfforts({
       ftpAtActivityW,
       hrMaxBpm,
       lt,
+      weightKg,
       warmupSec,
       cooldownSec,
       setCount,
@@ -360,8 +362,12 @@ function isHrLtBand(bandType) {
   return isLtBand(bandType) && LT_BANDS[bandType].metric === 'avgHr'
 }
 
-function stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm = null, lt = null) {
+function stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm = null, lt = null, weightKg = null) {
   const { avgPower, avgSpeedKmh, avgHr, avgCadence } = metrics
+  if (step.bandType === 'wkg') {
+    if (!weightKg || avgPower == null) return false
+    return inRange(avgPower / weightKg, step)
+  }
   if (isLtBand(step.bandType)) {
     const { metric, ref } = LT_BANDS[step.bandType]
     const value = metrics[metric]
@@ -406,7 +412,7 @@ function findThresholdWindowDuration(P, cursor, step, ftpAtActivityW, hrMaxBpm, 
   for (let s = cursor; s + durMin <= n && s < sLimit; s++) {
     for (let d = durMin; d <= durMax && s + d <= n; d++) {
       const metrics = computeMetrics(P, s, s + d)
-      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt)) {
+      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt, P.weightKg)) {
         return { start: s, end: s + d, ...metrics }
       }
     }
@@ -471,7 +477,7 @@ function findThresholdWindowDistance(P, cursor, step, ftpAtActivityW, hrMaxBpm, 
     const loopEnd = Math.max(eHi, eLo + 1)
     for (let e = eLo; e < loopEnd && e <= n; e++) {
       const metrics = computeMetrics(P, s, e)
-      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt)) {
+      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt, P.weightKg)) {
         return { start: s, end: e, ...metrics, distanceM: metersAt(speedPrefix, s, e) }
       }
     }
@@ -535,6 +541,7 @@ export function detectCustomIntervalSequence({
   ftpAtActivityW = null,
   hrMaxBpm = null,
   lt = null,
+  weightKg = null,
   warmupSec = null,
   cooldownSec = null,
   setCount = null,
@@ -563,6 +570,7 @@ export function detectCustomIntervalSequence({
   const P = {
     n,
     lt,
+    weightKg,
     watts: wattsPrefix,
     speed: speedPrefix,
     hr: hasHr ? buildPrefixSum(hr.map((v) => Math.max(0, v || 0)), totalN) : null,
@@ -591,6 +599,13 @@ export function detectCustomIntervalSequence({
       pattern: 'custom_intervals',
       efforts: [],
       message: `No ${label} was set for this activity's date; add it under lactate thresholds in your profile.`,
+    }
+  }
+  if (allSteps.some((s) => s.bandType === 'wkg') && !weightKg) {
+    return {
+      pattern: 'custom_intervals',
+      efforts: [],
+      message: "No body weight was set for this activity's date; add it under body weight in your profile.",
     }
   }
   if (usesCadence && !P.cadence) {
@@ -682,6 +697,7 @@ export function detectCustomIntervalSequence({
         ...(step.bandType === 'cadence_rpm' && found.avgCadence != null ? { avg_cadence_rpm: Math.round(found.avgCadence) } : {}),
         ...(isLtBand(step.bandType) && lt?.lt1Power && avgPower != null ? { pct_of_lt1: Math.round((avgPower / lt.lt1Power) * 1000) / 10 } : {}),
         ...(isLtBand(step.bandType) && lt?.lt2Power && avgPower != null ? { pct_of_lt2: Math.round((avgPower / lt.lt2Power) * 1000) / 10 } : {}),
+        ...(weightKg && avgPower != null && (step.bandType === 'wkg') ? { avg_wkg: Math.round((avgPower / weightKg) * 100) / 100 } : {}),
         ...(ftpAtActivityW && avgPower != null ? { pct_of_ftp: Math.round((avgPower / ftpAtActivityW) * 1000) / 10 } : {}),
       }
 

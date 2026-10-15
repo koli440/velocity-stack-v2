@@ -123,9 +123,12 @@ const METRIC_TOKEN_RE = /^([a-z0-9_]+)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*(min|sec|s)\s
 const REPEAT_LINE_RE = /^(?:(\d+)\s*sets?\s*of\s*)?(\d+)\s*x$/i
 const STEP_LINE_RE = /^(then\s+|set\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(min|sec|km|m)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
 const EXCLUDE_LINE_RE = /^(warm-?up|cool-?down)\s+(\d+(?:\.\d+)?)\s*(min|sec)$/i
-const RANGE_BAND_RE = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
-const MAX_BAND_RE = /^<\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
-const MIN_BAND_RE = /^>\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W|km\/h)$/i
+const RANGE_BAND_RE = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W\/kg|W|km\/h)$/i
+const MAX_BAND_RE = /^<\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W\/kg|W|km\/h)$/i
+const MIN_BAND_RE = /^>\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W\/kg|W|km\/h)$/i
+// A bare target ('3W/kg') means the target ±5%, normalised to an explicit range so it round-trips.
+const BARE_WKG_RE = /^(\d+(?:\.\d+)?)\s*W\/kg$/i
+export const WKG_TARGET_TOLERANCE = 0.05
 const BEST_BAND_RE = /^(?:best|max)(?:\s+(power|speed))?$/i
 
 export const BAND_SUFFIXES = {
@@ -139,10 +142,12 @@ export const BAND_SUFFIXES = {
   pct_lt2: '%LT2',
   pct_lt1_hr: '%LT1HR',
   pct_lt2_hr: '%LT2HR',
+  wkg: 'W/kg',
 }
 
 function bandTypeForSuffix(suffix) {
   const s = suffix.toUpperCase()
+  if (s === 'W/KG') return 'wkg'
   if (s === 'W') return 'watts'
   if (s === 'KM/H') return 'speed_kmh'
   if (s === '%HRMAX') return 'pct_hrmax'
@@ -157,7 +162,7 @@ function bandTypeForSuffix(suffix) {
 
 /**
  * @param {string} bandText - the `@ <band>` portion of a step line, already trimmed.
- * @returns {{ bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'pct_lt1'|'pct_lt2'|'pct_lt1_hr'|'pct_lt2_hr'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null } | null}
+ * @returns {{ bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'pct_lt1'|'pct_lt2'|'pct_lt1_hr'|'pct_lt2_hr'|'wkg'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null } | null}
  *   null when the band syntax is not recognised.
  */
 function parseBand(bandText) {
@@ -166,6 +171,13 @@ function parseBand(bandText) {
   let m = text.match(BEST_BAND_RE)
   if (m) {
     return { bandType: 'best', bestMetric: m[1] ? m[1].toLowerCase() : null, powerMin: null, powerMax: null }
+  }
+
+  m = text.match(BARE_WKG_RE)
+  if (m) {
+    const target = parseFloat(m[1])
+    const round = (v) => Math.round(v * 100) / 100
+    return { bandType: 'wkg', bestMetric: null, powerMin: round(target * (1 - WKG_TARGET_TOLERANCE)), powerMax: round(target * (1 + WKG_TARGET_TOLERANCE)) }
   }
 
   m = text.match(RANGE_BAND_RE)
@@ -200,7 +212,7 @@ function parseBand(bandText) {
  *   lapLengthM: number|null,                           // "lap 250m" track context (issue #129)
  *   pattern: 'repeated_bursts'|'flying_sprint'|'sustained_tt'|'standing_start'|null,  // fixed pattern (issue #128)
  *   patternOptions: object,                            // its manifest option keys (target_count, distance_m, ...)
- *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'pct_lt1'|'pct_lt2'|'pct_lt1_hr'|'pct_lt2_hr'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
+ *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'pct_lt1'|'pct_lt2'|'pct_lt1_hr'|'pct_lt2_hr'|'wkg'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
  *   errors: Array<{line: number, message: string}>
  * }}
  */
@@ -367,7 +379,7 @@ export function parseIntervalDsl(text) {
         line: lineNo,
         message:
           `Unrecognised band "${bandTextRaw.trim()}". Expected "a-b%FTP", "<x%FTP", ">x%FTP", ` +
-          'the same with "W", "km/h", "bpm", "%HRmax", "rpm", "%LT1", "%LT2", "%LT1HR" or "%LT2HR" instead of "%FTP", or "best"/"max" (with "power"/"speed" ' +
+          'the same with "W", "km/h", "bpm", "%HRmax", "rpm", "%LT1", "%LT2", "%LT1HR", "%LT2HR" or "W/kg" instead of "%FTP", or "best"/"max" (with "power"/"speed" ' +
           'required on distance-keyed steps).',
       })
     } else if (band.bandType === 'best') {
