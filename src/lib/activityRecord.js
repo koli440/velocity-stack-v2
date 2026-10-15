@@ -7,6 +7,7 @@
 
 import { buildFeedPreview } from './routePreview.js'
 import { zoneSignature } from './privacyZone.js'
+import { ftpAt } from './ftpHistory.js'
 
 /**
  * @param {object} summary - output of api/analyze.py's `analyze_fit_file().summary`
@@ -25,7 +26,10 @@ import { zoneSignature } from './privacyZone.js'
  * @param {string|null} [meta.externalSource]
  * @param {string|number|null} [meta.externalId]
  * @param {string} [meta.processingStatus]
- * @param {number|null} [meta.ftpWatts] - athlete FTP, used to derive intensity_factor/training_load
+ * @param {Array|null} [meta.ftpHistory] - athlete FTP history; the FTP valid on the activity's date
+ *   is snapshotted (issue #142). Takes precedence over ftpWatts.
+ * @param {number|null} [meta.ftpWatts] - fallback FTP when no history is supplied, used to derive
+ *   intensity_factor/training_load
  * @param {object|null} [meta.privacyZone] - owner's GPS privacy zone, applied to route_preview
  * @param {string} [meta.fallbackActivityDate] - used when summary.start_time is unavailable
  */
@@ -45,10 +49,14 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     externalSource = null,
     externalId = null,
     processingStatus = 'baseline_completed',
-    ftpWatts = null,
+    ftpWatts: fallbackFtp = null,
+    ftpHistory = null,
     privacyZone = null,
     fallbackActivityDate = new Date().toISOString(),
   } = meta
+
+  const activityDate = summary.start_time || fallbackActivityDate
+  const ftpWatts = Array.isArray(ftpHistory) ? ftpAt(ftpHistory, activityDate) : fallbackFtp
 
   const normalizedPower = summary.normalized_power_w ?? null
   const elapsedTime = summary.elapsed_time_s ?? null
@@ -72,7 +80,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     chainring: chainring ? parseInt(chainring) : null,
     cog: cog ? parseInt(cog) : null,
     crank_length_mm: crankLengthMm,
-    activity_date: summary.start_time || fallbackActivityDate,
+    activity_date: activityDate,
     start_time: summary.start_time ?? null,
     elapsed_time_s: summary.elapsed_time_s ?? null,
     moving_time_s: summary.moving_time_s ?? null,
@@ -103,10 +111,8 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     source,
     external_source: externalId != null ? externalSource : null,
     external_id: externalId != null ? String(externalId) : null,
-    // Point-in-time FTP snapshot (issue #14): persisted as a raw column so
-    // %FTP-based template evaluation always uses the FTP that was valid when
-    // the ride happened, never the athlete's current (possibly very
-    // different) FTP.
+    // Point-in-time FTP snapshot (issues #14, #142): the FTP valid on the ride's date (from the
+    // athlete's FTP history), never the current one. When null, the DB trigger resolves it.
     ftp_at_activity_w: ftpWatts ?? null,
   }
 }
