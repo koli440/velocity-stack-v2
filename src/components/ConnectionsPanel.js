@@ -169,7 +169,7 @@ function StravaCard({ userId }) {
   const connected = isConnected(conn)
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-3">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Strava</span>
         <span
@@ -349,7 +349,7 @@ export default function ConnectionsPanel({ userId }) {
   const showSummary = connected && !reconnecting
 
   return (
-    <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-base"><Icon name="refresh" size={18} /></span>
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
@@ -358,7 +358,7 @@ export default function ConnectionsPanel({ userId }) {
       </div>
 
       {/* Intervals.icu */}
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-3">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Intervals.icu</span>
           <span
