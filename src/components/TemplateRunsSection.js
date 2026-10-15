@@ -59,6 +59,9 @@ function EffortCards({ efforts }) {
             {eff.vi != null && <div>VI: <b className={val}>{eff.vi}</b></div>}
             {eff.intensity_factor != null && <div>IF: <b className={val}>{eff.intensity_factor}</b></div>}
             {eff.avg_hr_bpm != null && <div>Avg HR: <b className={val}>{eff.avg_hr_bpm} bpm</b></div>}
+            {Array.isArray(eff.lap_splits_sec) && eff.lap_splits_sec.length > 0 && (
+              <div>Lap splits{eff.lap_length_m ? ` (${eff.lap_length_m} m)` : ''}: <b className={val}>{eff.lap_splits_sec.map((t) => `${t}s`).join(', ')}</b></div>
+            )}
             {eff.pw_hr_decoupling_pct != null && <div>Pw:HR decoupling: <b className={val}>{eff.pw_hr_decoupling_pct}%</b></div>}
             {eff.work_kj != null && <div>Work: <b className={val}>{eff.work_kj} kJ</b></div>}
             {eff.peak_torque != null && <div>Peak torque: <b className={val}>{eff.peak_torque} Nm</b></div>}
