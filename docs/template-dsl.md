@@ -89,6 +89,15 @@ There are six kinds of band:
    report `pct_of_lt1`/`pct_of_lt2` (and `avg_hr_bpm` for HR variants). Existing templates
    are unaffected.
 
+8. **Power-to-weight band** (issue #144) — watts per kilogram, same range/min/max syntax:
+   `3-3.5W/kg`, `<2W/kg`, `>4W/kg`. A bare target (`work 10min ±10% @ 3W/kg`) means the
+   target ±5% and is normalised to an explicit range (`2.85-3.15W/kg`) so text round-trips.
+   Evaluated as the effort's average power divided by the *activity's own* weight snapshot
+   (`weight_at_activity_kg`, from the effective-dated weight history), never the current weight.
+   Without a weight the run reports "No body weight was set for this activity's date" instead
+   of failing. Stored as `bandType` `wkg`; matched efforts report `avg_wkg`. Existing templates
+   are unaffected.
+
 HR and cadence bands can be freely mixed with power bands across steps of one template
 (e.g. `work ... @ 150-165bpm` followed by `recovery ... @ <120bpm`); each step is matched
 against its own stream. Efforts matched on an HR band report `avg_hr_bpm`; on a cadence

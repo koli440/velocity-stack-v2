@@ -152,6 +152,32 @@ export const LT_SYSTEM_TEMPLATES = [
   },
 ]
 
+// Power-to-weight templates (issue #144), seeded by 20261107000000_wkg_templates.sql. They need a
+// body weight in the profile for the activity's date; otherwise the run reports a message.
+export const WKG_SYSTEM_TEMPLATES = [
+  {
+    slug: 'sys_wkg_threshold_2x20',
+    name: 'Threshold W/kg 2x20',
+    description: '2 x 20 minutes at 3.5-4 W/kg with 5 minute easy recoveries. Reports W/kg per effort.',
+    category: 'road',
+    dsl: '2x\nwork 20min ±15% @ 3.5-4W/kg\nrecovery 5min ±40% @ <2W/kg\nmetrics avg_power, avg_wkg, np_wkg',
+  },
+  {
+    slug: 'sys_wkg_climb_4x8',
+    name: 'Climbing W/kg 4x8',
+    description: '4 x 8 minutes climbing at 4-4.5 W/kg with 4 minute recoveries.',
+    category: 'road',
+    dsl: '4x\nwork 8min ±15% @ 4-4.5W/kg\nrecovery 4min ±40% @ <2W/kg\nmetrics avg_power, avg_wkg, avg_hr',
+  },
+  {
+    slug: 'sys_wkg_vo2_5x3',
+    name: 'VO2max W/kg 5x3',
+    description: '5 x 3 minutes above 5 W/kg with 3 minute recoveries.',
+    category: 'road',
+    dsl: '5x\nwork 3min ±20% @ >5W/kg\nrecovery 3min ±40% @ <2W/kg\nmetrics avg_power, avg_wkg, max_wkg',
+  },
+]
+
 export function buildLtManifest(dsl) {
   const parsed = parseIntervalDsl(dsl)
   if (parsed.errors.length) throw new Error(`Invalid DSL: ${JSON.stringify(parsed.errors)}`)

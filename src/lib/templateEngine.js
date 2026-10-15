@@ -393,6 +393,7 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
           ftpAtActivityW,
           hrMaxBpm,
           lt,
+          weightKg,
           warmupSec: manifest.warmup_sec || null,
           cooldownSec: manifest.cooldown_sec || null,
           setCount: manifest.set_count || null,
