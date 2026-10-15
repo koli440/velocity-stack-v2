@@ -10,6 +10,7 @@ import Portal from './Portal'
 import { getAuthHeader } from '../lib/supabase'
 import { BAND_SUFFIXES, parseIntervalDsl } from '../lib/intervalDsl'
 import { DSL_GUIDE_PATH } from '../lib/dslGuide'
+import { formatLegacyOptions } from '../lib/legacyPatterns'
 
 const CATEGORIES = ['road', 'track', 'gym']
 
