@@ -6,7 +6,7 @@ import { validateWeightEntry, resolveWeightAt, weightAt, weightFromActivity } fr
 import { wattsPerKg, formatWkg, curveToWkg } from '../wkg.js'
 import { buildActivityInsert } from '../activityRecord.js'
 import { evaluateTemplate } from '../templateEngine.js'
-import { applySummaryMetrics, attachWkg } from '../summaryMetrics.js'
+import { applySummaryMetrics, attachWkg, withDefaultMetrics } from '../summaryMetrics.js'
 
 const history = [
   { effective_from: '2026-01-01', weight_kg: 72 },
@@ -71,11 +71,12 @@ test('summary W/kg metrics require a weight', () => {
 test('attachWkg adds W/kg context only with a weight and never overwrites', () => {
   const r = { efforts: [{ role: 'work', avg_power: 280 }, { role: 'work', avg_power: 140, avg_wkg: 9 }], summary: {} }
   assert.equal(attachWkg(r, null), r)
-  const out = attachWkg(r, 70, 250, { lt1Power: 200, lt2Power: 280 })
+  const out = attachWkg(r, 70)
   assert.equal(out.efforts[0].avg_wkg, 4)
   assert.equal(out.efforts[1].avg_wkg, 9)
-  assert.equal(out.summary.ftp_wkg, 3.57)
-  assert.equal(out.summary.lt2_wkg, 4)
+  assert.equal(out.summary.ftp_wkg, undefined)
+  assert.equal(out.summary.lt1_wkg, undefined)
+  assert.equal(out.summary.lt2_wkg, undefined)
   assert.equal(r.efforts[0].avg_wkg, undefined)
 })
 
@@ -93,4 +94,19 @@ test('weight migration is idempotent and snapshot-based', () => {
   assert.match(sql, /weight_at_activity_kg/)
   assert.match(sql, /create or replace function/i)
   assert.match(sql, /drop trigger if exists/i)
+})
+
+test('default per-run metrics are added without a metrics line; no static athlete W/kg keys', () => {
+  const watts = Array(60).fill(280)
+  const r = { efforts: [{ role: 'work', start_sec: 0, end_sec: 60, avg_power: 280 }], summary: {} }
+  const out = applySummaryMetrics(withDefaultMetrics([]), r, { watts, heartrate: Array(60).fill(150), cadence: Array(60).fill(90) }, 250, null, 70)
+  const e = out.efforts[0]
+  assert.equal(e.avg_wkg, 4)
+  assert.equal(e.avg_hr_bpm, 150)
+  assert.equal(e.avg_cadence_rpm, 90)
+  assert.equal(e.np_w, 280)
+  assert.equal(e.avg_speed_kmh, undefined)
+  assert.equal(out.summary.avg_hr_bpm, 150)
+  assert.equal(e.max_power, undefined)
+  for (const k of ['ftp_wkg', 'lt1_wkg', 'lt2_wkg']) assert.equal(out.summary[k], undefined)
 })

@@ -280,9 +280,11 @@ export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null
     }
 
     workIdx.forEach((i, n) => {
+      if (metric._default && values[n] == null) return
       extras.set(i, { ...(extras.get(i) || {}), [key]: values[n] })
     })
-    summaryExtras[key] = aggregate(def, values)
+    const agg = aggregate(def, values)
+    if (!(metric._default && agg == null)) summaryExtras[key] = agg
   }
 
   const efforts = result.efforts.map((e, i) => {
@@ -304,15 +306,31 @@ export function selectedSummaryKeys(metrics) {
   return (Array.isArray(metrics) ? metrics : []).map((m) => summaryMetricKey(m)).filter(Boolean)
 }
 
-/** Summary keys always shown (when present) because they come from the athlete's weight snapshot. */
-export const WKG_CONTEXT_KEYS = ['avg_wkg', 'ftp_wkg', 'lt1_wkg', 'lt2_wkg']
+/** Per-run performance metrics every template run reports by default (when the data exists). */
+export const DEFAULT_RUN_METRIC_IDS = ['avg_wkg', 'avg_power', 'np', 'avg_speed', 'avg_cadence', 'avg_hr']
+
+/** Summary keys always shown (when present) for template runs. */
+export const DEFAULT_RUN_KEYS = DEFAULT_RUN_METRIC_IDS.map((id) => SUMMARY_METRICS[id].key)
 
 /**
- * Power-to-weight context (issue #143): adds `avg_wkg` to every effort that has an average power,
- * and `avg_wkg` (mean of the work efforts) plus the athlete's FTP / LT1 / LT2 in W/kg to the
- * summary. Purely additive; without a weight the result is returned untouched.
+ * Static athlete reference values older stored runs may contain. They are not run results,
+ * so they are never produced anymore and the UI hides them.
  */
-export function attachWkg(result, weightKg, ftp = null, lt = null) {
+export const LEGACY_STATIC_KEYS = ['ftp_wkg', 'lt1_wkg', 'lt2_wkg']
+
+/** Selected metrics plus the defaults; default-only metrics are flagged so null values are skipped. */
+export function withDefaultMetrics(metrics) {
+  const selected = Array.isArray(metrics) ? metrics.filter(Boolean) : []
+  const have = new Set(selected.map((m) => m.id))
+  return [...selected, ...DEFAULT_RUN_METRIC_IDS.filter((id) => !have.has(id)).map((id) => ({ id, _default: true }))]
+}
+
+/**
+ * Power-to-weight fallback (issue #143): adds `avg_wkg` to every effort that has an average power,
+ * and the mean of the work efforts to the summary. Purely additive; without a weight the result
+ * is returned untouched.
+ */
+export function attachWkg(result, weightKg) {
   if (!weightKg || !result || !Array.isArray(result.efforts) || !result.efforts.length) return result
   const efforts = result.efforts.map((e) => {
     if (e.avg_wkg != null || typeof e.avg_power !== 'number') return e
@@ -323,10 +341,5 @@ export function attachWkg(result, weightKg, ftp = null, lt = null) {
   const work = efforts.filter((e) => e.role === undefined || e.role === 'work')
   const wkgs = nums(work.map((e) => e.avg_wkg))
   if (summary.avg_wkg == null && wkgs.length) summary.avg_wkg = round2(mean(wkgs))
-  const ref = { ftp_wkg: ftp, lt1_wkg: lt?.lt1Power, lt2_wkg: lt?.lt2Power }
-  for (const [k, watts] of Object.entries(ref)) {
-    const v = wattsPerKg(watts, weightKg)
-    if (summary[k] == null && v != null) summary[k] = v
-  }
   return { ...result, efforts, summary }
 }
