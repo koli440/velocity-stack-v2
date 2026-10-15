@@ -5,6 +5,7 @@ import Portal from './Portal'
 import { supabase } from '../lib/supabase'
 import VelodromePicker from './VelodromePicker'
 import PrivacyZonePanel from './PrivacyZonePanel'
+import LactateThresholdPanel from './LactateThresholdPanel'
 import ConnectionsPanel from './ConnectionsPanel'
 import Avatar from './Avatar'
 import { readGlassPref, writeGlassPref } from '../lib/glass'
@@ -320,6 +321,8 @@ function ProfileSettingsModalInner({
               Used to calculate Intensity Factor and Training Load for uploaded activities.
             </p>
           </div>
+
+          <LactateThresholdPanel userId={user?.id} />
 
           <ConnectionsPanel userId={user?.id} />
 

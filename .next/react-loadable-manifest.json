@@ -1,0 +1,24 @@
+{
+  "app/activities/[id]/page.js -> ../../../components/ActivityMap": {
+    "id": 19485,
+    "files": [
+      "static/css/fc1c9daac70c093b.css",
+      "static/chunks/d0deef33.48d820d4c497da28.js",
+      "static/chunks/485.0cca0789e4974a8d.js"
+    ]
+  },
+  "components/VelodromesView.js -> ./VelodromeMap": {
+    "id": 26313,
+    "files": [
+      "static/css/fc1c9daac70c093b.css",
+      "static/chunks/d0deef33.48d820d4c497da28.js",
+      "static/chunks/313.2d1f868ec92cffef.js"
+    ]
+  },
+  "lib/bulkImport.js -> jszip": {
+    "id": 39315,
+    "files": [
+      "static/chunks/315.9498b5191d713c76.js"
+    ]
+  }
+}
