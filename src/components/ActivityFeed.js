@@ -9,6 +9,8 @@ import BadgePill from './BadgePill'
 import RouteThumbnail from './RouteThumbnail'
 import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
 import { authorName } from '../lib/social'
+import { PREFETCH_ROOT_MARGIN, canAutoLoad, didLoadFail } from '../lib/infiniteScroll'
+import { useEffect, useRef, useState } from 'react'
 
 // Intensity bar fill width (0-100%) driven by intensity_factor (IF ~1.0+ = full).
 function intensityPct(intensityFactor) {
@@ -102,6 +104,69 @@ export default function ActivityFeed({
   isLoadingMore = false,
   onLoadMore,
 }) {
+  const sentinelRef = useRef(null)
+  const latest = useRef({})
+  const pending = useRef(null)
+  const [supported] = useState(() => typeof IntersectionObserver !== 'undefined')
+  const [hasFailed, setHasFailed] = useState(false)
+  const count = activities.length
+
+  // Always expose the freshest props to the observer callback.
+  latest.current = { hasMore, isLoadingMore, onLoadMore, count, hasFailed, supported }
+
+  const triggerLoad = () => {
+    const cur = latest.current
+    if (!cur.onLoadMore || cur.isLoadingMore || pending.current) return
+    const entry = { prevCount: cur.count, sawLoading: false }
+    pending.current = entry
+    setHasFailed(false)
+    Promise.resolve()
+      .then(() => cur.onLoadMore())
+      .then(
+        () => {
+          if (!entry.sawLoading && pending.current === entry) pending.current = null
+        },
+        () => {
+          if (pending.current === entry) pending.current = null
+          setHasFailed(true)
+        }
+      )
+  }
+
+  // Settle a finished load: success clears the guard, an empty result flags failure.
+  useEffect(() => {
+    const entry = pending.current
+    if (!entry) return
+    if (isLoadingMore) {
+      entry.sawLoading = true
+    } else if (entry.sawLoading) {
+      pending.current = null
+      setHasFailed(didLoadFail({ prevCount: entry.prevCount, nextCount: count, hasMore }))
+    }
+  }, [isLoadingMore, count, hasMore])
+
+  // Re-created whenever state changes so a still-visible sentinel re-fires and chains loads.
+  useEffect(() => {
+    const node = sentinelRef.current
+    if (!node || !supported) return undefined
+    if (!canAutoLoad({ hasMore, isLoadingMore, hasFailed, supported, inFlight: Boolean(pending.current), hasHandler: Boolean(onLoadMore) })) {
+      return undefined
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return
+        const cur = latest.current
+        if (canAutoLoad({ ...cur, hasHandler: Boolean(cur.onLoadMore), inFlight: Boolean(pending.current) })) {
+          triggerLoad()
+        }
+      },
+      { rootMargin: PREFETCH_ROOT_MARGIN }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, isLoadingMore, hasFailed, supported, count, onLoadMore])
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -200,15 +265,22 @@ export default function ActivityFeed({
       </div>
 
       {hasMore && onLoadMore && (
-        <div className="flex justify-center pt-2">
-          <button
-            type="button"
-            onClick={onLoadMore}
-            disabled={isLoadingMore}
-            className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 transition disabled:opacity-50"
-          >
-            {isLoadingMore ? 'Loading…' : 'Load more'}
-          </button>
+        <div ref={sentinelRef} className="flex flex-col items-center gap-2 pt-2" data-testid="feed-sentinel">
+          {isLoadingMore && supported && !hasFailed && (
+            <span className="text-xs text-slate-400" role="status">Loading…</span>
+          )}
+          {(!supported || hasFailed) && (
+            <button
+              type="button"
+              onClick={() => {
+                if (!isLoadingMore) triggerLoad()
+              }}
+              disabled={isLoadingMore}
+              className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 transition disabled:opacity-50"
+            >
+              {isLoadingMore ? 'Loading…' : hasFailed ? 'Retry loading more' : 'Load more'}
+            </button>
+          )}
         </div>
       )}
     </div>
