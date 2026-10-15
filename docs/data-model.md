@@ -152,7 +152,7 @@ Endpoint `POST /api/sync/intervals/run` (`maxDuration` 60 s, needs `SUPABASE_SER
   run non-fatally and resume on the next one.
 - OAuth: `GET /api/connections/strava/authorize` (Bearer auth; returns `{ url }`, scope `activity:read_all`, HMAC-signed
   state bound to the user, 10 min expiry, keyed with `STRAVA_CLIENT_SECRET`) and `GET /api/connections/strava/callback`
-  (verifies state, exchanges the code, upserts the connection with the service client, redirects to `/?strava=<flag>`).
+  (verifies state, exchanges the code, upserts the connection with the service client, redirects to `/settings?strava=<flag>`).
   `GET|PATCH|DELETE /api/connections/strava`: configured flag / backfill / disconnect (best-effort Strava deauthorization).
 - Adapter `src/lib/server/stravaProvider.js` (`source: 'strava'`): lists Ride/VirtualRide/... activities since a date
   (paginated), uses the list item (name, start_date(_local), elapsed/moving time; the import needs nothing else from the detail endpoint) and fetches only streams (no .fit); the detail endpoint is called only as a fallback for ids not seen in a list which are resampled to 1 Hz and analysed by `analyzeStreams`;

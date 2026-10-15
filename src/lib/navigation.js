@@ -9,7 +9,7 @@ export const NAV_ITEMS = [
   { key: 'velodromes', label: 'Velodromes', icon: 'velodrome', href: '/velodromes' },
   { key: 'about', label: 'About', icon: 'book', href: '/about' },
   { key: 'feedback', label: 'Feedback', icon: 'bulb', href: '/feedback' },
-  { key: 'settings', label: 'Settings', icon: 'settings', action: 'settings' },
+  { key: 'settings', label: 'Settings', icon: 'settings', href: '/settings' },
 ]
 
 export function isNavItemActive(item, pathname) {
@@ -20,3 +20,4 @@ export function isNavItemActive(item, pathname) {
 // Window events used to let the top banner and the dashboard talk to each other.
 export const OPEN_ADD_SESSION_EVENT = 'velocity:open-add-session'
 export const ACTIVITIES_CHANGED_EVENT = 'velocity:activities-changed'
+export const PROFILE_UPDATED_EVENT = 'velocity:profile-updated'

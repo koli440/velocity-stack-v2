@@ -8,7 +8,6 @@ import Icon from './Icon'
 export default function Sidebar({
   isOpen = false,
   onClose,
-  onOpenSettings,
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -71,14 +70,7 @@ export default function Sidebar({
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.key}
-                onClick={() => {
-                  if (item.action === 'settings') {
-                    if (onClose) onClose()
-                    if (onOpenSettings) onOpenSettings()
-                  } else {
-                    handleNavigate(item.href)
-                  }
-                }}
+                onClick={() => handleNavigate(item.href)}
                 className={navItemClass(isNavItemActive(item, pathname))}
               >
                 <Icon name={item.icon} size={18} /> {item.label}

@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 // Strava redirects the browser here after the rider approves. Identity comes from the signed state.
 export async function GET(req) {
   const origin = appOrigin(req)
-  const back = (flag) => NextResponse.redirect(`${origin}/?strava=${encodeURIComponent(flag)}`)
+  const back = (flag) => NextResponse.redirect(`${origin}/settings?strava=${encodeURIComponent(flag)}`)
   try {
     if (!isStravaConfigured()) return back('not_configured')
     const params = new URL(req.url).searchParams
