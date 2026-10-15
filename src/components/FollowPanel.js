@@ -156,7 +156,7 @@ export default function FollowPanel({ userId, onChanged }) {
         onChange={(e) => setTerm(e.target.value)}
         placeholder="Find riders by name…"
         aria-label="Find riders"
-        className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
+        className="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800"
       />
       {error && <p className="text-[11px] text-rose-500">{error}</p>}
       {results.length > 0 && (
