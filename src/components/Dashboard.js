@@ -213,6 +213,7 @@ export default function Dashboard({ initialActivities = [] }) {
           <RidersExplorer userId={user?.id} onFollowChanged={reloadSocialFeeds} />
         ) : scope === 'mine' ? (
           <ActivityFeed
+            key="mine"
             activities={activities}
             onAddWorkout={() => window.dispatchEvent(new Event(OPEN_ADD_SESSION_EVENT))}
             coverPhotos={coverPhotos}
@@ -222,6 +223,7 @@ export default function Dashboard({ initialActivities = [] }) {
           />
         ) : scope === 'discover' ? (
           <ActivityFeed
+            key="discover"
             title="Discover"
             isOwnFeed={false}
             coverPhotos={coverPhotos}
@@ -233,6 +235,7 @@ export default function Dashboard({ initialActivities = [] }) {
           />
         ) : (
           <ActivityFeed
+            key="following"
             title="Following"
             isOwnFeed={false}
             coverPhotos={coverPhotos}
