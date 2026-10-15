@@ -145,20 +145,20 @@ test('syncConnection records a non-fatal rate limit for Strava and fatal auth er
   const conn = { provider: 'strava', user_id: 'u', last_synced_at: null, backfill_days: 30 }
   const svc = fakeService()
   const deps = (err) => ({
-    createProvider: () => ({ source: 'strava', listActivities: async () => { throw err } }),
+    createProvider: () => ({ source: 'strava', listActivities: async () => { throw err }, listWindow: async () => { throw err } }),
     loadExisting: undefined,
   })
   // existing fingerprints are loaded via service.from(...).select().eq(); stub through a richer fake
   const service = {
     ...svc,
-    from: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
+    from: () => ({ select: () => ({ eq: () => Object.assign(Promise.resolve({ data: [], error: null }), { maybeSingle: async () => ({ data: {} }) }) }) }),
   }
   const soft = await syncConnection(service, conn, deps(new StravaRateLimitError()))
   assert.equal(soft.fatal, false)
   assert.match(soft.error, /Strava rate limit/)
   const hard = await syncConnection(service, conn, deps(new StravaAuthError()))
   assert.equal(hard.fatal, true)
-  assert.deepEqual(service.rpcs.map((r) => [r.args.p_provider, r.args.p_fatal]), [['strava', false], ['strava', true]])
+  assert.deepEqual(service.rpcs.filter((r) => r.name === 'record_connection_result_for').map((r) => [r.args.p_provider, r.args.p_fatal]), [['strava', false], ['strava', true]])
 })
 
 test('Strava provider: 429 and 401 map to rate-limit / auth errors; headers throttle further calls', async () => {

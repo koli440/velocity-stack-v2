@@ -32,6 +32,15 @@ export class StravaRateLimitError extends ImportError {
   }
 }
 
+/** The shared Strava budget (or this purpose's share of it) is spent: stop cleanly, resume after the window resets. */
+export class StravaBudgetError extends StravaRateLimitError {
+  constructor(message = 'Strava request budget spent, continuing after the rate-limit window resets.') {
+    super(message)
+    this.name = 'StravaBudgetError'
+    this.budget = true
+  }
+}
+
 /** The user must reconnect (revoked/invalid grant or rejected token). */
 export class StravaAuthError extends ImportError {
   constructor(message = 'Strava rejected the connection. Reconnect Strava.') {
@@ -136,14 +145,21 @@ export async function deauthorize(accessToken, { fetchImpl = fetch } = {}) {
 }
 
 /**
- * @param {{ accessToken: string, fetchImpl?: typeof fetch }} opts
+ * @param {{ accessToken: string, fetchImpl?: typeof fetch, budget?: { reserve(purpose: string): boolean, observe(headers: any): void } }} opts
+ *   `budget` is the shared app-wide tracker (server/stravaBudget.js); every request is reserved against it.
  */
-export function createStravaProvider({ accessToken, fetchImpl = fetch }) {
+export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = null }) {
   if (!accessToken) throw new StravaAuthError('Strava is not connected. Reconnect Strava.')
   let lastRateLimit = null
+  let purpose = 'live'
+  // List items are kept so a ride import needs only the streams request (the list already carries
+  // name, start dates, distance and moving/elapsed time; the detail endpoint adds nothing the import uses).
+  const listed = new Map()
+  const remember = (rides) => rides.forEach((r) => listed.set(String(r.id), r))
 
   const get = async (path) => {
     if (isRateLimitNear(lastRateLimit)) throw new StravaRateLimitError()
+    if (budget && !budget.reserve(purpose)) throw new StravaBudgetError()
     let res
     try {
       res = await fetchImpl(`${API}${path}`, { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' })
@@ -151,6 +167,7 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch }) {
       throw new ImportError('Could not reach Strava. Try again in a moment.', 502)
     }
     lastRateLimit = parseRateLimit(res.headers) || lastRateLimit
+    budget?.observe(res.headers)
     if (res.status === 429) throw new StravaRateLimitError()
     if (res.status === 401) throw new StravaAuthError()
     return res
@@ -158,6 +175,42 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch }) {
 
   return {
     source: 'strava',
+
+    /** 'live' (webhook / new rides, whole budget) or 'backfill' (limited share of the budget). */
+    setPurpose(p) {
+      purpose = p === 'backfill' ? 'backfill' : 'live'
+    },
+
+    /**
+     * One newest-first page of rides in [oldest, before]; `exhausted` when no older rides remain in the window
+     * and `nextBefore` (ISO) is where the next page continues (also past non-ride activities).
+     * @param {{ oldest?: string, before?: string, maxPages?: number }} opts
+     */
+    async listWindow({ oldest, before, maxPages = 1 } = {}) {
+      const after = afterEpoch(oldest)
+      const beforeEpoch = before ? Math.floor(new Date(before).getTime() / 1000) + 1 : undefined
+      const rides = []
+      let exhausted = false
+      let nextBefore = null
+      for (let page = 1; page <= maxPages; page++) {
+        const qs = new URLSearchParams({ per_page: String(PAGE_SIZE), page: String(page) })
+        if (after) qs.set('after', String(after))
+        if (Number.isFinite(beforeEpoch)) qs.set('before', String(beforeEpoch))
+        const res = await get(`/athlete/activities?${qs}`)
+        if (!res.ok) throw new ImportError(`Strava API error (${res.status})`, res.status)
+        const items = await res.json()
+        const arr = Array.isArray(items) ? items : []
+        rides.push(...filterStravaRides(arr))
+        const oldestRaw = arr.length ? arr[arr.length - 1]?.start_date : null
+        if (oldestRaw) nextBefore = oldestRaw
+        if (arr.length < PAGE_SIZE) {
+          exhausted = true
+          break
+        }
+      }
+      remember(rides)
+      return { rides, exhausted, nextBefore }
+    },
 
     /** @param {{ oldest?: string }} opts - YYYY-MM-DD lower bound; omit for full history */
     async listActivities({ oldest } = {}) {
@@ -172,16 +225,30 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch }) {
         rides.push(...filterStravaRides(items))
         if (!Array.isArray(items) || items.length < PAGE_SIZE) break
       }
+      remember(rides)
       return rides
     },
 
     async fetchActivity(externalId, { gearing = {} } = {}) {
       const id = String(externalId)
-      const detailRes = await get(`/activities/${encodeURIComponent(id)}`)
-      if (detailRes.status === 404) throw new ImportError(`Strava activity ${id} was not found.`, 404)
-      if (!detailRes.ok) throw new ImportError(`Strava API error (${detailRes.status})`, detailRes.status)
-      const detail = await detailRes.json()
-      if (!isStravaRide(detail)) throw new ImportError(`Strava activity ${id} is not a ride.`, 422)
+      let detail
+      const item = listed.get(id)
+      if (item) {
+        detail = {
+          name: item.name,
+          start_date: item.start_time,
+          start_date_local: item.start_date_local,
+          elapsed_time: item.elapsed_time_s ?? undefined,
+          moving_time: item.moving_time_s,
+        }
+      } else {
+        // Not seen in a list (single-ride import): one extra read for the same fields.
+        const detailRes = await get(`/activities/${encodeURIComponent(id)}`)
+        if (detailRes.status === 404) throw new ImportError(`Strava activity ${id} was not found.`, 404)
+        if (!detailRes.ok) throw new ImportError(`Strava API error (${detailRes.status})`, detailRes.status)
+        detail = await detailRes.json()
+        if (!isStravaRide(detail)) throw new ImportError(`Strava activity ${id} is not a ride.`, 422)
+      }
 
       const streamsRes = await get(`/activities/${encodeURIComponent(id)}/streams?keys=${STRAVA_STREAM_KEYS}&key_by_type=true`)
       const streams = streamsRes.ok ? await streamsRes.json() : null
@@ -209,7 +276,7 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch }) {
 /** Provider for a connections row; refreshes the token first. */
 export async function createStravaProviderForConnection(service, conn, opts = {}) {
   const accessToken = await getFreshAccessToken(service, conn, opts)
-  return createStravaProvider({ accessToken, fetchImpl: opts.fetchImpl })
+  return createStravaProvider({ accessToken, fetchImpl: opts.fetchImpl, budget: opts.budget })
 }
 
 // ---- Webhook subscription (one per Strava app) ----

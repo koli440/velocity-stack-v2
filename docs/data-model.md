@@ -99,18 +99,46 @@ in `src/lib/server/connections.js`; `getServiceClient()` returns null without `S
   p_synced_at default null)` — service_role only. Success clears the error; `p_fatal` sets status `error` (cron then
   skips it until the user reconnects or runs a manual sync); non-fatal only records `last_error`; `p_synced_at` moves the
   cursor. Reusable for Strava (`p_provider = 'strava'`).
-- `set_connection_backfill` now also resets `last_synced_at`/`last_attempt_at` so a changed window is re-imported.
+- `set_connection_backfill` resets the backfill state (see "Newest-first backfill") and `last_attempt_at`; it no longer
+  touches the forward cursor `last_synced_at`.
 
 Endpoint `POST /api/sync/intervals/run` (`maxDuration` 60 s, needs `SUPABASE_SERVICE_ROLE_KEY`, 503 otherwise):
 - cron mode: header `x-sync-token` verified against `sync_settings.cron_token`; processes up to 10 active connections not
   attempted in the last 10 min, least recently attempted first.
 - manual mode: `Authorization: Bearer <user token>`; syncs only the caller's connection, 429 within 60 s of the last attempt.
-- Per connection (`src/lib/server/intervalsSync.js`): list rides since `last_synced_at` minus 2 days (first run:
-  `backfillOldest(backfill_days)`), drop rides already imported by external id, import oldest-first via `importActivity`
-  (duplicates skipped, Strava copies upgraded), at most 8 fetches and a 45 s deadline per invocation. Unfinished work resumes
-  next run: the cursor moves to the last processed ride; a complete run sets it to the run start. 401/403/404 => status
+- Per connection (`src/lib/server/intervalsSync.js`): a forward phase lists rides since `last_synced_at` minus 2 days and
+  imports them; then a backfill phase imports history newest to oldest (see "Newest-first backfill"). Rides already
+  imported are dropped by external id, imports go through `importActivity` (duplicates skipped, Strava copies upgraded,
+  unique violation 23505 = skipped); Intervals.icu imports 4 rides in parallel, the cap is the 45 s deadline, not a fixed
+  count. 401/403/404 => status
   `error` with a message; other failures keep the status and only set `last_error`. One failing connection or ride never
   blocks others. Pure logic: `src/lib/syncPlan.js`.
+
+## Newest-first backfill and Strava budget (`20261110000000_backfill_cursor_strava_budget.sql`)
+- `connections.last_synced_at` is only the **forward** cursor (ongoing new rides; set to the run start when the forward
+  phase finished). History uses separate, client-readable columns: `backfill_cursor` (TIMESTAMPTZ; everything newer than it
+  inside the window is handled, NULL = start at the newest ride), `backfill_complete` (BOOLEAN, default false),
+  `backfill_imported` (INT) and `backfill_total` (INT, known for Intervals.icu; NULL for Strava).
+  Existing rows with `last_synced_at` are marked `backfill_complete = true` (the old oldest-first cursor already covered
+  history; the forward sync catches the rest).
+- Forward sync always runs first, so new rides never wait for an old backfill. The backfill lists the window
+  `[backfillOldest(backfill_days), cursor]` (Intervals.icu: one list sorted newest-first; Strava: paginated newest-first
+  with `before`), imports newest-first and moves the cursor backwards. Known rides are skipped, so overlaps are harmless.
+- `set_connection_backfill` and reconnecting (trigger `trg_reset_backfill_on_reconnect`) reset cursor/complete/counters;
+  already imported rides are skipped by external id, so nothing is imported twice and a longer window extends the history.
+- `record_backfill_progress(p_user_id, p_provider, p_backfill_days, p_cursor, p_complete, p_imported_delta, p_total)` —
+  service_role only; ignored if `backfill_days` changed meanwhile.
+- `strava_rate_budget` — single row (id = 1), RLS on, no client grants. App-wide Strava usage from the
+  `X-ReadRateLimit-*`/`X-RateLimit-*` headers: 15-minute and daily counters (read and overall) with limits (defaults
+  200/2000 and 400/4000). `record_strava_rate_usage(...)` (service_role only) merges observations inside the current window
+  (15-min windows at :00/:15/:30/:45, daily at 00:00 UTC) and resets counters when the window rolled over.
+- Budget rules (`src/lib/stravaBudget.js`): backfill may use at most 60% of the 15-minute and 70% of the daily read limit;
+  the remainder is reserved for live (webhook/new-ride/forward) sync. Every Strava run checks the budget first and stops
+  cleanly (no error) when exhausted. Strava backfills are round-robin (least recently attempted first) with an equal share
+  of the remaining backfill budget per rider (max 10 rides per turn).
+- Chaining: a run that ended with work left and progress made triggers the next run immediately (cron token, fire and
+  forget, `{ "chain": n }` body, max depth 20, 3 s minimum gap); Strava stops chaining when the backfill budget is spent.
+  The 15-minute cron stays the safety net.
 
 ## Strava (`20261028000000_strava.sql`, #109 step 5)
 - `sync_settings.strava_webhook_verify_token` — random, generated by the migration (service-role only, never in the repo);
@@ -127,7 +155,7 @@ Endpoint `POST /api/sync/intervals/run` (`maxDuration` 60 s, needs `SUPABASE_SER
   (verifies state, exchanges the code, upserts the connection with the service client, redirects to `/?strava=<flag>`).
   `GET|PATCH|DELETE /api/connections/strava`: configured flag / backfill / disconnect (best-effort Strava deauthorization).
 - Adapter `src/lib/server/stravaProvider.js` (`source: 'strava'`): lists Ride/VirtualRide/... activities since a date
-  (paginated), fetches detail + streams (no .fit) which are resampled to 1 Hz and analysed by `analyzeStreams`;
+  (paginated), uses the list item (name, start_date(_local), elapsed/moving time; the import needs nothing else from the detail endpoint) and fetches only streams (no .fit); the detail endpoint is called only as a fallback for ids not seen in a list which are resampled to 1 Hz and analysed by `analyzeStreams`;
   `start_time`/`elapsed_time_s` come from the Strava activity so duplicate detection works. Pure helpers: `src/lib/strava.js`.
 - Webhook `POST /api/webhooks/strava` (`src/lib/server/stravaWebhook.js`): activity create/update for a known athlete resets
   `last_attempt_at` and triggers that rider's sync (delete events are ignored); `athlete` events with

@@ -10,7 +10,7 @@ import {
   isConnected,
   syncHealth,
 } from '../lib/connections'
-import { describeSyncResult } from '../lib/syncPlan'
+import { describeSyncResult, backfillProgressText } from '../lib/syncPlan'
 import Icon from './Icon'
 
 const BACKFILL_OPTIONS = [
@@ -43,7 +43,23 @@ const HEALTH_CLS = { ok: 'text-emerald-500', warn: 'text-amber-500', error: 'tex
 function HealthLine({ conn }) {
   const h = syncHealth(conn)
   if (!h) return null
-  return <p className={`text-[11px] font-bold ${HEALTH_CLS[h.level]}`}>● {h.text}</p>
+  const progress = backfillProgressText(conn)
+  return (
+    <>
+      <p className={`text-[11px] font-bold ${HEALTH_CLS[h.level]}`}>● {h.text}</p>
+      {progress && <p className="text-[11px] text-slate-500 dark:text-slate-300">{progress}</p>}
+    </>
+  )
+}
+
+// Re-reads the connection while history is still being imported so the progress line moves.
+function useBackfillRefresh(conn, load) {
+  const importing = !!backfillProgressText(conn)
+  useEffect(() => {
+    if (!importing) return undefined
+    const t = setInterval(load, 30000)
+    return () => clearInterval(t)
+  }, [importing, load])
 }
 
 const STRAVA_FLAGS = {
@@ -91,6 +107,7 @@ function StravaCard({ userId }) {
   useEffect(() => {
     load()
   }, [load])
+  useBackfillRefresh(conn, load)
 
   useEffect(() => {
     fetch('/api/connections/strava')
@@ -295,6 +312,7 @@ export default function ConnectionsPanel({ userId }) {
   useEffect(() => {
     load()
   }, [load])
+  useBackfillRefresh(conn, load)
 
   const run = async (fn) => {
     setBusy(true)
