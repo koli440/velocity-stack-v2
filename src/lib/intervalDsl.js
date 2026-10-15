@@ -74,10 +74,41 @@
 //   recovery 5min ±30% @ <55%FTP
 //   metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
 //
+// Fixed track patterns (issue #128): start with `pattern <name>` instead of a
+// repeat line to express repeated_bursts, flying_sprint, sustained_tt or
+// standing_start (see src/lib/legacyPatterns.js). Their option lines map 1:1
+// onto the manifest keys those evaluators always read, so stored manifests and
+// template_executions stay valid:
+//
+//   pattern repeated_bursts
+//   count 3
+//   duration 3min ±45sec
+//   recovery window 60sec
+//   metrics np
+//
+//   pattern flying_sprint
+//   distance 200m
+//
+//   pattern sustained_tt
+//   min duration 20min
+//   lap 250m
+//
+//   pattern standing_start
+//   distance 1km
+//
 // Deliberately plain JS (no Node-only APIs) so it can run both server-side
 // (API route validation) and client-side (live preview in the creator UI).
 
 import { SUMMARY_METRIC_IDS } from './summaryMetrics.js'
+import {
+  LEGACY_PATTERN_NAMES,
+  LEGACY_PATTERN_OPTIONS,
+  PATTERN_LINE_RE,
+  formatLegacyOptions,
+  isLegacyPattern,
+  legacyOptionsFromManifest,
+  parseLegacyOptionLine,
+} from './legacyPatterns.js'
 
 const METRICS_LINE_RE = /^metrics\b\s*:?\s*(.*)$/i
 const METRIC_TOKEN_RE = /^([a-z_]+)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*(min|sec|s)\s*\))?$/i
@@ -150,6 +181,8 @@ function parseBand(bandText) {
  *   setRecovery: step|null,                            // "set recovery ..." line (role 'recovery')
  *   warmupSec: number|null, cooldownSec: number|null,  // excluded head/tail of the activity
  *   metrics: Array<{id: string, windowSec: number|null}>,  // selected summary metrics (issue #127)
+ *   pattern: 'repeated_bursts'|'flying_sprint'|'sustained_tt'|'standing_start'|null,  // fixed pattern (issue #128)
+ *   patternOptions: object,                            // its manifest option keys (target_count, distance_m, ...)
  *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
  *   errors: Array<{line: number, message: string}>
  * }}
@@ -164,6 +197,8 @@ export function parseIntervalDsl(text) {
   let cooldownSec = null
   let metrics = []
   let sawMetricsLine = false
+  let pattern = null
+  const patternOptions = {}
 
   const rawLines = (text || '').split(/\r\n|\r|\n/)
   let sawRepeatLine = false
@@ -174,9 +209,17 @@ export function parseIntervalDsl(text) {
     if (!line) return // blank lines are allowed as spacing
 
     if (!sawRepeatLine) {
+      const pm = line.match(PATTERN_LINE_RE)
+      if (pm) {
+        const name = pm[1].toLowerCase()
+        if (isLegacyPattern(name)) pattern = name
+        else errors.push({ line: lineNo, message: `Unknown pattern "${pm[1]}". Available: ${LEGACY_PATTERN_NAMES.join(', ')}.` })
+        sawRepeatLine = true
+        return
+      }
       const m = line.match(REPEAT_LINE_RE)
       if (!m) {
-        errors.push({ line: lineNo, message: `Expected a repeat count like "4x", "1x" or "3 sets of 5x", got "${line}".` })
+        errors.push({ line: lineNo, message: `Expected a repeat count like "4x", "1x" or "3 sets of 5x" (or "pattern <name>"), got "${line}".` })
         sawRepeatLine = true // avoid cascading "expected repeat line" errors
         return
       }
@@ -193,6 +236,10 @@ export function parseIntervalDsl(text) {
     }
 
     const ex = line.match(EXCLUDE_LINE_RE)
+    if (ex && pattern) {
+      errors.push({ line: lineNo, message: `"${ex[1].toLowerCase()}" is not available with pattern ${pattern}.` })
+      return
+    }
     if (ex) {
       const isWarmup = ex[1].toLowerCase().startsWith('warm')
       const sec = parseFloat(ex[2]) * (ex[3].toLowerCase() === 'min' ? 60 : 1)
@@ -217,6 +264,31 @@ export function parseIntervalDsl(text) {
       sawMetricsLine = true
       const parsedMetrics = parseMetricsList(mm[1], lineNo, errors)
       metrics = parsedMetrics
+      return
+    }
+
+    const opt = parseLegacyOptionLine(line)
+    if (pattern) {
+      if (!opt) {
+        errors.push({
+          line: lineNo,
+          message:
+            `Could not parse "${line}". Pattern ${pattern} accepts: ${LEGACY_PATTERN_OPTIONS[pattern].join(', ')}, metrics` +
+            (STEP_LINE_RE.test(line) ? ' (work/recovery step lines are only used without "pattern").' : '.'),
+        })
+      } else if (!LEGACY_PATTERN_OPTIONS[pattern].includes(opt.option.name)) {
+        errors.push({ line: lineNo, message: `"${opt.option.name}" is not available with pattern ${pattern}. Accepted: ${LEGACY_PATTERN_OPTIONS[pattern].join(', ')}.` })
+      } else if (opt.error) {
+        errors.push({ line: lineNo, message: opt.error })
+      } else if (opt.option.keys.some((k) => patternOptions[k] != null)) {
+        errors.push({ line: lineNo, message: `Only one "${opt.option.name}" line is allowed.` })
+      } else {
+        Object.assign(patternOptions, opt.values)
+      }
+      return
+    }
+    if (opt) {
+      errors.push({ line: lineNo, message: `"${opt.option.name}" needs a first line like "pattern repeated_bursts" instead of a repeat count.` })
       return
     }
 
@@ -320,11 +392,11 @@ export function parseIntervalDsl(text) {
     errors.push({ line: 1, message: 'Empty template: expected a repeat count line like "4x".' })
   }
 
-  if (!steps.some((s) => s.role === 'work')) {
+  if (!pattern && !steps.some((s) => s.role === 'work')) {
     errors.push({ line: rawLines.length || 1, message: 'Template must contain at least one "work" step.' })
   }
 
-  return { repeatCount, setCount, setRecovery, steps, warmupSec, cooldownSec, metrics, errors }
+  return { repeatCount, setCount, setRecovery, steps, warmupSec, cooldownSec, metrics, pattern, patternOptions, errors }
 }
 
 function parseMetricsList(listText, lineNo, errors) {
@@ -394,12 +466,21 @@ function formatBand({ bandType, bestMetric, powerMin, powerMax, keyBy }) {
   return suffix
 }
 
+function metricsLine(metrics) {
+  return `metrics ${metrics.map((m) => (m.windowSec ? `${m.id}(${formatDuration(m.windowSec)})` : m.id)).join(', ')}`
+}
+
 /**
  * Render a parsed (or hand-built) manifest back into editable DSL text.
  * @param {{repeatCount: number, steps: Array}} manifest
  * @returns {string}
  */
-export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [] } = {}) {
+export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {} } = {}) {
+  if (pattern) {
+    const lines = [`pattern ${pattern}`, ...formatLegacyOptions(pattern, patternOptions)]
+    if (metrics && metrics.length) lines.push(metricsLine(metrics))
+    return lines.join('\n')
+  }
   const lines = [setCount ? `${setCount} sets of ${repeatCount}x` : `${repeatCount}x`]
   if (warmupSec) lines.push(`warmup ${formatDuration(warmupSec)}`)
   if (cooldownSec) lines.push(`cooldown ${formatDuration(cooldownSec)}`)
@@ -410,7 +491,7 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
   steps.forEach((step) => lines.push(stepLine(step, step.contiguous ? 'then ' : '')))
   if (setCount && setRecovery) lines.push(stepLine({ ...setRecovery, role: 'recovery' }, 'set '))
   if (metrics && metrics.length) {
-    lines.push(`metrics ${metrics.map((m) => (m.windowSec ? `${m.id}(${formatDuration(m.windowSec)})` : m.id)).join(', ')}`)
+    lines.push(metricsLine(metrics))
   }
   return lines.join('\n')
 }
@@ -420,7 +501,12 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
  * Optional fields are omitted when unused so manifests of templates that do not
  * use newer grammar are byte-identical to those saved before it existed.
  */
-export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [] }) {
+export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {} }) {
+  const summaryMetrics =
+    metrics && metrics.length
+      ? { summary_metrics: metrics.map((m) => ({ id: m.id, ...(m.windowSec ? { window_sec: m.windowSec } : {}) })) }
+      : {}
+  if (pattern) return { pattern, ...patternOptions, ...summaryMetrics }
   return {
     pattern: 'custom_intervals',
     repeat_count: repeatCount,
@@ -429,14 +515,22 @@ export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, co
     ...(cooldownSec ? { cooldown_sec: cooldownSec } : {}),
     ...(setCount ? { set_count: setCount } : {}),
     ...(setCount && setRecovery ? { set_recovery: setRecovery } : {}),
-    ...(metrics && metrics.length
-      ? { summary_metrics: metrics.map((m) => ({ id: m.id, ...(m.windowSec ? { window_sec: m.windowSec } : {}) })) }
-      : {}),
+    ...summaryMetrics,
   }
 }
 
 /** Inverse of buildIntervalManifest: the `stringifyIntervalDsl` input for a stored manifest. */
 export function manifestToDslInput(manifest = {}) {
+  if (isLegacyPattern(manifest.pattern)) {
+    // Seeded manifests list fixed output names under `metrics`; only decoupling changes what is computed.
+    const legacyMetrics = Array.isArray(manifest.metrics) && manifest.metrics.includes('pw_hr_decoupling_pct') ? [{ id: 'decoupling', windowSec: null }] : []
+    const selected = (manifest.summary_metrics || []).map((m) => ({ id: m.id, windowSec: m.window_sec ?? null }))
+    return {
+      pattern: manifest.pattern,
+      patternOptions: legacyOptionsFromManifest(manifest),
+      metrics: selected.length ? selected : manifest.pattern === 'sustained_tt' ? legacyMetrics : [],
+    }
+  }
   return {
     repeatCount: manifest.repeat_count,
     steps: manifest.steps || [],

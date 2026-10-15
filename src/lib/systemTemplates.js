@@ -123,3 +123,23 @@ export function buildManifest(dsl) {
   if (errors.length) throw new Error(`Invalid DSL: ${JSON.stringify(errors)}`)
   return { pattern: 'custom_intervals', repeat_count: repeatCount, steps }
 }
+
+// DSL equivalents of the fixed-pattern templates seeded by
+// 20260925000000_activity_analyzer.sql (issue #128). Written to dsl_source by
+// 20261102000000_legacy_template_dsl_source.sql; their manifests are unchanged.
+export const LEGACY_TEMPLATE_DSL = {
+  tpl_vo2max_3min: 'pattern repeated_bursts\ncount 3\nduration 3min ±45sec\nrecovery window 1min',
+  tpl_track_f200: 'pattern flying_sprint\ndistance 200m',
+  tpl_track_pursuit: 'pattern sustained_tt\ndistances 2km, 3km, 4km\nlap 250m',
+  tpl_track_standing_start: 'pattern standing_start\ndistance 1km',
+  tpl_road_z2_decoupling: 'pattern sustained_tt\nmin duration 20min\nmetrics decoupling',
+}
+
+// Manifests exactly as seeded in the database.
+export const LEGACY_SEEDED_MANIFESTS = {
+  tpl_vo2max_3min: { pattern: 'repeated_bursts', target_count: 3, target_duration_sec: 180, duration_tolerance_sec: 45, metrics: ['avg_power', 'dropoff_pct', 'pacing_index', 'hr_recovery_60s'], recovery_window_sec: 60 },
+  tpl_track_f200: { pattern: 'flying_sprint', distance_m: 200, metrics: ['max_cadence', 'max_power', 'estimated_time', 'pacing_index'] },
+  tpl_track_pursuit: { pattern: 'sustained_tt', distances_m: [2000, 3000, 4000], lap_length_m: 250, metrics: ['avg_power', 'lap_splits_250m', 'pacing_index', 'dropoff_pct'] },
+  tpl_track_standing_start: { pattern: 'standing_start', distance_m: 1000, metrics: ['peak_torque', 'time_to_peak_power_sec', 'max_power', 'avg_power_first_10s'] },
+  tpl_road_z2_decoupling: { pattern: 'sustained_tt', min_duration_sec: 1200, metrics: ['pw_hr_decoupling_pct', 'avg_power', 'avg_heartrate'] },
+}

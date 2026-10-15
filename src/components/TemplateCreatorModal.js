@@ -10,6 +10,7 @@ import Portal from './Portal'
 import { getAuthHeader } from '../lib/supabase'
 import { BAND_SUFFIXES, parseIntervalDsl } from '../lib/intervalDsl'
 import { DSL_GUIDE_PATH } from '../lib/dslGuide'
+import { formatLegacyOptions } from '../lib/legacyPatterns'
 
 const CATEGORIES = ['road', 'track', 'gym']
 
@@ -197,6 +198,15 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
             </div>
           ) : (
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              {parsed.pattern ? (
+                <>
+                  Pattern {parsed.pattern}
+                  {formatLegacyOptions(parsed.pattern, parsed.patternOptions).length > 0 &&
+                    ` (${formatLegacyOptions(parsed.pattern, parsed.patternOptions).join(', ')})`}
+                  {parsed.metrics?.length > 0 && ` — metrics: ${parsed.metrics.map((m) => m.id).join(', ')}`}
+                </>
+              ) : (
+              <>
               {parsed.setCount ? `${parsed.setCount} sets × ` : ''}
               {parsed.repeatCount} × [
               {parsed.steps
@@ -220,6 +230,8 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
                 ]
                   .filter(Boolean)
                   .join(' and ')})`}
+              </>
+              )}
             </p>
           )}
         </div>
