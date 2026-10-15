@@ -7,7 +7,7 @@ export const DSL_STEP_PARTS = [
   { part: 'work | recovery', meaning: 'Step role. "work" is the effort you want analysed; "recovery" is the rest between efforts.' },
   { part: '<value><unit>', meaning: 'Length of the step. Duration units: min, sec. Distance units: km, m. Decimals are allowed (1.5min).' },
   { part: '±<n>%', meaning: 'Tolerance (0-100%) on the length when matching the step against an activity.' },
-  { part: '@ <band>', meaning: 'Intensity target: a range, an upper/lower bound, or "best".' },
+  { part: '@ <band>', meaning: 'Intensity target (power, speed, heart rate or cadence): a range, an upper/lower bound, or "best".' },
 ]
 
 export const DSL_BANDS = [
@@ -16,6 +16,9 @@ export const DSL_BANDS = [
   { syntax: '>80%FTP', meaning: 'Lower bound only (at least 80% FTP).' },
   { syntax: '250-300W', meaning: 'Absolute watts range; works without an FTP set. Bounds (<150W, >200W) work too.' },
   { syntax: '30-40km/h', meaning: 'Speed range in km/h. Bounds (<20km/h, >45km/h) work too.' },
+  { syntax: '150-165bpm', meaning: 'Average heart rate range in beats per minute. Bounds (<120bpm, >170bpm) work too.' },
+  { syntax: '80-90%HRmax', meaning: 'Heart rate as a percentage of the activity\'s max HR (the recorded max, or the highest value in the HR stream). Bounds work too.' },
+  { syntax: '90-100rpm', meaning: 'Average cadence range in rpm. Bounds (<60rpm, >110rpm) work too.' },
   { syntax: 'best  /  max', meaning: 'No threshold: find the single highest-average window of that length. On duration steps this means power.' },
   { syntax: 'best power  /  best speed', meaning: 'Required for "best"/"max" on distance steps, which have no default metric.' },
 ]
@@ -64,6 +67,16 @@ export const DSL_GUIDE_EXAMPLES = [
     title: 'Speed-banded effort',
     description: 'Target speed instead of power, e.g. for motor-paced or track efforts.',
     dsl: '2x\nwork 2km ±10% @ 45-50km/h\nrecovery 3min ±50% @ <30km/h',
+  },
+  {
+    title: 'Heart-rate-controlled blocks',
+    description: 'Work by heart rate (bpm or %HRmax) instead of power; needs an HR stream on the activity.',
+    dsl: '3x\nwork 10min ±10% @ 150-165bpm\nrecovery 5min ±30% @ <70%HRmax',
+  },
+  {
+    title: 'Cadence drills',
+    description: 'High-cadence work bouts with low-cadence recoveries.',
+    dsl: '4x\nwork 5min ±15% @ 100-110rpm\nrecovery 3min ±30% @ <70rpm',
   },
   {
     title: 'Pursuit pacing: best power over 4 x 1km',

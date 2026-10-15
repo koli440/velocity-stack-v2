@@ -135,3 +135,21 @@ test('evaluateTemplate (custom_intervals): distance-keyed step reports no match 
   assert.equal(result.efforts.length, 0)
   assert.equal(result.summary.reps_detected, 0)
 })
+
+test('evaluateTemplate (custom_intervals): heart-rate-banded template works on an HR-only activity', () => {
+  const heartrate = [...repeatWatts(100, 20), ...repeatWatts(160, 60), ...repeatWatts(110, 30), ...repeatWatts(160, 60), ...repeatWatts(110, 30)]
+  const template = {
+    slug: 'hr',
+    manifest: {
+      pattern: 'custom_intervals',
+      repeat_count: 2,
+      steps: [
+        { role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'pct_hrmax', powerMin: 85, powerMax: 100 },
+        { role: 'recovery', keyBy: 'duration', targetDurationSec: 30, durationTolerancePct: 10, bandType: 'hr_bpm', powerMin: null, powerMax: 120 },
+      ],
+    },
+  }
+  const result = evaluateTemplate(template, { heartrate }, null, 180)
+  assert.equal(result.summary.reps_detected, 2)
+  assert.equal(result.efforts.filter((e) => e.role === 'work').length, 2)
+})

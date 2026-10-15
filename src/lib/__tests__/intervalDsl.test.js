@@ -161,3 +161,40 @@ test('stringify . parse round-trip is stable', () => {
     assert.equal(text2, text)
   }
 })
+
+test('parses heart-rate (bpm, %HRmax) and cadence (rpm) bands: range, min-only, max-only', () => {
+  const cases = [
+    ['150-165bpm', 'hr_bpm', 150, 165],
+    ['<120bpm', 'hr_bpm', null, 120],
+    ['>170bpm', 'hr_bpm', 170, null],
+    ['80-90%HRmax', 'pct_hrmax', 80, 90],
+    ['<70%HRmax', 'pct_hrmax', null, 70],
+    ['>85%hrmax', 'pct_hrmax', 85, null],
+    ['90-100rpm', 'cadence_rpm', 90, 100],
+    ['<60rpm', 'cadence_rpm', null, 60],
+    ['>110RPM', 'cadence_rpm', 110, null],
+  ]
+  for (const [band, bandType, min, max] of cases) {
+    const { steps, errors } = parseIntervalDsl(`1x\nwork 5min ±10% @ ${band}`)
+    assert.deepEqual(errors, [], band)
+    assert.equal(steps[0].bandType, bandType, band)
+    assert.equal(steps[0].powerMin, min, band)
+    assert.equal(steps[0].powerMax, max, band)
+    assert.equal(steps[0].bestMetric, null)
+  }
+})
+
+test('hr/cadence band validation reuses min<max and non-negative rules', () => {
+  assert.ok(parseIntervalDsl('1x\nwork 5min ±10% @ 165-150bpm').errors.length > 0)
+  assert.ok(parseIntervalDsl('1x\nwork 5min ±10% @ 100-100rpm').errors.length > 0)
+  assert.ok(parseIntervalDsl('1x\nwork 5min ±10% @ 150bpm').errors.length > 0)
+})
+
+test('hr/cadence bands round-trip through stringify canonically', () => {
+  const src = '3x\nwork 10min ±10% @ 150-165bpm\nrecovery 5min ±30% @ <70%hrmax\nrecovery 1min ±30% @ >90RPM'
+  const p = parseIntervalDsl(src)
+  assert.deepEqual(p.errors, [])
+  const text = stringifyIntervalDsl(p)
+  assert.equal(text, '3x\nwork 10min ±10% @ 150-165bpm\nrecovery 5min ±30% @ <70%HRmax\nrecovery 1min ±30% @ >90rpm')
+  assert.equal(stringifyIntervalDsl(parseIntervalDsl(text)), text)
+})
