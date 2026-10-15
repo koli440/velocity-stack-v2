@@ -86,6 +86,7 @@ export async function importActivity({
     externalId: String(externalId),
     processingStatus: 'baseline_completed',
     ftpWatts: prof.ftp_w ?? null,
+    ftpHistory: prof.ftp_history ?? null,
     fallbackActivityDate: fetched.startDateLocal || undefined,
   })
 
@@ -130,7 +131,11 @@ export async function loadImportProfile(supabase, userId) {
     .select('default_chainring, default_cog, crank_length_mm, ftp_w')
     .eq('id', userId)
     .maybeSingle()
-  return data || {}
+  const { data: ftpRows } = await supabase
+    .from('ftp_history')
+    .select('effective_from, ftp_w')
+    .eq('user_id', userId)
+  return { ...(data || {}), ftp_history: ftpRows || [] }
 }
 
 export { DUPLICATE_MESSAGE }

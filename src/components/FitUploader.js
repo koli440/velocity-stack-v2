@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
+import { fetchFtpHistory } from '../lib/ftpHistory'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import VelodromePicker from './VelodromePicker'
 
@@ -142,6 +143,7 @@ export default function FitUploader({
         .select('ftp_w')
         .eq('id', currentUser.id)
         .maybeSingle()
+      const { history: ftpHistory } = await fetchFtpHistory(supabase, currentUser.id)
 
       const activityRecord = buildActivityInsert(analysis.summary, {
         title,
@@ -156,6 +158,7 @@ export default function FitUploader({
         fileSha256,
         processingStatus: 'baseline_completed',
         ftpWatts: profile?.ftp_w ?? null,
+        ftpHistory,
       })
 
       const { data: activity, error: actError } = await supabase

@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import VelodromePicker from './VelodromePicker'
 import PrivacyZonePanel from './PrivacyZonePanel'
 import LactateThresholdPanel from './LactateThresholdPanel'
+import FtpHistoryPanel from './FtpHistoryPanel'
 import ConnectionsPanel from './ConnectionsPanel'
 import Avatar from './Avatar'
 import { readGlassPref, writeGlassPref } from '../lib/glass'
@@ -26,7 +27,6 @@ function ProfileSettingsModalInner({
   const [defaultChainring, setDefaultChainring] = useState('58')
   const [defaultCog, setDefaultCog] = useState('14')
   const [crankLength, setCrankLength] = useState('165.0')
-  const [ftpWatts, setFtpWatts] = useState('')
   const [themePref, setThemePref] = useState('dark')
 
   const [discoverableByEmail, setDiscoverableByEmail] = useState(true)
@@ -60,7 +60,6 @@ function ProfileSettingsModalInner({
         setDefaultChainring(data.default_chainring ? String(data.default_chainring) : '58')
         setDefaultCog(data.default_cog ? String(data.default_cog) : '14')
         setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
-        setFtpWatts(data.ftp_w ? String(data.ftp_w) : '')
         setThemePref(data.theme_preference || 'dark')
         setDiscoverableByEmail(data.discoverable_by_email !== false)
         setAvatarUrl(data.avatar_url || null)
@@ -125,7 +124,6 @@ function ProfileSettingsModalInner({
       default_chainring: defaultChainring ? parseInt(defaultChainring) : null,
       default_cog: defaultCog ? parseInt(defaultCog) : null,
       crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
-      ftp_w: ftpWatts ? parseInt(ftpWatts) : null,
       theme_preference: themePref,
       discoverable_by_email: discoverableByEmail,
       updated_at: new Date().toISOString(),
@@ -306,21 +304,7 @@ function ProfileSettingsModalInner({
             </div>
           </div>
 
-          <div>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              FTP / Threshold Power (W)
-            </label>
-            <input
-              type="number"
-              value={ftpWatts}
-              onChange={(e) => setFtpWatts(e.target.value)}
-              placeholder="e.g. 280"
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
-            />
-            <p className="text-[10px] text-slate-400 mt-1">
-              Used to calculate Intensity Factor and Training Load for uploaded activities.
-            </p>
-          </div>
+          <FtpHistoryPanel userId={user?.id} />
 
           <LactateThresholdPanel userId={user?.id} />
 

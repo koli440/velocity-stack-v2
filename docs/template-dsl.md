@@ -41,7 +41,10 @@ There are six kinds of band:
 
 1. **Relative `%FTP` band** — evaluated against the *activity's own* FTP snapshot
    (`ftp_at_activity_w`), never the athlete's current/live FTP, so matching stays
-   consistent even if FTP has drifted a lot since the ride.
+   consistent even if FTP has drifted a lot since the ride. The snapshot is the entry of
+   the athlete's **FTP history** (Settings → FTP) valid on the ride's date; it is set on
+   import/sync/upload, and editing the history re-resolves affected activities (including
+   Intensity Factor and Training Load).
    - Range: `90-110%FTP`
    - Max only: `<55%FTP`
    - Min only: `>80%FTP`

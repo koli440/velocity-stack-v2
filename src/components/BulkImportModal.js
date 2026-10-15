@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import { loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import { expandToFitFiles, importFitFilesBatch } from '../lib/bulkImport'
+import { fetchFtpHistory } from '../lib/ftpHistory'
 import VelodromePicker from './VelodromePicker'
 
 const STATUS_META = {
@@ -105,6 +106,7 @@ function BulkImportModalInner({
         .select('ftp_w')
         .eq('id', currentUser.id)
         .maybeSingle()
+      const { history: ftpHistory } = await fetchFtpHistory(supabase, currentUser.id)
 
       // Preload fingerprints of already-imported activities so duplicates (including ones
       // synced earlier from Intervals.icu, or re-running the same archive) are skipped
@@ -125,6 +127,7 @@ function BulkImportModalInner({
           isFixedGear,
           processingStatus: 'baseline_completed',
           ftpWatts: profile?.ftp_w ?? null,
+          ftpHistory,
         },
         onProgress: (result) => setResults((prev) => [...prev, result]),
       })
