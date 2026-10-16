@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDiff, validateSuggestionInput, reviewPath, formatValue } from '../suggestions.js'
+import { buildDiff, validateSuggestionInput, reviewPath, formatValue, SUGGESTION_NOTICE, ADMIN_CONTACT_EMAIL } from '../suggestions.js'
 import { describeNotification } from '../notifications.js'
 
 const targets = [{ entity_type: 'velodrome', allowed_columns: ['name', 'city'] }]
@@ -38,4 +38,10 @@ test('review_suggestion UPDATE qualifies the id column and is_admin only answers
   assert.match(migration, /WHERE public\.%1\$I\.%3\$I::text = \$2/)
   assert.doesNotMatch(migration, /AS r WHERE %3\$I/)
   assert.match(migration, /WHEN p_user IS NOT DISTINCT FROM auth\.uid\(\)/)
+})
+
+test('suggestion notice names the administrator from the shared constant', () => {
+  assert.equal(ADMIN_CONTACT_EMAIL, 'koli440@gmail.com')
+  assert.ok(SUGGESTION_NOTICE.includes(ADMIN_CONTACT_EMAIL))
+  assert.match(SUGGESTION_NOTICE, /administrator/)
 })
