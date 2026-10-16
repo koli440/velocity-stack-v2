@@ -1,7 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { DISCIPLINES } from '../pbVault.js'
 import { mapDisciplineRow, disciplineFitsTrack, findDisciplineDistance, fetchDisciplines } from '../lookups.js'
 
 const migration = readFileSync(
@@ -9,8 +8,8 @@ const migration = readFileSync(
   'utf8',
 )
 
-test('migration seeds every fallback discipline', () => {
-  for (const d of DISCIPLINES) assert.ok(migration.includes(`'${d.name}', '${d.category}', ${d.distanceM}`), d.name)
+test('migration seeds the PB Vault disciplines', () => {
+  for (const n of ['200m Flying', '4000m Team Pursuit', 'Madison']) assert.ok(migration.includes(`'${n}'`), n)
 })
 
 test('migration adds is_indoor and Oderlandhalle', () => {
@@ -27,7 +26,17 @@ test('mapDisciplineRow + helpers', () => {
   assert.equal(findDisciplineDistance([d], 'Y'), null)
 })
 
-test('fetchDisciplines falls back to the static list on error', async () => {
+test('fetchDisciplines returns an empty list on error', async () => {
   const client = { from: () => ({ select: () => ({ order: async () => ({ data: null, error: new Error('x') }) }) }) }
-  assert.equal(await fetchDisciplines(client), DISCIPLINES)
+  assert.deepEqual(await fetchDisciplines(client), [])
+})
+
+test('discipline suggestions are registered and can be applied by review_suggestion', () => {
+  const m = readFileSync(
+    new URL('../../../supabase/migrations/20261125000000_discipline_suggestions.sql', import.meta.url),
+    'utf8',
+  )
+  assert.match(m, /'discipline'/)
+  assert.match(m, /suggestion_targets/)
+  assert.match(m, /allowed_columns/)
 })

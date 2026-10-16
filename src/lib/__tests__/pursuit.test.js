@@ -8,7 +8,6 @@ import {
   pacingStrategyLabel,
   calculatePursuitStrategy,
 } from '../pursuit.js'
-import { DISCIPLINES } from '../pbVault.js'
 
 test('formatTime renders M:SS.mmm like v1\'s format_time()', () => {
   assert.equal(formatTime(210), '3:30.000')
@@ -142,14 +141,4 @@ test('calculatePursuitStrategy: negative drift makes each flying lap faster than
     assert.ok(result.laps[i].lapTimeS < result.laps[i - 1].lapTimeS)
   }
   assert.ok(Math.abs(result.elapsedTimeS - 150) < 0.01)
-})
-
-test('DISCIPLINES is a non-empty, well-formed reference catalogue', () => {
-  assert.ok(DISCIPLINES.length > 0)
-  for (const d of DISCIPLINES) {
-    assert.equal(typeof d.category, 'string')
-    assert.equal(typeof d.name, 'string')
-    assert.ok(d.distanceM > 0)
-    assert.equal(typeof d.flyingStart, 'boolean')
-  }
 })

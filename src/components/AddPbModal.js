@@ -6,27 +6,27 @@ import { supabase, getAuthHeader } from '../lib/supabase'
 import { fetchDisciplines, findDisciplineDistance } from '../lib/lookups'
 import { parseJsonResponse } from '../lib/httpJson'
 import {
-  DISCIPLINES,
   minutesSecondsToTotalSeconds,
   calculateAvgSpeedKmh,
   countSplits,
 } from '../lib/pbVault'
 import VelodromePicker from './VelodromePicker'
 import Icon from './Icon'
+import DisciplineSuggest from './DisciplineSuggest'
 
 // "Add New Personal Best" form - migrated from v1's expander in pages/30_PB_vault.py. Collects
 // discipline + track + time (as separate Min/Sec inputs, like v1) plus optional gear and lap/
 // split times, then posts to /api/personal-bests.
 function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
-  const [disciplines, setDisciplines] = useState(DISCIPLINES)
-  const [discipline, setDiscipline] = useState(DISCIPLINES[0].name)
+  const [disciplines, setDisciplines] = useState([])
+  const [discipline, setDiscipline] = useState('')
 
   useEffect(() => {
     let active = true
     fetchDisciplines(supabase).then((list) => {
       if (!active) return
       setDisciplines(list)
-      setDiscipline((current) => (list.some((d) => d.name === current) ? current : list[0].name))
+      setDiscipline((current) => (list.some((d) => d.name === current) ? current : list[0]?.name || ''))
     })
     return () => {
       active = false
@@ -59,7 +59,7 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
   )
 
   const resetForm = () => {
-    setDiscipline(disciplines[0].name)
+    setDiscipline(disciplines[0]?.name || '')
     setTrackId('')
     setEventName('')
     setAchievedDate(new Date().toISOString().slice(0, 10))
@@ -160,6 +160,7 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
           <label className="block space-y-1.5">
             <span className="text-xs uppercase font-bold text-slate-400">Discipline</span>
             <select
@@ -174,6 +175,8 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
               ))}
             </select>
           </label>
+          <DisciplineSuggest categories={[...new Set(disciplines.map((d) => d.category))]} />
+          </div>
 
           <label className="block space-y-1.5">
             <span className="text-xs uppercase font-bold text-slate-400">Track</span>

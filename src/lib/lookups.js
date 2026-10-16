@@ -1,7 +1,5 @@
 // Central lookups (disciplines, countries, surfaces). The DB tables (see
-// supabase/migrations/20261111000000_central_lookups.sql) are the source of truth; the static
-// DISCIPLINES list in pbVault.js is only an offline/error fallback mirroring the seed.
-import { DISCIPLINES } from './pbVault.js'
+// supabase/migrations/20261111000000_central_lookups.sql) are the single source of truth.
 
 export function mapDisciplineRow(row) {
   return {
@@ -37,9 +35,9 @@ export async function fetchDisciplines(client) {
       .order('sort_order', { ascending: true })
     if (!error && data && data.length > 0) return data.map(mapDisciplineRow)
   } catch {
-    // fall through to the static fallback
+    // fall through to an empty list
   }
-  return DISCIPLINES
+  return []
 }
 
 export async function fetchCountries(client) {

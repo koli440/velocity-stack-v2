@@ -4,49 +4,12 @@
 // load_discipline_data / get_track_laps_info helpers in utils.py). v1 stored PBs in a Google
 // Sheet keyed by a free-text UserID; v2 persists them in the `personal_bests` table (see
 // supabase/migrations/20261007000000_personal_bests.sql), scoped to the authenticated user via
-// RLS. Disciplines are a fixed reference list (mirroring v1's "Disciplines" sheet), not user
-// data, so - like Pursuit Strategist (#52) - they're kept as a static catalogue here rather than
-// a DB table.
-
-// Offline fallback only: the `disciplines` table (src/lib/lookups.js) is the source of truth.
-// Fixed catalogue of track cycling disciplines a rider can log a PB against, with their race
-// distance in meters (used to compute average speed). Mirrors v1's "Disciplines" Google Sheet
-// worksheet verbatim (name + distance + category) - this previously held an invented, UCI-generic
-// list that didn't match any of v1's actual discipline names, so every migrated PB's
-// getDisciplineDistance() lookup would silently fail.
-export const DISCIPLINES = [
-  { category: 'Sprint', name: '200m Flying', distanceM: 200, flyingStart: true },
-  { category: 'Time Trial', name: '500m TT', distanceM: 500, flyingStart: false },
-  { category: 'Time Trial', name: '666m TT', distanceM: 666, flyingStart: false },
-  { category: 'Time Trial', name: '750m TT', distanceM: 750, flyingStart: false },
-  { category: 'Time Trial', name: '750m Team Sprint', distanceM: 750, flyingStart: false },
-  { category: 'Time Trial', name: '800m TT', distanceM: 800, flyingStart: false },
-  { category: 'Time Trial', name: '1000m TT', distanceM: 1000, flyingStart: false },
-  { category: 'Endurance', name: '2000m Individual Pursuit', distanceM: 2000, flyingStart: false },
-  { category: 'Endurance', name: '3000m Individual Pursuit', distanceM: 3000, flyingStart: false },
-  { category: 'Endurance', name: '4000m Individual Pursuit', distanceM: 4000, flyingStart: false },
-  { category: 'Endurance', name: '4000m Team Pursuit', distanceM: 4000, flyingStart: false },
-  { category: 'Time Trial', name: '500m Team Sprint', distanceM: 500, flyingStart: false },
-  { category: 'Endurance', name: 'Scratch Race', distanceM: 10000, flyingStart: false },
-  { category: 'Endurance', name: 'Points Race', distanceM: 20000, flyingStart: false },
-  { category: 'Endurance', name: 'Madison', distanceM: 30000, flyingStart: false },
-  { category: 'BMX', name: 'BMX Race', distanceM: 350, flyingStart: false },
-]
+// RLS. Disciplines are shared reference data read from the `disciplines` table
+// (src/lib/lookups.js); users suggest new ones and an admin approves them.
 
 export const SPLIT_MODES = {
   LAPS: 'laps',
   DISTANCE: 'distance',
-}
-
-/**
- * Looks up a discipline's race distance by name, falling back to null if unknown (e.g. a
- * custom/legacy discipline string from an older record).
- * @param {string} name
- * @returns {number|null}
- */
-export function getDisciplineDistance(name) {
-  const match = DISCIPLINES.find((d) => d.name === name)
-  return match ? match.distanceM : null
 }
 
 /**

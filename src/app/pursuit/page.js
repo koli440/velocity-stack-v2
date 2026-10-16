@@ -11,7 +11,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
-import { DISCIPLINES } from '../../lib/pbVault'
+import DisciplineSuggest from '../../components/DisciplineSuggest'
 import { fetchDisciplines } from '../../lib/lookups'
 import {
   getTrackLaps,
@@ -54,7 +54,7 @@ export default function PursuitPage() {
 
   const [targetMin, setTargetMin] = useState(3)
   const [targetSec, setTargetSec] = useState(30)
-  const [disciplines, setDisciplines] = useState(DISCIPLINES)
+  const [disciplines, setDisciplines] = useState([])
   const [startPenalty, setStartPenalty] = useState(5)
   const [pacingDrift, setPacingDrift] = useState(0)
   const [chainring, setChainring] = useState(58)
@@ -112,7 +112,7 @@ export default function PursuitPage() {
   }, [filteredTracks, trackId])
 
   useEffect(() => {
-    if (!category) setCategory(CATEGORIES.includes('Endurance') ? 'Endurance' : CATEGORIES[0])
+    if (!category && CATEGORIES.length > 0) setCategory(CATEGORIES.includes('Endurance') ? 'Endurance' : CATEGORIES[0])
   }, [category, CATEGORIES])
 
   const filteredDisciplines = useMemo(
@@ -259,6 +259,7 @@ export default function PursuitPage() {
                 filteredDisciplines.map((d) => ({ value: d.name, label: d.name }))
               )}
             </div>
+            <DisciplineSuggest categories={CATEGORIES} />
 
             {selectedDiscipline && (
               <p className="text-sm text-slate-600 dark:text-slate-300">
