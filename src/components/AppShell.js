@@ -127,6 +127,7 @@ export default function AppShell({ children }) {
       <Sidebar
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
+        isAdmin={!!profile?.is_admin}
       />
 
       {/* 2. Main application body */}
