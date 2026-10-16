@@ -220,8 +220,14 @@ export function systemTemplateRowSql(t, manifest) {
 }
 
 /** Idempotent upsert (keyed on slug) for a list of catalogue templates. Never deletes rows. */
-export function systemTemplatesUpsertSql(templates, manifestBuilder = buildLtManifest) {
-  const rows = templates.map((t) => systemTemplateRowSql(t, manifestBuilder(t.dsl))).join(',\n')
+export function manifestBuilderFor(t) {
+  return SYSTEM_TEMPLATES.includes(t) ? buildManifest : buildLtManifest
+}
+
+export function systemTemplatesUpsertSql(templates, manifestBuilder = null) {
+  const rows = templates
+    .map((t) => systemTemplateRowSql(t, (manifestBuilder || manifestBuilderFor(t))(t.dsl)))
+    .join(',\n')
   return `INSERT INTO public.analysis_templates (slug, name, description, category, manifest, dsl_source, user_id, visibility)
 SELECT v.slug, v.name, v.description, v.category, v.manifest, v.dsl_source, NULL, 'public'
 FROM (VALUES

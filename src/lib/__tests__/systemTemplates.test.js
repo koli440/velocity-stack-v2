@@ -72,3 +72,14 @@ test('generated upsert is idempotent and never deletes', () => {
   assert.match(sql, /ON CONFLICT \(slug\) DO UPDATE/)
   assert.doesNotMatch(sql, /\bDELETE\b|\bDROP\b|\bTRUNCATE\b/i)
 })
+
+test('no-argument generator output reproduces every seeded manifest', () => {
+  const sql = systemTemplatesUpsertSql(ALL_SYSTEM_TEMPLATES)
+  for (const t of ALL_SYSTEM_TEMPLATES) {
+    const builder = SYSTEM_TEMPLATES.includes(t) ? buildManifest : buildLtManifest
+    const manifestLiteral = `$q$${JSON.stringify(builder(t.dsl))}$q$::jsonb`
+    assert.ok(sql.includes(manifestLiteral), t.slug)
+    assert.ok(allSql.includes(manifestLiteral), `${t.slug} not seeded with this manifest`)
+    assert.ok(sql.includes(systemTemplateRowSql(t, builder(t.dsl))), t.slug)
+  }
+})
