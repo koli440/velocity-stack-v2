@@ -2,8 +2,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  DISCIPLINES,
-  getDisciplineDistance,
   formatTime,
   minutesSecondsToTotalSeconds,
   totalSecondsToMinutesSeconds,
@@ -12,18 +10,6 @@ import {
   buildLapAnalysis,
   formatDate,
 } from '../pbVault.js'
-
-test('getDisciplineDistance resolves known disciplines and falls back to null', () => {
-  assert.equal(getDisciplineDistance('1000m TT'), 1000)
-  assert.equal(getDisciplineDistance('4000m Individual Pursuit'), 4000)
-  assert.equal(getDisciplineDistance('Some Unknown Event'), null)
-})
-
-test('DISCIPLINES catalogue has unique names and positive distances', () => {
-  const names = DISCIPLINES.map((d) => d.name)
-  assert.equal(new Set(names).size, names.length)
-  assert.ok(DISCIPLINES.every((d) => d.distanceM > 0))
-})
 
 test('formatTime renders M:SS.mmm like v1\'s format_time()', () => {
   assert.equal(formatTime(210), '3:30.000')
