@@ -59,6 +59,29 @@ export function getTrackLaps(trackLengthM, distanceM, tolerance = 0.05) {
   return { laps: 0, valid: false }
 }
 
+export const MIN_DISTANCE_M = 100
+export const MAX_DISTANCE_M = 100000
+
+/**
+ * Parses a user-entered distance override. Blank input means "use the default" (value: null).
+ * @param {string|number|null|undefined} input
+ * @returns {{ value: number|null, error: string|null }}
+ */
+export function parseDistanceOverride(input) {
+  if (input === null || input === undefined || String(input).trim() === '') {
+    return { value: null, error: null }
+  }
+  const n = Number(String(input).trim())
+  if (!Number.isFinite(n)) return { value: null, error: 'Distance must be a number.' }
+  if (n < MIN_DISTANCE_M || n > MAX_DISTANCE_M) {
+    return {
+      value: null,
+      error: `Distance must be between ${MIN_DISTANCE_M} and ${MAX_DISTANCE_M} m.`,
+    }
+  }
+  return { value: n, error: null }
+}
+
 /**
  * Classifies a pacing drift value the same way v1's UI messaging does.
  * @param {number} pacingDriftS

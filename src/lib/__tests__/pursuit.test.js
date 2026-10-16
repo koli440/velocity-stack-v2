@@ -142,3 +142,13 @@ test('calculatePursuitStrategy: negative drift makes each flying lap faster than
   }
   assert.ok(Math.abs(result.elapsedTimeS - 150) < 0.01)
 })
+
+test('parseDistanceOverride validates and defaults', async () => {
+  const { parseDistanceOverride } = await import('../pursuit.js')
+  assert.deepEqual(parseDistanceOverride(''), { value: null, error: null })
+  assert.equal(parseDistanceOverride('3000').value, 3000)
+  assert.ok(parseDistanceOverride('abc').error)
+  assert.ok(parseDistanceOverride('-5').error)
+  assert.ok(parseDistanceOverride('50').error)
+  assert.ok(parseDistanceOverride('1e9').error)
+})

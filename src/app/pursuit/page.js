@@ -15,6 +15,7 @@ import DisciplineSuggest from '../../components/DisciplineSuggest'
 import { fetchDisciplines } from '../../lib/lookups'
 import {
   getTrackLaps,
+  parseDistanceOverride,
   calculatePursuitStrategy,
   formatTime,
   pacingStrategyLabel,
@@ -55,6 +56,7 @@ export default function PursuitPage() {
   const [targetMin, setTargetMin] = useState(3)
   const [targetSec, setTargetSec] = useState(30)
   const [disciplines, setDisciplines] = useState([])
+  const [distanceInput, setDistanceInput] = useState('')
   const [startPenalty, setStartPenalty] = useState(5)
   const [pacingDrift, setPacingDrift] = useState(0)
   const [chainring, setChainring] = useState(58)
@@ -126,6 +128,7 @@ export default function PursuitPage() {
       !filteredDisciplines.some((d) => d.name === disciplineName)
     ) {
       setDisciplineName(filteredDisciplines[0].name)
+      setDistanceInput('')
     }
   }, [filteredDisciplines, disciplineName])
 
@@ -134,9 +137,13 @@ export default function PursuitPage() {
   const trackLengthM = selectedTrack ? Number(selectedTrack.length_m) : 0
   const targetSeconds = (Number(targetMin) || 0) * 60 + (Number(targetSec) || 0)
 
+  const override = parseDistanceOverride(distanceInput)
+  const distanceM = override.value ?? selectedDiscipline?.distanceM ?? 0
+  const isOverridden = override.value !== null && override.value !== selectedDiscipline?.distanceM
+
   const lapsInfo =
-    selectedTrack && selectedDiscipline
-      ? getTrackLaps(trackLengthM, selectedDiscipline.distanceM)
+    selectedTrack && selectedDiscipline && !override.error
+      ? getTrackLaps(trackLengthM, distanceM)
       : { laps: 0, valid: false }
 
   const strategy =
@@ -144,7 +151,7 @@ export default function PursuitPage() {
       ? calculatePursuitStrategy({
           trackLengthM,
           laps: lapsInfo.laps,
-          totalDistanceM: selectedDiscipline.distanceM,
+          totalDistanceM: distanceM,
           targetSeconds,
           startPenaltyS: Number(startPenalty) || 0,
           pacingDriftS: Number(pacingDrift) || 0,
@@ -255,15 +262,50 @@ export default function PursuitPage() {
               {select(
                 'Discipline',
                 disciplineName,
-                setDisciplineName,
+                (v) => {
+                  setDisciplineName(v)
+                  setDistanceInput('')
+                },
                 filteredDisciplines.map((d) => ({ value: d.name, label: d.name }))
               )}
             </div>
             <DisciplineSuggest categories={CATEGORIES} />
 
             {selectedDiscipline && (
+              <div className="space-y-1.5">
+                <span className="text-xs uppercase font-bold text-slate-400">
+                  Distance (m) — default {selectedDiscipline.distanceM}
+                </span>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={100}
+                    max={100000}
+                    value={distanceInput}
+                    placeholder={String(selectedDiscipline.distanceM)}
+                    onChange={(e) => setDistanceInput(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 dark:border-surface-darkBorder bg-transparent px-3 py-2 text-sm"
+                  />
+                  {distanceInput !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => setDistanceInput('')}
+                      className="shrink-0 rounded-lg border border-slate-200 dark:border-surface-darkBorder px-3 py-2 text-xs font-bold"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                {override.error && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{override.error}</p>
+                )}
+              </div>
+            )}
+            {selectedDiscipline && (
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Distance: <span className="font-bold">{selectedDiscipline.distanceM}m</span> | Total
+                Distance: <span className="font-bold">{distanceM}m</span>
+                {isOverridden && ' (custom)'} | Total
                 Laps:{' '}
                 <span className="font-bold">
                   {lapsInfo.valid ? lapsInfo.laps : '—'}
@@ -347,7 +389,7 @@ export default function PursuitPage() {
         <>
           {/* Summary metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {metric('Distance', `${selectedDiscipline.distanceM}`, 'm')}
+            {metric('Distance', `${distanceM}`, 'm')}
             {metric('Track', `${trackLengthM}`, 'm')}
             {metric('Target', formatTime(targetSeconds))}
             {metric('Avg Speed', strategy.avgSpeedKmh.toFixed(2), 'km/h')}
