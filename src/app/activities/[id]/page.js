@@ -412,7 +412,7 @@ export default function ActivityDetailPage() {
 
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
       {!sharedView && (
-        <TemplateRunsSection activityId={activityId} onVisibleWindowsChange={setHighlightWindows} />
+        <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} onVisibleWindowsChange={setHighlightWindows} />
       )}
 
       {/* 5. Bottom panel: Quick track and gearing setup (own activities only) */}

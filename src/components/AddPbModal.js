@@ -17,7 +17,7 @@ import DisciplineSuggest from './DisciplineSuggest'
 // "Add New Personal Best" form - migrated from v1's expander in pages/30_PB_vault.py. Collects
 // discipline + track + time (as separate Min/Sec inputs, like v1) plus optional gear and lap/
 // split times, then posts to /api/personal-bests.
-function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
+function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved, prefill = null }) {
   const [disciplines, setDisciplines] = useState([])
   const [discipline, setDiscipline] = useState('')
 
@@ -46,6 +46,21 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
+
+  // Apply suggested values (e.g. from a template run effort); the user still reviews and saves.
+  useEffect(() => {
+    if (!isOpen || !prefill) return
+    if (prefill.discipline && disciplines.some((d) => d.name === prefill.discipline)) {
+      setDiscipline(prefill.discipline)
+    }
+    if (prefill.trackId) setTrackId(prefill.trackId)
+    if (prefill.achievedDate) setAchievedDate(prefill.achievedDate)
+    if (prefill.minutes != null) setMinutes(prefill.minutes)
+    if (prefill.seconds != null) setSeconds(prefill.seconds)
+    if (prefill.chainring) setChainring(prefill.chainring)
+    if (prefill.cog) setCog(prefill.cog)
+    if (prefill.notes) setNotes(prefill.notes)
+  }, [isOpen, prefill, disciplines])
 
   const selectedTrack = tracks.find((t) => t.id === trackId)
   const distanceM = findDisciplineDistance(disciplines, discipline)

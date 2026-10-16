@@ -112,3 +112,61 @@ export function formatDate(isoDate) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   return `${day}. ${month}. ${date.getFullYear()}`
 }
+
+/**
+ * Picks the PB Vault discipline whose distance is closest to a template effort's distance
+ * (within `tolerance`, default 5%). Disciplines that don't fit the track length are skipped
+ * when a track is known. Returns null when nothing is close enough.
+ * @param {Array<object>} disciplines - central disciplines (see lookups.mapDisciplineRow)
+ * @param {number} distanceM
+ * @param {number|null} [trackLengthM]
+ * @param {number} [tolerance]
+ */
+export function matchDisciplineByDistance(disciplines, distanceM, trackLengthM = null, tolerance = 0.05) {
+  const target = Number(distanceM)
+  if (!(target > 0)) return null
+  let best = null
+  let bestDiff = Infinity
+  for (const d of disciplines || []) {
+    if (!(d.distanceM > 0)) continue
+    if (trackLengthM && d.minTrackLengthM != null && trackLengthM < d.minTrackLengthM) continue
+    if (trackLengthM && d.maxTrackLengthM != null && trackLengthM > d.maxTrackLengthM) continue
+    const diff = Math.abs(d.distanceM - target)
+    if (diff / d.distanceM <= tolerance && diff < bestDiff) {
+      best = d
+      bestDiff = diff
+    }
+  }
+  return best
+}
+
+/**
+ * Builds the values to prefill the "Add Personal Best" form from a template run effort and its
+ * activity. Everything is only a suggestion; the user reviews and saves.
+ * @param {object} effort - template run effort (distance_m, target_distance_m, duration_sec, ...)
+ * @param {object} activity - activity row (activity_date, track_id, tracks, chainring, cog, name)
+ * @param {Array<object>} disciplines
+ */
+export function buildPbPrefillFromEffort(effort, activity, disciplines) {
+  const track = activity?.tracks || null
+  const distance = effort?.target_distance_m ?? effort?.distance_m
+  const discipline = matchDisciplineByDistance(disciplines, distance, track?.length_m ?? null)
+  const date = String(activity?.activity_date || activity?.created_at || '').slice(0, 10)
+  const prefill = {
+    discipline: discipline ? discipline.name : null,
+    trackId: activity?.track_id || null,
+    achievedDate: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null,
+    chainring: activity?.chainring ? Number(activity.chainring) : null,
+    cog: activity?.cog ? Number(activity.cog) : null,
+  }
+  if (Number(effort?.duration_sec) > 0) {
+    Object.assign(prefill, totalSecondsToMinutesSeconds(effort.duration_sec))
+  }
+  const notes = []
+  if (activity?.name) notes.push(`From activity: ${activity.name}`)
+  if (effort?.distance_m != null) notes.push(`Detected distance: ${effort.distance_m} m`)
+  if (effort?.avg_power != null) notes.push(`Avg power: ${effort.avg_power} W`)
+  if (effort?.avg_speed_kmh != null) notes.push(`Avg speed: ${effort.avg_speed_kmh} km/h`)
+  prefill.notes = notes.join('\n')
+  return prefill
+}
