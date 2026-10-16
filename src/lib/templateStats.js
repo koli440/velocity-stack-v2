@@ -30,25 +30,18 @@ export function runMetrics(summary) {
 
 /**
  * @param {Array} rows template_executions rows with embedded `activities(title, activity_date)`
- * @returns {Record<string, {count, last_run_at, metrics, runs}>} keyed by template id
+ * @returns {Record<string, {count, last_run_at, metrics}>} keyed by template id
  */
 export function aggregateTemplateStats(rows) {
   const byTemplate = {}
   for (const row of Array.isArray(rows) ? rows : []) {
     if (!row || !row.template_id) continue
-    const t = (byTemplate[row.template_id] ||= { count: 0, last_run_at: null, runs: [], sums: {} })
+    const t = (byTemplate[row.template_id] ||= { count: 0, last_run_at: null, sums: {} })
     const act = Array.isArray(row.activities) ? row.activities[0] : row.activities
     const date = act?.activity_date || row.created_at || null
     const metrics = runMetrics(row.summary)
     t.count++
     if (date && (!t.last_run_at || date > t.last_run_at)) t.last_run_at = date
-    t.runs.push({
-      id: row.id,
-      activity_id: row.activity_id,
-      title: act?.title || null,
-      date,
-      metrics,
-    })
     for (const [k, v] of Object.entries(metrics)) {
       const s = (t.sums[k] ||= { total: 0, n: 0, best: v })
       s.total += v
@@ -62,10 +55,45 @@ export function aggregateTemplateStats(rows) {
     for (const [k, s] of Object.entries(t.sums)) {
       metrics[k] = { avg: round2(s.total / s.n), n: s.n, best: BEST_KEYS.has(k) ? s.best : null }
     }
-    t.runs.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
-    result[id] = { count: t.count, last_run_at: t.last_run_at, metrics, runs: t.runs }
+    result[id] = { count: t.count, last_run_at: t.last_run_at, metrics }
   }
   return result
+}
+
+export const RUNS_PAGE_SIZE = 25
+export const RUNS_MAX_PAGE_SIZE = 100
+
+/** Validates and clamps the query of the paginated run-list endpoint. */
+export function parseRunsParams(sp) {
+  const get = (k) => (typeof sp?.get === 'function' ? sp.get(k) : sp?.[k])
+  const int = (v, d) => {
+    const n = Number.parseInt(v, 10)
+    return Number.isFinite(n) && n >= 0 ? n : d
+  }
+  const limit = Math.min(Math.max(int(get('limit'), RUNS_PAGE_SIZE), 1), RUNS_MAX_PAGE_SIZE)
+  const offset = Math.min(int(get('offset'), 0), 100000)
+  const rawSort = get('sort')
+  const sort = rawSort && rawSort !== 'date' && isStatMetricKey(rawSort) ? rawSort : 'date'
+  const dir = get('dir') === 'asc' ? 'asc' : 'desc'
+  const q = String(get('q') || '').trim().slice(0, 100)
+  return { limit, offset, sort, dir, q }
+}
+
+/** Escapes LIKE wildcards so a search term is matched literally. */
+export function escapeLike(q) {
+  return String(q).replace(/[\\%_]/g, (c) => `\\${c}`)
+}
+
+/** Shapes one template_executions row (with embedded activity) for the run list. */
+export function mapRunRow(row) {
+  const act = Array.isArray(row.activities) ? row.activities[0] : row.activities
+  return {
+    id: row.id,
+    activity_id: row.activity_id,
+    title: act?.title || null,
+    date: act?.activity_date || row.created_at || null,
+    metrics: runMetrics(row.summary),
+  }
 }
 
 const LABELS = {
