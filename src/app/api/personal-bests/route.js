@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../lib/supabaseServer'
-import { calculateAvgSpeedKmh, getDisciplineDistance } from '../../../lib/pbVault'
+import { calculateAvgSpeedKmh } from '../../../lib/pbVault'
+import { fetchDisciplines, findDisciplineDistance } from '../../../lib/lookups'
 
 // GET /api/personal-bests - list the signed-in rider's own Personal Best records (issue #50,
 // "PB Vault"). RLS already scopes rows to auth.uid(), this just orders them for the UI.
@@ -59,7 +60,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Missing discipline or time' }, { status: 400 })
     }
 
-    const distanceM = getDisciplineDistance(discipline)
+    const distanceM = findDisciplineDistance(await fetchDisciplines(supabase), discipline)
     if (!distanceM) {
       return NextResponse.json({ error: 'Unknown discipline' }, { status: 400 })
     }

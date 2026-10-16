@@ -16,23 +16,6 @@
 // 28" wheel, 700x23C/25C tyre).
 export const WHEEL_CIRCUMFERENCE_M = 2.14
 
-// Fixed catalogue of UCI track cycling disciplines: category, display name, race distance (m)
-// and whether the event starts from a flying (rolling) start rather than a standing start.
-export const DISCIPLINES = [
-  { category: 'Sprint', name: 'Flying 200m', distanceM: 200, flyingStart: true },
-  { category: 'Sprint', name: 'Kilo (1km Time Trial)', distanceM: 1000, flyingStart: false },
-  { category: 'Sprint', name: '500m Time Trial (Women)', distanceM: 500, flyingStart: false },
-  { category: 'Sprint', name: 'Team Sprint (Men, 3 laps)', distanceM: 750, flyingStart: false },
-  { category: 'Sprint', name: 'Team Sprint (Women, 2 laps)', distanceM: 500, flyingStart: false },
-  { category: 'Pursuit', name: 'Individual Pursuit (Men)', distanceM: 4000, flyingStart: false },
-  { category: 'Pursuit', name: 'Individual Pursuit (Women)', distanceM: 3000, flyingStart: false },
-  { category: 'Pursuit', name: 'Team Pursuit (Men)', distanceM: 4000, flyingStart: false },
-  { category: 'Pursuit', name: 'Team Pursuit (Women)', distanceM: 4000, flyingStart: false },
-  { category: 'Endurance', name: 'Scratch Race', distanceM: 10000, flyingStart: false },
-  { category: 'Endurance', name: 'Points Race', distanceM: 20000, flyingStart: false },
-  { category: 'Endurance', name: 'Madison', distanceM: 30000, flyingStart: false },
-]
-
 function round(value, decimals) {
   const factor = 10 ** decimals
   return Math.round(value * factor) / factor

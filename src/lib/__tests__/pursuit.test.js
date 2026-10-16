@@ -3,12 +3,12 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   WHEEL_CIRCUMFERENCE_M,
-  DISCIPLINES,
   formatTime,
   getTrackLaps,
   pacingStrategyLabel,
   calculatePursuitStrategy,
 } from '../pursuit.js'
+import { DISCIPLINES } from '../pbVault.js'
 
 test('formatTime renders M:SS.mmm like v1\'s format_time()', () => {
   assert.equal(formatTime(210), '3:30.000')

@@ -8,24 +8,25 @@
 // data, so - like Pursuit Strategist (#52) - they're kept as a static catalogue here rather than
 // a DB table.
 
+// Offline fallback only: the `disciplines` table (src/lib/lookups.js) is the source of truth.
 // Fixed catalogue of track cycling disciplines a rider can log a PB against, with their race
 // distance in meters (used to compute average speed). Mirrors v1's "Disciplines" Google Sheet
 // worksheet verbatim (name + distance + category) - this previously held an invented, UCI-generic
 // list that didn't match any of v1's actual discipline names, so every migrated PB's
 // getDisciplineDistance() lookup would silently fail.
 export const DISCIPLINES = [
-  { category: 'Sprint', name: '200m Flying', distanceM: 200 },
-  { category: 'Time Trial', name: '500m TT', distanceM: 500 },
-  { category: 'Time Trial', name: '666m TT', distanceM: 666 },
-  { category: 'Time Trial', name: '750m TT', distanceM: 750 },
-  { category: 'Time Trial', name: '750m Team Sprint', distanceM: 750 },
-  { category: 'Time Trial', name: '800m TT', distanceM: 800 },
-  { category: 'Time Trial', name: '1000m TT', distanceM: 1000 },
-  { category: 'Endurance', name: '2000m Individual Pursuit', distanceM: 2000 },
-  { category: 'Endurance', name: '3000m Individual Pursuit', distanceM: 3000 },
-  { category: 'Endurance', name: '4000m Individual Pursuit', distanceM: 4000 },
-  { category: 'Endurance', name: '4000m Team Pursuit', distanceM: 4000 },
-  { category: 'BMX', name: 'BMX Race', distanceM: 350 },
+  { category: 'Sprint', name: '200m Flying', distanceM: 200, flyingStart: true },
+  { category: 'Time Trial', name: '500m TT', distanceM: 500, flyingStart: false },
+  { category: 'Time Trial', name: '666m TT', distanceM: 666, flyingStart: false },
+  { category: 'Time Trial', name: '750m TT', distanceM: 750, flyingStart: false },
+  { category: 'Time Trial', name: '750m Team Sprint', distanceM: 750, flyingStart: false },
+  { category: 'Time Trial', name: '800m TT', distanceM: 800, flyingStart: false },
+  { category: 'Time Trial', name: '1000m TT', distanceM: 1000, flyingStart: false },
+  { category: 'Endurance', name: '2000m Individual Pursuit', distanceM: 2000, flyingStart: false },
+  { category: 'Endurance', name: '3000m Individual Pursuit', distanceM: 3000, flyingStart: false },
+  { category: 'Endurance', name: '4000m Individual Pursuit', distanceM: 4000, flyingStart: false },
+  { category: 'Endurance', name: '4000m Team Pursuit', distanceM: 4000, flyingStart: false },
+  { category: 'BMX', name: 'BMX Race', distanceM: 350, flyingStart: false },
 ]
 
 export const SPLIT_MODES = {
