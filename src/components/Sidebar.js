@@ -8,6 +8,7 @@ import Icon from './Icon'
 export default function Sidebar({
   isOpen = false,
   onClose,
+  isAdmin = false,
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -76,6 +77,14 @@ export default function Sidebar({
                 <Icon name={item.icon} size={18} /> {item.label}
               </button>
             ))}
+            {isAdmin && (
+              <button
+                onClick={() => handleNavigate('/admin/suggestions')}
+                className={navItemClass(pathname?.startsWith('/admin'))}
+              >
+                <Icon name="check" size={18} /> Suggestions
+              </button>
+            )}
           </nav>
         </div>
 

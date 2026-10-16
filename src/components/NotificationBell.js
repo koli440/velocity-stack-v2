@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { reviewPath } from '../lib/suggestions'
 import { formatDateTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
@@ -75,7 +77,13 @@ export default function NotificationBell({ userId }) {
             >
               <Avatar url={n.actor?.avatar_url} name={authorName(n.actor)} size="w-6 h-6" textSize="text-[10px]" />
               <div>
-                {describeNotification(n, n.actor)}
+                {n.type === 'suggestion_submitted' && n.suggestion_id ? (
+                  <Link href={reviewPath(n.suggestion_id)} className="underline">
+                    {describeNotification(n, n.actor)}
+                  </Link>
+                ) : (
+                  describeNotification(n, n.actor)
+                )}
                 <span className="block text-[10px] font-normal text-slate-400">
                   {formatDateTime(n.created_at)}
                 </span>

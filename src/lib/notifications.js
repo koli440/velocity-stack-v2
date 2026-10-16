@@ -14,6 +14,12 @@ export function describeNotification(notification, actor) {
       return `${name} wants to follow you`
     case 'follow_approved':
       return `${name} approved your follow request`
+    case 'suggestion_submitted':
+      return `${name} submitted a suggestion for review`
+    case 'suggestion_approved':
+      return 'Your suggestion was approved'
+    case 'suggestion_rejected':
+      return 'Your suggestion was declined'
     default:
       return 'New notification'
   }
@@ -27,7 +33,7 @@ export async function fetchNotifications(client, userId, limit = NOTIFICATION_PA
   if (!userId) return { notifications: [], error: null }
   const { data, error } = await client
     .from('notifications')
-    .select('id, type, actor_id, created_at, read_at')
+    .select('id, type, actor_id, suggestion_id, created_at, read_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)
