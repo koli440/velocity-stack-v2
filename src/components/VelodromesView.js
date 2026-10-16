@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import Icon from './Icon'
+import SuggestionNotice from './SuggestionNotice'
+import { getAuthHeader } from '../lib/supabase'
+import { buildVelodromePayload } from '../lib/velodromeSuggestions'
 
 // Dynamic import of the Leaflet map
 const VelodromeMap = dynamic(() => import('./VelodromeMap'), {
@@ -14,7 +17,7 @@ const VelodromeMap = dynamic(() => import('./VelodromeMap'), {
   )
 })
 
-export default function VelodromesView({ tracks = [], onRefreshTracks }) {
+export default function VelodromesView({ tracks = [] }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [search, setSearch] = useState('')
   const [surfaceFilter, setSurfaceFilter] = useState('ALL')
@@ -24,47 +27,67 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
   const [submitting, setSubmitting] = useState(false)
 
-  const [formData, setFormData] = useState({
+  const emptyForm = {
     name: '',
     country_code: '',
     length_m: '250',
     surface: 'Wood',
     is_indoor: true,
-    elevation_m: '100',
+    elevation_m: '',
     latitude: '',
     longitude: '',
-    notes: ''
-  })
+    notes: '',
+    website_url: '',
+    pricing_url: '',
+    booking_url: ''
+  }
+  const [formData, setFormData] = useState(emptyForm)
+  const [editingTrack, setEditingTrack] = useState(null)
+
+  const openAdd = () => {
+    if (showAddModal && !editingTrack) return setShowAddModal(false)
+    setEditingTrack(null)
+    setFormData(emptyForm)
+    setShowAddModal(true)
+  }
+
+  const openEdit = (t) => {
+    setEditingTrack(t)
+    setFormData(Object.fromEntries(
+      Object.keys(emptyForm).map(k => [k, t[k] == null ? (k === 'is_indoor' ? false : '') : t[k]])
+    ))
+    setShowAddModal(true)
+    window.scrollTo?.({ top: 0, behavior: 'smooth' })
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const { payload, error } = buildVelodromePayload(formData, editingTrack)
+    if (error) {
+      alert(error)
+      return
+    }
     setSubmitting(true)
 
     try {
-      const res = await fetch('/api/tracks', {
+      const res = await fetch('/api/suggestions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({
+          entity_type: 'velodrome',
+          target_id: editingTrack ? editingTrack.id : null,
+          payload
+        })
       })
 
       const json = await res.json()
       if (res.ok) {
-        alert('Velodrome added successfully!')
+        alert('Thanks! Your suggestion was submitted for admin review. It will not appear immediately.')
         setShowAddModal(false)
-        setFormData({
-          name: '',
-          country_code: '',
-          length_m: '250',
-          surface: 'Wood',
-          is_indoor: true,
-          elevation_m: '100',
-          latitude: '',
-          longitude: '',
-          notes: ''
-        })
-        if (onRefreshTracks) onRefreshTracks()
+        setEditingTrack(null)
+        setFormData(emptyForm)
       } else {
-        alert('Error: ' + json.error)
+        alert(res.status === 401 ? 'Please log in to submit suggestions.' : 'Error: ' + json.error)
       }
     } catch (err) {
       alert('Failed: ' + err.message)
@@ -143,10 +166,10 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         </div>
 
         <button
-          onClick={() => setShowAddModal(!showAddModal)}
+          onClick={openAdd}
           className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider shadow-sm transition"
         >
-          {showAddModal ? 'Close Form' : '+ Add Velodrome'}
+          {showAddModal && !editingTrack ? 'Close Form' : '+ Suggest Velodrome'}
         </button>
       </div>
 
@@ -194,8 +217,9 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
       {showAddModal && (
         <form onSubmit={handleSubmit} className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-emerald-500/40 shadow-md space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-            <Icon name="flag" /> Add New Track Oval
+            <Icon name="flag" /> {editingTrack ? `Suggest edit: ${editingTrack.name}` : 'Suggest New Track Oval'}
           </h3>
+          <SuggestionNotice />
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
@@ -281,12 +305,45 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">Website</label>
+              <input
+                type="url"
+                placeholder="https://..."
+                value={formData.website_url}
+                onChange={e => setFormData({...formData, website_url: e.target.value})}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">Pricing / price list</label>
+              <input
+                type="url"
+                placeholder="https://..."
+                value={formData.pricing_url}
+                onChange={e => setFormData({...formData, pricing_url: e.target.value})}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">Booking form</label>
+              <input
+                type="url"
+                placeholder="https://..."
+                value={formData.booking_url}
+                onChange={e => setFormData({...formData, booking_url: e.target.value})}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={submitting}
             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition text-xs uppercase tracking-wider"
           >
-            {submitting ? 'Saving to Database...' : 'Save Velodrome'}
+            {submitting ? 'Submitting...' : 'Submit for review'}
           </button>
         </form>
       )}
@@ -408,6 +465,19 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
                 {t.notes && (
                   <p className="text-xs text-slate-400 italic line-clamp-2 mt-1">"{t.notes}"</p>
                 )}
+
+                <div className="flex flex-wrap gap-3 text-xs mt-2">
+                  {[['website_url', 'Website'], ['pricing_url', 'Pricing'], ['booking_url', 'Book']].map(([k, label]) =>
+                    t[k] ? (
+                      <a key={k} href={t[k]} target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-brand-neon font-semibold underline">
+                        {label}
+                      </a>
+                    ) : null
+                  )}
+                  <button type="button" onClick={() => openEdit(t)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline ml-auto">
+                    Suggest edit
+                  </button>
+                </div>
               </div>
 
               {t.latitude && t.longitude && (
