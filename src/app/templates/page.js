@@ -1,10 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase, getAuthHeader } from '../../lib/supabase'
 import { parseJsonResponse } from '../../lib/httpJson'
 import TemplateCreatorModal from '../../components/TemplateCreatorModal'
+import TemplateRunsModal from '../../components/TemplateRunsModal'
 import Icon from '../../components/Icon'
 import {
   filterByTab,
@@ -35,7 +35,7 @@ export default function TemplatesPage() {
   const [stats, setStats] = useState({})
   const [statsLoading, setStatsLoading] = useState(true)
   const [statsError, setStatsError] = useState(null)
-  const [expanded, setExpanded] = useState(new Set())
+  const [runsFor, setRunsFor] = useState(null)
   const [modal, setModal] = useState({ open: false, template: null })
 
   const load = useCallback(async () => {
@@ -169,21 +169,12 @@ export default function TemplatesPage() {
 
   const ownerLabel = (t) => (!t.user_id ? 'System' : t.user_id === userId ? 'You' : owners[t.user_id] || 'Community')
 
-  const toggleExpanded = (id) =>
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-
   const renderStats = (t) => {
     if (statsLoading) return <p className="text-[11px] text-slate-400">Loading your usage…</p>
     if (statsError) return <p className="text-[11px] text-red-500">Usage stats unavailable.</p>
     const st = stats[t.id]
     if (!st) return <p className="text-[11px] text-slate-400">Not used yet.</p>
     const keys = orderMetricKeys(Object.keys(st.metrics))
-    const open = expanded.has(t.id)
     return (
       <div className="rounded-xl bg-slate-50 dark:bg-slate-900/40 p-3 space-y-2 text-[11px]">
         <p className="font-bold text-slate-700 dark:text-slate-200">
@@ -204,27 +195,9 @@ export default function TemplatesPage() {
           </div>
         )}
         {keys.length > 0 && <p className="text-[10px] text-slate-400">Average / best across runs</p>}
-        <button onClick={() => toggleExpanded(t.id)} className="font-bold text-emerald-500 hover:underline" aria-expanded={open}>
-          {open ? 'Hide activities' : `Show activities (${st.runs.length})`}
+        <button onClick={() => setRunsFor(t)} className="font-bold text-emerald-500 hover:underline" aria-haspopup="dialog">
+          View {st.count} {st.count === 1 ? 'run' : 'runs'}
         </button>
-        {open && (
-          <ul className="space-y-1.5">
-            {st.runs.map((r) => (
-              <li key={r.id} className="border-t border-slate-200 dark:border-slate-700 pt-1.5">
-                <Link href={`/activities/${r.activity_id}`} className="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-500">
-                  {r.title || 'Untitled activity'}
-                </Link>
-                {r.date && <span className="text-slate-400"> · {new Date(r.date).toLocaleDateString()}</span>}
-                <div className="text-slate-500 dark:text-slate-400">
-                  {orderMetricKeys(Object.keys(r.metrics))
-                    .slice(0, 6)
-                    .map((k) => `${metricLabel(k)} ${fmt(r.metrics[k])}`)
-                    .join(' · ')}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     )
   }
@@ -342,6 +315,14 @@ export default function TemplatesPage() {
             )
           })}
         </div>
+      )}
+
+      {runsFor && (
+        <TemplateRunsModal
+          template={runsFor}
+          metricKeys={orderMetricKeys(Object.keys(stats[runsFor.id]?.metrics || {}))}
+          onClose={() => setRunsFor(null)}
+        />
       )}
 
       {modal.open && (
