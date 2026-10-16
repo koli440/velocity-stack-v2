@@ -22,7 +22,7 @@ test('validateSuggestionInput enforces registry and allowed fields', () => {
 test('helpers and notification text', () => {
   assert.equal(reviewPath('abc'), '/admin/suggestions/abc')
   assert.equal(formatValue(null), '—')
-  assert.equal(describeNotification({ type: 'suggestion_submitted' }, { username: 'ann' }), 'ann submitted a suggestion for review')
+  assert.equal(describeNotification({ type: 'suggestion_submitted' }, { display_name: 'ann' }), 'ann submitted a suggestion for review')
   assert.match(describeNotification({ type: 'suggestion_approved' }, null), /approved/)
   assert.match(describeNotification({ type: 'suggestion_rejected' }, null), /declined/)
 })
