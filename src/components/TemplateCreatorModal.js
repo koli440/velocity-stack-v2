@@ -13,6 +13,7 @@ import { DSL_GUIDE_PATH } from '../lib/dslGuide'
 import { formatLegacyOptions } from '../lib/legacyPatterns'
 import Icon from './Icon'
 
+const DEFAULT_DSL = '4x\nwork 3min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP'
 const CATEGORIES = ['road', 'track', 'gym']
 
 function formatBandLabel(step) {
@@ -45,19 +46,26 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('road')
   const [visibility, setVisibility] = useState('private')
-  const [dslSource, setDslSource] = useState('4x\nwork 3min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP')
+  const [dslSource, setDslSource] = useState(DEFAULT_DSL)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
 
+  const originalDsl = editingTemplate ? editingTemplate.dsl_source || '' : DEFAULT_DSL
+
+  // Re-seed the form each time the modal opens so stale edits don't persist.
   useEffect(() => {
+    if (!isOpen) return
     if (editingTemplate) {
       setName(editingTemplate.name || '')
       setDescription(editingTemplate.description || '')
       setCategory(editingTemplate.category || 'road')
       setVisibility(editingTemplate.visibility || 'private')
       setDslSource(editingTemplate.dsl_source || '')
+    } else {
+      setDslSource(DEFAULT_DSL)
     }
-  }, [editingTemplate])
+    setSaveError(null)
+  }, [editingTemplate, isOpen])
 
   const parsed = useMemo(() => parseIntervalDsl(dslSource), [dslSource])
 
@@ -173,7 +181,17 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
         </div>
 
         <div>
-          <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Interval DSL</label>
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Interval DSL</label>
+            <button
+              type="button"
+              onClick={() => setDslSource(originalDsl)}
+              disabled={dslSource === originalDsl}
+              className="text-[10px] font-black uppercase tracking-wider text-orange-500 disabled:opacity-40"
+            >
+              Reset to default
+            </button>
+          </div>
           <textarea
             value={dslSource}
             onChange={(e) => setDslSource(e.target.value)}
@@ -196,6 +214,10 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
                   Line {e.line}: {e.message}
                 </div>
               ))}
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                Valid example:
+                <pre className="mt-1 font-mono whitespace-pre-wrap">{DEFAULT_DSL}</pre>
+              </div>
             </div>
           ) : (
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
