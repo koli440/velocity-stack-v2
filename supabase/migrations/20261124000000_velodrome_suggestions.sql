@@ -40,7 +40,7 @@ BEGIN
     END IF;
     FOREACH k IN ARRAY ARRAY['website_url', 'pricing_url', 'booking_url'] LOOP
         v := NEW.payload ->> k;
-        IF v IS NOT NULL AND v <> '' AND v !~* '^https?://[^[:space:]]+$' THEN
+        IF v IS NOT NULL AND v !~* '^https?://[^[:space:]]+$' THEN
             RAISE EXCEPTION 'Field "%" must be an http(s) link', k;
         END IF;
     END LOOP;
