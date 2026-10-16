@@ -1,15 +1,20 @@
 // Per-template usage statistics aggregated from the current user's template_executions rows.
 
 import { SUMMARY_METRICS, DEFAULT_RUN_KEYS, LEGACY_STATIC_KEYS } from './summaryMetrics.js'
+import { EFFORT_RESULT_KEYS, isLowerBetterKey, formatResultValue } from './effortMetrics.js'
 
-const KNOWN_KEYS = new Set(Object.values(SUMMARY_METRICS).map((m) => m.key))
+const KNOWN_KEYS = new Set([...Object.values(SUMMARY_METRICS).map((m) => m.key), ...EFFORT_RESULT_KEYS])
 const HR_RECOVERY_KEY = /^hr_recovery_\d+s$/
 
 // Keys where a lower value is not "better", so a best (max) value is meaningful.
 const BEST_KEYS = new Set([
   'avg_power', 'max_power', 'np_w', 'avg_wkg', 'max_wkg', 'np_wkg', 'avg_hr_bpm', 'max_hr_bpm',
   'avg_cadence_rpm', 'max_cadence_rpm', 'avg_speed_kmh', 'max_speed_kmh', 'work_kj',
+  'best_distance_m', 'avg_distance_m', 'total_distance_m',
 ])
+
+// Lower is better (race times): the best value is the minimum.
+const isBestMin = (key) => /^(best|avg|total)_time_sec$/.test(key) && isLowerBetterKey(key)
 
 export function isStatMetricKey(key) {
   if (LEGACY_STATIC_KEYS.includes(key)) return false
@@ -46,14 +51,14 @@ export function aggregateTemplateStats(rows) {
       const s = (t.sums[k] ||= { total: 0, n: 0, best: v })
       s.total += v
       s.n++
-      if (v > s.best) s.best = v
+      if (isBestMin(k) ? v < s.best : v > s.best) s.best = v
     }
   }
   const result = {}
   for (const [id, t] of Object.entries(byTemplate)) {
     const metrics = {}
     for (const [k, s] of Object.entries(t.sums)) {
-      metrics[k] = { avg: round2(s.total / s.n), n: s.n, best: BEST_KEYS.has(k) ? s.best : null }
+      metrics[k] = { avg: round2(s.total / s.n), n: s.n, best: BEST_KEYS.has(k) || isBestMin(k) ? s.best : null }
     }
     result[id] = { count: t.count, last_run_at: t.last_run_at, metrics }
   }
@@ -102,6 +107,8 @@ const LABELS = {
   avg_cadence_rpm: 'Avg cadence (rpm)', max_cadence_rpm: 'Peak cadence (rpm)', avg_speed_kmh: 'Avg speed (km/h)',
   max_speed_kmh: 'Peak speed (km/h)', work_kj: 'Work (kJ)', pacing_index: 'Pacing (%)', dropoff_pct: 'Drop-off (%)',
   pw_hr_decoupling_pct: 'Decoupling (%)',
+  best_time_sec: 'Best time', avg_time_sec: 'Avg time', total_time_sec: 'Total time',
+  best_distance_m: 'Best distance', avg_distance_m: 'Avg distance', total_distance_m: 'Total distance',
 }
 
 export function metricLabel(key) {
@@ -114,6 +121,12 @@ export function metricLabel(key) {
 /** Default keys first (in default order), then the rest alphabetically. */
 export function orderMetricKeys(keys) {
   const list = [...keys]
-  const rank = (k) => (DEFAULT_RUN_KEYS.includes(k) ? DEFAULT_RUN_KEYS.indexOf(k) : 100)
+  const rank = (k) => (DEFAULT_RUN_KEYS.includes(k) ? DEFAULT_RUN_KEYS.indexOf(k) : EFFORT_RESULT_KEYS.includes(k) ? 50 : 100)
   return list.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
+}
+
+/** Display text of a stat value: race time / km for effort result keys, else a trimmed number. */
+export function formatStatValue(key, v) {
+  if (EFFORT_RESULT_KEYS.includes(key)) return formatResultValue(key, v)
+  return Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/0$/, '')
 }

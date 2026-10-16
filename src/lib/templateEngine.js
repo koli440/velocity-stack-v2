@@ -7,6 +7,7 @@
 
 import { analyzeSessionEfforts } from './effortDetectionEngine.js'
 import { applySummaryMetrics, attachWkg, withDefaultMetrics } from './summaryMetrics.js'
+import { applyEffortMetrics } from './effortMetrics.js'
 import { computeLapSplits, lapSummary } from './lapSplits.js'
 
 function avg(arr) {
@@ -410,6 +411,7 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
     result.summary.reason = detection.message
   }
 
-  const withMetrics = applySummaryMetrics(withDefaultMetrics(manifest.summary_metrics), result, timeSeries, ftpAtActivityW, lt, weightKg)
+  const withTimeDistance = applyEffortMetrics(result, timeSeries, manifest)
+  const withMetrics = applySummaryMetrics(withDefaultMetrics(manifest.summary_metrics), withTimeDistance, timeSeries, ftpAtActivityW, lt, weightKg)
   return attachWkg(withMetrics, weightKg)
 }

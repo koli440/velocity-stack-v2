@@ -138,7 +138,8 @@ export function matchDisciplineByDistance(disciplines, distanceM, trackLengthM =
  */
 export function buildPbPrefillFromEffort(effort, activity, disciplines) {
   const track = activity?.tracks || null
-  const distance = effort?.target_distance_m ?? effort?.distance_m
+  // Time-keyed efforts report the distance covered, which is not a discipline distance.
+  const distance = effort?.keyed_by === 'time' ? null : effort?.target_distance_m ?? effort?.distance_m
   const discipline = matchDisciplineByDistance(disciplines, distance, track?.length_m ?? null)
   const date = String(activity?.activity_date || activity?.created_at || '').slice(0, 10)
   const prefill = {
@@ -148,8 +149,9 @@ export function buildPbPrefillFromEffort(effort, activity, disciplines) {
     chainring: activity?.chainring ? Number(activity.chainring) : null,
     cog: activity?.cog ? Number(activity.cog) : null,
   }
-  if (Number(effort?.duration_sec) > 0) {
-    Object.assign(prefill, totalSecondsToMinutesSeconds(effort.duration_sec))
+  const seconds = Number(effort?.elapsed_time_sec) > 0 ? effort.elapsed_time_sec : effort?.duration_sec
+  if (Number(seconds) > 0) {
+    Object.assign(prefill, totalSecondsToMinutesSeconds(seconds))
   }
   const notes = []
   if (activity?.name) notes.push(`From activity: ${activity.name}`)
