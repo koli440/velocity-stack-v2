@@ -19,6 +19,8 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
   const [search, setSearch] = useState('')
   const [surfaceFilter, setSurfaceFilter] = useState('ALL')
   const [indoorFilter, setIndoorFilter] = useState('ALL')
+  const [countryFilter, setCountryFilter] = useState('ALL')
+  const [showCountries, setShowCountries] = useState(false)
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
   const [submitting, setSubmitting] = useState(false)
 
@@ -77,6 +79,36 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
   const outdoorCount = totalTracks - indoorCount
   const uniqueCountries = new Set(tracks.map(t => t.country_code).filter(Boolean)).size
 
+  const countryList = [...new Set(tracks.map(t => t.country_code).filter(Boolean))].sort()
+
+  const clearTileFilters = () => {
+    setIndoorFilter('ALL')
+    setCountryFilter('ALL')
+    setShowCountries(false)
+  }
+  const toggleIndoorTile = (value) => {
+    setCountryFilter('ALL')
+    setShowCountries(false)
+    setIndoorFilter(indoorFilter === value ? 'ALL' : value)
+  }
+  const toggleCountriesTile = () => {
+    if (showCountries) {
+      setShowCountries(false)
+      setCountryFilter('ALL')
+    } else {
+      setShowCountries(true)
+    }
+  }
+  const activeTile = showCountries
+    ? 'COUNTRIES'
+    : indoorFilter === 'INDOOR' ? 'INDOOR' : indoorFilter === 'OUTDOOR' ? 'OUTDOOR' : 'TOTAL'
+  const tileClass = (id) =>
+    `text-left bg-white dark:bg-surface-darkCard p-4 rounded-2xl border shadow-sm transition cursor-pointer hover:border-emerald-500 ${
+      activeTile === id
+        ? 'border-emerald-500 ring-2 ring-emerald-500/40'
+        : 'border-slate-200 dark:border-surface-darkBorder'
+    }`
+
   // Filtering
   const filteredTracks = tracks.filter(t => {
     const matchesSearch =
@@ -92,7 +124,9 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
       (indoorFilter === 'INDOOR' && t.is_indoor) ||
       (indoorFilter === 'OUTDOOR' && !t.is_indoor)
 
-    return matchesSearch && matchesSurface && matchesIndoor
+    const matchesCountry = countryFilter === 'ALL' || t.country_code === countryFilter
+
+    return matchesSearch && matchesSurface && matchesIndoor && matchesCountry
   })
 
   return (
@@ -116,25 +150,45 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         </button>
       </div>
 
-      {/* KPI Indicators */}
+      {/* KPI Indicators (clickable filters) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        <button type="button" aria-pressed={activeTile === 'TOTAL'} onClick={clearTileFilters} className={tileClass('TOTAL')}>
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Tracks</div>
           <div className="text-3xl font-black text-slate-900 dark:text-white mt-1">{totalTracks}</div>
-        </div>
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        </button>
+        <button type="button" aria-pressed={activeTile === 'INDOOR'} onClick={() => toggleIndoorTile('INDOOR')} className={tileClass('INDOOR')}>
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Indoor Ovals</div>
           <div className="text-3xl font-black text-amber-500 dark:text-amber-400 mt-1">{indoorCount}</div>
-        </div>
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        </button>
+        <button type="button" aria-pressed={activeTile === 'OUTDOOR'} onClick={() => toggleIndoorTile('OUTDOOR')} className={tileClass('OUTDOOR')}>
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Outdoor Tracks</div>
           <div className="text-3xl font-black text-sky-500 dark:text-sky-400 mt-1">{outdoorCount}</div>
-        </div>
-        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        </button>
+        <button type="button" aria-pressed={activeTile === 'COUNTRIES'} onClick={toggleCountriesTile} className={tileClass('COUNTRIES')}>
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Countries</div>
           <div className="text-3xl font-black text-emerald-500 dark:text-brand-neon mt-1">{uniqueCountries}</div>
-        </div>
+        </button>
       </div>
+
+      {showCountries && (
+        <div className="flex flex-wrap gap-2">
+          {countryList.map(c => (
+            <button
+              key={c}
+              type="button"
+              aria-pressed={countryFilter === c}
+              onClick={() => setCountryFilter(countryFilter === c ? 'ALL' : c)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold border transition ${
+                countryFilter === c
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Form for adding a track */}
       {showAddModal && (
@@ -244,10 +298,10 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
             <Icon name="globe" /> Worldwide Radar
           </h2>
           <span className="text-xs text-slate-400">
-            {tracks.filter(t => t.latitude).length} mapped
+            {filteredTracks.filter(t => t.latitude).length} mapped
           </span>
         </div>
-        <VelodromeMap tracks={tracks} />
+        <VelodromeMap tracks={filteredTracks} />
       </section>
 
       {/* Filter controls */}
