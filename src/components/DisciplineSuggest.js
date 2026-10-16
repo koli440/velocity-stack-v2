@@ -11,11 +11,14 @@ const input =
 export default function DisciplineSuggest({ categories = [] }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
-  const [category, setCategory] = useState(categories[0] || '')
+  const [category, setCategory] = useState('')
   const [distanceM, setDistanceM] = useState('')
   const [flyingStart, setFlyingStart] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
+
+  // Until the user types one, default to the first loaded category.
+  const effectiveCategory = category || categories[0] || ''
 
   const submit = async (e) => {
     e.preventDefault()
@@ -29,7 +32,7 @@ export default function DisciplineSuggest({ categories = [] }) {
           entity_type: 'discipline',
           payload: {
             name: name.trim(),
-            category: category.trim(),
+            category: effectiveCategory.trim(),
             distance_m: Number(distanceM),
             flying_start: flyingStart,
           },
@@ -63,7 +66,7 @@ export default function DisciplineSuggest({ categories = [] }) {
       {open && (
         <form onSubmit={submit} className="mt-2 space-y-2">
           <input className={input} placeholder="Name (e.g. 1km TT U17)" value={name} onChange={(e) => setName(e.target.value)} required />
-          <input className={input} placeholder="Category (e.g. Time Trial)" list="discipline-categories" value={category} onChange={(e) => setCategory(e.target.value)} required />
+          <input className={input} placeholder="Category (e.g. Time Trial)" list="discipline-categories" value={effectiveCategory} onChange={(e) => setCategory(e.target.value)} required />
           <datalist id="discipline-categories">
             {categories.map((c) => (
               <option key={c} value={c} />
