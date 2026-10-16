@@ -1,7 +1,8 @@
 // Generic suggestion/moderation helpers (issue #176). Admin-approved changes to shared data.
 
-export const SUGGESTION_NOTICE =
-  'Suggestions are reviewed by an admin and are not applied instantly. You will be notified of the outcome.'
+export const ADMIN_CONTACT_EMAIL = 'koli440@gmail.com'
+
+export const SUGGESTION_NOTICE = `Suggestions are reviewed by the administrator (${ADMIN_CONTACT_EMAIL}) and are not applied instantly. You will be notified of the outcome.`
 
 export const STATUS_LABELS = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' }
 
