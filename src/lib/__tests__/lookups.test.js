@@ -40,3 +40,19 @@ test('discipline suggestions are registered and can be applied by review_suggest
   assert.match(m, /suggestion_targets/)
   assert.match(m, /allowed_columns/)
 })
+
+test('fetchTracks queries the tracks table ordered by name', async () => {
+  const { fetchTracks } = await import('../lookups.js')
+  const calls = []
+  const q = {
+    select: (c) => (calls.push(['select', c]), q),
+    order: (c, o) => (calls.push(['order', c, o]), 'result'),
+  }
+  const sb = { from: (t) => (calls.push(['from', t]), q) }
+  assert.equal(fetchTracks(sb), 'result')
+  assert.deepEqual(calls[0], ['from', 'tracks'])
+})
+
+test('migration adds Oderlandhalle as a selectable GER track', () => {
+  assert.match(migration, /Oderlandhalle[\s\S]*'GER'/)
+})

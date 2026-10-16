@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, getAuthHeader } from '../../lib/supabase'
+import { fetchTracks } from '../../lib/lookups'
 import { parseJsonResponse } from '../../lib/httpJson'
 import {
   ResponsiveContainer,
@@ -60,7 +61,7 @@ export default function PbVaultPage() {
       loadPersonalBests()
     })
 
-    supabase.from('tracks').select('*').order('name').then(({ data }) => {
+    fetchTracks(supabase).then(({ data }) => {
       setTracks(data || [])
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps

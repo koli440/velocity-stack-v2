@@ -12,7 +12,7 @@ import {
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
 import DisciplineSuggest from '../../components/DisciplineSuggest'
-import { fetchDisciplines } from '../../lib/lookups'
+import { fetchDisciplines, fetchTracks } from '../../lib/lookups'
 import {
   getTrackLaps,
   calculatePursuitStrategy,
@@ -47,7 +47,6 @@ export default function PursuitPage() {
   const [tracks, setTracks] = useState([])
   const [loadingTracks, setLoadingTracks] = useState(true)
 
-  const [country, setCountry] = useState('')
   const [trackId, setTrackId] = useState('')
   const [category, setCategory] = useState('')
   const [disciplineName, setDisciplineName] = useState('')
@@ -62,10 +61,7 @@ export default function PursuitPage() {
 
   useEffect(() => {
     let active = true
-    supabase
-      .from('tracks')
-      .select('*')
-      .order('name', { ascending: true })
+    fetchTracks(supabase)
       .then(({ data, error }) => {
         if (!active) return
         if (!error && data) setTracks(data)
@@ -90,26 +86,6 @@ export default function PursuitPage() {
     () => Array.from(new Set(disciplines.map((d) => d.category))).sort(),
     [disciplines]
   )
-
-  const countries = useMemo(
-    () => Array.from(new Set(tracks.map((t) => t.country_code).filter(Boolean))).sort(),
-    [tracks]
-  )
-
-  useEffect(() => {
-    if (!country && countries.length > 0) setCountry(countries[0])
-  }, [countries, country])
-
-  const filteredTracks = useMemo(
-    () => tracks.filter((t) => t.country_code === country),
-    [tracks, country]
-  )
-
-  useEffect(() => {
-    if (filteredTracks.length > 0 && !filteredTracks.some((t) => t.id === trackId)) {
-      setTrackId(filteredTracks[0].id)
-    }
-  }, [filteredTracks, trackId])
 
   useEffect(() => {
     if (!category && CATEGORIES.length > 0) setCategory(CATEGORIES.includes('Endurance') ? 'Endurance' : CATEGORIES[0])
@@ -234,19 +210,6 @@ export default function PursuitPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {select(
-                'Country',
-                country,
-                setCountry,
-                countries.map((c) => ({ value: c, label: c }))
-              )}
-              <div className="block space-y-1.5">
-                <span className="text-xs uppercase font-bold text-slate-400">Track</span>
-                <VelodromePicker tracks={filteredTracks} value={trackId} onChange={setTrackId} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {select(
                 'Category',
                 category,
                 setCategory,
@@ -260,6 +223,11 @@ export default function PursuitPage() {
               )}
             </div>
             <DisciplineSuggest categories={CATEGORIES} />
+
+            <div className="relative z-30 block space-y-1.5">
+              <span className="text-xs uppercase font-bold text-slate-400">Velodrome</span>
+              <VelodromePicker tracks={tracks} value={trackId} onChange={setTrackId} defaultToFavorite />
+            </div>
 
             {selectedDiscipline && (
               <p className="text-sm text-slate-600 dark:text-slate-300">

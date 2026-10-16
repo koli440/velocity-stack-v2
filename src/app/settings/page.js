@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import VelodromePicker from '../../components/VelodromePicker'
+import { fetchTracks } from '../../lib/lookups'
 import PrivacyZonePanel from '../../components/PrivacyZonePanel'
 import LactateThresholdPanel from '../../components/LactateThresholdPanel'
 import FtpHistoryPanel from '../../components/FtpHistoryPanel'
@@ -148,7 +149,7 @@ export default function SettingsPage() {
       if (session?.user) setUser(session.user)
       else router.push('/login')
     })
-    supabase.from('tracks').select('*').order('name').then(({ data }) => setTracks(data || []))
+    fetchTracks(supabase).then(({ data }) => setTracks(data || []))
   }, [router])
 
   return (

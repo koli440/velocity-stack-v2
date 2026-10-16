@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, getAuthHeader } from '../../lib/supabase'
+import { fetchTracks } from '../../lib/lookups'
 import { parseJsonResponse } from '../../lib/httpJson'
 import {
   ResponsiveContainer,
@@ -70,10 +71,7 @@ export default function AeroLabPage() {
       loadAeroTests()
     })
 
-    supabase
-      .from('tracks')
-      .select('*')
-      .order('name')
+    fetchTracks(supabase)
       .then(({ data }) => {
         setTracks(data || [])
       })
