@@ -9,6 +9,9 @@ import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 
 import { computeBaselines } from '../lib/templateBaselines'
 import TemplateCreatorModal from './TemplateCreatorModal'
 import Icon from './Icon'
+import AddPbModal from './AddPbModal'
+import { fetchDisciplines } from '../lib/lookups'
+import { buildPbPrefillFromEffort } from '../lib/pbVault'
 
 const RUN_COLORS = ['#f59e0b', '#38bdf8', '#d946ef', '#34d399', '#f87171', '#a78bfa']
 
@@ -30,7 +33,7 @@ function DeltaBadge({ current, previous, label }) {
   )
 }
 
-function EffortCards({ efforts }) {
+function EffortCards({ efforts, onSendToPbVault }) {
   const val = 'text-slate-700 dark:text-slate-200'
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -69,6 +72,15 @@ function EffortCards({ efforts }) {
             {eff.work_kj != null && <div>Work: <b className={val}>{eff.work_kj} kJ</b></div>}
             {eff.peak_torque != null && <div>Peak torque: <b className={val}>{eff.peak_torque} Nm</b></div>}
           </div>
+          {onSendToPbVault && (
+            <button
+              type="button"
+              onClick={() => onSendToPbVault(eff)}
+              className="mt-1 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 hover:underline"
+            >
+              Send to PB Vault
+            </button>
+          )}
         </div>
       ))}
     </div>
@@ -78,7 +90,7 @@ function EffortCards({ efforts }) {
 // Lists every persisted template run for this activity as its own card, with deltas vs
 // the previous run of the same template on another activity (issue #66). Choosing a
 // template only happens when adding a run, so what is displayed always matches a real run.
-export default function TemplateRunsSection({ activityId, onVisibleWindowsChange }) {
+export default function TemplateRunsSection({ activityId, activity = null, tracks = [], onVisibleWindowsChange }) {
   const [templates, setTemplates] = useState([])
   const [runs, setRuns] = useState([])
   const [historyBySlug, setHistoryBySlug] = useState({})
@@ -91,12 +103,18 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
   const [pickedTemplateId, setPickedTemplateId] = useState('')
   const [showOnChart, setShowOnChart] = useState(true)
   const [running, setRunning] = useState(false)
+  const [pbPrefill, setPbPrefill] = useState(null)
   const [error, setError] = useState(null)
   const [currentUserId, setCurrentUserId] = useState(null)
   const [creatorOpen, setCreatorOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState(null)
   const [favoriteIds, setFavoriteIds] = useState(() => new Set())
   const [recentIds, setRecentIds] = useState([])
+
+  const sendToPbVault = async (effort) => {
+    const disciplines = await fetchDisciplines(supabase)
+    setPbPrefill(buildPbPrefillFromEffort(effort, activity, disciplines))
+  }
 
   const loadTemplates = useCallback(async () => {
     const authHeader = await getAuthHeader()
@@ -377,7 +395,7 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
                     {expanded ? '▴ Hide efforts' : `▾ Show efforts (${run.efforts.length})`}
                   </button>
                 )}
-                {expanded && hasEfforts && <EffortCards efforts={run.efforts} />}
+                {expanded && hasEfforts && <EffortCards efforts={run.efforts} onSendToPbVault={activity ? sendToPbVault : null} />}
               </div>
             )
           })}
@@ -474,6 +492,14 @@ export default function TemplateRunsSection({ activityId, onVisibleWindowsChange
           onDelete={deleteTemplate}
         />
       )}
+
+      <AddPbModal
+        isOpen={!!pbPrefill}
+        prefill={pbPrefill}
+        tracks={tracks}
+        onClose={() => setPbPrefill(null)}
+        onSaved={() => setPbPrefill(null)}
+      />
 
       <TemplateCreatorModal
         isOpen={creatorOpen}

@@ -78,3 +78,45 @@ test('formatDate handles missing/invalid input defensively', () => {
   assert.equal(formatDate(null), '')
   assert.equal(formatDate('not-a-date'), '')
 })
+
+import { matchDisciplineByDistance, buildPbPrefillFromEffort } from '../pbVault.js'
+
+const DISCS = [
+  { name: '1 km TT', distanceM: 1000, minTrackLengthM: null, maxTrackLengthM: null },
+  { name: '4 km IP', distanceM: 4000, minTrackLengthM: null, maxTrackLengthM: null },
+  { name: '4 km Short', distanceM: 4000, minTrackLengthM: 0, maxTrackLengthM: 200 },
+]
+
+test('matchDisciplineByDistance picks the closest within tolerance', () => {
+  assert.equal(matchDisciplineByDistance(DISCS, 3990).name, '4 km IP')
+  assert.equal(matchDisciplineByDistance(DISCS, 2500), null)
+  assert.equal(matchDisciplineByDistance(DISCS, null), null)
+})
+
+test('matchDisciplineByDistance respects track length bounds', () => {
+  assert.equal(matchDisciplineByDistance(DISCS, 4000, 250).name, '4 km IP')
+  assert.equal(matchDisciplineByDistance(DISCS, 4000, 166).name, '4 km IP')
+})
+
+test('buildPbPrefillFromEffort maps effort and activity fields', () => {
+  const p = buildPbPrefillFromEffort(
+    { distance_m: 3995, target_distance_m: 4000, duration_sec: 281.5, avg_power: 410, avg_speed_kmh: 51.2 },
+    { activity_date: '2026-05-01T10:00:00Z', track_id: 't1', tracks: { length_m: 250 }, chainring: 60, cog: 14, name: 'Track night' },
+    DISCS
+  )
+  assert.equal(p.discipline, '4 km IP')
+  assert.equal(p.trackId, 't1')
+  assert.equal(p.achievedDate, '2026-05-01')
+  assert.equal(p.minutes, 4)
+  assert.equal(p.seconds, 41.5)
+  assert.equal(p.chainring, 60)
+  assert.match(p.notes, /410 W/)
+})
+
+test('buildPbPrefillFromEffort leaves unknowns null', () => {
+  const p = buildPbPrefillFromEffort({}, {}, DISCS)
+  assert.equal(p.discipline, null)
+  assert.equal(p.trackId, null)
+  assert.equal(p.achievedDate, null)
+  assert.equal(p.minutes, undefined)
+})
