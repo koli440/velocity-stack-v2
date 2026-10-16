@@ -46,6 +46,7 @@ const STRATEGY_BANNER = {
 export default function PursuitPage() {
   const [tracks, setTracks] = useState([])
   const [loadingTracks, setLoadingTracks] = useState(true)
+  const [homeTrackId, setHomeTrackId] = useState(null)
 
   const [trackId, setTrackId] = useState('')
   const [category, setCategory] = useState('')
@@ -62,9 +63,26 @@ export default function PursuitPage() {
   useEffect(() => {
     let active = true
     fetchTracks(supabase)
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
+        let home = null
+        try {
+          const { data: auth } = await supabase.auth.getUser()
+          if (auth?.user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('home_track_id')
+              .eq('id', auth.user.id)
+              .maybeSingle()
+            home = profile?.home_track_id || null
+          }
+        } catch {}
         if (!active) return
-        if (!error && data) setTracks(data)
+        if (!error && data) {
+          setTracks(data)
+          const pick = data.find((t) => t.id === home) || data[0]
+          if (pick) setTrackId((cur) => cur || pick.id)
+          setHomeTrackId(home)
+        }
         setLoadingTracks(false)
       })
     return () => {
@@ -226,7 +244,7 @@ export default function PursuitPage() {
 
             <div className="relative z-30 block space-y-1.5">
               <span className="text-xs uppercase font-bold text-slate-400">Velodrome</span>
-              <VelodromePicker tracks={tracks} value={trackId} onChange={setTrackId} defaultToFavorite />
+              <VelodromePicker tracks={tracks} value={trackId} onChange={setTrackId} favoriteId={homeTrackId} />
             </div>
 
             {selectedDiscipline && (
