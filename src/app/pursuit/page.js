@@ -112,7 +112,7 @@ export default function PursuitPage() {
   }, [filteredTracks, trackId])
 
   useEffect(() => {
-    if (!category) setCategory(CATEGORIES[1] || CATEGORIES[0])
+    if (!category) setCategory(CATEGORIES.includes('Endurance') ? 'Endurance' : CATEGORIES[0])
   }, [category, CATEGORIES])
 
   const filteredDisciplines = useMemo(

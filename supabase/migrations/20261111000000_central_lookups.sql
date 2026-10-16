@@ -40,7 +40,7 @@ ON CONFLICT (code) DO NOTHING;
 
 -- 3. Disciplines (seeded from the PB Vault list) -------------------------------------------
 CREATE TABLE IF NOT EXISTS public.disciplines (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     category TEXT NOT NULL,
     distance_m NUMERIC(8, 2) NOT NULL CHECK (distance_m > 0),
@@ -64,32 +64,59 @@ INSERT INTO public.disciplines (name, category, distance_m, flying_start, sort_o
     ('3000m Individual Pursuit', 'Endurance', 3000, FALSE, 9),
     ('4000m Individual Pursuit', 'Endurance', 4000, FALSE, 10),
     ('4000m Team Pursuit', 'Endurance', 4000, FALSE, 11),
-    ('BMX Race', 'BMX', 350, FALSE, 12)
+    ('500m Team Sprint', 'Time Trial', 500, FALSE, 12),
+    ('Scratch Race', 'Endurance', 10000, FALSE, 13),
+    ('Points Race', 'Endurance', 20000, FALSE, 14),
+    ('Madison', 'Endurance', 30000, FALSE, 15),
+    ('BMX Race', 'BMX', 350, FALSE, 16)
 ON CONFLICT (name) DO NOTHING;
 
 -- 4. Velodrome cleanup ------------------------------------------------------------------------
 ALTER TABLE public.tracks ADD COLUMN IF NOT EXISTS is_indoor BOOLEAN;
 
--- Map duplicates (same country, ~same length, within ~0.01 deg; or same name ignoring case) to
--- the oldest row of the pair and repoint references before deleting.
-CREATE TEMP TABLE _track_dupes ON COMMIT DROP AS
+-- Map duplicates (same country and ~same length, and either the same name ignoring case or
+-- within ~0.01 deg) to the oldest matching row. Chains (A<-B<-C) are resolved to the root keeper.
+CREATE TEMP TABLE _track_edges ON COMMIT DROP AS
 SELECT DISTINCT ON (d.id) d.id AS dup_id, k.id AS keep_id
 FROM public.tracks d
 JOIN public.tracks k
   ON k.id <> d.id
  AND (k.created_at, k.id::text) < (d.created_at, d.id::text)
+ AND k.country_code IS NOT DISTINCT FROM d.country_code
+ AND round(k.length_m) = round(d.length_m)
  AND (
       lower(trim(k.name)) = lower(trim(d.name))
       OR (
-        k.country_code = d.country_code
-        AND k.latitude IS NOT NULL AND d.latitude IS NOT NULL
-        AND round(k.length_m) = round(d.length_m)
+        k.latitude IS NOT NULL AND d.latitude IS NOT NULL
         AND abs(k.latitude - d.latitude) <= 0.01
         AND abs(k.longitude - d.longitude) <= 0.01
       )
  )
 ORDER BY d.id, k.created_at, k.id::text;
 
+CREATE TEMP TABLE _track_dupes ON COMMIT DROP AS
+WITH RECURSIVE chain AS (
+    SELECT dup_id, keep_id FROM _track_edges
+    UNION ALL
+    SELECT c.dup_id, e.keep_id FROM chain c JOIN _track_edges e ON e.dup_id = c.keep_id
+)
+SELECT dup_id, keep_id FROM chain
+WHERE NOT EXISTS (SELECT 1 FROM _track_edges e WHERE e.dup_id = chain.keep_id);
+
+DO $$
+DECLARE r RECORD;
+BEGIN
+    FOR r IN
+        SELECT d.name AS dup_name, k.name AS keep_name
+        FROM _track_dupes m
+        JOIN public.tracks d ON d.id = m.dup_id
+        JOIN public.tracks k ON k.id = m.keep_id
+    LOOP
+        RAISE NOTICE 'Merging duplicate velodrome "%" into "%"', r.dup_name, r.keep_name;
+    END LOOP;
+END $$;
+
+-- Every FK to tracks.id: activities, personal_bests, aero_tests, profiles.home_track_id.
 UPDATE public.activities a SET track_id = m.keep_id FROM _track_dupes m WHERE a.track_id = m.dup_id;
 UPDATE public.personal_bests p SET track_id = m.keep_id FROM _track_dupes m WHERE p.track_id = m.dup_id;
 UPDATE public.aero_tests p SET track_id = m.keep_id FROM _track_dupes m WHERE p.track_id = m.dup_id;

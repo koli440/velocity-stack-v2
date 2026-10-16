@@ -26,6 +26,10 @@ export const DISCIPLINES = [
   { category: 'Endurance', name: '3000m Individual Pursuit', distanceM: 3000, flyingStart: false },
   { category: 'Endurance', name: '4000m Individual Pursuit', distanceM: 4000, flyingStart: false },
   { category: 'Endurance', name: '4000m Team Pursuit', distanceM: 4000, flyingStart: false },
+  { category: 'Time Trial', name: '500m Team Sprint', distanceM: 500, flyingStart: false },
+  { category: 'Endurance', name: 'Scratch Race', distanceM: 10000, flyingStart: false },
+  { category: 'Endurance', name: 'Points Race', distanceM: 20000, flyingStart: false },
+  { category: 'Endurance', name: 'Madison', distanceM: 30000, flyingStart: false },
   { category: 'BMX', name: 'BMX Race', distanceM: 350, flyingStart: false },
 ]
 
