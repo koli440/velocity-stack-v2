@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { supabase } from '../lib/supabase'
+import { fetchTracks } from '../lib/lookups'
 import Sidebar from './Sidebar'
 import TopNav from './TopNav'
 import Footer from './Footer'
@@ -98,7 +99,7 @@ export default function AppShell({ children }) {
 
   useEffect(() => {
     if (!user?.id) return
-    supabase.from('tracks').select('*').order('name').then(({ data }) => setTracks(data || []))
+    fetchTracks(supabase).then(({ data }) => setTracks(data || []))
   }, [user?.id])
 
   const handleSignOut = async () => {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { fetchTracks } from '../../lib/lookups'
 import VelodromesView from '../../components/VelodromesView'
 
 export default function VelodromesPage() {
@@ -10,10 +11,7 @@ export default function VelodromesPage() {
 
   const reloadTracks = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('tracks')
-      .select('*')
-      .order('name', { ascending: true })
+    const { data, error } = await fetchTracks(supabase)
 
     if (!error && data) {
       setTracks(data)

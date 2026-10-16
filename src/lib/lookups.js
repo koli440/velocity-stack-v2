@@ -52,3 +52,8 @@ export async function fetchSurfaces(client) {
     .order('sort_order', { ascending: true })
   return error || !data ? [] : data.map((s) => s.name)
 }
+
+/** The single velodrome data source: every picker/list loads tracks through this. */
+export function fetchTracks(supabase) {
+  return supabase.from('tracks').select('*').order('name', { ascending: true })
+}

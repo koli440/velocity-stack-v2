@@ -15,6 +15,7 @@ import ActivityStreamsChart from '../../../components/ActivityStreamsChart'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
 import TemplateRunsSection from '../../../components/TemplateRunsSection'
 import VelodromePicker from '../../../components/VelodromePicker'
+import { fetchTracks } from '../../../lib/lookups'
 import EditActivityModal from '../../../components/EditActivityModal'
 import { weightFromActivity } from '../../../lib/weightHistory'
 
@@ -70,7 +71,7 @@ export default function ActivityDetailPage() {
           .select('*, tracks(*)')
           .eq('id', activityId)
           .maybeSingle(),
-        supabase.from('tracks').select('*').order('name'),
+        fetchTracks(supabase),
         supabase
           .from('activity_curves')
           .select('curve_type, data')
