@@ -1,7 +1,17 @@
 // Content for the standalone DSL Syntax Guide page (/dsl-guide).
 // Every example here is validated against the parser in __tests__/dslGuide.test.js.
 
+import { SUMMARY_METRIC_IDS } from './summaryMetrics.js'
+import { LEGACY_PATTERN_NAMES, LEGACY_PATTERN_OPTIONS } from './legacyPatterns.js'
+import { DEFAULT_LAP_LENGTH_M } from './constants.js'
+
 export const DSL_GUIDE_PATH = '/dsl-guide'
+
+// Lists below come from the parser's own tables so the guide cannot drift from the grammar.
+const METRIC_LIST = SUMMARY_METRIC_IDS.join(', ')
+const PATTERN_LIST = LEGACY_PATTERN_NAMES.join(', ')
+const PATTERN_OPTION_LIST = LEGACY_PATTERN_NAMES.map((p) => `${p}: ${LEGACY_PATTERN_OPTIONS[p].join(', ')}`).join('; ')
+const LAP_EXAMPLE = `lap ${DEFAULT_LAP_LENGTH_M}m`
 
 export const DSL_STEP_PARTS = [
   { part: 'work | recovery', meaning: 'Step role. "work" is the effort you want analysed; "recovery" is the rest between efforts.' },
@@ -15,9 +25,9 @@ export const DSL_OPTIONS = [
   { syntax: 'set recovery 5min ±30% @ <55%FTP', meaning: 'Optional, only with sets: the rest searched for between sets (never after the last one). Same syntax as a step, but without then.' },
   { syntax: 'then work 1min ...', meaning: 'Prefix a step with "then" to make it start exactly where the previous step ended (over-unders, pyramids, ramps). Not allowed on the first step.' },
   { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (min or sec). At most once.' },
-  { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: 'Template runs always report avg W/kg, avg power, NP, avg speed, avg cadence and avg HR where data exists. Choose extra summary metrics per work effort and for the run: avg_power, max_power, np, vi, if, avg_hr, max_hr, avg_cadence, max_cadence, avg_speed, max_speed, work_kj, avg_wkg, max_wkg, np_wkg (power per kg of the activity weight), pacing, dropoff, decoupling, hr_recovery (optional window, default 60sec), and time in lactate zones in seconds: time_below_lt1, time_lt1_lt2, time_above_lt2 (power) and time_below_lt1_hr, time_lt1_lt2_hr, time_above_lt2_hr (heart rate). At most once.' },
-  { syntax: 'pattern repeated_bursts', meaning: 'Use instead of the repeat line to run a built-in detector: repeated_bursts, flying_sprint, sustained_tt or standing_start. Then add its option lines: count 3, duration 3min ±45sec, recovery window 1min (repeated_bursts); distance 200m (flying_sprint, standing_start); distances 2km, 3km, 4km, min duration 20min, lap 250m (sustained_tt). Only metrics is also allowed.' },
-  { syntax: 'lap 250m', meaning: 'Track context: report per-lap split times (full laps only, from the speed stream) for every work effort, plus lap_count, best_lap_sec, slowest_lap_sec and avg_lap_sec for the run. At most once; also valid under pattern sustained_tt.' },
+  { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: `Template runs always report avg W/kg, avg power, NP, avg speed, avg cadence and avg HR where data exists. Choose extra summary metrics per work effort and for the run: ${METRIC_LIST}. hr_recovery takes an optional window (default 60sec); np_wkg, avg_wkg and max_wkg are power per kg of the activity weight; the time_* metrics are seconds in lactate zones (power, or heart rate with the _hr suffix). At most once.` },
+  { syntax: 'pattern repeated_bursts', meaning: `Use instead of the repeat line to run a built-in detector: ${PATTERN_LIST}. Then add its option lines (${PATTERN_OPTION_LIST}). Only metrics is also allowed.` },
+  { syntax: LAP_EXAMPLE, meaning: 'Track context: report per-lap split times (full laps only, from the speed stream) for every work effort, plus lap_count, best_lap_sec, slowest_lap_sec and avg_lap_sec for the run. At most once; also valid under pattern sustained_tt.' },
   { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity. At most once.' },
 ]
 

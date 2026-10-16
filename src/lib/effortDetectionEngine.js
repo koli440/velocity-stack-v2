@@ -2,6 +2,8 @@
  * Universal effort detection engine for VelocityStack
  */
 
+import { DEFAULT_LAP_LENGTH_M, MPS_TO_KMH } from './constants.js'
+
 // Helper function: moving average to smooth out noise
 function movingAverage(arr, windowSize = 3) {
   if (!arr || arr.length === 0) return []
@@ -139,8 +141,8 @@ function detectSustainedTimeTrial(watts, cadence, userRole) {
     label = '4 km Pursuit (Elite)'
   }
 
-  const speedKmh = Math.round(((dist / best.dur) * 3.6) * 10) / 10
-  const lapTime250m = (best.dur / (dist / 250)).toFixed(2)
+  const speedKmh = Math.round(((dist / best.dur) * MPS_TO_KMH) * 10) / 10
+  const lapTime250m = (best.dur / (dist / DEFAULT_LAP_LENGTH_M)).toFixed(2)
 
   return {
     pattern: 'sustained_tt',

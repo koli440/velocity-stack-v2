@@ -2,11 +2,9 @@
 // shared with other riders. Applied to persisted route previews; raw GPS is never exposed
 // to other riders at all (see supabase/migrations/20261015000000_privacy_zone_shared_view.sql).
 
-export const MIN_ZONE_RADIUS_M = 50
-export const MAX_ZONE_RADIUS_M = 5000
-export const DEFAULT_ZONE_RADIUS_M = 200
+import { MIN_ZONE_RADIUS_M, MAX_ZONE_RADIUS_M, DEFAULT_ZONE_RADIUS_M, EARTH_RADIUS_M } from './constants.js'
 
-const EARTH_RADIUS_M = 6371000
+export { MIN_ZONE_RADIUS_M, MAX_ZONE_RADIUS_M, DEFAULT_ZONE_RADIUS_M }
 
 export function haversineMeters(lat1, lng1, lat2, lng2) {
   const rad = Math.PI / 180
