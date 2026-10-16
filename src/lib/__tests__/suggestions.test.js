@@ -26,3 +26,16 @@ test('helpers and notification text', () => {
   assert.match(describeNotification({ type: 'suggestion_approved' }, null), /approved/)
   assert.match(describeNotification({ type: 'suggestion_rejected' }, null), /declined/)
 })
+
+import { readFileSync } from 'node:fs'
+
+const migration = readFileSync(
+  new URL('../../../supabase/migrations/20261123010000_admin_suggestions.sql', import.meta.url),
+  'utf8'
+)
+
+test('review_suggestion UPDATE qualifies the id column and is_admin only answers for self', () => {
+  assert.match(migration, /WHERE public\.%1\$I\.%3\$I::text = \$2/)
+  assert.doesNotMatch(migration, /AS r WHERE %3\$I/)
+  assert.match(migration, /WHEN p_user IS NOT DISTINCT FROM auth\.uid\(\)/)
+})

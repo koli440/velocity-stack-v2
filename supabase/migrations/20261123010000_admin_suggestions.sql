@@ -37,10 +37,15 @@ CREATE TRIGGER trg_protect_admin_flag
     BEFORE INSERT OR UPDATE ON public.profiles
     FOR EACH ROW EXECUTE FUNCTION public.protect_admin_flag();
 
+-- Callers may only ask about themselves, so arbitrary UUIDs cannot be probed for admin status.
 CREATE OR REPLACE FUNCTION public.is_admin(p_user UUID DEFAULT auth.uid())
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-    SELECT COALESCE((SELECT is_admin FROM public.profiles WHERE id = p_user), FALSE)
+    SELECT CASE
+        WHEN p_user IS NOT DISTINCT FROM auth.uid()
+            THEN COALESCE((SELECT is_admin FROM public.profiles WHERE id = p_user), FALSE)
+        ELSE FALSE
+    END
 $$;
 
 REVOKE ALL ON FUNCTION public.is_admin(UUID) FROM PUBLIC, anon;
@@ -202,7 +207,7 @@ BEGIN
         ELSE
             SELECT string_agg(format('%1$I = r.%1$I', k), ', ') INTO v_cols FROM jsonb_object_keys(s.payload) AS k;
             EXECUTE format(
-                'UPDATE public.%1$I SET %2$s FROM jsonb_populate_record(NULL::public.%1$I, $1) AS r WHERE %3$I::text = $2',
+                'UPDATE public.%1$I SET %2$s FROM jsonb_populate_record(NULL::public.%1$I, $1) AS r WHERE public.%1$I.%3$I::text = $2',
                 t.table_name, v_cols, t.id_column
             ) USING s.payload, s.target_id;
             GET DIAGNOSTICS v_count = ROW_COUNT;
