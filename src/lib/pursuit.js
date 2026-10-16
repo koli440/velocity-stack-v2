@@ -12,9 +12,10 @@
 // static reference list rather than a new DB table - mirroring the read-only, seed-only way the
 // `tracks` table itself is already used elsewhere in the app.
 
-// Standard 700c road wheel circumference in meters (matches the 2.140m constant used in v1 - a
-// 28" wheel, 700x23C/25C tyre).
-export const WHEEL_CIRCUMFERENCE_M = 2.14
+import { WHEEL_CIRCUMFERENCE_M } from './constants.js'
+import { formatMinSecMs, mpsToKmh } from './format.js'
+
+export { WHEEL_CIRCUMFERENCE_M }
 
 function round(value, decimals) {
   const factor = 10 ** decimals
@@ -26,12 +27,7 @@ function round(value, decimals) {
  * @param {number} totalSeconds
  * @returns {string}
  */
-export function formatTime(totalSeconds) {
-  const minutes = Math.floor(totalSeconds / 60)
-  const remainingSeconds = totalSeconds % 60
-  // Pad to width 6 ("SS.mmm") the same way Python's `:06.3f` does.
-  return `${minutes}:${remainingSeconds.toFixed(3).padStart(6, '0')}`
-}
+export const formatTime = formatMinSecMs
 
 /**
  * Works out how many whole laps a discipline's distance makes of a given track, mirroring v1's
@@ -165,7 +161,7 @@ export function calculatePursuitStrategy({
       lap: i,
       lapTimeS: round(lapTime, 3),
       overallTimeS: round(elapsed, 3),
-      speedKmh: round((trackLengthM / lapTime) * 3.6, 1),
+      speedKmh: round(mpsToKmh(trackLengthM / lapTime), 1),
       cadenceRpm: Math.round(lapCadence),
     })
   }

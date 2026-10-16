@@ -5,6 +5,8 @@
 // since start) or "by distance" (cumulative meters, integrated from the speed stream since FIT
 // files don't always carry a per-sample distance field). Used by ActivityStreamsChart (issue #12).
 
+import { formatElapsed, formatDistanceKm } from './format.js'
+
 export const STREAM_METRICS = [
   { key: 'speed', label: 'Speed', unit: 'km/h', color: '#38bdf8', decimals: 1 },
   { key: 'heartrate', label: 'Heart Rate', unit: 'bpm', color: '#ef4444', decimals: 0 },
@@ -13,27 +15,7 @@ export const STREAM_METRICS = [
   { key: 'torque', label: 'Torque', unit: 'Nm', color: '#eab308', decimals: 1 },
 ]
 
-/**
- * @param {number} seconds
- * @returns {string} "mm:ss" (or "h:mm:ss" past one hour)
- */
-export function formatElapsed(seconds) {
-  const total = Math.max(0, Math.round(seconds || 0))
-  const h = Math.floor(total / 3600)
-  const m = Math.floor((total % 3600) / 60)
-  const s = total % 60
-  const mm = String(m).padStart(h > 0 ? 2 : 1, '0')
-  const ss = String(s).padStart(2, '0')
-  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${mm}:${ss}`
-}
-
-/**
- * @param {number} meters
- * @returns {string} distance formatted in km with 2 decimals
- */
-export function formatDistanceKm(meters) {
-  return `${(Math.max(0, meters || 0) / 1000).toFixed(2)} km`
-}
+export { formatElapsed, formatDistanceKm }
 
 /**
  * @param {object} timeSeries - { watts, cadence, torque, speed, heartrate }

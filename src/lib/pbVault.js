@@ -7,25 +7,14 @@
 // RLS. Disciplines are shared reference data read from the `disciplines` table
 // (src/lib/lookups.js); users suggest new ones and an admin approves them.
 
+import { formatTime, mpsToKmh } from './format.js'
+
 export const SPLIT_MODES = {
   LAPS: 'laps',
   DISTANCE: 'distance',
 }
 
-/**
- * Formats a duration in seconds as v1's `format_time()` does: `M:SS.mmm`, e.g. 210 -> "3:30.000".
- * Mirrors Python's `:06.3f` zero-padding on the seconds portion.
- * @param {number} totalSeconds
- * @returns {string}
- */
-export function formatTime(totalSeconds) {
-  if (totalSeconds == null || Number.isNaN(Number(totalSeconds)) || totalSeconds < 0) {
-    return '--:--'
-  }
-  const minutes = Math.floor(totalSeconds / 60)
-  const remainingSeconds = totalSeconds % 60
-  return `${minutes}:${remainingSeconds.toFixed(3).padStart(6, '0')}`
-}
+export { formatTime }
 
 /**
  * Parses a minutes/seconds pair (as entered via two separate inputs, like v1's m/s number_input
@@ -61,7 +50,7 @@ export function totalSecondsToMinutesSeconds(totalSeconds) {
  */
 export function calculateAvgSpeedKmh(distanceM, totalSeconds) {
   if (!distanceM || !totalSeconds || totalSeconds <= 0) return 0
-  return Math.round((distanceM / totalSeconds) * 3.6 * 100) / 100
+  return Math.round(mpsToKmh(distanceM / totalSeconds) * 100) / 100
 }
 
 /**
@@ -88,7 +77,7 @@ export function buildLapAnalysis(lapTimes, segmentDistanceM) {
   let cumulative = 0
   return lapTimes.map((time, index) => {
     cumulative += time
-    const speedKmh = time > 0 ? (segmentDistanceM / time) * 3.6 : 0
+    const speedKmh = time > 0 ? mpsToKmh(segmentDistanceM / time) : 0
     return {
       segment: index + 1,
       time,

@@ -1,6 +1,8 @@
-// System analysis templates catalog (issue #122). Source of truth for the
-// DSL strings seeded by supabase/migrations/20261101000000_system_templates_catalog.sql;
-// a unit test keeps the migration in sync with this list.
+// System analysis templates catalogue (issues #122, #121, #144). This file is the single place
+// system templates are authored: the app reads them at runtime from `analysis_templates`, and the
+// rows there come from idempotent migrations generated from this list
+// (`node scripts/generate-system-templates-sql.mjs`). Shipped migrations are never edited;
+// __tests__/systemTemplates.test.js fails if a seeded slug/DSL/manifest and this list diverge.
 import { parseIntervalDsl, buildIntervalManifest } from './intervalDsl.js'
 
 export const SYSTEM_TEMPLATES = [
@@ -208,4 +210,30 @@ export const LEGACY_SEEDED_MANIFESTS = {
   tpl_track_pursuit: { pattern: 'sustained_tt', distances_m: [2000, 3000, 4000], lap_length_m: 250, metrics: ['avg_power', 'lap_splits_250m', 'pacing_index', 'dropoff_pct'] },
   tpl_track_standing_start: { pattern: 'standing_start', distance_m: 1000, metrics: ['peak_torque', 'time_to_peak_power_sec', 'max_power', 'avg_power_first_10s'] },
   tpl_road_z2_decoupling: { pattern: 'sustained_tt', min_duration_sec: 1200, metrics: ['pw_hr_decoupling_pct', 'avg_power', 'avg_heartrate'] },
+}
+
+export const ALL_SYSTEM_TEMPLATES = [...SYSTEM_TEMPLATES, ...LT_SYSTEM_TEMPLATES, ...WKG_SYSTEM_TEMPLATES]
+
+/** One `analysis_templates` VALUES row, formatted exactly as in the seed migrations. */
+export function systemTemplateRowSql(t, manifest) {
+  return `(\n    $q$${t.slug}$q$,\n    $q$${t.name}$q$,\n    $q$${t.description}$q$,\n    $q$${t.category}$q$,\n    $q$${JSON.stringify(manifest)}$q$::jsonb,\n    $q$${t.dsl}$q$\n)`
+}
+
+/** Idempotent upsert (keyed on slug) for a list of catalogue templates. Never deletes rows. */
+export function systemTemplatesUpsertSql(templates, manifestBuilder = buildLtManifest) {
+  const rows = templates.map((t) => systemTemplateRowSql(t, manifestBuilder(t.dsl))).join(',\n')
+  return `INSERT INTO public.analysis_templates (slug, name, description, category, manifest, dsl_source, user_id, visibility)
+SELECT v.slug, v.name, v.description, v.category, v.manifest, v.dsl_source, NULL, 'public'
+FROM (VALUES
+${rows}
+) AS v(slug, name, description, category, manifest, dsl_source)
+ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    category = EXCLUDED.category,
+    manifest = EXCLUDED.manifest,
+    dsl_source = EXCLUDED.dsl_source,
+    user_id = NULL,
+    visibility = 'public';
+`
 }
