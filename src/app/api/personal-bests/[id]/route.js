@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
-import { calculateAvgSpeedKmh, getDisciplineDistance } from '../../../../lib/pbVault'
+import { calculateAvgSpeedKmh } from '../../../../lib/pbVault'
+import { fetchDisciplines, findDisciplineDistance } from '../../../../lib/lookups'
 
 // GET /api/personal-bests/:id - fetch a single owned PB record (v1's 31_PB_detail.py).
 export async function GET(req, { params }) {
@@ -85,7 +86,7 @@ export async function PATCH(req, { params }) {
     if (notes !== undefined) updates.notes = notes || null
 
     if (timeSeconds !== undefined && Number(timeSeconds) > 0) {
-      const distanceM = existing.discipline_distance_m || getDisciplineDistance(existing.discipline)
+      const distanceM = existing.discipline_distance_m || findDisciplineDistance(await fetchDisciplines(supabase), existing.discipline)
       updates.time_seconds = Number(timeSeconds)
       updates.avg_speed_kmh = calculateAvgSpeedKmh(distanceM, Number(timeSeconds))
     }

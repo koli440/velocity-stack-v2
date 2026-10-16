@@ -1,12 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Portal from './Portal'
-import { getAuthHeader } from '../lib/supabase'
+import { supabase, getAuthHeader } from '../lib/supabase'
+import { fetchDisciplines, findDisciplineDistance } from '../lib/lookups'
 import { parseJsonResponse } from '../lib/httpJson'
 import {
   DISCIPLINES,
-  getDisciplineDistance,
   minutesSecondsToTotalSeconds,
   calculateAvgSpeedKmh,
   countSplits,
@@ -18,7 +18,21 @@ import Icon from './Icon'
 // discipline + track + time (as separate Min/Sec inputs, like v1) plus optional gear and lap/
 // split times, then posts to /api/personal-bests.
 function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
+  const [disciplines, setDisciplines] = useState(DISCIPLINES)
   const [discipline, setDiscipline] = useState(DISCIPLINES[0].name)
+
+  useEffect(() => {
+    let active = true
+    fetchDisciplines(supabase).then((list) => {
+      if (!active) return
+      setDisciplines(list)
+      setDiscipline((current) => (list.some((d) => d.name === current) ? current : list[0].name))
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
   const [trackId, setTrackId] = useState('')
   const [eventName, setEventName] = useState('')
   const [achievedDate, setAchievedDate] = useState(new Date().toISOString().slice(0, 10))
@@ -34,7 +48,7 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
   const [errorMsg, setErrorMsg] = useState(null)
 
   const selectedTrack = tracks.find((t) => t.id === trackId)
-  const distanceM = getDisciplineDistance(discipline)
+  const distanceM = findDisciplineDistance(disciplines, discipline)
   const totalSeconds = minutesSecondsToTotalSeconds(minutes, seconds)
   const avgSpeedKmh = calculateAvgSpeedKmh(distanceM, totalSeconds)
 
@@ -45,7 +59,7 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
   )
 
   const resetForm = () => {
-    setDiscipline(DISCIPLINES[0].name)
+    setDiscipline(disciplines[0].name)
     setTrackId('')
     setEventName('')
     setAchievedDate(new Date().toISOString().slice(0, 10))
@@ -153,7 +167,7 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved }) {
               onChange={(e) => setDiscipline(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
             >
-              {DISCIPLINES.map((d) => (
+              {disciplines.map((d) => (
                 <option key={d.name} value={d.name}>
                   {d.name} ({d.distanceM}m)
                 </option>

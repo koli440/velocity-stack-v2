@@ -11,8 +11,9 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
+import { DISCIPLINES } from '../../lib/pbVault'
+import { fetchDisciplines } from '../../lib/lookups'
 import {
-  DISCIPLINES,
   getTrackLaps,
   calculatePursuitStrategy,
   formatTime,
@@ -20,10 +21,6 @@ import {
 } from '../../lib/pursuit'
 import VelodromePicker from '../../components/VelodromePicker'
 import Icon from '../../components/Icon'
-
-// Sorted, de-duplicated discipline categories (Endurance, Pursuit, Sprint). v1 defaulted the
-// category picker to index 1 of its alphabetically-sorted list, which lands on "Pursuit" here too.
-const CATEGORIES = Array.from(new Set(DISCIPLINES.map((d) => d.category))).sort()
 
 const STRATEGY_BANNER = {
   negative: {
@@ -57,6 +54,7 @@ export default function PursuitPage() {
 
   const [targetMin, setTargetMin] = useState(3)
   const [targetSec, setTargetSec] = useState(30)
+  const [disciplines, setDisciplines] = useState(DISCIPLINES)
   const [startPenalty, setStartPenalty] = useState(5)
   const [pacingDrift, setPacingDrift] = useState(0)
   const [chainring, setChainring] = useState(58)
@@ -77,6 +75,21 @@ export default function PursuitPage() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    let active = true
+    fetchDisciplines(supabase).then((list) => {
+      if (active) setDisciplines(list)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const CATEGORIES = useMemo(
+    () => Array.from(new Set(disciplines.map((d) => d.category))).sort(),
+    [disciplines]
+  )
 
   const countries = useMemo(
     () => Array.from(new Set(tracks.map((t) => t.country_code).filter(Boolean))).sort(),
@@ -99,12 +112,12 @@ export default function PursuitPage() {
   }, [filteredTracks, trackId])
 
   useEffect(() => {
-    if (!category) setCategory(CATEGORIES[1] || CATEGORIES[0])
-  }, [category])
+    if (!category) setCategory(CATEGORIES.includes('Endurance') ? 'Endurance' : CATEGORIES[0])
+  }, [category, CATEGORIES])
 
   const filteredDisciplines = useMemo(
-    () => DISCIPLINES.filter((d) => d.category === category),
-    [category]
+    () => disciplines.filter((d) => d.category === category),
+    [disciplines, category]
   )
 
   useEffect(() => {
@@ -117,7 +130,7 @@ export default function PursuitPage() {
   }, [filteredDisciplines, disciplineName])
 
   const selectedTrack = tracks.find((t) => t.id === trackId) || null
-  const selectedDiscipline = DISCIPLINES.find((d) => d.name === disciplineName) || null
+  const selectedDiscipline = disciplines.find((d) => d.name === disciplineName) || null
   const trackLengthM = selectedTrack ? Number(selectedTrack.length_m) : 0
   const targetSeconds = (Number(targetMin) || 0) * 60 + (Number(targetSec) || 0)
 
