@@ -12,9 +12,8 @@ import {
   templatePermissions,
   visibleTabs,
 } from '../../lib/templateMenu'
-import { metricLabel, orderMetricKeys } from '../../lib/templateStats'
+import { metricLabel, orderMetricKeys, formatStatValue } from '../../lib/templateStats'
 
-const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/0$/, ''))
 
 const TAB_LABELS = { mine: 'Mine', favorites: 'Favorites', public: 'Public', system: 'System' }
 
@@ -187,8 +186,8 @@ export default function TemplatesPage() {
               <div key={k} className="flex justify-between gap-2">
                 <span>{metricLabel(k)}</span>
                 <span className="font-mono text-slate-700 dark:text-slate-200">
-                  {fmt(st.metrics[k].avg)}
-                  {st.metrics[k].best != null && st.metrics[k].n > 1 && <span className="text-slate-400"> / {fmt(st.metrics[k].best)}</span>}
+                  {formatStatValue(k, st.metrics[k].avg)}
+                  {st.metrics[k].best != null && st.metrics[k].n > 1 && <span className="text-slate-400"> / {formatStatValue(k, st.metrics[k].best)}</span>}
                 </span>
               </div>
             ))}

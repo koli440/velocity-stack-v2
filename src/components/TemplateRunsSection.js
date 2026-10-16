@@ -12,23 +12,25 @@ import Icon from './Icon'
 import AddPbModal from './AddPbModal'
 import { fetchDisciplines } from '../lib/lookups'
 import { buildPbPrefillFromEffort } from '../lib/pbVault'
+import { EFFORT_RESULT_KEYS, describeDelta, formatRaceTime, formatResultValue, isLowerBetterKey } from '../lib/effortMetrics'
 
 const RUN_COLORS = ['#f59e0b', '#38bdf8', '#d946ef', '#34d399', '#f87171', '#a78bfa']
 
-function formatMetric(value, suffix = '') {
+function formatMetric(value, suffix = '', key = null) {
   if (value === null || value === undefined) return '—'
+  if (key && typeof value === 'number' && (EFFORT_RESULT_KEYS.includes(key) || isLowerBetterKey(key))) return formatResultValue(key, value)
   if (typeof value === 'number') return `${Math.round(value * 10) / 10}${suffix}`
   return `${value}${suffix}`
 }
 
-function DeltaBadge({ current, previous, label }) {
-  if (typeof current !== 'number' || typeof previous !== 'number') return null
-  const diff = Math.round((current - previous) * 10) / 10
-  if (diff === 0) return null
+// Times are lower-is-better, so a faster result is green; other metrics are higher-is-better.
+function DeltaBadge({ current, previous, label, metricKey }) {
+  const delta = describeDelta(metricKey, current, previous)
+  if (!delta) return null
   return (
-    <div className={`flex justify-between gap-3 text-[10px] font-bold ${diff > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+    <div className={`flex justify-between gap-3 text-[10px] font-bold ${delta.good ? 'text-emerald-500' : 'text-red-500'}`}>
       <span className="text-slate-400 font-semibold">{label}</span>
-      <span>{diff > 0 ? '▲' : '▼'} {Math.abs(diff)}</span>
+      <span>{delta.diff > 0 ? '▲' : '▼'} {delta.text}</span>
     </div>
   )
 }
@@ -44,9 +46,16 @@ function EffortCards({ efforts, onSendToPbVault }) {
         >
           <div className="text-xs font-black text-slate-900 dark:text-white">
             {eff.role ? `${eff.role === 'work' ? 'Work' : 'Recovery'} rep ${eff.rep || idx + 1}` : `Effort #${idx + 1}`}{' '}
-            ({eff.distance_m != null ? `${eff.distance_m}m` : `${eff.duration_sec}s`})
+            ({eff.target_distance_m != null ? `${eff.target_distance_m}m` : eff.distance_m != null && eff.keyed_by === undefined ? `${eff.distance_m}m` : `${eff.duration_sec}s`})
           </div>
           <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-400">
+            {eff.elapsed_time_sec != null && (
+              <div className="col-span-2 text-xs">Time: <b className="text-orange-500">{formatRaceTime(eff.elapsed_time_sec, 2)}</b></div>
+            )}
+            {eff.keyed_by === 'time' && eff.distance_m != null && (
+              <div className="col-span-2 text-xs">Distance: <b className="text-orange-500">{(eff.distance_m / 1000).toFixed(2)} km</b></div>
+            )}
+            {eff.no_speed_data && <div className="col-span-2 italic">{eff.keyed_by === 'distance' ? 'No speed data: time unavailable' : 'No distance data'}</div>}
             {eff.target_distance_m != null && <div>Target: <b className={val}>{eff.target_distance_m}m</b></div>}
             {eff.avg_power != null && <div>Avg W: <b className={val}>{eff.avg_power}</b></div>}
             {eff.max_power != null && <div>Max W: <b className={val}>{eff.max_power}</b></div>}
@@ -66,7 +75,7 @@ function EffortCards({ efforts, onSendToPbVault }) {
             {eff.intensity_factor != null && <div>IF: <b className={val}>{eff.intensity_factor}</b></div>}
             {eff.avg_hr_bpm != null && <div>Avg HR: <b className={val}>{eff.avg_hr_bpm} bpm</b></div>}
             {Array.isArray(eff.lap_splits_sec) && eff.lap_splits_sec.length > 0 && (
-              <div>Lap splits{eff.lap_length_m ? ` (${eff.lap_length_m} m)` : ''}: <b className={val}>{eff.lap_splits_sec.map((t) => `${t}s`).join(', ')}</b></div>
+              <div>Lap splits{eff.lap_length_m ? ` (${eff.lap_length_m} m)` : ''}: <b className={val}>{eff.lap_splits_sec.map((t) => formatRaceTime(t, 2)).join(', ')}</b></div>
             )}
             {eff.pw_hr_decoupling_pct != null && <div>Pw:HR decoupling: <b className={val}>{eff.pw_hr_decoupling_pct}%</b></div>}
             {eff.work_kj != null && <div>Work: <b className={val}>{eff.work_kj} kJ</b></div>}
@@ -332,7 +341,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
             const metricKeys = selectedSummaryKeys(templates.find((t) => t.id === run.template_id)?.manifest?.summary_metrics)
             const entries = [
               ...summaryEntries.slice(0, 4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key)),
-              ...summaryEntries.slice(4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key) && (metricKeys.includes(key) || DEFAULT_RUN_KEYS.includes(key))),
+              ...summaryEntries.slice(4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key) && (metricKeys.includes(key) || DEFAULT_RUN_KEYS.includes(key) || EFFORT_RESULT_KEYS.includes(key))),
             ]
             const hasEfforts = Array.isArray(run.efforts) && run.efforts.length > 0
             return (
@@ -371,12 +380,12 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                     <div key={key} className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center">
                       <div className="text-[8px] uppercase font-bold text-slate-400">{key.replace(/_/g, ' ')}</div>
                       <div className="text-xs font-black text-orange-500">
-                        {formatMetric(value)}
+                        {formatMetric(value, '', key)}
                       </div>
                       <div className="mt-1 space-y-0.5 text-left">
-                        <DeltaBadge current={value} previous={prev?.summary?.[key]} label="Last run" />
-                        <DeltaBadge current={value} previous={baselines.last90.summary[key]} label="90-day avg" />
-                        <DeltaBadge current={value} previous={baselines.allTime.summary[key]} label="All-time avg" />
+                        <DeltaBadge current={value} previous={prev?.summary?.[key]} label="Last run" metricKey={key} />
+                        <DeltaBadge current={value} previous={baselines.last90.summary[key]} label="90-day avg" metricKey={key} />
+                        <DeltaBadge current={value} previous={baselines.allTime.summary[key]} label="All-time avg" metricKey={key} />
                       </div>
                     </div>
                   ))}
@@ -416,12 +425,14 @@ export default function TemplateRunsSection({ activityId, activity = null, track
             const rows = [...(historyBySlug[compareTemplate.slug] || [])].sort(
               (a, b) => new Date(b.activities?.activity_date || b.created_at) - new Date(a.activities?.activity_date || a.created_at)
             )
-            const keys = [...new Set(rows.flatMap((r) => Object.keys(r.summary || {})))].slice(0, 5)
+            const allKeys = [...new Set(rows.flatMap((r) => Object.keys(r.summary || {})))]
+            // Time and distance results are always offered (older runs simply have none).
+            const keys = [...allKeys.filter((k) => EFFORT_RESULT_KEYS.includes(k)), ...allKeys.filter((k) => !EFFORT_RESULT_KEYS.includes(k))].slice(0, 8)
             if (rows.length === 0) return <p className="text-[11px] text-slate-400">No runs of this template yet.</p>
             const metric = keys.includes(compareMetric) ? compareMetric : keys[0]
             const chartData = [...rows].reverse().map((r) => ({
               label: formatDate(r.activities?.activity_date) || '—',
-              value: typeof r.summary?.[metric] === 'number' ? Math.round(r.summary[metric] * 10) / 10 : null,
+              value: typeof r.summary?.[metric] === 'number' ? Math.round(r.summary[metric] * 100) / 100 : null,
               current: r.activity_id === activityId,
             }))
             return (
@@ -433,14 +444,14 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                       onChange={(e) => setCompareMetric(e.target.value)}
                       className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1.5 text-[11px] text-slate-900 dark:text-white font-semibold"
                     >
-                      {keys.map((k) => <option key={k} value={k}>{k.replace(/_/g, ' ')}</option>)}
+                      {keys.map((k) => <option key={k} value={k}>{k.replace(/_/g, ' ')}{isLowerBetterKey(k) ? ' (lower is better)' : ''}</option>)}
                     </select>
                     <div className="h-28">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                           <XAxis dataKey="label" tick={{ fontSize: 9 }} />
-                          <YAxis width={36} tick={{ fontSize: 9 }} domain={['auto', 'auto']} />
-                          <Tooltip />
+                          <YAxis width={36} tick={{ fontSize: 9 }} domain={['auto', 'auto']} tickFormatter={(v) => (EFFORT_RESULT_KEYS.includes(metric) ? formatResultValue(metric, v) : v)} />
+                          <Tooltip formatter={(v) => (EFFORT_RESULT_KEYS.includes(metric) ? formatResultValue(metric, v) : v)} />
                           <Bar dataKey="value" name={metric.replace(/_/g, ' ')} radius={[4, 4, 0, 0]}>
                             {chartData.map((d, i) => <Cell key={i} fill={d.current ? '#f97316' : '#94a3b8'} />)}
                           </Bar>
@@ -461,7 +472,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                       <tr key={r.id} className={r.activity_id === activityId ? 'bg-orange-500/10 font-bold' : ''}>
                         <td className="py-2 pr-3">{r.activity_id === activityId ? '● This activity' : r.activities?.title || 'Session'}</td>
                         <td className="pr-3">{formatDate(r.activities?.activity_date)}</td>
-                        {keys.map((k) => <td key={k} className="pr-3 font-mono">{formatMetric(r.summary?.[k])}</td>)}
+                        {keys.map((k) => <td key={k} className="pr-3 font-mono">{formatMetric(r.summary?.[k], '', k)}</td>)}
                       </tr>
                     ))}
                   </tbody>

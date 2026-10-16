@@ -259,8 +259,9 @@ set recovery 5min ±30% @ <55%FTP
   distance (integrated from the activity's speed stream) falls within the target
   distance's tolerance range, and picks the window with the best `best power`/
   `best speed` metric (or the band match, for `%FTP`/`W`/`km/h` bands) among those.
-  Resulting efforts additionally report `target_distance_m`, `distance_m`, and
-  `estimated_time_sec` (how long that distance actually took).
+  Resulting efforts additionally report `target_distance_m`, `distance_m` (distance of the
+  matched window), and the exact time for the target distance — see
+  [Time and distance results](#time-and-distance-results).
 
 ## Worked examples
 
@@ -408,6 +409,27 @@ stored `template_executions` keep working unchanged. `pattern x` with no options
 detector defaults. The five seeded system templates (`tpl_vo2max_3min`, `tpl_track_f200`,
 `tpl_track_pursuit`, `tpl_track_standing_start`, `tpl_road_z2_decoupling`) only had their
 `dsl_source` filled in; their manifests and results are untouched.
+
+## Time and distance results
+
+Every run reports the result a rider actually judges an effort by (issue #191):
+
+- **Time-keyed efforts** (a duration such as `20min`, and `repeated_bursts`): `distance_m`
+  covered in the window and `avg_speed_kmh`, integrated from the speed stream. Summary:
+  `best_distance_m`, `avg_distance_m`, `total_distance_m`.
+- **Distance-keyed efforts** (a distance such as `3km`, and the legacy `sustained_tt`,
+  `flying_sprint`, `standing_start`): `elapsed_time_sec`, the exact time to cover the target
+  distance, with the boundary interpolated inside its 1 Hz sample (not whole seconds), plus
+  `avg_speed_kmh` and `avg_power`. `estimated_time_sec` carries the same value on custom
+  efforts. For `flying_sprint` it is the fastest 200 m (or `distance`) near the peak.
+  Summary: `best_time_sec`, `avg_time_sec`, `total_time_sec`.
+- Efforts carry `keyed_by` (`time` or `distance`). Without a usable speed stream they get
+  `no_speed_data: true` and no distance/time value is invented.
+
+Times are lower-is-better: Compare and the baseline deltas (last run, 90-day and all-time
+average) show a faster time in green, and the Templates page stats use the minimum as best.
+Times display as race times (`m:ss.ss`), distances in km. Stored executions that predate
+these fields still render; the fields simply are not shown for them.
 
 ## Track context: lap splits (`lap` line)
 

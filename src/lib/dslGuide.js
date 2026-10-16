@@ -28,6 +28,7 @@ export const DSL_OPTIONS = [
   { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: `Template runs always report avg W/kg, avg power, NP, avg speed, avg cadence and avg HR where data exists. Choose extra summary metrics per work effort and for the run: ${METRIC_LIST}. hr_recovery takes an optional window (default 60sec); np_wkg, avg_wkg and max_wkg are power per kg of the activity weight; the time_* metrics are seconds in lactate zones (power, or heart rate with the _hr suffix). At most once.` },
   { syntax: 'pattern repeated_bursts', meaning: `Use instead of the repeat line to run a built-in detector: ${PATTERN_LIST}. Then add its option lines (${PATTERN_OPTION_LIST}). Only metrics is also allowed.` },
   { syntax: LAP_EXAMPLE, meaning: 'Track context: report per-lap split times (full laps only, from the speed stream) for every work effort, plus lap_count, best_lap_sec, slowest_lap_sec and avg_lap_sec for the run. At most once; also valid under pattern sustained_tt.' },
+  { syntax: 'time & distance results', meaning: 'Automatic, no line needed. Duration steps (20min) report the distance covered plus average speed; distance steps (3km) and the legacy pursuit/flying/standing patterns report the exact elapsed time (interpolated, shown as a race time) plus average speed. Needs a speed stream; without one the run says so. Run summaries add best/avg/total time or distance, and a faster time counts as an improvement in comparisons.' },
   { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity. At most once.' },
 ]
 

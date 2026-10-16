@@ -9,9 +9,7 @@ import Portal from './Portal'
 import Icon from './Icon'
 import { getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
-import { RUNS_PAGE_SIZE, metricLabel, orderMetricKeys } from '../lib/templateStats'
-
-const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/0$/, ''))
+import { RUNS_PAGE_SIZE, metricLabel, orderMetricKeys, formatStatValue } from '../lib/templateStats'
 
 function Inner({ template, metricKeys, onClose }) {
   const [runs, setRuns] = useState([])
@@ -135,7 +133,7 @@ function Inner({ template, metricKeys, onClose }) {
                 <div className="text-slate-500 dark:text-slate-400">
                   {orderMetricKeys(Object.keys(r.metrics))
                     .slice(0, 6)
-                    .map((k) => `${metricLabel(k)} ${fmt(r.metrics[k])}`)
+                    .map((k) => `${metricLabel(k)} ${formatStatValue(k, r.metrics[k])}`)
                     .join(' · ')}
                 </div>
               </li>
