@@ -24,6 +24,8 @@ export function describeNotification(notification, actor) {
       return `${name} ended the coaching relationship`
     case 'coach_replaced':
       return `${name} chose a different coach — you no longer have access to their data`
+    case 'coach_edited':
+      return `${name} (your coach) updated your training settings`
     case 'suggestion_submitted':
       return `${name} submitted a suggestion for review`
     case 'suggestion_approved':

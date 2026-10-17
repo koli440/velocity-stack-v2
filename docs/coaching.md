@@ -15,6 +15,32 @@
 - Never exposed: connection tokens, `profile_secrets`, email. `get_athlete_profile` returns training fields only.
 - Known gap: `shared_activities` does not expose later snapshot columns (e.g. `ftp_at_activity_w`).
 
-## Step 3 notes
-Coach edits of thresholds/weight will add `changed_by`/source columns to the history tables ("set by coach").
-Coach UI: `/calendar?rider=<id>` is minimal wiring only.
+## Coach edits (step 3, `20261130000000_coach_edits.sql`)
+Consent is wide: besides reading everything, the ACTIVE coach (`is_coach_of`) may write the rider's physiology and
+training settings, and **only** those:
+- `ftp_history`, `weight_history`, `lactate_threshold_history`, `power_zone_history`: extra INSERT/UPDATE/DELETE RLS
+  policies (`*_coach`) next to the `*_own` ones, both USING and WITH CHECK require `is_coach_of(user_id)`.
+  Moving a row to another rider is refused by trigger. Derived values (activity FTP/weight/zone snapshots, IF, TL,
+  `profiles.ftp_w`) follow through the existing SECURITY DEFINER triggers.
+- Profile training defaults (`home_track_id`, `default_chainring`, `default_cog`, `crank_length_mm`): only through
+  `coach_update_athlete_profile(p_rider, p_changes jsonb)`. There is no coach UPDATE policy on `profiles`; any other
+  key (FTP mirror, privacy zone, admin flag, names, avatar...) is rejected.
+- Never writable by a coach: activities, connections, secrets, templates, PBs, aero tests, follows, blocks,
+  relationships, notifications.
+
+**Labelling and audit.** Triggers stamp `changed_by`, `changed_at`, `set_by_coach` on every history row (and
+`training_set_by/at/by_coach` on the profile) from `auth.uid()`; client-supplied values are overwritten, so they cannot be
+forged. An edit by the rider clears the label. Every coach edit is also written to `coach_edits` (rider_id, coach_id,
+table, row, action, old/new values). The rider reads all of it, a coach only their own edits while the relationship is
+active; no client can write the table. The UI shows a "set by coach" badge where those values appear.
+
+**Notifications.** A coach edit creates a `coach_edited` notification for the rider. At most one *unread* one exists per
+coach/rider (partial unique index); further edits only bump its timestamp, so editing is never spam.
+
+**Revocation** takes effect immediately: `is_coach_of` is evaluated on every statement.
+
+## Coach UI (step 3)
+Context is URL based, never stored: `/coach` (dashboard), `/coach/<riderId>` (overview) and
+`/coach/<riderId>/<page>` (calendar, activities, templates, PBs, physiology settings ...) show the athlete's data;
+feed, notifications and own settings stay the coach's. `coach_dashboard()` returns one row per active athlete
+(last activity, last 7 days count/time/distance/load). Pending invites come from `my_coaching()`.
