@@ -3,6 +3,7 @@
 // Modal listing the current user's runs of one template (issue #174). Pages are loaded
 // lazily from the uncached /api/templates/stats/runs endpoint with search and sorting.
 
+import { CoachRunBadge, useRunCoachNames } from './CoachBadge'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Portal from './Portal'
@@ -12,9 +13,10 @@ import { getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import { RUNS_PAGE_SIZE, metricLabel, orderMetricKeys, formatStatValue } from '../lib/templateStats'
 
-function Inner({ template, metricKeys, onClose }) {
+function Inner({ template, metricKeys, filter = 'all', onClose }) {
   const contextHref = useContextHref()
   const [runs, setRuns] = useState([])
+  const coachNames = useRunCoachNames(runs)
   const [total, setTotal] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -43,7 +45,7 @@ function Inner({ template, metricKeys, onClose }) {
       setError(null)
       try {
         const authHeader = await getAuthHeader()
-        const params = new URLSearchParams({ template_id: template.id, sort, dir, limit: String(RUNS_PAGE_SIZE), offset: String(offset) })
+        const params = new URLSearchParams({ template_id: template.id, filter, sort, dir, limit: String(RUNS_PAGE_SIZE), offset: String(offset) })
         if (q) params.set('q', q)
         const res = await fetch(`/api/templates/stats/runs?${params}`, { headers: authHeader, cache: 'no-store' })
         const json = await parseJsonResponse(res)
@@ -58,7 +60,7 @@ function Inner({ template, metricKeys, onClose }) {
         if (id === reqId.current) setLoading(false)
       }
     },
-    [template.id, sort, dir, q]
+    [template.id, sort, dir, q, filter]
   )
 
   useEffect(() => {
@@ -131,6 +133,7 @@ function Inner({ template, metricKeys, onClose }) {
                 <Link href={contextHref(`/activities/${r.activity_id}`)} className="text-sm font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-500 break-words">
                   {r.title || 'Untitled activity'}
                 </Link>
+                <CoachRunBadge run={r} names={coachNames} />
                 {r.date && <span className="text-slate-400"> · {new Date(r.date).toLocaleDateString()}</span>}
                 <div className="text-slate-500 dark:text-slate-400">
                   {orderMetricKeys(Object.keys(r.metrics))

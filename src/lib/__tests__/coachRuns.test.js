@@ -1,0 +1,80 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {
+  canSendRunToPbVault,
+  coachRunCoachIds,
+  coachRunLabel,
+  coachRunnableTemplates,
+  compareOptions,
+  filterRuns,
+  parseRunFilter,
+  runActions,
+  runTemplateName,
+  withTemplateSnapshot,
+} from '../coachRuns.js'
+import { mapRunRow } from '../templateStats.js'
+
+const own = { id: 'r1', template_id: 't1', by_coach: false }
+const byCoach = { id: 'r2', template_id: 't2', by_coach: true, run_by_coach_id: 'c1', template_name: 'Secret', template_slug: 'secret' }
+
+test('filterRuns / parseRunFilter', () => {
+  assert.deepEqual(filterRuns([own, byCoach], 'coach'), [byCoach])
+  assert.deepEqual(filterRuns([own, byCoach], 'own'), [own])
+  assert.equal(filterRuns([own, byCoach]).length, 2)
+  assert.equal(parseRunFilter('coach'), 'coach')
+  assert.equal(parseRunFilter('x'), 'all')
+  assert.deepEqual(filterRuns(null), [])
+})
+
+test('coachRunLabel names the coach or falls back to former coach', () => {
+  assert.equal(coachRunLabel(own), null)
+  assert.equal(coachRunLabel(byCoach, { c1: 'Amy' }), 'run by coach Amy')
+  assert.equal(coachRunLabel(byCoach, {}), 'run by former coach')
+  assert.equal(coachRunLabel({ by_coach: true, run_by_coach_id: null }, { c1: 'Amy' }), 'run by former coach')
+})
+
+test('coachRunCoachIds is distinct and ignores own runs', () => {
+  assert.deepEqual(coachRunCoachIds([own, byCoach, byCoach, { by_coach: true, run_by_coach_id: null }]), ['c1'])
+})
+
+test('coach can only run own and system templates', () => {
+  const list = [{ id: 'a', user_id: null }, { id: 'b', user_id: 'coach' }, { id: 'c', user_id: 'rider' }]
+  assert.deepEqual(coachRunnableTemplates(list, 'coach').map((t) => t.id), ['a', 'b'])
+  assert.deepEqual(coachRunnableTemplates(list, null).map((t) => t.id), ['a'])
+})
+
+test('coach runs never go to the PB Vault', () => {
+  assert.equal(canSendRunToPbVault(byCoach), false)
+  assert.equal(canSendRunToPbVault(own), true)
+})
+
+test('runActions: rider deletes anything, coach only his own runs', () => {
+  assert.deepEqual(runActions(byCoach, { userId: 'rider', athleteContext: false }), { canDelete: true, canRerun: false })
+  assert.deepEqual(runActions(own, { userId: 'rider', athleteContext: false }), { canDelete: true, canRerun: true })
+  assert.deepEqual(runActions(byCoach, { userId: 'c1', athleteContext: true }), { canDelete: true, canRerun: true })
+  assert.deepEqual(runActions(byCoach, { userId: 'c2', athleteContext: true }), { canDelete: false, canRerun: false })
+  assert.deepEqual(runActions(own, { userId: 'c1', athleteContext: true }), { canDelete: false, canRerun: false })
+  assert.equal(runActions({ ...byCoach, template_id: null }, { userId: 'c1', athleteContext: true }).canRerun, false)
+})
+
+test('withTemplateSnapshot exposes only name/slug/category', () => {
+  const out = withTemplateSnapshot({ ...byCoach, template_category: 'cat' })
+  assert.deepEqual(out.analysis_templates, { slug: 'secret', name: 'Secret', category: 'cat' })
+  assert.equal(runTemplateName(out), 'Secret')
+  const joined = { analysis_templates: { name: 'Live', slug: 'l' } }
+  assert.equal(withTemplateSnapshot(joined), joined)
+})
+
+test('compareOptions works for unreadable templates', () => {
+  assert.deepEqual(compareOptions([byCoach, byCoach, { template_name: 'Alpha', template_slug: 'alpha' }]), [
+    { slug: 'alpha', name: 'Alpha' },
+    { slug: 'secret', name: 'Secret' },
+  ])
+})
+
+test('mapRunRow carries the coach stamp', () => {
+  const row = mapRunRow({ id: 'x', activity_id: 'a', summary: {}, created_at: '2026-01-01', by_coach: true, run_by_coach_id: 'c1' })
+  assert.equal(row.by_coach, true)
+  assert.equal(row.run_by_coach_id, 'c1')
+  assert.equal(mapRunRow({ id: 'y', activity_id: 'a', summary: {} }).by_coach, false)
+})

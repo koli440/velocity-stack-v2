@@ -12,6 +12,8 @@ import Icon from './Icon'
 import AddPbModal from './AddPbModal'
 import { fetchDisciplines } from '../lib/lookups'
 import { buildPbPrefillFromEffort } from '../lib/pbVault'
+import { CoachRunBadge, useRunCoachNames } from './CoachBadge'
+import { canSendRunToPbVault, coachRunnableTemplates, compareOptions, filterRuns, runActions, runTemplateName, runTemplateSlug } from '../lib/coachRuns'
 import { EFFORT_RESULT_KEYS, describeDelta, formatRaceTime, formatResultValue, isLowerBetterKey } from '../lib/effortMetrics'
 
 const RUN_COLORS = ['#f59e0b', '#38bdf8', '#d946ef', '#34d399', '#f87171', '#a78bfa']
@@ -100,7 +102,11 @@ function EffortCards({ efforts, onSendToPbVault }) {
 // Lists every persisted template run for this activity as its own card, with deltas vs
 // the previous run of the same template on another activity (issue #66). Choosing a
 // template only happens when adding a run, so what is displayed always matches a real run.
-export default function TemplateRunsSection({ activityId, activity = null, tracks = [], onVisibleWindowsChange }) {
+// `riderId` switches on athlete mode: an active coach viewing the athlete's activity. Runs he adds are stored on
+// the athlete's account, only his own + system templates are offered, and he can delete/re-run only his own runs.
+export default function TemplateRunsSection({ activityId, activity = null, tracks = [], riderId = null, onVisibleWindowsChange }) {
+  const athleteMode = !!riderId
+  const [runFilter, setRunFilter] = useState('all')
   const [templates, setTemplates] = useState([])
   const [runs, setRuns] = useState([])
   const [historyBySlug, setHistoryBySlug] = useState({})
@@ -130,7 +136,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
     const authHeader = await getAuthHeader()
     const res = await fetch('/api/templates', { headers: authHeader })
     const data = await res.json()
-    if (res.ok) setTemplates(data.templates || [])
+    if (res.ok) setTemplates(data.templates || [])  // athlete mode narrows to coachRunnableTemplates below
   }, [])
 
   const loadPickerExtras = useCallback(async () => {
@@ -167,14 +173,14 @@ export default function TemplateRunsSection({ activityId, activity = null, track
 
   const loadHistory = useCallback(async (slug) => {
     const authHeader = await getAuthHeader()
-    const res = await fetch(`/api/templates/${slug}/history`, { headers: authHeader })
+    const res = await fetch(`/api/templates/${slug}/history${athleteMode ? `?rider=${riderId}` : ''}`, { headers: authHeader })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
       setError(data.error || 'Failed to load template history')
       return
     }
     setHistoryBySlug((prev) => ({ ...prev, [slug]: data.executions || [] }))
-  }, [])
+  }, [athleteMode, riderId])
 
   const loadRuns = useCallback(async () => {
     if (!activityId) return
@@ -184,7 +190,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
     if (res.ok) {
       const list = data.executions || []
       setRuns(list)
-      list.forEach((r) => r.analysis_templates?.slug && loadHistory(r.analysis_templates.slug))
+      list.forEach((r) => runTemplateSlug(r) && loadHistory(runTemplateSlug(r)))
     }
   }, [activityId, loadHistory])
 
@@ -223,7 +229,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
     })
 
   const baselinesFor = (run) =>
-    computeBaselines(historyBySlug[run.analysis_templates?.slug] || [], { activityId, runAt: run.activities?.activity_date || run.updated_at })
+    computeBaselines(historyBySlug[runTemplateSlug(run)] || [], { activityId, runAt: run.activities?.activity_date || run.updated_at })
 
   const runTemplate = async (templateId, { hide = false } = {}) => {
     setRunning(true)
@@ -250,7 +256,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
   }
 
   const deleteRun = async (run) => {
-    if (!window.confirm(`Delete this "${run.analysis_templates?.name}" run? This cannot be undone.`)) return
+    if (!window.confirm(`Delete this "${runTemplateName(run)}" run? This cannot be undone.`)) return
     try {
       const authHeader = await getAuthHeader()
       const res = await fetch(`/api/activities/${activityId}/apply-template?executionId=${run.id}`, {
@@ -260,7 +266,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to delete run')
       setRuns((prev) => prev.filter((r) => r.id !== run.id))
-      if (run.analysis_templates?.slug) loadHistory(run.analysis_templates.slug)
+      if (runTemplateSlug(run)) loadHistory(runTemplateSlug(run))
     } catch (err) {
       setError(err.message)
     }
@@ -281,7 +287,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
     }
   }
 
-  const compareTemplate = templates.find((t) => t.id === compareTemplateId) || null
+  const compareTemplate = compareOptions(runs).find((o) => o.slug === compareTemplateId) || null
   useEffect(() => {
     if (tab === 'compare' && compareTemplate?.slug && !historyBySlug[compareTemplate.slug]) {
       loadHistory(compareTemplate.slug)
@@ -289,19 +295,22 @@ export default function TemplateRunsSection({ activityId, activity = null, track
   }, [tab, compareTemplate, historyBySlug, loadHistory])
 
   const openAdd = () => {
-    setPickedTemplateId((prev) => prev || templates[0]?.id || '')
+    setPickedTemplateId((prev) => prev || (athleteMode ? coachRunnableTemplates(templates, currentUserId) : templates)[0]?.id || '')
     setAddOpen(true)
     loadPickerExtras()
   }
 
   const runTemplateIds = new Set(runs.map((r) => r.template_id))
+  const coachNames = useRunCoachNames(runs)
+  const hasCoachRuns = runs.some((r) => r.by_coach)
+  const shownRuns = filterRuns(runs, runFilter)
   const btn = 'py-2 px-3 rounded-xl font-black text-[11px] uppercase tracking-wider transition whitespace-nowrap'
 
   return (
     <div className="glass-dense bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-          <Icon name="flask" /> Template Runs <span className="text-slate-400">({runs.length})</span>
+          <Icon name="flask" /> Template Runs <span className="text-slate-400">({shownRuns.length})</span>
         </h3>
         <button type="button" onClick={openAdd} className={`${btn} bg-orange-500 hover:bg-orange-600 text-white`}>
           + Add Run
@@ -321,6 +330,16 @@ export default function TemplateRunsSection({ activityId, activity = null, track
         ))}
       </div>
 
+      {hasCoachRuns && !athleteMode && (
+        <div className="flex gap-2 text-[10px] font-black uppercase tracking-wider" data-testid="run-filter">
+          {[['all', 'All'], ['coach', 'By coach'], ['own', 'My runs']].map(([key, label]) => (
+            <button key={key} type="button" onClick={() => setRunFilter(key)} className={`px-2 py-1 rounded-lg ${runFilter === key ? 'bg-sky-500/10 text-sky-500' : 'text-slate-400'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {error && (
         <div className="text-[11px] font-bold text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl p-2.5">
           {error}
@@ -334,12 +353,15 @@ export default function TemplateRunsSection({ activityId, activity = null, track
               No runs yet. Add a run to detect target efforts and compute apples-to-apples metrics for this activity.
             </p>
           )}
-          {runs.map((run) => {
+          {shownRuns.map((run) => {
+            const actions = runActions(run, { userId: currentUserId, athleteContext: athleteMode })
             const baselines = baselinesFor(run)
             const prev = baselines.previous
             const expanded = expandedIds.has(run.id)
             const summaryEntries = Object.entries(run.summary || {})
-            const metricKeys = selectedSummaryKeys(templates.find((t) => t.id === run.template_id)?.manifest?.summary_metrics)
+            const manifest = templates.find((t) => t.id === run.template_id)?.manifest
+            // Without a readable definition (a coach's template) every non-legacy result is shown.
+            const metricKeys = manifest ? selectedSummaryKeys(manifest.summary_metrics) : summaryEntries.map(([key]) => key)
             const entries = [
               ...summaryEntries.slice(0, 4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key)),
               ...summaryEntries.slice(4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key) && (metricKeys.includes(key) || DEFAULT_RUN_KEYS.includes(key) || EFFORT_RESULT_KEYS.includes(key))),
@@ -351,8 +373,9 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-3 h-3 rounded-full shrink-0" style={{ background: colorById[run.id] }} />
                     <b className="text-xs text-slate-900 dark:text-white truncate">
-                      {run.analysis_templates?.name || 'Template'}
+                      {runTemplateName(run)}
                     </b>
+                    <CoachRunBadge run={run} names={coachNames} />
                     <span className="text-[10px] text-slate-400">
                       run {formatDateTime(run.updated_at)}
                     </span>
@@ -366,12 +389,16 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                       />
                       On chart
                     </label>
-                    <button type="button" disabled={running} onClick={() => runTemplate(run.template_id, { hide: hiddenIds.has(run.id) })} className="text-slate-400 hover:text-orange-500 disabled:opacity-50">
-                      Re-run
-                    </button>
-                    <button type="button" onClick={() => deleteRun(run)} className="text-red-500">
-                      Delete
-                    </button>
+                    {actions.canRerun && (
+                      <button type="button" disabled={running} onClick={() => runTemplate(run.template_id, { hide: hiddenIds.has(run.id) })} className="text-slate-400 hover:text-orange-500 disabled:opacity-50">
+                        Re-run
+                      </button>
+                    )}
+                    {actions.canDelete && (
+                      <button type="button" onClick={() => deleteRun(run)} className="text-red-500">
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -405,7 +432,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                     {expanded ? '▴ Hide efforts' : `▾ Show efforts (${run.efforts.length})`}
                   </button>
                 )}
-                {expanded && hasEfforts && <EffortCards efforts={run.efforts} onSendToPbVault={activity ? sendToPbVault : null} />}
+                {expanded && hasEfforts && <EffortCards efforts={run.efforts} onSendToPbVault={activity && canSendRunToPbVault(run) && !athleteMode ? sendToPbVault : null} />}
               </div>
             )
           })}
@@ -420,7 +447,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
             className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs text-slate-900 dark:text-white font-semibold"
           >
             <option value="">Select a template…</option>
-            {templates.filter((t) => runTemplateIds.has(t.id)).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            {compareOptions(runs).map((o) => <option key={o.slug} value={o.slug}>{o.name}</option>)}
           </select>
           {compareTemplate && (() => {
             const rows = [...(historyBySlug[compareTemplate.slug] || [])].sort(
@@ -486,7 +513,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
 
       {addOpen && (
         <TemplatePickerModal
-          templates={templates}
+          templates={athleteMode ? coachRunnableTemplates(templates, currentUserId) : templates}
           userId={currentUserId}
           runTemplateIds={runTemplateIds}
           favoriteIds={favoriteIds}

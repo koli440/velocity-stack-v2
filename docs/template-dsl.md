@@ -525,3 +525,7 @@ work 15min ±10% @ Z3
 recovery 5min ±40% @ <Z3
 metrics avg_power, time_z2, time_z3, time_z4
 ```
+
+## Coach runs
+A coach may run his own (or a system) template on an athlete's activity. The athlete sees the result and the template name only,
+never the DSL/manifest. See docs/coaching.md.

@@ -199,3 +199,6 @@ PBs, aero tests, ftp/weight/lactate/power-zone history, and the `shared_activiti
 - `notifications.type` gains `coach_edited` (max one unread per user/actor, `uq_notifications_coach_edited_unread`).
 - `get_athlete_profile` now also returns the training stamp; `coach_dashboard()` lists active athletes with last activity
   and 7-day volume.
+
+`template_executions` also has `by_coach`, `run_by_coach_id`, `coach_key` (uniqueness with activity+template) and name/slug/category
+snapshot columns; see *Coach template runs* in coaching.md.

@@ -1,25 +1,39 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
 import { aggregateTemplateStats } from '../../../../lib/templateStats'
+import { parseRunFilter } from '../../../../lib/coachRuns'
 
-// GET /api/templates/stats
+// GET /api/templates/stats[?filter=all|coach|own]
 // Per-template run statistics for the current user (single aggregated query; anonymous
-// users get an empty result). Never cached.
+// users get an empty result). Never cached. Only runs ON THE CALLER'S ACCOUNT count (user_id = caller):
+// runs a coach makes on athletes live on the athletes' accounts, so they never count towards the
+// coach's own statistics. Runs a coach made on the caller's activities are included (filter=coach
+// shows only those, filter=own excludes them); `names` carries the stored template names, so
+// templates the caller cannot read (a coach's private ones) can still be listed by name.
 export async function GET(req) {
   const noStore = { headers: { 'Cache-Control': 'no-store' } }
   try {
     const { supabase, user } = await getRequestUser(req)
     if (!user) return NextResponse.json({ success: true, stats: {} }, noStore)
 
-    const { data, error } = await supabase
+    const filter = parseRunFilter(new URL(req.url).searchParams.get('filter'))
+    let query = supabase
       .from('template_executions')
-      .select('id, template_id, activity_id, summary, created_at, activities(title, activity_date)')
+      .select('id, template_id, activity_id, summary, created_at, by_coach, template_name, template_slug, template_category, activities(title, activity_date)')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(5000)
+    if (filter === 'coach') query = query.eq('by_coach', true)
+    if (filter === 'own') query = query.eq('by_coach', false)
+    const { data, error } = await query.order('created_at', { ascending: false }).limit(5000)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400, ...noStore })
-    return NextResponse.json({ success: true, stats: aggregateTemplateStats(data) }, noStore)
+    const stats = aggregateTemplateStats(data)
+    const names = {}
+    for (const row of data || []) {
+      if (row.template_id && stats[row.template_id] && !names[row.template_id]) {
+        names[row.template_id] = { name: row.template_name, slug: row.template_slug, category: row.template_category }
+      }
+    }
+    return NextResponse.json({ success: true, stats, names }, noStore)
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500, ...noStore })
   }
