@@ -1,4 +1,4 @@
-// In-app notifications (issue #49): new follower, follow request, request approved.
+// In-app notifications (issue #49): new follower, follow request, request approved, coaching.
 // Rows are written by database triggers (see 20261014000000_blocks_requests_notifications.sql).
 
 import { fetchProfilesByIds, authorName } from './social.js'
@@ -14,6 +14,16 @@ export function describeNotification(notification, actor) {
       return `${name} wants to follow you`
     case 'follow_approved':
       return `${name} approved your follow request`
+    case 'coach_invite':
+      return `${name} invited you to be their athlete`
+    case 'coach_request':
+      return `${name} asked you to be their coach`
+    case 'coach_accepted':
+      return `${name} accepted — coaching is now active`
+    case 'coach_ended':
+      return `${name} ended the coaching relationship`
+    case 'coach_replaced':
+      return `${name} chose a different coach — you no longer have access to their data`
     case 'suggestion_submitted':
       return `${name} submitted a suggestion for review`
     case 'suggestion_approved':
@@ -23,6 +33,13 @@ export function describeNotification(notification, actor) {
     default:
       return 'New notification'
   }
+}
+
+// Notifications that need an answer in Settings (accept / decline a coaching request).
+export function notificationHref(notification) {
+  return notification?.type === 'coach_invite' || notification?.type === 'coach_request'
+    ? '/settings#coaching'
+    : null
 }
 
 export function countUnread(notifications) {

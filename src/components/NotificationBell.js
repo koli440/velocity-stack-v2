@@ -12,6 +12,7 @@ import {
   fetchNotifications,
   markAllNotificationsRead,
   describeNotification,
+  notificationHref,
   countUnread,
 } from '../lib/notifications'
 
@@ -79,6 +80,10 @@ export default function NotificationBell({ userId }) {
               <div>
                 {n.type === 'suggestion_submitted' && n.suggestion_id ? (
                   <Link href={reviewPath(n.suggestion_id)} className="underline">
+                    {describeNotification(n, n.actor)}
+                  </Link>
+                ) : notificationHref(n) ? (
+                  <Link href={notificationHref(n)} className="underline">
                     {describeNotification(n, n.actor)}
                   </Link>
                 ) : (
