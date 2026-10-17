@@ -62,6 +62,7 @@ function EffortCards({ efforts, onSendToPbVault }) {
             {eff.avg_cadence_rpm != null && <div>Avg cadence: <b className={val}>{eff.avg_cadence_rpm} rpm</b></div>}
             {eff.avg_speed_kmh != null && <div>Avg speed: <b className={val}>{eff.avg_speed_kmh} km/h</b></div>}
             {eff.avg_wkg != null && <div>Avg W/kg: <b className={val}>{eff.avg_wkg}</b></div>}
+            {eff.avg_zone != null && <div>Zone: <b className={val}>Z{eff.avg_zone}{eff.target_zone ? ` (target ${eff.target_zone})` : ''}</b></div>}
             {eff.pct_of_ftp != null && <div>% FTP: <b className={val}>{eff.pct_of_ftp}%</b></div>}
             {eff.pacing_index != null && <div>Pacing: <b className={val}>{eff.pacing_index}%</b></div>}
             {eff.dropoff_pct != null && <div>Drop-off: <b className={val}>{eff.dropoff_pct}%</b></div>}

@@ -43,6 +43,14 @@
 //   work 10min ±10% @ 95-105%LT2
 //   recovery 5min ±30% @ <80%LT1
 //
+// Power-zone bands (issue #194) use the athlete's Z1-Z6 for the activity's date (see
+// src/lib/powerZones.js): `Z3` is one zone, `Z2-Z3` a range of zones, `<Z2` is below zone 2 and
+// `>Z4` above zone 4:
+//
+//   3x
+//   work 15min ±3% @ Z3
+//   recovery 5min ±30% @ <Z2
+//
 // Warm-up and cool-down can be excluded from the search (issue #124): the
 // first/last N of the activity are ignored by the detector:
 //
@@ -107,6 +115,7 @@
 // Deliberately plain JS (no Node-only APIs) so it can run both server-side
 // (API route validation) and client-side (live preview in the creator UI).
 
+import { ZONE_COUNT, isValidZone } from './powerZones.js'
 import { SUMMARY_METRIC_IDS } from './summaryMetrics.js'
 import {
   LEGACY_PATTERN_NAMES,
@@ -129,6 +138,10 @@ const MIN_BAND_RE = /^>\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax
 // A bare target ('3W/kg') means the target ±5%, normalised to an explicit range so it round-trips.
 const BARE_WKG_RE = /^(\d+(?:\.\d+)?)\s*W\/kg$/i
 export const WKG_TARGET_TOLERANCE = 0.05
+const ZONE_RANGE_RE = /^Z(\d+)\s*-\s*Z(\d+)$/i
+const ZONE_SINGLE_RE = /^Z(\d+)$/i
+const ZONE_MAX_RE = /^<\s*Z(\d+)$/i
+const ZONE_MIN_RE = /^>\s*Z(\d+)$/i
 const BEST_BAND_RE = /^(?:best|max)(?:\s+(power|speed))?$/i
 
 export const BAND_SUFFIXES = {
@@ -144,6 +157,9 @@ export const BAND_SUFFIXES = {
   pct_lt2_hr: '%LT2HR',
   wkg: 'W/kg',
 }
+
+// `zone` bands keep zone numbers (1-6) in powerMin/powerMax: both set = zones powerMin..powerMax
+// inclusive, only powerMax = below that zone, only powerMin = above that zone.
 
 function bandTypeForSuffix(suffix) {
   const s = suffix.toUpperCase()
@@ -162,7 +178,7 @@ function bandTypeForSuffix(suffix) {
 
 /**
  * @param {string} bandText - the `@ <band>` portion of a step line, already trimmed.
- * @returns {{ bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'pct_lt1'|'pct_lt2'|'pct_lt1_hr'|'pct_lt2_hr'|'wkg'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null } | null}
+ * @returns {{ bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'pct_lt1'|'pct_lt2'|'pct_lt1_hr'|'pct_lt2_hr'|'wkg'|'zone'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null } | null}
  *   null when the band syntax is not recognised.
  */
 function parseBand(bandText) {
@@ -179,6 +195,18 @@ function parseBand(bandText) {
     const round = (v) => Math.round(v * 100) / 100
     return { bandType: 'wkg', bestMetric: null, powerMin: round(target * (1 - WKG_TARGET_TOLERANCE)), powerMax: round(target * (1 + WKG_TARGET_TOLERANCE)) }
   }
+
+  m = text.match(ZONE_SINGLE_RE)
+  if (m) return { bandType: 'zone', bestMetric: null, powerMin: parseInt(m[1], 10), powerMax: parseInt(m[1], 10) }
+
+  m = text.match(ZONE_RANGE_RE)
+  if (m) return { bandType: 'zone', bestMetric: null, powerMin: parseInt(m[1], 10), powerMax: parseInt(m[2], 10) }
+
+  m = text.match(ZONE_MAX_RE)
+  if (m) return { bandType: 'zone', bestMetric: null, powerMin: null, powerMax: parseInt(m[1], 10) }
+
+  m = text.match(ZONE_MIN_RE)
+  if (m) return { bandType: 'zone', bestMetric: null, powerMin: parseInt(m[1], 10), powerMax: null }
 
   m = text.match(RANGE_BAND_RE)
   if (m) {
@@ -212,7 +240,7 @@ function parseBand(bandText) {
  *   lapLengthM: number|null,                           // "lap 250m" track context (issue #129)
  *   pattern: 'repeated_bursts'|'flying_sprint'|'sustained_tt'|'standing_start'|null,  // fixed pattern (issue #128)
  *   patternOptions: object,                            // its manifest option keys (target_count, distance_m, ...)
- *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'pct_lt1'|'pct_lt2'|'pct_lt1_hr'|'pct_lt2_hr'|'wkg'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
+ *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'pct_lt1'|'pct_lt2'|'pct_lt1_hr'|'pct_lt2_hr'|'wkg'|'zone'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
  *   errors: Array<{line: number, message: string}>
  * }}
  */
@@ -379,8 +407,8 @@ export function parseIntervalDsl(text) {
         line: lineNo,
         message:
           `Unrecognised band "${bandTextRaw.trim()}". Expected "a-b%FTP", "<x%FTP", ">x%FTP", ` +
-          'the same with "W", "km/h", "bpm", "%HRmax", "rpm", "%LT1", "%LT2", "%LT1HR", "%LT2HR" or "W/kg" instead of "%FTP", or "best"/"max" (with "power"/"speed" ' +
-          'required on distance-keyed steps).',
+          'the same with "W", "km/h", "bpm", "%HRmax", "rpm", "%LT1", "%LT2", "%LT1HR", "%LT2HR" or "W/kg" instead of "%FTP", a power zone ' +
+          '("Z3", "Z2-Z3", "<Z2", ">Z4"), or "best"/"max" (with "power"/"speed" required on distance-keyed steps).',
       })
     } else if (band.bandType === 'best') {
       bestMetric = band.bestMetric
@@ -393,6 +421,9 @@ export function parseIntervalDsl(text) {
         }
         bestMetric = 'power' // backward-compatible default for duration-keyed bare "best"/"max"
       }
+    } else if (band.bandType === 'zone') {
+      const zoneError = validateZoneBand(band)
+      if (zoneError) errors.push({ line: lineNo, message: zoneError })
     } else {
       if (band.powerMin != null && band.powerMin < 0) {
         errors.push({ line: lineNo, message: 'Band minimum must be >= 0.' })
@@ -433,6 +464,18 @@ export function parseIntervalDsl(text) {
   }
 
   return { repeatCount, setCount, setRecovery, steps, warmupSec, cooldownSec, metrics, pattern, patternOptions, lapLengthM, errors }
+}
+
+function validateZoneBand({ powerMin, powerMax }) {
+  for (const z of [powerMin, powerMax]) {
+    if (z != null && !isValidZone(z)) return `Unknown zone "Z${z}". Power zones are Z1 to Z${ZONE_COUNT}.`
+  }
+  if (powerMin != null && powerMax != null && powerMin > powerMax) {
+    return `Zone range must go from the lower to the higher zone, e.g. "Z${powerMax}-Z${powerMin}".`
+  }
+  if (powerMin == null && powerMax === 1) return '"<Z1" matches nothing: there is no zone below Z1.'
+  if (powerMax == null && powerMin === ZONE_COUNT) return `">Z${ZONE_COUNT}" matches nothing: there is no zone above Z${ZONE_COUNT}.`
+  return null
 }
 
 function parseMetricsList(listText, lineNo, errors) {
@@ -494,6 +537,11 @@ function formatBand({ bandType, bestMetric, powerMin, powerMax, keyBy }) {
     // duration-keyed steps; distance-keyed steps always spell out the metric.
     if (keyBy === 'distance' || bestMetric === 'speed') return `best ${bestMetric || 'power'}`
     return 'best'
+  }
+  if (bandType === 'zone') {
+    if (powerMin != null && powerMax != null) return powerMin === powerMax ? `Z${powerMin}` : `Z${powerMin}-Z${powerMax}`
+    if (powerMax != null) return `<Z${powerMax}`
+    return `>Z${powerMin}`
   }
   const suffix = BAND_SUFFIXES[bandType] || '%FTP'
   if (powerMin != null && powerMax != null) return `${formatNumber(powerMin)}-${formatNumber(powerMax)}${suffix}`

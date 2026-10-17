@@ -3,6 +3,7 @@
  */
 
 import { DEFAULT_LAP_LENGTH_M, MPS_TO_KMH } from './constants.js'
+import { ZONES_UNAVAILABLE_MESSAGE, zoneBandWatts, zoneLabel, zoneOfPower } from './powerZones.js'
 
 // Helper function: moving average to smooth out noise
 function movingAverage(arr, windowSize = 3) {
@@ -28,6 +29,7 @@ export function analyzeSessionEfforts({
   hrMaxBpm = null,
   lt = null,
   weightKg = null,
+  zones = null,
   setCount = null,
   setRecovery = null,
   warmupSec = null,
@@ -52,6 +54,7 @@ export function analyzeSessionEfforts({
       hrMaxBpm,
       lt,
       weightKg,
+      zones,
       warmupSec,
       cooldownSec,
       setCount,
@@ -356,6 +359,12 @@ const LT_BANDS = {
   pct_lt2_hr: { metric: 'avgHr', ref: 'lt2Hr' },
 }
 
+// "Z3", "Z2-Z3", "<Z2", ">Z4": the zone band as written in the DSL.
+function zoneTargetLabel({ powerMin, powerMax }) {
+  if (powerMin != null && powerMax != null) return powerMin === powerMax ? zoneLabel(powerMin) : `${zoneLabel(powerMin)}-${zoneLabel(powerMax)}`
+  return powerMax != null ? `<${zoneLabel(powerMax)}` : `>${zoneLabel(powerMin)}`
+}
+
 export function isLtBand(bandType) {
   return Object.prototype.hasOwnProperty.call(LT_BANDS, bandType)
 }
@@ -364,8 +373,13 @@ function isHrLtBand(bandType) {
   return isLtBand(bandType) && LT_BANDS[bandType].metric === 'avgHr'
 }
 
-function stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm = null, lt = null, weightKg = null) {
+function stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm = null, lt = null, weightKg = null, zones = null) {
   const { avgPower, avgSpeedKmh, avgHr, avgCadence } = metrics
+  if (step.bandType === 'zone') {
+    const band = zoneBandWatts(zones, step)
+    if (!band || avgPower == null) return false
+    return inRange(avgPower, { powerMin: band.min, powerMax: band.max })
+  }
   if (step.bandType === 'wkg') {
     if (!weightKg || avgPower == null) return false
     return inRange(avgPower / weightKg, step)
@@ -414,7 +428,7 @@ function findThresholdWindowDuration(P, cursor, step, ftpAtActivityW, hrMaxBpm, 
   for (let s = cursor; s + durMin <= n && s < sLimit; s++) {
     for (let d = durMin; d <= durMax && s + d <= n; d++) {
       const metrics = computeMetrics(P, s, s + d)
-      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt, P.weightKg)) {
+      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt, P.weightKg, P.zones)) {
         return { start: s, end: s + d, ...metrics }
       }
     }
@@ -479,7 +493,7 @@ function findThresholdWindowDistance(P, cursor, step, ftpAtActivityW, hrMaxBpm, 
     const loopEnd = Math.max(eHi, eLo + 1)
     for (let e = eLo; e < loopEnd && e <= n; e++) {
       const metrics = computeMetrics(P, s, e)
-      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt, P.weightKg)) {
+      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt, P.weightKg, P.zones)) {
         return { start: s, end: e, ...metrics, distanceM: metersAt(speedPrefix, s, e) }
       }
     }
@@ -544,6 +558,7 @@ export function detectCustomIntervalSequence({
   hrMaxBpm = null,
   lt = null,
   weightKg = null,
+  zones = null,
   warmupSec = null,
   cooldownSec = null,
   setCount = null,
@@ -573,6 +588,7 @@ export function detectCustomIntervalSequence({
     n,
     lt,
     weightKg,
+    zones,
     watts: wattsPrefix,
     speed: speedPrefix,
     hr: hasHr ? buildPrefixSum(hr.map((v) => Math.max(0, v || 0)), totalN) : null,
@@ -602,6 +618,10 @@ export function detectCustomIntervalSequence({
       efforts: [],
       message: `No ${label} was set for this activity's date; add it under lactate thresholds in your profile.`,
     }
+  }
+  if (allSteps.some((s) => s.bandType === 'zone')) {
+    if (!zones) return { pattern: 'custom_intervals', efforts: [], message: ZONES_UNAVAILABLE_MESSAGE }
+    if (!hasWatts) return { pattern: 'custom_intervals', efforts: [], message: 'No power stream available on this activity to match power zone steps.' }
   }
   if (allSteps.some((s) => s.bandType === 'wkg') && !weightKg) {
     return {
@@ -699,6 +719,7 @@ export function detectCustomIntervalSequence({
         ...(step.bandType === 'cadence_rpm' && found.avgCadence != null ? { avg_cadence_rpm: Math.round(found.avgCadence) } : {}),
         ...(isLtBand(step.bandType) && lt?.lt1Power && avgPower != null ? { pct_of_lt1: Math.round((avgPower / lt.lt1Power) * 1000) / 10 } : {}),
         ...(isLtBand(step.bandType) && lt?.lt2Power && avgPower != null ? { pct_of_lt2: Math.round((avgPower / lt.lt2Power) * 1000) / 10 } : {}),
+        ...(step.bandType === 'zone' && avgPower != null ? { avg_zone: zoneOfPower(zones, avgPower), target_zone: zoneTargetLabel(step) } : {}),
         ...(weightKg && avgPower != null && (step.bandType === 'wkg') ? { avg_wkg: Math.round((avgPower / weightKg) * 100) / 100 } : {}),
         ...(ftpAtActivityW && avgPower != null ? { pct_of_ftp: Math.round((avgPower / ftpAtActivityW) * 1000) / 10 } : {}),
       }
@@ -739,6 +760,7 @@ export function detectCustomIntervalSequence({
           avg_power: avgPower,
           max_power: hasWatts && avgPower != null ? Math.max(...watts.slice(found.start, found.end)) : null,
           band_type: setRecovery.bandType,
+          ...(setRecovery.bandType === 'zone' && avgPower != null ? { avg_zone: zoneOfPower(zones, avgPower), target_zone: zoneTargetLabel(setRecovery) } : {}),
           ...(avgSpeedKmh != null ? { avg_speed_kmh: avgSpeedKmh } : {}),
         })
         cursor = found.end

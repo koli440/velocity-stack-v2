@@ -19,6 +19,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import { activityLtSummary } from '../lib/lactateThresholds'
+import { formatZoneRange, zoneBreakdown, zonesFromActivity } from '../lib/powerZones'
 import { weightFromActivity } from '../lib/weightHistory'
 import { ftpFromActivity } from '../lib/ftpHistory'
 import { wattsPerKg } from '../lib/wkg'
@@ -125,6 +126,19 @@ function ltMetrics(summary) {
     out.push({ id: `lt_hr_${z.id}`, group: 'Heart Rate & Cadence', label: `Time ${z.label} (HR)`, value: formatDuration(z.seconds) })
   )
   return out
+}
+
+// Power zones (issue #194): time in Z1-Z6 from the activity's own zone snapshot (LT, FTP, boundaries).
+function zoneMetrics(activity, ltSummary) {
+  const zones = zonesFromActivity(activity, ltSummary?.lt)
+  if (!zones) return []
+  return zoneBreakdown(activity?.time_series?.watts, zones).map((z) => ({
+    id: `zone_${z.zone}`,
+    group: 'Power',
+    label: `Time ${z.label} ${z.name}`,
+    value: formatDuration(z.seconds),
+    hint: `${formatZoneRange(z)} · ${z.pct}%${zones.estimated ? ' · est. from FTP' : ''}`,
+  }))
 }
 
 // Power-to-weight (issue #143): uses the activity's own weight / FTP / LT snapshots; empty without a weight.
@@ -308,6 +322,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
         badge: pbBadge(activity?.peak_torque_nm, torqueMaster1s),
       },
       ...ltMetrics(ltSummary),
+      ...zoneMetrics(activity, ltSummary),
       ...wkgMetrics(activity, ltSummary, powerCurve, powerWindows),
     ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
