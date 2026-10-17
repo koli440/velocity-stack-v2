@@ -7,6 +7,7 @@ import VelodromePicker from '../../components/VelodromePicker'
 import { fetchTracks } from '../../lib/lookups'
 import PrivacyZonePanel from '../../components/PrivacyZonePanel'
 import LactateThresholdPanel from '../../components/LactateThresholdPanel'
+import PowerZonesPanel from '../../components/PowerZonesPanel'
 import FtpHistoryPanel from '../../components/FtpHistoryPanel'
 import WeightHistoryPanel from '../../components/WeightHistoryPanel'
 import ConnectionsPanel from '../../components/ConnectionsPanel'
@@ -325,6 +326,7 @@ export default function SettingsPage() {
           <FtpHistoryPanel userId={user?.id} />
           <WeightHistoryPanel userId={user?.id} />
           <LactateThresholdPanel userId={user?.id} />
+          <PowerZonesPanel userId={user?.id} />
         </div>
 
         <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6">
