@@ -271,6 +271,9 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
         )}
 
         <div className="border-t border-slate-100 dark:border-slate-800/60 pt-3">
+          <p className="text-[10px] text-slate-400 mb-1.5">
+            Band hints: 90-110%FTP, 95-105%LT2, 3-3.5W/kg, or a power zone such as Z3, Z2-Z3, &lt;Z2, &gt;Z4.
+          </p>
           <a
             href={DSL_GUIDE_PATH}
             target="_blank"
