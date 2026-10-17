@@ -48,7 +48,7 @@ export function ftpFromActivity(activity) {
 export async function fetchFtpHistory(supabase, userId) {
   const { data, error } = await supabase
     .from('ftp_history')
-    .select('id, effective_from, ftp_w')
+    .select('id, effective_from, ftp_w, changed_by, changed_at, set_by_coach')
     .eq('user_id', userId)
     .order('effective_from', { ascending: false })
   return { history: data || [], error }

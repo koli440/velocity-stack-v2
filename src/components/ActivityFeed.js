@@ -103,6 +103,7 @@ export default function ActivityFeed({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  activityHref = (act) => `/activities/${act.id}`,
 }) {
   const sentinelRef = useRef(null)
   const latest = useRef({})
@@ -229,7 +230,7 @@ export default function ActivityFeed({
                   </div>
                 )}
                 <Link
-                  href={`/activities/${act.id}`}
+                  href={activityHref(act)}
                   className="mt-2 block text-base font-black text-slate-900 dark:text-white group-hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"
                 >
                   {act.title || 'Velodrome Session'}

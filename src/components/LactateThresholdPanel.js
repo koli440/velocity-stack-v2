@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import CoachBadge, { useCoachNames } from './CoachBadge'
 import { fetchLtHistory, saveLtEntry, deleteLtEntry, validateLtEntry, resolveLtAt } from '../lib/lactateThresholds'
 import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 
@@ -19,6 +20,7 @@ const fmt = (v, unit) => (v == null ? '–' : `${v} ${unit}`)
 // snapshot the entry valid at their date, so adding an entry updates later activities only.
 export default function LactateThresholdPanel({ userId }) {
   const [history, setHistory] = useState([])
+  const coachNames = useCoachNames(history)
   const [form, setForm] = useState({ ...EMPTY, effective_from: new Date().toISOString().slice(0, 10) })
   const [editingId, setEditingId] = useState(null)
   const [status, setStatus] = useState(null)
@@ -147,7 +149,8 @@ export default function LactateThresholdPanel({ userId }) {
             <li key={h.id} className="py-1.5 flex items-center justify-between gap-2 text-[11px]">
               <span className="font-mono text-slate-600 dark:text-slate-300">
                 {h.effective_from} · LT1 {fmt(h.lt1_power_w, 'W')}/{fmt(h.lt1_hr, 'bpm')} · LT2{' '}
-                {fmt(h.lt2_power_w, 'W')}/{fmt(h.lt2_hr, 'bpm')}
+                {fmt(h.lt2_power_w, 'W')}/{fmt(h.lt2_hr, 'bpm')}{' '}
+                <CoachBadge row={h} names={coachNames} />
               </span>
               <span className="flex gap-2 shrink-0">
                 <button type="button" onClick={() => edit(h)} className="font-bold text-emerald-600">

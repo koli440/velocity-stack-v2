@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import CoachBadge, { useCoachNames } from './CoachBadge'
 import { fetchFtpHistory, saveFtpEntry, deleteFtpEntry, validateFtpEntry, resolveFtpAt } from '../lib/ftpHistory'
 import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 
@@ -11,6 +12,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 // adding or editing an entry re-resolves the affected activities (and their IF / training load).
 export default function FtpHistoryPanel({ userId }) {
   const [history, setHistory] = useState([])
+  const coachNames = useCoachNames(history)
   const [form, setForm] = useState({ effective_from: today(), ftp_w: '' })
   const [editingId, setEditingId] = useState(null)
   const [status, setStatus] = useState(null)
@@ -130,7 +132,8 @@ export default function FtpHistoryPanel({ userId }) {
           {history.map((h) => (
             <li key={h.id} className="py-1.5 flex items-center justify-between gap-2 text-[11px]">
               <span className="font-mono text-slate-600 dark:text-slate-300">
-                {h.effective_from} · {h.ftp_w} W
+                {h.effective_from} · {h.ftp_w} W{' '}
+                <CoachBadge row={h} names={coachNames} />
               </span>
               <span className="flex gap-2 shrink-0">
                 <button type="button" onClick={() => edit(h)} className="font-bold text-emerald-600">

@@ -3,6 +3,7 @@
 // not readable by clients, `my_coaching()` is.
 
 import { fetchProfilesByIds, authorName } from './social.js'
+import { SHARED_FEED_COLUMNS, DEFAULT_ACTIVITIES_PAGE_SIZE } from './activityPagination.js'
 
 export const COACHING_SETTINGS_PATH = '/settings#coaching'
 
@@ -204,6 +205,23 @@ export async function fetchCoachEdits(client, riderId, limit = 50) {
     .order('created_at', { ascending: false })
     .limit(limit)
   return { edits: error ? [] : data || [], error: error || null }
+}
+
+// One page of an athlete's activities through the masked shared_activities view (a coach reads
+// everything incl. private activities, but privacy-zone coordinates stay masked).
+export async function fetchAthleteActivitiesPage(client, { riderId, page = 0, pageSize = DEFAULT_ACTIVITIES_PAGE_SIZE } = {}) {
+  if (!riderId) return { data: [], hasMore: false, error: null }
+  const from = page * pageSize
+  const { data, error } = await client
+    .from('shared_activities')
+    .select(SHARED_FEED_COLUMNS)
+    .eq('user_id', riderId)
+    .order('activity_date', { ascending: false })
+    .order('id', { ascending: false })
+    .range(from, from + pageSize - 1)
+  if (error) return { data: [], hasMore: false, error }
+  const rows = data || []
+  return { data: rows, hasMore: rows.length === pageSize, error: null }
 }
 
 export { authorName }

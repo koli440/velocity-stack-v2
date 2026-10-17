@@ -99,7 +99,7 @@ function normalizeLt(lt) {
 export async function fetchLtHistory(supabase, userId) {
   const { data, error } = await supabase
     .from('lactate_threshold_history')
-    .select('id, effective_from, lt1_power_w, lt1_hr, lt2_power_w, lt2_hr')
+    .select('id, effective_from, lt1_power_w, lt1_hr, lt2_power_w, lt2_hr, changed_by, changed_at, set_by_coach')
     .eq('user_id', userId)
     .order('effective_from', { ascending: false })
   return { history: data || [], error }

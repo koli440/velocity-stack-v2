@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import CoachBadge, { useCoachNames } from './CoachBadge'
 import {
   fetchWeightHistory,
   saveWeightEntry,
@@ -17,6 +18,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 // day (used for W/kg); changing history updates the affected activities.
 export default function WeightHistoryPanel({ userId }) {
   const [history, setHistory] = useState([])
+  const coachNames = useCoachNames(history)
   const [form, setForm] = useState({ effective_from: today(), weight_kg: '' })
   const [editingId, setEditingId] = useState(null)
   const [status, setStatus] = useState(null)
@@ -135,7 +137,8 @@ export default function WeightHistoryPanel({ userId }) {
           {history.map((h) => (
             <li key={h.id} className="py-1.5 flex items-center justify-between gap-2 text-[11px]">
               <span className="font-mono text-slate-600 dark:text-slate-300">
-                {h.effective_from} · {h.weight_kg} kg
+                {h.effective_from} · {h.weight_kg} kg{' '}
+                <CoachBadge row={h} names={coachNames} />
               </span>
               <span className="flex gap-2 shrink-0">
                 <button type="button" onClick={() => edit(h)} className="font-bold text-emerald-600">

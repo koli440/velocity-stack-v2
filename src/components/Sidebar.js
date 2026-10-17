@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { NAV_ITEMS, isNavItemActive } from '../lib/navigation'
+import { NAV_ITEMS } from '../lib/navigation'
+import { parseCoachPath, navHref, isContextNavActive } from '../lib/coachContext'
 import Icon from './Icon'
 
 export default function Sidebar({
@@ -12,7 +12,7 @@ export default function Sidebar({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [isCoach, setIsCoach] = useState(true)
+  const { riderId } = parseCoachPath(pathname)
 
   const handleNavigate = (path) => {
     router.push(path)
@@ -71,8 +71,8 @@ export default function Sidebar({
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.key}
-                onClick={() => handleNavigate(item.href)}
-                className={navItemClass(isNavItemActive(item, pathname))}
+                onClick={() => handleNavigate(navHref(item, riderId))}
+                className={navItemClass(isContextNavActive(item, pathname, riderId))}
               >
                 <Icon name={item.icon} size={18} /> {item.label}
               </button>
@@ -88,22 +88,6 @@ export default function Sidebar({
           </nav>
         </div>
 
-        {/* Bottom Coach / Rider switch */}
-        <div className="pt-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between px-2">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            {isCoach ? 'Coach View' : 'Rider View'}
-          </span>
-          <button
-            onClick={() => setIsCoach(!isCoach)}
-            className={`w-11 h-6 flex items-center rounded-full p-1 transition duration-300 ${
-              isCoach
-                ? 'bg-emerald-500 dark:bg-brand-neon justify-end'
-                : 'bg-slate-300 dark:bg-slate-700 justify-start'
-            }`}
-          >
-            <div className="bg-white dark:bg-slate-950 w-4 h-4 rounded-full shadow-md"></div>
-          </button>
-        </div>
       </aside>
     </>
   )

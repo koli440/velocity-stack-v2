@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import CoachBadge, { useCoachNames } from './CoachBadge'
 import { fetchLtHistory, resolveLtAt, ltFromHistoryEntry } from '../lib/lactateThresholds'
 import { fetchFtpHistory, ftpAt } from '../lib/ftpHistory'
 import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
@@ -30,6 +31,7 @@ const defaultsForm = () => ({
 // the resulting watts. Effective-dated; activities snapshot the entry valid on their day.
 export default function PowerZonesPanel({ userId }) {
   const [history, setHistory] = useState([])
+  const coachNames = useCoachNames(history)
   const [ltHistory, setLtHistory] = useState([])
   const [ftpHistory, setFtpHistory] = useState([])
   const [form, setForm] = useState(defaultsForm)
@@ -186,7 +188,8 @@ export default function PowerZonesPanel({ userId }) {
           {history.map((h) => (
             <li key={h.id} className="py-1.5 flex items-center justify-between gap-2 text-[11px]">
               <span className="font-mono text-slate-600 dark:text-slate-300">
-                {h.effective_from} · {zonePctsFromEntry(h)?.join('/')}%
+                {h.effective_from} · {zonePctsFromEntry(h)?.join('/')}%{' '}
+                <CoachBadge row={h} names={coachNames} />
               </span>
               <span className="flex gap-2 shrink-0">
                 <button type="button" onClick={() => edit(h)} className="font-bold text-emerald-600">
