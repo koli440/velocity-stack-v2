@@ -12,6 +12,8 @@ import FtpHistoryPanel from '../../components/FtpHistoryPanel'
 import WeightHistoryPanel from '../../components/WeightHistoryPanel'
 import ConnectionsPanel from '../../components/ConnectionsPanel'
 import CoachingPanel from '../../components/CoachingPanel'
+import CoachBadge, { useCoachNames } from '../../components/CoachBadge'
+import CoachEditsList from '../../components/CoachEditsList'
 import { PROFILE_UPDATED_EVENT } from '../../lib/navigation'
 import Icon from '../../components/Icon'
 import Avatar from '../../components/Avatar'
@@ -30,6 +32,8 @@ export default function SettingsPage() {
   const [lastName, setLastName] = useState('')
   const [nickname, setNickname] = useState('')
   const [homeTrackId, setHomeTrackId] = useState('')
+  const [trainingStamp, setTrainingStamp] = useState(null)
+  const coachNames = useCoachNames(trainingStamp ? [trainingStamp] : [])
   const [defaultChainring, setDefaultChainring] = useState('58')
   const [defaultCog, setDefaultCog] = useState('14')
   const [crankLength, setCrankLength] = useState('165.0')
@@ -62,6 +66,7 @@ export default function SettingsPage() {
         setLastName(data.last_name || '')
         setNickname(data.nickname || '')
         setHomeTrackId(data.home_track_id || '')
+        setTrainingStamp(data)
         setDefaultChainring(data.default_chainring ? String(data.default_chainring) : '58')
         setDefaultCog(data.default_cog ? String(data.default_cog) : '14')
         setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
@@ -275,7 +280,7 @@ export default function SettingsPage() {
 
         </section>
         <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
-          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Gear defaults</h2>
+          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Gear defaults <CoachBadge row={trainingStamp} names={coachNames} /></h2>
           <div>
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
               Home Velodrome
@@ -323,11 +328,12 @@ export default function SettingsPage() {
           </div>
 
         </section>
-        <div className="space-y-6">
+        <div id="physiology" className="space-y-6">
           <FtpHistoryPanel userId={user?.id} />
           <WeightHistoryPanel userId={user?.id} />
           <LactateThresholdPanel userId={user?.id} />
           <PowerZonesPanel userId={user?.id} />
+          <CoachEditsList riderId={user?.id} />
         </div>
 
         <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6">

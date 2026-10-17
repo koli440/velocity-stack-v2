@@ -39,9 +39,9 @@ export function describeNotification(notification, actor) {
 
 // Notifications that need an answer in Settings (accept / decline a coaching request).
 export function notificationHref(notification) {
-  return notification?.type === 'coach_invite' || notification?.type === 'coach_request'
-    ? '/settings#coaching'
-    : null
+  if (notification?.type === 'coach_invite' || notification?.type === 'coach_request') return '/settings#coaching'
+  if (notification?.type === 'coach_edited') return '/settings#physiology'
+  return null
 }
 
 export function countUnread(notifications) {

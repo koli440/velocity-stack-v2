@@ -40,7 +40,26 @@ coach/rider (partial unique index); further edits only bump its timestamp, so ed
 **Revocation** takes effect immediately: `is_coach_of` is evaluated on every statement.
 
 ## Coach UI (step 3)
-Context is URL based, never stored: `/coach` (dashboard), `/coach/<riderId>` (overview) and
-`/coach/<riderId>/<page>` (calendar, activities, templates, PBs, physiology settings ...) show the athlete's data;
-feed, notifications and own settings stay the coach's. `coach_dashboard()` returns one row per active athlete
-(last activity, last 7 days count/time/distance/load). Pending invites come from `my_coaching()`.
+Context is URL based, never stored (`src/lib/coachContext.js` parses/builds the paths):
+
+| Route | Shows |
+|---|---|
+| `/coach` | Dashboard: athletes with last activity, 7-day sessions/time/distance/load, pending invites |
+| `/coach/<id>` | Overview: current FTP / weight / LT1 / LT2 (with coach badges), recent activities, audit list |
+| `/coach/<id>/calendar` | `ActivityCalendar` for the athlete (replaces step 2's `/calendar?rider=`, which redirects) |
+| `/coach/<id>/activities[/<activityId>]` | Athlete activities (masked `shared_activities`) and detail |
+| `/coach/<id>/pb-vault`, `/templates` | Read-only lists (coach access is SELECT-only) |
+| `/coach/<id>/physiology` | The four history panels + gear defaults, editable by the coach |
+
+- `app/coach/[riderId]/layout.js` checks `get_athlete_profile` (which only answers for an active coach), shows the
+  persistent indigo banner "Coaching: <Name> - Exit" and the athlete tab bar; anyone else sees "not coaching".
+- The top-right user menu has a "Viewing as" section (Me + athletes, only when the user has athletes).
+- In athlete context the sidebar's Calendar / Personal Best Vault / Templates / Settings entries point at the athlete
+  (`navHref`); feed, notifications, tools and own settings stay the coach's own. The Coach/Rider toggle was removed.
+- Rider side: history rows and the "Gear defaults" heading show a "Set by coach <name> - date" badge
+  (`CoachBadge`), settings lists the audit trail ("Coach changes"), and the `coach_edited` notification links to
+  `/settings#physiology`.
+- All of this is convenience only; every write is checked by RLS / SECURITY DEFINER functions (see above).
+
+Choices made: "weekly volume" is the last 7 days; PBs/templates are read-only in athlete context; activity detail
+opens the existing page (which falls back to the masked view) under `/coach/<id>/activities/<activityId>`.

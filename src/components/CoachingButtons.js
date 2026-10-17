@@ -82,7 +82,7 @@ export default function CoachingButtons({ userId, rider }) {
         </button>
       )}
       {state.status === 'athlete' && (
-        <Link href={`/calendar?rider=${rider.id}`} className={primary}>Calendar</Link>
+        <Link href={`/coach/${rider.id}/calendar`} className={primary}>Calendar</Link>
       )}
       {actions.hint && <span className="basis-full text-[11px] text-slate-400">{actions.hint}</span>}
       {state.status === 'none' && (

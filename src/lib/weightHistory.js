@@ -55,7 +55,7 @@ export function weightFromActivity(activity) {
 export async function fetchWeightHistory(supabase, userId) {
   const { data, error } = await supabase
     .from('weight_history')
-    .select('id, effective_from, weight_kg')
+    .select('id, effective_from, weight_kg, changed_by, changed_at, set_by_coach')
     .eq('user_id', userId)
     .order('effective_from', { ascending: false })
   return { history: data || [], error }

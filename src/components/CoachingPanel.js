@@ -190,7 +190,7 @@ export default function CoachingPanel({ userId }) {
               key={row.id}
               actions={
                 <>
-                  <Link href={`/calendar?rider=${row.rider_id}`} className={btnPrimary}>Calendar</Link>
+                  <Link href={`/coach/${row.rider_id}/calendar`} className={btnPrimary}>Calendar</Link>
                   <button type="button" disabled={busy === row.id} className={btnQuiet} onClick={() => run(row.id, () => endCoaching(supabase, row.id))}>
                     End coaching
                   </button>

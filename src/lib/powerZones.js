@@ -203,7 +203,7 @@ export function zoneBreakdown(stream, zones) {
 export async function fetchZoneHistory(supabase, userId) {
   const { data, error } = await supabase
     .from('power_zone_history')
-    .select(`id, effective_from, ${ZONE_PCT_FIELDS.join(', ')}`)
+    .select(`id, effective_from, ${ZONE_PCT_FIELDS.join(', ')}, changed_by, changed_at, set_by_coach`)
     .eq('user_id', userId)
     .order('effective_from', { ascending: false })
   return { history: data || [], error }
