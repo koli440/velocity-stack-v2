@@ -31,7 +31,7 @@ test('settings is a normal link to /settings, the modal is gone', () => {
 test('home is only active on exactly /', () => {
   assert.equal(isNavItemActive(NAV_ITEMS[0], '/'), true)
   assert.equal(isNavItemActive(NAV_ITEMS[0], '/gears'), false)
-  assert.equal(isNavItemActive(NAV_ITEMS[2], '/gears/x'), true)
+  assert.equal(isNavItemActive(NAV_ITEMS[3], '/gears/x'), true)
 })
 
 test('privacy zone lives in settings, not on the dashboard', () => {
