@@ -11,6 +11,7 @@ import PowerZonesPanel from '../../components/PowerZonesPanel'
 import FtpHistoryPanel from '../../components/FtpHistoryPanel'
 import WeightHistoryPanel from '../../components/WeightHistoryPanel'
 import ConnectionsPanel from '../../components/ConnectionsPanel'
+import CoachingPanel from '../../components/CoachingPanel'
 import { PROFILE_UPDATED_EVENT } from '../../lib/navigation'
 import Icon from '../../components/Icon'
 import Avatar from '../../components/Avatar'
@@ -346,6 +347,10 @@ export default function SettingsPage() {
           {saved && <span className="text-xs font-bold text-emerald-500">Saved</span>}
         </div>
       </form>
+
+      <div className="mt-6">
+        <CoachingPanel userId={user?.id} />
+      </div>
     </section>
   )
 }

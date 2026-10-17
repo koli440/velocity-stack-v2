@@ -175,3 +175,13 @@ Month calendar of a rider's activities (Monday-start weeks). Each week row ends 
 coach view can reuse it later. Only the visible range is queried (`activity_date >= start AND < end`) with a minimal
 column list; days are bucketed in the browser's local time. Day cells hold generic events (`kind: 'activity' | 'planned'`)
 so planned workouts can be added alongside activities. Pure logic lives in `src/lib/calendar.js`. No DB changes.
+
+## Coaching (`20261129000000_coaching_relationships.sql`)
+
+`coaching_relationships(id, coach_id, rider_id, status pending|active|declined|ended, initiated_by, created_at, responded_at, ended_at, ended_by)`.
+RLS is on and clients hold no table privileges; all reads/writes go through SECURITY DEFINER RPCs
+(`invite_athlete`, `request_coach`, `accept_coaching`, `decline_coaching`, `end_coaching`, `my_coaching`,
+`coaching_status_with`, `get_athlete_profile`). One active coach per rider (partial unique index).
+`is_coach_of(rider)` is block-aware and drives extra SELECT policies on activity curves, template runs/templates,
+PBs, aero tests, ftp/weight/lactate/power-zone history, and the `shared_activities` view / `can_view_activity`
+(photos). The base `activities` table stays owner-only; coaches read the masked view. See [coaching.md](coaching.md).

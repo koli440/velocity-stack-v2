@@ -153,12 +153,13 @@ export function formatKm(meters) {
 
 /**
  * Default data fetcher: a rider's activities within [startISO, endISO).
- * RLS decides what is visible; later a coach can pass an athlete's id.
+ * RLS decides what is visible; a coach passes an athlete's id with `shared: true`.
  */
-export async function fetchActivitiesInRange(client, { riderId, startISO, endISO }) {
+export async function fetchActivitiesInRange(client, { riderId, startISO, endISO, shared = false }) {
   if (!riderId) return { data: [], error: null }
+  // A coach reads an athlete through the masked view (never the raw table with GPS).
   const { data, error } = await client
-    .from('activities')
+    .from(shared ? 'shared_activities' : 'activities')
     .select(CALENDAR_ACTIVITY_COLUMNS)
     .eq('user_id', riderId)
     .gte('activity_date', startISO)
