@@ -436,6 +436,11 @@ function findThresholdWindowDuration(P, cursor, step, ftpAtActivityW, hrMaxBpm, 
   return null
 }
 
+// How many seconds a step may span; distance-keyed steps are bounded by the stream length.
+function durationReach(step, P) {
+  return step.keyBy === 'distance' ? P.n : durationRange(step).durMax
+}
+
 /** Single best duration-keyed window (duration within tolerance), optimising `step.bestMetric`. */
 function overlaps(blocked, s, e) {
   return blocked.some(([bs, be]) => s < be && e > bs)
@@ -656,6 +661,53 @@ export function detectCustomIntervalSequence({
     ranked.sort((a, b) => a[0].found.start - b[0].found.start)
   }
 
+  const locate = (step, from, exact = false) =>
+    step.keyBy === 'distance'
+      ? step.bandType === 'best'
+        ? findBestWindowDistance(P, from, step, [], exact)
+        : findThresholdWindowDistance(P, from, step, ftpAtActivityW, effectiveHrMax, exact)
+      : step.bandType === 'best'
+      ? findBestWindowDuration(P, from, step, [], exact)
+      : findThresholdWindowDuration(P, from, step, ftpAtActivityW, effectiveHrMax, exact)
+
+  // Earliest chain of back-to-back windows at or after `from`, refined to the best fit: among
+  // chains starting within one first-step length of the earliest, prefer the one with the
+  // largest work-vs-recovery power contrast (ties keep the earliest).
+  const placeChain = (from, anchored) => {
+    const tryAt = (s0) => {
+      const windows = []
+      let cur = s0
+      for (const step of steps) {
+        const found = locate(step, cur, true)
+        if (!found) return null
+        windows.push({ step, found })
+        cur = found.end
+      }
+      return windows
+    }
+    const contrast = (windows) =>
+      windows.reduce((sum, { step, found }) => sum + (found.avgPower || 0) * (step.role === 'recovery' ? -1 : 1), 0)
+    // After a previous rep the next one should continue seamlessly when it can.
+    if (anchored) {
+      const right = tryAt(from)
+      if (right) return right
+    }
+    let best = null
+    let bestScore = -Infinity
+    let limit = n
+    for (let s0 = from; s0 < limit && s0 < n; s0++) {
+      const windows = tryAt(s0)
+      if (!windows) continue
+      if (!best) limit = s0 + durationReach(steps[0], P)
+      const score = contrast(windows)
+      if (score > bestScore) {
+        best = windows
+        bestScore = score
+      }
+    }
+    return best
+  }
+
   const setsN = setCount || 1
   const totalReps = repeatCount * setsN
   for (let rep = 0; rep < totalReps; rep++) {
@@ -667,17 +719,21 @@ export function detectCustomIntervalSequence({
       repWindows.push(...ranked[rep])
     }
 
-    for (const step of single ? [] : steps) {
-      const isDistance = step.keyBy === 'distance'
+    // Preferred: the earliest placement where every step of the repeat follows the previous one
+    // back-to-back (end of step N = start of step N+1). Only when no such chain exists do we fall
+    // back to placing each step independently, which can leave gaps.
+    if (!single && steps.length > 1) {
+      const chain = placeChain(repCursor, efforts.length > 0)
+      if (chain) {
+        repWindows.push(...chain)
+        repCursor = chain[chain.length - 1].found.end
+      }
+    }
+
+    for (const step of single || repWindows.length ? [] : steps) {
       // `then` steps must start exactly where the previous step in this repeat ended.
       const exact = Boolean(step.contiguous) && repWindows.length > 0
-      const found = isDistance
-        ? step.bandType === 'best'
-          ? findBestWindowDistance(P, repCursor, step, [], exact)
-          : findThresholdWindowDistance(P, repCursor, step, ftpAtActivityW, effectiveHrMax, exact)
-        : step.bandType === 'best'
-        ? findBestWindowDuration(P, repCursor, step, [], exact)
-        : findThresholdWindowDuration(P, repCursor, step, ftpAtActivityW, effectiveHrMax, exact)
+      const found = locate(step, repCursor, exact)
 
       if (!found) {
         repWindows.length = 0
@@ -738,14 +794,8 @@ export function detectCustomIntervalSequence({
     // End of a set (but not the last): look for the set recovery after the final rep.
     if (setCount && (rep + 1) % repeatCount === 0 && rep + 1 < totalReps) {
       if (setRecovery) {
-        const isDistance = setRecovery.keyBy === 'distance'
-        const found = isDistance
-          ? setRecovery.bandType === 'best'
-            ? findBestWindowDistance(P, cursor, setRecovery, [])
-            : findThresholdWindowDistance(P, cursor, setRecovery, ftpAtActivityW, effectiveHrMax)
-          : setRecovery.bandType === 'best'
-          ? findBestWindowDuration(P, cursor, setRecovery, [])
-          : findThresholdWindowDuration(P, cursor, setRecovery, ftpAtActivityW, effectiveHrMax)
+        // Prefer the window starting right where the last rep ended; otherwise search ahead.
+        const found = locate(setRecovery, cursor, true) || locate(setRecovery, cursor)
         // Without the set recovery the next set cannot be located: stop here.
         if (!found) break
         const avgPower = found.avgPower != null ? Math.round(found.avgPower) : null

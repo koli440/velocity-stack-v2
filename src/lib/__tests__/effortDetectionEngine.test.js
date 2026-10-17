@@ -576,3 +576,58 @@ test('legacy (no sets) detection output has no set tags', () => {
   const { efforts } = detectCustomIntervalSequence({ watts: setStream(1, 3), steps: [S(30, [295, 305])], repeatCount: 3 })
   assert.ok(efforts.every((e) => e.set === undefined && e.rep_in_set === undefined))
 })
+
+// ---- contiguous back-to-back steps (issue #198) ----
+const seg = (w, n) => new Array(n).fill(w)
+const ZONES = { bounds: [146, 195, 260, 273, 312], lt1: 195, lt2: 260, pcts: [75, 100, 100, 105, 120], estimated: true, source: 'ftp' }
+const zoneStep = (role, sec, tol, min, max) => ({
+  role, keyBy: 'duration', targetDurationSec: sec, targetDistanceM: null, durationTolerancePct: tol,
+  bandType: 'zone', bestMetric: null, powerMin: min, powerMax: max,
+})
+
+function assertSeamless(efforts) {
+  for (let i = 1; i < efforts.length; i++) assert.equal(efforts[i].start_sec, efforts[i - 1].end_sec, `step ${i} follows step ${i - 1}`)
+}
+
+for (const tol of [0, 2, 10]) {
+  test(`3x work 15min Z3 / recovery 8min <Z2 at ±${tol}%: windows are back-to-back`, () => {
+    const watts = [...seg(120, 300), ...seg(235, 920), ...seg(120, 470), ...seg(235, 905), ...seg(120, 490), ...seg(235, 900), ...seg(100, 200)]
+    const steps = []
+    for (let i = 0; i < 3; i++) {
+      steps.push(zoneStep('work', 900, tol, 3, 3))
+      if (i < 2) steps.push(zoneStep('recovery', 480, tol, null, 2))
+    }
+    const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 1, zones: ZONES })
+    assert.equal(efforts.length, 5)
+    assertSeamless(efforts)
+    efforts.forEach((e) => {
+      const target = e.role === 'work' ? 900 : 480
+      assert.ok(Math.abs(e.duration_sec - target) <= Math.round(target * tol / 100), `duration ${e.duration_sec}`)
+    })
+    if (tol === 0) assert.ok(Math.abs(efforts[0].start_sec - 300) <= 20)
+  })
+}
+
+test('work/recovery repeats and sets: reps and set recovery are back-to-back', () => {
+  const rep = [...seg(230, 60), ...seg(80, 30)]
+  const watts = [...seg(100, 20), ...rep, ...rep, ...seg(60, 45), ...rep, ...rep, ...seg(100, 20)]
+  const steps = [
+    { role: 'work', targetDurationSec: 60, durationTolerancePct: 0, bandType: 'watts', powerMin: 200, powerMax: 260 },
+    { role: 'recovery', targetDurationSec: 30, durationTolerancePct: 0, bandType: 'watts', powerMin: null, powerMax: 100 },
+  ]
+  const setRecovery = { role: 'recovery', targetDurationSec: 45, durationTolerancePct: 0, bandType: 'watts', powerMin: null, powerMax: 70 }
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, setCount: 2, setRecovery })
+  assert.equal(efforts.length, 9)
+  assertSeamless(efforts)
+})
+
+test('gapped data still falls back to independent placement (backward compatible)', () => {
+  const watts = [...seg(230, 60), ...seg(150, 20), ...seg(80, 30)]
+  const steps = [
+    { role: 'work', targetDurationSec: 60, durationTolerancePct: 0, bandType: 'watts', powerMin: 200, powerMax: 260 },
+    { role: 'recovery', targetDurationSec: 30, durationTolerancePct: 0, bandType: 'watts', powerMin: null, powerMax: 100 },
+  ]
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 1 })
+  assert.equal(efforts.length, 2)
+  assert.equal(efforts[1].start_sec, 80)
+})
