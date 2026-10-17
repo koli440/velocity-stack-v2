@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../../lib/supabaseServer'
 import { escapeLike, mapRunRow, parseRunsParams } from '../../../../../lib/templateStats'
-import { parseRunFilter } from '../../../../../lib/coachRuns'
+import { applyRunScope, parseRunFilter, resolveRunScope } from '../../../../../lib/coachRuns'
 
-// GET /api/templates/stats/runs?template_id=&filter=all|coach|own&q=&sort=date|<metric>&dir=asc|desc&limit=&offset=
+// GET /api/templates/stats/runs?template_id=&filter=all|coach|own&rider=<athleteId>&q=&sort=date|<metric>&dir=asc|desc&limit=&offset=
 // One page of the current user's runs of a template (loaded lazily by the Templates page
 // modal). Never cached.
 export async function GET(req) {
@@ -20,9 +20,10 @@ export async function GET(req) {
     let query = supabase
       .from('template_executions')
       .select('id, activity_id, summary, created_at, by_coach, run_by_coach_id, activities!inner(title, activity_date)', { count: 'exact' })
-      .eq('user_id', user.id)
       .eq('template_id', templateId)
-    const filter = parseRunFilter(searchParams.get('filter'))
+    const scope = resolveRunScope(searchParams.get('rider'), user.id)
+    query = applyRunScope(query, scope)
+    const filter = scope.coachId ? 'all' : parseRunFilter(searchParams.get('filter'))
     if (filter === 'coach') query = query.eq('by_coach', true)
     if (filter === 'own') query = query.eq('by_coach', false)
     if (q) query = query.ilike('activities.title', `%${escapeLike(q)}%`)

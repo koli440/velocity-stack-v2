@@ -13,7 +13,7 @@ import { getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import { RUNS_PAGE_SIZE, metricLabel, orderMetricKeys, formatStatValue } from '../lib/templateStats'
 
-function Inner({ template, metricKeys, filter = 'all', onClose }) {
+function Inner({ template, metricKeys, filter = 'all', rider = null, athleteName = null, onClose }) {
   const contextHref = useContextHref()
   const [runs, setRuns] = useState([])
   const coachNames = useRunCoachNames(runs)
@@ -46,6 +46,7 @@ function Inner({ template, metricKeys, filter = 'all', onClose }) {
       try {
         const authHeader = await getAuthHeader()
         const params = new URLSearchParams({ template_id: template.id, filter, sort, dir, limit: String(RUNS_PAGE_SIZE), offset: String(offset) })
+        if (rider) params.set('rider', rider)
         if (q) params.set('q', q)
         const res = await fetch(`/api/templates/stats/runs?${params}`, { headers: authHeader, cache: 'no-store' })
         const json = await parseJsonResponse(res)
@@ -60,7 +61,7 @@ function Inner({ template, metricKeys, filter = 'all', onClose }) {
         if (id === reqId.current) setLoading(false)
       }
     },
-    [template.id, sort, dir, q, filter]
+    [template.id, sort, dir, q, filter, rider]
   )
 
   useEffect(() => {
@@ -84,7 +85,7 @@ function Inner({ template, metricKeys, filter = 'all', onClose }) {
       >
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white truncate">
-            {template.name} · runs{total > 0 && !loading ? ` (${total})` : ''}
+            {template.name} · {rider ? `your runs on ${athleteName || 'this athlete'}` : 'runs'}{total > 0 && !loading ? ` (${total})` : ''}
           </h2>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-bold shrink-0">
             <Icon name="close" /> Close

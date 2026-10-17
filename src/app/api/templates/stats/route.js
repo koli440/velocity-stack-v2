@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
 import { aggregateTemplateStats } from '../../../../lib/templateStats'
-import { parseRunFilter } from '../../../../lib/coachRuns'
+import { applyRunScope, parseRunFilter, resolveRunScope } from '../../../../lib/coachRuns'
 
-// GET /api/templates/stats[?filter=all|coach|own]
+// GET /api/templates/stats[?filter=all|coach|own][&rider=<athleteId>]
+// With ?rider= (coach in athlete context) only the runs THIS coach made on that athlete are counted.
 // Per-template run statistics for the current user (single aggregated query; anonymous
 // users get an empty result). Never cached. Only runs ON THE CALLER'S ACCOUNT count (user_id = caller):
 // runs a coach makes on athletes live on the athletes' accounts, so they never count towards the
@@ -16,11 +17,13 @@ export async function GET(req) {
     const { supabase, user } = await getRequestUser(req)
     if (!user) return NextResponse.json({ success: true, stats: {} }, noStore)
 
-    const filter = parseRunFilter(new URL(req.url).searchParams.get('filter'))
+    const sp = new URL(req.url).searchParams
+    const scope = resolveRunScope(sp.get('rider'), user.id)
+    const filter = scope.coachId ? 'all' : parseRunFilter(sp.get('filter'))
     let query = supabase
       .from('template_executions')
       .select('id, template_id, activity_id, summary, created_at, by_coach, template_name, template_slug, template_category, activities(title, activity_date)')
-      .eq('user_id', user.id)
+    query = applyRunScope(query, scope)
     if (filter === 'coach') query = query.eq('by_coach', true)
     if (filter === 'own') query = query.eq('by_coach', false)
     const { data, error } = await query.order('created_at', { ascending: false }).limit(5000)
