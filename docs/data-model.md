@@ -170,7 +170,7 @@ See [integrations.md](integrations.md) for the user-facing flow, env vars and se
 
 ## Calendar (`/calendar`)
 
-Month/week calendar of a rider's activities (Monday-start weeks, per-week totals of time, distance and count).
+Month calendar of a rider's activities (Monday-start weeks). Each week row ends with a prominent summary card (time, distance, count); on mobile it is a bar under the week.
 `ActivityCalendar` takes an optional `riderId` (defaults to the signed-in user) and a `fetchEvents` function, so a
 coach view can reuse it later. Only the visible range is queried (`activity_date >= start AND < end`) with a minimal
 column list; days are bucketed in the browser's local time. Day cells hold generic events (`kind: 'activity' | 'planned'`)

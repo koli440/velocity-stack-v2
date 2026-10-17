@@ -49,12 +49,6 @@ export function buildMonthGrid(anchor) {
   return buildWeeks(startOfWeek(first), startOfWeek(last))
 }
 
-/** The single week (one row of 7 Dates) containing `anchor`. */
-export function buildWeekGrid(anchor) {
-  const s = startOfWeek(anchor)
-  return buildWeeks(s, s)
-}
-
 function buildWeeks(firstWeekStart, lastWeekStart) {
   const weeks = []
   for (let s = firstWeekStart; s <= lastWeekStart; s = addDays(s, 7)) {
@@ -70,13 +64,12 @@ export function gridRange(weeks) {
   return { start, end, startISO: start.toISOString(), endISO: end.toISOString() }
 }
 
-export function viewRange(view, anchor) {
-  return gridRange(view === 'week' ? buildWeekGrid(anchor) : buildMonthGrid(anchor))
+export function monthRange(anchor) {
+  return gridRange(buildMonthGrid(anchor))
 }
 
-/** Moves the anchor by one period in `direction` (-1 / +1). */
-export function shiftAnchor(view, anchor, direction) {
-  if (view === 'week') return addDays(anchor, 7 * direction)
+/** Moves the anchor by `direction` (-1 / +1) months. */
+export function shiftMonth(anchor, direction) {
   return new Date(anchor.getFullYear(), anchor.getMonth() + direction, 1)
 }
 

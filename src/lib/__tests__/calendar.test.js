@@ -2,10 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   buildMonthGrid,
-  buildWeekGrid,
   buildCalendarRows,
-  gridRange,
-  shiftAnchor,
+  shiftMonth,
+  monthRange,
   activityToEvent,
   groupEventsByDay,
   summarizeEvents,
@@ -23,20 +22,12 @@ test('month grid is full Monday-start weeks covering the month', () => {
   assert.ok(weeks.every((w) => w.length === 7))
 })
 
-test('week grid is a single Mon-Sun row', () => {
-  const [week, ...rest] = buildWeekGrid(new Date(2026, 9, 18)) // Sunday
-  assert.equal(rest.length, 0)
-  assert.equal(dayKey(week[0]), '2026-10-12')
-  assert.equal(dayKey(week[6]), '2026-10-18')
-})
-
-test('gridRange is half-open and shiftAnchor moves by period', () => {
-  const r = gridRange(buildWeekGrid(new Date(2026, 9, 14)))
-  assert.equal(dayKey(r.start), '2026-10-12')
-  assert.equal(dayKey(r.end), '2026-10-19')
-  assert.equal(dayKey(shiftAnchor('week', new Date(2026, 9, 14), 1)), '2026-10-21')
-  assert.equal(dayKey(shiftAnchor('month', new Date(2026, 0, 31), 1)), '2026-02-01')
-  assert.equal(dayKey(shiftAnchor('month', new Date(2026, 0, 31), -1)), '2025-12-01')
+test('monthRange is half-open and shiftMonth moves by month', () => {
+  const r = monthRange(new Date(2026, 9, 14))
+  assert.equal(dayKey(r.start), '2026-09-28')
+  assert.equal(dayKey(r.end), '2026-11-02')
+  assert.equal(dayKey(shiftMonth(new Date(2026, 0, 31), 1)), '2026-02-01')
+  assert.equal(dayKey(shiftMonth(new Date(2026, 0, 31), -1)), '2025-12-01')
 })
 
 test('activityToEvent maps fields and picks a key metric', () => {

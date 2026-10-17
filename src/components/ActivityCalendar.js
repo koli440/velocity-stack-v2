@@ -7,10 +7,9 @@ import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
 import {
   buildMonthGrid,
-  buildWeekGrid,
   buildCalendarRows,
-  viewRange,
-  shiftAnchor,
+  monthRange,
+  shiftMonth,
   formatDuration,
   formatKm,
   startOfDay,
@@ -45,19 +44,27 @@ function EventChip({ event }) {
   )
 }
 
-function WeekSummary({ summary, className = '' }) {
+function WeekSummary({ summary }) {
+  const stat = (value, label) => (
+    <div className="text-center md:text-left">
+      <b className="block text-xl md:text-2xl font-black leading-tight text-emerald-700 dark:text-brand-neon">{value}</b>
+      <span className="text-[10px] uppercase tracking-widest font-bold text-slate-600 dark:text-slate-300">{label}</span>
+    </div>
+  )
   return (
-    <div className={`text-[11px] text-slate-500 dark:text-slate-400 ${className}`}>
-      <span className="block text-[9px] uppercase tracking-widest font-bold">Week</span>
-      <b className="text-slate-900 dark:text-white">{formatDuration(summary.durationS)} h</b>
-      <span className="block">{formatKm(summary.distanceM)}</span>
-      <span className="block">{summary.count} {summary.count === 1 ? 'activity' : 'activities'}</span>
+    <div
+      className="rounded-xl border-2 border-emerald-500/50 bg-emerald-500/10 dark:bg-emerald-500/15 p-3 grid grid-cols-3 md:grid-cols-1 gap-2 md:content-center"
+      aria-label="Week summary"
+    >
+      {stat(`${formatDuration(summary.durationS)} h`, 'Time')}
+      {stat(formatKm(summary.distanceM), 'Distance')}
+      {stat(summary.count, summary.count === 1 ? 'Activity' : 'Activities')}
     </div>
   )
 }
 
 /**
- * Month/week calendar of a rider's activities.
+ * Month calendar of a rider's activities.
  * @param {string} [riderId]  rider whose calendar is shown; defaults to the signed-in user
  * @param {(args: {riderId: string, startISO: string, endISO: string}) => Promise<{data: Array, error: Error|null}>} fetchEvents
  *   returns day-cell events (see lib/calendar.js); only the visible range is requested.
@@ -72,13 +79,12 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     supabase.auth.getSession().then(({ data: { session } }) => setSessionUserId(session?.user?.id ?? null))
   }, [riderIdProp])
 
-  const [view, setView] = useState('month')
   const [anchor, setAnchor] = useState(() => startOfDay(new Date()))
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const { start, end, startISO, endISO } = useMemo(() => viewRange(view, anchor), [view, anchor])
+  const { start, end, startISO, endISO } = useMemo(() => monthRange(anchor), [anchor])
 
   const load = useCallback(async () => {
     if (!riderId) return
@@ -99,14 +105,10 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   }, [load])
 
   const rows = useMemo(() => {
-    const weeks = view === 'week' ? buildWeekGrid(anchor) : buildMonthGrid(anchor)
-    return buildCalendarRows(weeks, events, { anchor: view === 'month' ? anchor : undefined })
-  }, [view, anchor, events])
+    return buildCalendarRows(buildMonthGrid(anchor), events, { anchor })
+  }, [anchor, events])
 
-  const title =
-    view === 'month'
-      ? formatDate(anchor, { month: 'long', year: 'numeric' })
-      : `${formatDate(start, { day: 'numeric', month: 'short' })} – ${formatDate(new Date(end.getTime() - 1), { day: 'numeric', month: 'short', year: 'numeric' })}`
+  const title = formatDate(anchor, { month: 'long', year: 'numeric' })
 
   const weekdayLabels = rows[0]?.cells.map((c) => formatDate(c.date, { weekday: 'short' })) || []
   const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition'
@@ -115,22 +117,12 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     <div className="glass-card bg-white dark:bg-surface-darkCard p-3 sm:p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <button aria-label="Previous" className={btn} onClick={() => setAnchor(shiftAnchor(view, anchor, -1))}>‹</button>
+          <button aria-label="Previous" className={btn} onClick={() => setAnchor(shiftMonth(anchor, -1))}>‹</button>
           <button className={btn} onClick={() => setAnchor(startOfDay(new Date()))}>Today</button>
-          <button aria-label="Next" className={btn} onClick={() => setAnchor(shiftAnchor(view, anchor, 1))}>›</button>
+          <button aria-label="Next" className={btn} onClick={() => setAnchor(shiftMonth(anchor, 1))}>›</button>
         </div>
         <h2 className="text-base font-extrabold text-slate-900 dark:text-white capitalize">{title}</h2>
-        <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-          {['month', 'week'].map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-3 py-1.5 text-xs font-bold capitalize ${view === v ? 'bg-emerald-500 text-slate-950' : 'text-slate-500 dark:text-slate-300'}`}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
+        <span className="hidden sm:block w-[7.5rem]" aria-hidden />
       </div>
 
       {error && (
@@ -138,14 +130,14 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
       )}
 
       <div className={`space-y-2 ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
-        <div className="hidden md:grid grid-cols-[repeat(7,minmax(0,1fr))_7rem] gap-1.5 text-[10px] uppercase tracking-widest font-bold text-slate-400">
+        <div className="hidden md:grid grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5 text-[10px] uppercase tracking-widest font-bold text-slate-400">
           {weekdayLabels.map((l, i) => <div key={i} className="px-1">{l}</div>)}
-          <div className="px-1">Summary</div>
+          <div className="px-1">Week total</div>
         </div>
         {rows.map((row, ri) => (
-          <div key={ri} className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(0,1fr))_7rem] gap-1.5">
+          <div key={ri} className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5">
             {row.cells.map((cell) => {
-              const hideOnMobile = view === 'month' && cell.events.length === 0 && !cell.isToday
+              const hideOnMobile = cell.events.length === 0 && !cell.isToday
               return (
                 <div
                   key={cell.key}
@@ -163,7 +155,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                 </div>
               )
             })}
-            <WeekSummary summary={row.summary} className="rounded-xl bg-slate-50 dark:bg-slate-900/60 p-2" />
+            <WeekSummary summary={row.summary} />
           </div>
         ))}
       </div>
