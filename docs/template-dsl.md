@@ -78,9 +78,6 @@ There are six kinds of band:
    keying existed). On a **distance-keyed** step the metric must be spelled out
    explicitly, since there's no default: `best power` or `best speed`.
 
-7a. **Power-zone band** (issue #194) — `Z3`, `Z2-Z3`, `<Z2`, `>Z4`. Matches the window's average
-   power against the activity's own zone snapshot; stored as `bandType` `zone` (zone numbers in
-   `powerMin`/`powerMax`). Efforts carry `avg_zone` and `target_zone`.
 7. **Lactate-threshold band** (issue #121) — relative to the athlete's LT1/LT2, same
    range/min/max syntax: `95-105%LT2`, `<100%LT1`, `>100%LT2` (power) and
    `97-103%LT2HR`, `<100%LT1HR` (average heart rate). Evaluated against the *activity's own*
@@ -100,6 +97,22 @@ There are six kinds of band:
    Without a weight the run reports "No body weight was set for this activity's date" instead
    of failing. Stored as `bandType` `wkg`; matched efforts report `avg_wkg`. Existing templates
    are unaffected.
+
+9. **Power-zone band** (issue #194) — the athlete's power zones Z1–Z6: `Z3` (the whole zone),
+   `Z2-Z3` (a range of zones), `<Z2` (average power below Z2, i.e. Z1) and `>Z4` (above Z4, i.e.
+   Z5+). Zone numbers are case-insensitive (`z3`); `Z0`/`Z7`, reversed ranges and impossible
+   comparisons (`<Z1`, `>Z6`) are parse errors. Z1 has no lower bound and Z6 no upper bound.
+   A window matches when its *average power* lies in the band's watt range. Zones come from the
+   Settings → Power zones model: Z1/Z2 boundaries are % of LT1 power, Z3/Z4/Z5 boundaries % of
+   LT2 power (defaults 75/100/100/105/120; Z2 is 75–100% of LT1, Z3 100% of LT1 to 100% of LT2,
+   Z4 LT2 to 105%, Z5 105–120%, Z6 above). A boundary value belongs to the zone above it. Zones
+   are resolved from the *activity's own* snapshot (`power_zone_pcts_at_activity`, where NULL
+   means defaults, plus the activity's LT1/LT2 snapshots), never current settings. If LT1/LT2
+   power is missing, zones are estimated from the activity's FTP (LT1 = 75% FTP, LT2 = FTP). With
+   neither, the run reports a message instead of failing. Stored as `bandType` `zone` with zone
+   numbers in `powerMin`/`powerMax` (`Z3` = 3/3, `<Z2` = null/2, `>Z4` = 4/null), so manifests
+   are independent of the user's watt values. Efforts report `avg_zone` and `target_zone`.
+   The `time_z1` … `time_z6` metrics report seconds in each zone. Existing templates are unaffected.
 
 HR and cadence bands can be freely mixed with power bands across steps of one template
 (e.g. `work ... @ 150-165bpm` followed by `recovery ... @ <120bpm`); each step is matched
@@ -493,3 +506,13 @@ recovery 5min ±40% @ <100%LT1HR
 
 System templates using LT bands: `sys_lt_lt2_intervals_4x8`, `sys_lt_lt2_hr_3x10`,
 `sys_lt_lt1_endurance_90`, `sys_lt_over_unders`.
+
+System templates using zone bands: `sys_zone_tempo_3x15`, `sys_zone_endurance_z2_90`,
+`sys_zone_vo2_5x4`.
+
+```
+3x
+work 15min ±10% @ Z3
+recovery 5min ±40% @ <Z3
+metrics avg_power, time_z2, time_z3, time_z4
+```

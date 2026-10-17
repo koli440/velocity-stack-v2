@@ -180,6 +180,33 @@ export const WKG_SYSTEM_TEMPLATES = [
   },
 ]
 
+// Power-zone templates (issue #194), seeded by 20261128000000_power_zone_templates.sql. They use
+// the activity's zone snapshot (LT-based, or estimated from FTP); without either, the run reports
+// a message instead of efforts.
+export const ZONE_SYSTEM_TEMPLATES = [
+  {
+    slug: 'sys_zone_tempo_3x15',
+    name: 'Tempo Z3 3x15',
+    description: '3 x 15 minutes in power zone Z3 (tempo) with 5 minute recoveries in Z1-Z2. Reports time in each zone.',
+    category: 'road',
+    dsl: '3x\nwork 15min ±10% @ Z3\nrecovery 5min ±40% @ <Z3\nmetrics avg_power, avg_hr, time_z2, time_z3, time_z4',
+  },
+  {
+    slug: 'sys_zone_endurance_z2_90',
+    name: 'Endurance Z2 90min',
+    description: 'One 90 minute steady ride in power zone Z2, reporting decoupling and time in Z1-Z3.',
+    category: 'road',
+    dsl: '1x\nwork 90min ±20% @ Z2\nmetrics avg_power, avg_hr, decoupling, time_z1, time_z2, time_z3',
+  },
+  {
+    slug: 'sys_zone_vo2_5x4',
+    name: 'VO2max Z5 5x4',
+    description: '5 x 4 minutes in power zone Z5 with 4 minute recoveries below Z3.',
+    category: 'road',
+    dsl: '5x\nwork 4min ±15% @ Z5\nrecovery 4min ±40% @ <Z3\nmetrics avg_power, avg_hr, time_z4, time_z5, time_z6',
+  },
+]
+
 export function buildLtManifest(dsl) {
   const parsed = parseIntervalDsl(dsl)
   if (parsed.errors.length) throw new Error(`Invalid DSL: ${JSON.stringify(parsed.errors)}`)
@@ -212,7 +239,7 @@ export const LEGACY_SEEDED_MANIFESTS = {
   tpl_road_z2_decoupling: { pattern: 'sustained_tt', min_duration_sec: 1200, metrics: ['pw_hr_decoupling_pct', 'avg_power', 'avg_heartrate'] },
 }
 
-export const ALL_SYSTEM_TEMPLATES = [...SYSTEM_TEMPLATES, ...LT_SYSTEM_TEMPLATES, ...WKG_SYSTEM_TEMPLATES]
+export const ALL_SYSTEM_TEMPLATES = [...SYSTEM_TEMPLATES, ...LT_SYSTEM_TEMPLATES, ...WKG_SYSTEM_TEMPLATES, ...ZONE_SYSTEM_TEMPLATES]
 
 /** One `analysis_templates` VALUES row, formatted exactly as in the seed migrations. */
 export function systemTemplateRowSql(t, manifest) {

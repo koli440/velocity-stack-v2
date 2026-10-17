@@ -25,7 +25,7 @@ export const DSL_OPTIONS = [
   { syntax: 'set recovery 5min ±30% @ <55%FTP', meaning: 'Optional, only with sets: the rest searched for between sets (never after the last one). Same syntax as a step, but without then.' },
   { syntax: 'then work 1min ...', meaning: 'Prefix a step with "then" to make it start exactly where the previous step ended (over-unders, pyramids, ramps). Not allowed on the first step.' },
   { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (min or sec). At most once.' },
-  { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: `Template runs always report avg W/kg, avg power, NP, avg speed, avg cadence and avg HR where data exists. Choose extra summary metrics per work effort and for the run: ${METRIC_LIST}. hr_recovery takes an optional window (default 60sec); np_wkg, avg_wkg and max_wkg are power per kg of the activity weight; the time_* metrics are seconds in lactate zones (power, or heart rate with the _hr suffix). At most once.` },
+  { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: `Template runs always report avg W/kg, avg power, NP, avg speed, avg cadence and avg HR where data exists. Choose extra summary metrics per work effort and for the run: ${METRIC_LIST}. hr_recovery takes an optional window (default 60sec); np_wkg, avg_wkg and max_wkg are power per kg of the activity weight; the time_below/lt1/above_* metrics are seconds in lactate zones (power, or heart rate with the _hr suffix); time_z1 to time_z6 are seconds in each power zone. At most once.` },
   { syntax: 'pattern repeated_bursts', meaning: `Use instead of the repeat line to run a built-in detector: ${PATTERN_LIST}. Then add its option lines (${PATTERN_OPTION_LIST}). Only metrics is also allowed.` },
   { syntax: LAP_EXAMPLE, meaning: 'Track context: report per-lap split times (full laps only, from the speed stream) for every work effort, plus lap_count, best_lap_sec, slowest_lap_sec and avg_lap_sec for the run. At most once; also valid under pattern sustained_tt.' },
   { syntax: 'time & distance results', meaning: 'Automatic, no line needed. Duration steps (20min) report the distance covered plus average speed; distance steps (3km) and the legacy pursuit/flying/standing patterns report the exact elapsed time (interpolated, shown as a race time) plus average speed. Needs a speed stream; without one the run says so. Run summaries add best/avg/total time or distance, and a faster time counts as an improvement in comparisons.' },
@@ -42,6 +42,7 @@ export const DSL_BANDS = [
   { syntax: '80-90%HRmax', meaning: 'Heart rate as a percentage of the activity\'s max HR (the recorded max, or the highest value in the HR stream). Bounds work too.' },
   { syntax: '95-105%LT2', meaning: 'Power as a percentage of your LT2 (lactate threshold 2) power, taken from the activity\'s own LT snapshot for its date. Bounds (<100%LT1, >100%LT2) work too. Set LT values in your profile settings; without them the run reports a message.' },
   { syntax: '85-100%LT1', meaning: 'Same as above but relative to LT1 power. Use %LT1HR / %LT2HR (e.g. 97-103%LT2HR) for the average heart rate relative to LT1/LT2 heart rate.' },
+  { syntax: 'Z3', meaning: 'A power zone (Z1 to Z6) from your zone settings: Z3, Z2-Z3 (range), <Z2 (below) or >Z4 (above). Zones are built from LT1/LT2 (or estimated from FTP) as stored on the activity; without either the run reports a message.' },
   { syntax: '3-3.5W/kg', meaning: 'Power per kilogram of body weight, using the weight valid on the activity\'s date (set it under body weight in your profile). Bounds (<2W/kg, >4W/kg) work too; a bare target like 3W/kg means 3 W/kg ±5% (stored as 2.85-3.15W/kg). Without a weight the run reports a message.' },
   { syntax: '90-100rpm', meaning: 'Average cadence range in rpm. Bounds (<60rpm, >110rpm) work too.' },
   { syntax: 'best  /  max', meaning: 'No threshold: find the single highest-average window of that length. On duration steps this means power.' },
@@ -108,6 +109,11 @@ export const DSL_GUIDE_EXAMPLES = [
     title: 'Lactate threshold heart-rate blocks',
     description: 'Heart rate relative to LT2 / LT1 heart rate.',
     dsl: '3x\nwork 10min ±15% @ 97-103%LT2HR\nrecovery 5min ±40% @ <100%LT1HR\nmetrics time_lt1_lt2_hr, time_above_lt2_hr',
+  },
+  {
+    title: 'Power zone intervals',
+    description: 'Work in a power zone with recoveries below it, reporting time in each zone. Needs LT1/LT2 or an FTP.',
+    dsl: '3x\nwork 15min ±10% @ Z3\nrecovery 5min ±40% @ <Z3\nmetrics avg_power, time_z2, time_z3, time_z4',
   },
   {
     title: 'Power-to-weight blocks',
