@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../../lib/supabaseServer'
-import { applyRunScope, resolveRunScope, withTemplateSnapshot } from '../../../../../lib/coachRuns'
+import { applyRunScope, attachSharedActivities, resolveRunScope, withTemplateSnapshot } from '../../../../../lib/coachRuns'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -39,7 +39,8 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    const executions = (data || []).map(withTemplateSnapshot)
+    const rows = ownerId !== user.id ? await attachSharedActivities(supabase, data) : data
+    const executions = (rows || []).map(withTemplateSnapshot)
     const first = executions[0]
     let template = first ? { id: first.template_id, slug, name: first.template_name, category: first.template_category } : null
     if (!template) {

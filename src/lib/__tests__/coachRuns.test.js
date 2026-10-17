@@ -112,3 +112,20 @@ test('athleteTemplateGroups labels sources and sorts by count', () => {
   const g = athleteTemplateGroups(stats, names, tpl, COACH)
   assert.deepEqual(g.map((x) => [x.name, x.source]), [['Mine', 'yours'], ['Gone', 'template removed'], ['Sys', 'system']])
 })
+
+import { attachSharedActivities, pageRunRows } from '../coachRuns.js'
+
+test('coach run list keeps every run although the raw activity is unreadable (regression: "No runs yet.")', async () => {
+  const rows = [
+    { id: 'a', activity_id: 'x1', summary: { avg_power: 200 }, created_at: '2026-01-01', activities: null },
+    { id: 'b', activity_id: 'x2', summary: { avg_power: 300 }, created_at: '2026-01-02', activities: null },
+  ]
+  const sb = { from: (t) => ({ select: () => ({ in: async (_c, ids) => ({ data: t === 'shared_activities' ? ids.map((id) => ({ id, title: `T ${id}`, activity_date: id === 'x1' ? '2026-02-01' : '2026-03-01' })) : [] }) }) }) }
+  const enriched = await attachSharedActivities(sb, rows)
+  const page = pageRunRows(enriched, {})
+  assert.equal(page.total, 2)
+  assert.deepEqual(page.rows.map((r) => r.id), ['b', 'a'])
+  assert.deepEqual(pageRunRows(enriched, { q: 'x1' }).rows.map((r) => r.id), ['a'])
+  assert.deepEqual(pageRunRows(enriched, { sort: 'avg_power', dir: 'asc', limit: 1, offset: 1 }).rows.map((r) => r.id), ['b'])
+  assert.equal(pageRunRows(rows, {}).total, 2)
+})
