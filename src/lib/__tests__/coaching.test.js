@@ -11,6 +11,11 @@ import {
   fetchCoachingStatus,
   acceptCoaching,
   fetchAthleteProfile,
+  pickCoachProfileChanges,
+  coachEditLabel,
+  coachEditAuthorIds,
+  updateAthleteProfile,
+  fetchCoachDashboard,
 } from '../coaching.js'
 import { describeNotification, notificationHref } from '../notifications.js'
 import { fetchActivitiesInRange } from '../calendar.js'
@@ -159,4 +164,69 @@ test('migration: accept swaps the previous coach and notifies; decline is silent
   const decline = sql.match(/FUNCTION public\.decline_coaching[\s\S]*?\$\$;\n/)[0]
   assert.doesNotMatch(decline, /notifications/)
   assert.match(sql, /trg_end_coaching_on_block/)
+})
+
+test('pickCoachProfileChanges keeps only the whitelisted training defaults', () => {
+  assert.deepEqual(
+    pickCoachProfileChanges({ default_cog: 15, is_admin: true, ftp_w: 999, privacy_zone_lat: 1, crank_length_mm: 170 }),
+    { default_cog: 15, crank_length_mm: 170 }
+  )
+  assert.deepEqual(pickCoachProfileChanges(null), {})
+})
+
+test('coachEditLabel labels coach edits only', () => {
+  const names = new Map([['c1', 'Coach Cathy']])
+  assert.equal(coachEditLabel({ set_by_coach: false, changed_by: 'me' }, names), null)
+  assert.equal(coachEditLabel(null, names), null)
+  assert.equal(
+    coachEditLabel({ set_by_coach: true, changed_by: 'c1', changed_at: '2026-03-02T10:00:00Z' }, names),
+    'Set by coach Coach Cathy · 2026-03-02'
+  )
+  assert.equal(coachEditLabel({ set_by_coach: true, changed_by: 'gone' }, names), 'Set by coach')
+  assert.equal(
+    coachEditLabel({ training_set_by_coach: true, training_set_by: 'c1', training_set_at: '2026-03-02T10:00:00Z' }, { c1: 'Cathy' }),
+    'Set by coach Cathy · 2026-03-02'
+  )
+})
+
+test('coachEditAuthorIds returns distinct coach authors', () => {
+  assert.deepEqual(
+    coachEditAuthorIds([
+      { set_by_coach: true, changed_by: 'c1' },
+      { set_by_coach: true, changed_by: 'c1' },
+      { set_by_coach: false, changed_by: 'me' },
+      { training_set_by_coach: true, training_set_by: 'c2' },
+    ]).sort(),
+    ['c1', 'c2']
+  )
+})
+
+test('coach edit RPC wrappers', async () => {
+  const calls = []
+  const client = {
+    rpc: async (name, args) => {
+      calls.push([name, args])
+      return { data: name === 'coach_dashboard' ? [{ rider_id: 'a' }] : null, error: null }
+    },
+  }
+  const res = await updateAthleteProfile(client, 'r1', { default_cog: 15, is_admin: true })
+  assert.equal(res.error, null)
+  assert.deepEqual(calls[0], ['coach_update_athlete_profile', { p_rider: 'r1', p_changes: { default_cog: 15 } }])
+  assert.deepEqual((await fetchCoachDashboard(client)).rows, [{ rider_id: 'a' }])
+})
+
+test('coach_edited notification text', () => {
+  assert.match(describeNotification({ type: 'coach_edited' }, { display_name: 'Cathy' }), /Cathy.*updated your training settings/)
+})
+
+test('coach edit migration keeps coach writes narrow', () => {
+  const sql = readFileSync(
+    new URL('../../../supabase/migrations/20261130000000_coach_edits.sql', import.meta.url),
+    'utf8'
+  ).replace(/--.*$/gm, '')
+  // No coach policy on anything but the four history tables; profiles only via the function.
+  assert.doesNotMatch(sql, /POLICY[^;]*ON public\.(profiles|activities|connections|profile_secrets)\b/i)
+  assert.match(sql, /'ftp_history', 'weight_history', 'lactate_threshold_history', 'power_zone_history'/)
+  assert.match(sql, /coach_update_athlete_profile[\s\S]*is_coach_of\(p_rider\)/)
+  assert.match(sql, /NEW\.set_by_coach := auth\.uid\(\) <> NEW\.user_id/)
 })

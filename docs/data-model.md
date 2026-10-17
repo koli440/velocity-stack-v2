@@ -185,3 +185,17 @@ RLS is on and clients hold no table privileges; all reads/writes go through SECU
 `is_coach_of(rider)` is block-aware and drives extra SELECT policies on activity curves, template runs/templates,
 PBs, aero tests, ftp/weight/lactate/power-zone history, and the `shared_activities` view / `can_view_activity`
 (photos). The base `activities` table stays owner-only; coaches read the masked view. See [coaching.md](coaching.md).
+
+## Coach edits (`20261130000000_coach_edits.sql`)
+
+- History tables (`ftp_history`, `weight_history`, `lactate_threshold_history`, `power_zone_history`) gain
+  `changed_by UUID`, `changed_at TIMESTAMPTZ`, `set_by_coach BOOLEAN` (trigger `stamp_history_row`, always computed from
+  `auth.uid()`); `profiles` gains `training_set_by`, `training_set_at`, `training_set_by_coach` (trigger
+  `stamp_profile_training`, set only when a training default changes).
+- Coach write policies `*_insert_coach/_update_coach/_delete_coach` on those four tables (`is_coach_of(user_id)`).
+  `coach_update_athlete_profile(p_rider, p_changes)` is the only coach write path to `profiles` (whitelist of four fields).
+- `coach_edits(id, rider_id, coach_id, table_name, row_id, action, old_values, new_values, created_at)`: audit trail
+  written by triggers (`audit_history_row`, `record_coach_edit`); SELECT for the rider and (while active) the coach.
+- `notifications.type` gains `coach_edited` (max one unread per user/actor, `uq_notifications_coach_edited_unread`).
+- `get_athlete_profile` now also returns the training stamp; `coach_dashboard()` lists active athletes with last activity
+  and 7-day volume.

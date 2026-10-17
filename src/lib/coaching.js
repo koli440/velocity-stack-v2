@@ -134,4 +134,76 @@ export async function fetchAthleteProfile(client, riderId) {
   return { athlete: row || null, error: null }
 }
 
+// ---- Coach edits (coaching step 3) -----------------------------------------------------
+
+// Training defaults a coach may change on the athlete's profile (mirrors the database whitelist).
+export const COACH_PROFILE_FIELDS = Object.freeze([
+  'home_track_id',
+  'default_chainring',
+  'default_cog',
+  'crank_length_mm',
+])
+
+/** Keeps only the whitelisted profile fields (the database rejects everything else anyway). */
+export function pickCoachProfileChanges(changes) {
+  const out = {}
+  for (const key of COACH_PROFILE_FIELDS) {
+    if (changes && Object.prototype.hasOwnProperty.call(changes, key)) out[key] = changes[key]
+  }
+  return out
+}
+
+/**
+ * "Set by coach" label for a history row or profile defaults. `row` carries the stamp columns
+ * (`set_by_coach` + `changed_by` + `changed_at`, or the profile's `training_set_*` equivalents);
+ * `names` maps user ids to display names. Returns null for the rider's own values.
+ */
+export function coachEditLabel(row, names) {
+  const byCoach = row?.set_by_coach ?? row?.training_set_by_coach
+  if (!byCoach) return null
+  const who = row.changed_by ?? row.training_set_by
+  const at = row.changed_at ?? row.training_set_at
+  const name = (names instanceof Map ? names.get(who) : names?.[who]) || null
+  const date = at ? new Date(at).toISOString().slice(0, 10) : null
+  const parts = ['Set by coach']
+  if (name) parts[0] += ` ${name}`
+  if (date) parts.push(date)
+  return parts.join(' · ')
+}
+
+/** Distinct stamp authors of rows, to resolve their names in one query. */
+export function coachEditAuthorIds(rows) {
+  const ids = new Set()
+  for (const row of rows || []) {
+    const byCoach = row?.set_by_coach ?? row?.training_set_by_coach
+    const who = row?.changed_by ?? row?.training_set_by
+    if (byCoach && who) ids.add(who)
+  }
+  return [...ids]
+}
+
+export async function fetchCoachDashboard(client) {
+  const { data, error } = await client.rpc('coach_dashboard')
+  return { rows: error ? [] : data || [], error: error || null }
+}
+
+export async function updateAthleteProfile(client, riderId, changes) {
+  const { error } = await client.rpc('coach_update_athlete_profile', {
+    p_rider: riderId,
+    p_changes: pickCoachProfileChanges(changes),
+  })
+  return { error: error || null }
+}
+
+// Audit trail rows visible to the signed-in user (the rider sees all, a coach their own).
+export async function fetchCoachEdits(client, riderId, limit = 50) {
+  const { data, error } = await client
+    .from('coach_edits')
+    .select('id, coach_id, table_name, row_id, action, old_values, new_values, created_at')
+    .eq('rider_id', riderId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  return { edits: error ? [] : data || [], error: error || null }
+}
+
 export { authorName }
