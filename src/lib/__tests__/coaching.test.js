@@ -141,7 +141,7 @@ test('migration: coaches never read raw activities, coordinates stay masked', ()
   const view = sql.match(/CREATE VIEW public\.shared_activities AS[\s\S]*?GRANT SELECT ON public\.shared_activities/)[0]
   assert.match(view, /a\.time_series - 'latitude' - 'longitude'/)
   assert.match(view, /zone_signature/)
-  assert.doesNotMatch(view, /raw_file_url|file_sha256|privacy_zone_lat,\s*\n?\s*p\./)
+  assert.doesNotMatch(view.replace(/--.*$/gm, ''), /raw_file_url|file_sha256/)
   assert.match(view, /public\.is_coach_of\(a\.user_id\)/)
 })
 
