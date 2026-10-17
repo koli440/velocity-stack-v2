@@ -230,3 +230,28 @@ test('coach edit migration keeps coach writes narrow', () => {
   assert.match(sql, /coach_update_athlete_profile[\s\S]*is_coach_of\(p_rider\)/)
   assert.match(sql, /NEW\.set_by_coach := auth\.uid\(\) <> NEW\.user_id/)
 })
+
+// ---- Bot coaching guardrails ------------------------------------------------------------
+const botSql = readFileSync(
+  new URL('../../../supabase/migrations/20261201000000_coaching_with_bots.sql', import.meta.url),
+  'utf8'
+)
+
+test('bot migration: internal functions are not client-callable', () => {
+  assert.match(botSql, /REVOKE ALL ON FUNCTION public\.coaching_accept_as\(UUID, UUID\) FROM PUBLIC, anon, authenticated/)
+  assert.match(botSql, /REVOKE ALL ON FUNCTION public\.create_coaching_request\(UUID, UUID, UUID\) FROM PUBLIC, anon, authenticated/)
+  assert.doesNotMatch(botSql, /GRANT EXECUTE ON FUNCTION public\.coaching_accept_as/)
+})
+
+test('bot migration: bots_coach_edit is service_role only and requires a bot', () => {
+  assert.match(botSql, /REVOKE ALL ON FUNCTION public\.bots_coach_edit[\s\S]*?FROM PUBLIC, anon, authenticated/)
+  assert.match(botSql, /GRANT EXECUTE ON FUNCTION public\.bots_coach_edit[\s\S]*?TO service_role/)
+  assert.doesNotMatch(botSql, /GRANT EXECUTE ON FUNCTION public\.bots_coach_edit[^;]*authenticated/)
+  assert.match(botSql, /id = p_bot AND is_bot/)
+  assert.match(botSql, /is_coach_of\(p_rider\)/)
+})
+
+test('bot migration: bots auto-accept only, never initiate', () => {
+  assert.match(botSql, /id = p_initiator AND is_bot/)
+  assert.match(botSql, /coaching_accept_as\(v_id, v_other\)/)
+})

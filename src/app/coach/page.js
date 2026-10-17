@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { fetchMyCoaching, groupRelationships, fetchCoachDashboard, authorName, COACHING_SETTINGS_PATH } from '../../lib/coaching'
 import { athletePath, formatLastActivity, weeklyVolume } from '../../lib/coachContext'
 import Avatar from '../../components/Avatar'
+import BotBadge from '../../components/BotBadge'
 
 // Coach dashboard: every athlete the signed-in user actively coaches (volume figures come from
 // the coach_dashboard() RPC, which is gated by is_coach_of) plus pending invites/requests.
@@ -66,6 +67,7 @@ export default function CoachDashboardPage() {
               >
                 <span className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
                   <Avatar url={a.profile?.avatar_url} name={name} size="w-7 h-7" textSize="text-xs" /> {name}
+                  {a.profile?.is_bot && <BotBadge />}
                 </span>
                 <span className="block text-[11px] text-slate-500">
                   Last activity: {formatLastActivity(a.stats?.last_activity_at)}

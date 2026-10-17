@@ -39,7 +39,7 @@ export default function CoachingButtons({ userId, rider }) {
     load()
   }, [load])
 
-  if (!userId || !rider || rider.id === userId || rider.is_bot) return null
+  if (!userId || !rider || rider.id === userId) return null
 
   const actions = profileCoachingActions(state.status, { viewerHasCoach })
   const run = async (fn) => {
