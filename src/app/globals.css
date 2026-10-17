@@ -64,12 +64,12 @@ body {
   html[data-glass="on"] :is(.glass-popover, .fixed.inset-0 > :is(.bg-white, .dark\:bg-surface-darkCard)) {
     -webkit-backdrop-filter: blur(24px) saturate(1.4);
     backdrop-filter: blur(24px) saturate(1.4);
-    background-color: rgba(255, 255, 255, 0.94);
+    background-color: #ffffff;
     border-color: rgba(15, 23, 42, 0.12);
     color: #0f172a;
   }
   html.dark[data-glass="on"] :is(.glass-popover, .fixed.inset-0 > :is(.bg-white, .dark\:bg-surface-darkCard)) {
-    background-color: rgba(15, 23, 42, 0.95);
+    background-color: #0f172a;
     border-color: rgba(255, 255, 255, 0.16);
     color: #f8fafc;
   }

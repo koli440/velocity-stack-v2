@@ -71,7 +71,7 @@ export default function UserMenu({ user, profile, displayName }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-60 z-50 p-2 space-y-1 rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder shadow-lg"
+          className="absolute right-0 mt-2 w-60 z-50 p-2 space-y-1 glass-popover rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder shadow-xl"
         >
           {options.hasAthletes && (
             <div data-testid="viewing-as" className="pb-1 border-b border-slate-100 dark:border-slate-800">
