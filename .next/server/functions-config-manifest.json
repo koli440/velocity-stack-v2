@@ -1,1 +1,0 @@
-{"version":1,"functions":{"/api/connections/strava/authorize":{},"/api/connections/strava":{},"/api/connections/strava/callback":{},"/api/sync/intervals/run":{"maxDuration":60},"/api/sync/strava/run":{"maxDuration":60},"/api/webhooks/strava":{"maxDuration":60},"/api/webhooks/strava/subscribe":{},"/":{},"/about":{},"/dsl-guide":{}}}
