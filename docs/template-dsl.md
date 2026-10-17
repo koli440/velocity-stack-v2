@@ -78,6 +78,9 @@ There are six kinds of band:
    keying existed). On a **distance-keyed** step the metric must be spelled out
    explicitly, since there's no default: `best power` or `best speed`.
 
+7a. **Power-zone band** (issue #194) — `Z3`, `Z2-Z3`, `<Z2`, `>Z4`. Matches the window's average
+   power against the activity's own zone snapshot; stored as `bandType` `zone` (zone numbers in
+   `powerMin`/`powerMax`). Efforts carry `avg_zone` and `target_zone`.
 7. **Lactate-threshold band** (issue #121) — relative to the athlete's LT1/LT2, same
    range/min/max syntax: `95-105%LT2`, `<100%LT1`, `>100%LT2` (power) and
    `97-103%LT2HR`, `<100%LT1HR` (average heart rate). Evaluated against the *activity's own*
@@ -372,6 +375,7 @@ metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
 | `hr_recovery` / `hr_recovery(<n>sec\|min)` | `hr_recovery_<n>s` | mean | bpm the HR drops `n` seconds after the effort ends (default 60 s); `null` if the stream ends first |
 | `time_below_lt1`, `time_lt1_lt2`, `time_above_lt2` | `time_below_lt1_s`, `time_lt1_lt2_s`, `time_above_lt2_s` | sum | Seconds of the effort's power below LT1 (`< LT1`), between (`LT1 <= p < LT2`) or above LT2 (`>= LT2`), using the activity's LT snapshot; `null` without the needed thresholds |
 | `time_below_lt1_hr`, `time_lt1_lt2_hr`, `time_above_lt2_hr` | `time_below_lt1_hr_s`, `time_lt1_lt2_hr_s`, `time_above_lt2_hr_s` | sum | Same, from the heart-rate stream and LT HR |
+| `time_z1`, `time_z2`, `time_z3`, `time_z4`, `time_z5`, `time_z6` | `time_z1_s`, `time_z2_s`, `time_z3_s`, `time_z4_s`, `time_z5_s`, `time_z6_s` | sum | Seconds of the effort's power inside power zone Z1…Z6 (issue #194), using the activity's zone snapshot (LT-based, or FTP-estimated); `null` without zones |
 
 **Default run metrics (automatic).** Every template run reports real per-run performance metrics
 without a `metrics` line, per work effort and in the summary where the data exists: `avg_wkg`

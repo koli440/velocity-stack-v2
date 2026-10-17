@@ -20,6 +20,7 @@ import {
   ReferenceLine,
 } from 'recharts'
 import { ltFromActivity } from '../lib/lactateThresholds'
+import { zoneRanges, zonesFromActivity } from '../lib/powerZones'
 import { STREAM_METRICS, buildStreamSeries, formatAxisTick, formatElapsed } from '../lib/activityStreams'
 
 // Lactate threshold lines (issue #121) drawn on the power and heart-rate lanes.
@@ -30,10 +31,21 @@ function thresholdLines(metric, lt) {
   return []
 }
 
-function MetricLane({ metric, data, mode, syncId, highlightWindows, lt }) {
+// Power zone bands (issue #194) behind the power lane; Z1 and Z6 are open-ended and clipped to the data.
+const ZONE_COLORS = ['#94a3b8', '#22c55e', '#eab308', '#f97316', '#ef4444', '#a855f7']
+
+function zoneBands(metric, zones, data) {
+  if (!zones || metric.key !== 'watts') return []
+  const peak = data.reduce((m, d) => (d.watts != null && d.watts > m ? d.watts : m), 0)
+  const top = Math.max(peak, zones.bounds[zones.bounds.length - 1] + 1)
+  return zoneRanges(zones).map((r) => ({ label: r.label, y1: r.minW ?? 0, y2: r.maxW ?? top, color: ZONE_COLORS[r.zone - 1] }))
+}
+
+function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones }) {
   const hasData = data.some((d) => d[metric.key] != null)
   if (!hasData) return null
   const lines = thresholdLines(metric, lt)
+  const bands = zoneBands(metric, zones, data)
   const lineValues = lines.map(([, v]) => v)
   const yDomain = lineValues.length
     ? [(min) => Math.min(min, ...lineValues), (max) => Math.max(max, ...lineValues)]
@@ -62,6 +74,9 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt }) {
                   ifOverflow="visible"
                 />
               ))}
+            {bands.map((b) => (
+              <ReferenceArea key={b.label} y1={b.y1} y2={b.y2} fill={b.color} fillOpacity={0.08} stroke="none" ifOverflow="hidden" />
+            ))}
             <defs>
               <linearGradient id={`fill-${metric.key}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={metric.color} stopOpacity={0.35} />
@@ -121,6 +136,7 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt }) {
 
 export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows = [], activity = null }) {
   const lt = useMemo(() => ltFromActivity(activity), [activity])
+  const zones = useMemo(() => zonesFromActivity(activity, lt), [activity, lt])
   const [mode, setMode] = useState('time')
 
   const data = useMemo(() => buildStreamSeries(timeSeries, mode), [timeSeries, mode])
@@ -165,7 +181,7 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
 
       <div className="space-y-1.5">
         {STREAM_METRICS.map((metric) => (
-          <MetricLane key={metric.key} metric={metric} data={data} mode={mode} syncId="activity-streams" highlightWindows={highlightWindows} lt={lt} />
+          <MetricLane key={metric.key} metric={metric} data={data} mode={mode} syncId="activity-streams" highlightWindows={highlightWindows} lt={lt} zones={zones} />
         ))}
       </div>
 

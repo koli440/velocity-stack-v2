@@ -18,6 +18,10 @@ const CATEGORIES = ['road', 'track', 'gym']
 
 function formatBandLabel(step) {
   if (step.bandType === 'best') return `best ${step.bestMetric || 'power'} effort`
+  if (step.bandType === 'zone') {
+    if (step.powerMin != null && step.powerMax != null) return step.powerMin === step.powerMax ? `Z${step.powerMin}` : `Z${step.powerMin}-Z${step.powerMax}`
+    return step.powerMax != null ? `<Z${step.powerMax}` : `>Z${step.powerMin}`
+  }
   const suffix = step.bandType === 'pct_ftp' ? '% FTP' : BAND_SUFFIXES[step.bandType] || '% FTP'
   if (step.powerMin != null && step.powerMax != null) return `${step.powerMin}-${step.powerMax}${suffix}`
   if (step.powerMax != null) return `<${step.powerMax}${suffix}`

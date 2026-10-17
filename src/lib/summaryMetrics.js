@@ -10,6 +10,7 @@
 
 import { secondsInLtZone } from './lactateThresholds.js'
 import { wattsPerKg } from './wkg.js'
+import { ZONE_COUNT, ZONE_NAMES, zoneSeconds } from './powerZones.js'
 
 /** Default HR recovery window (seconds) when `hr_recovery` has no explicit `(<n>sec)`. */
 export const DEFAULT_HR_RECOVERY_WINDOW_SEC = 60
@@ -44,6 +45,12 @@ export const SUMMARY_METRICS = {
   time_below_lt1_hr: { key: 'time_below_lt1_hr_s', label: 'Time below LT1 heart rate (s)', agg: 'sum', lt: { stream: 'hr', zone: 'below_lt1', t1: 'lt1Hr', t2: 'lt2Hr' } },
   time_lt1_lt2_hr: { key: 'time_lt1_lt2_hr_s', label: 'Time between LT1 and LT2 heart rate (s)', agg: 'sum', lt: { stream: 'hr', zone: 'lt1_lt2', t1: 'lt1Hr', t2: 'lt2Hr' } },
   time_above_lt2_hr: { key: 'time_above_lt2_hr_s', label: 'Time above LT2 heart rate (s)', agg: 'sum', lt: { stream: 'hr', zone: 'above_lt2', t1: 'lt1Hr', t2: 'lt2Hr' } },
+  ...Object.fromEntries(
+    Array.from({ length: ZONE_COUNT }, (_, i) => [
+      `time_z${i + 1}`,
+      { key: `time_z${i + 1}_s`, label: `Time in power zone Z${i + 1} ${ZONE_NAMES[i]} (s; needs LT or FTP)`, agg: 'sum', zone: i + 1 },
+    ])
+  ),
   hr_recovery: { key: 'hr_recovery', label: 'HR recovery (bpm dropped N seconds after the effort)', agg: 'mean' },
 }
 
@@ -139,10 +146,15 @@ function hrRecoveryOf(hr, end, windowSec) {
   return Math.round(a - b)
 }
 
-function effortValue(metric, effort, streams, ftp, lt, weightKg = null) {
+function effortValue(metric, effort, streams, ftp, lt, weightKg = null, zones = null) {
   const { watts, hr, cadence, speed } = streams
   const { start_sec: s, end_sec: e } = effort
   const ltDef = SUMMARY_METRICS[metric.id]?.lt
+  const zoneNo = SUMMARY_METRICS[metric.id]?.zone
+  if (zoneNo) {
+    const secs = zoneSeconds(sliceStream(watts, s, e), zones)
+    return secs ? secs[zoneNo - 1] : null
+  }
   if (ltDef) {
     return lt ? secondsInLtZone(sliceStream(streams[ltDef.stream], s, e), ltDef.zone, lt[ltDef.t1], lt[ltDef.t2]) : null
   }
@@ -237,9 +249,10 @@ function aggregate(def, values) {
  * @param {number|null} ftp
  * @param {{lt1Power, lt1Hr, lt2Power, lt2Hr}|null} lt - the activity's lactate threshold snapshot
  * @param {number|null} weightKg - the activity's body weight snapshot (W/kg metrics are null without it)
+ * @param {object|null} zones - the activity's resolved power zones (see zonesFromActivity); time_z1..z6 are null without it
  * @returns the same result shape (a new object when metrics are applied).
  */
-export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null, lt = null, weightKg = null) {
+export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null, lt = null, weightKg = null, zones = null) {
   const selected = (Array.isArray(metrics) ? metrics : []).filter((m) => m && SUMMARY_METRICS[m.id])
   if (!selected.length || !result || !Array.isArray(result.efforts) || !result.efforts.length) return result
 
@@ -261,7 +274,7 @@ export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null
     const values = workIdx.map((i) => {
       const e = result.efforts[i]
       if (metric.id === 'dropoff') return null // filled in below, needs the whole series
-      return effortValue(metric, e, streams, ftp, lt, weightKg)
+      return effortValue(metric, e, streams, ftp, lt, weightKg, zones)
     })
 
     if (metric.id === 'dropoff') {

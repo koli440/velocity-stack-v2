@@ -359,9 +359,11 @@ const EVALUATORS = {
  *   snapshot (issue #121; see ltFromActivity); used by `%LT1`/`%LT2` bands and the LT time metrics.
  * @param {number|null} [weightKg] - the activity's body weight snapshot (issue #143); adds W/kg
  *   to efforts and the summary, and powers the W/kg summary metrics. Optional: null = no W/kg.
+ * @param {object|null} [zones] - the activity's resolved power zones (issue #194; see zonesFromActivity);
+ *   used by `@ Z3`-style bands and the time_z1..time_z6 metrics.
  * @returns {{ efforts: object[], summary: object }}
  */
-export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null, hrMaxBpm = null, lt = null, weightKg = null) {
+export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null, hrMaxBpm = null, lt = null, weightKg = null, zones = null) {
   const manifest = template.manifest || {}
   const pattern = manifest.pattern || 'repeated_bursts'
   const evaluator = EVALUATORS[pattern]
@@ -395,6 +397,7 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
           hrMaxBpm,
           lt,
           weightKg,
+          zones,
           warmupSec: manifest.warmup_sec || null,
           cooldownSec: manifest.cooldown_sec || null,
           setCount: manifest.set_count || null,
@@ -412,6 +415,6 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
   }
 
   const withTimeDistance = applyEffortMetrics(result, timeSeries, manifest)
-  const withMetrics = applySummaryMetrics(withDefaultMetrics(manifest.summary_metrics), withTimeDistance, timeSeries, ftpAtActivityW, lt, weightKg)
+  const withMetrics = applySummaryMetrics(withDefaultMetrics(manifest.summary_metrics), withTimeDistance, timeSeries, ftpAtActivityW, lt, weightKg, zones)
   return attachWkg(withMetrics, weightKg)
 }

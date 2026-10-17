@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../../lib/supabaseServer'
 import { evaluateTemplate } from '../../../../../lib/templateEngine'
 import { weightFromActivity } from '../../../../../lib/weightHistory'
+import { ZONE_SNAPSHOT_COLUMN, zonesFromActivity } from '../../../../../lib/powerZones'
 import { LT_SNAPSHOT_COLUMNS, ltFromActivity } from '../../../../../lib/lactateThresholds'
 
 // POST /api/activities/:id/apply-template  { templateId | templateSlug }
@@ -26,7 +27,7 @@ export async function POST(req, { params }) {
 
     const { data: activity, error: actError } = await supabase
       .from('activities')
-      .select(`id, user_id, time_series, ftp_at_activity_w, max_hr, weight_at_activity_kg, ${LT_SNAPSHOT_COLUMNS.join(', ')}`)
+      .select(`id, user_id, time_series, ftp_at_activity_w, max_hr, weight_at_activity_kg, ${ZONE_SNAPSHOT_COLUMN}, ${LT_SNAPSHOT_COLUMNS.join(', ')}`)
       .eq('id', activityId)
       .single()
 
@@ -49,7 +50,7 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
-    const result = evaluateTemplate(template, activity.time_series || {}, activity.ftp_at_activity_w ?? null, activity.max_hr ?? null, ltFromActivity(activity), weightFromActivity(activity))
+    const result = evaluateTemplate(template, activity.time_series || {}, activity.ftp_at_activity_w ?? null, activity.max_hr ?? null, ltFromActivity(activity), weightFromActivity(activity), zonesFromActivity(activity))
 
     // A given template can only be run once per activity (unique constraint on
     // activity_id + template_id) — re-running replaces the prior result
