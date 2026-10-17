@@ -48,7 +48,7 @@ Context is URL based, never stored (`src/lib/coachContext.js` parses/builds the 
 | `/coach/<id>` | Overview: current FTP / weight / LT1 / LT2 (with coach badges), recent activities, audit list |
 | `/coach/<id>/calendar` | `ActivityCalendar` for the athlete (replaces step 2's `/calendar?rider=`, which redirects) |
 | `/coach/<id>/activities[/<activityId>]` | Athlete activities (masked `shared_activities`) and detail |
-| `/coach/<id>/pb-vault`, `/templates` | Read-only lists (coach access is SELECT-only) |
+| `/coach/<id>/pb-vault` | Read-only list (coach access is SELECT-only) |
 | `/coach/<id>/physiology` | The four history panels + gear defaults, editable by the coach |
 
 - `app/coach/[riderId]/layout.js` checks `get_athlete_profile` (which only answers for an active coach), shows the
@@ -96,3 +96,16 @@ The active coach (`is_coach_of`) can run templates on an athlete's activity (`/c
 - **PB Vault**: never; the button is hidden for coach runs and the vault has no link to executions.
 - **No notification.** After the relationship ends runs stay, labelled with the coach's name, or "former coach" if the account is gone.
   Deleting a template keeps coach runs (`template_id` becomes NULL, name snapshot stays).
+
+### Templates section in athlete context (`/coach/<id>/templates`)
+Shows the template runs the **coach** made on **this athlete's** activities, grouped by template (own + system, with a
+"yours" / "system" / "template removed" label), with usage stats and a run list titled "your runs on <athlete>".
+- Read through `GET /api/templates/stats?rider=<id>` and `/api/templates/stats/runs?rider=<id>` (and `/api/templates/<slug>/history?rider=<id>&coach_only=1`),
+  which add `by_coach = true AND run_by_coach_id = <caller>` to the existing RLS-protected read (`template_executions_select_coach`,
+  `is_coach_of`). No new migration/policy: the athlete's own runs and other coaches' runs are never returned; a stranger or an
+  ended/pending/blocked coach gets nothing (RLS), and access is lost immediately on revocation.
+- Without `?rider=` (the coach's own Templates page) only `user_id = coach` rows count, so coach runs on athletes never appear in the coach's own stats.
+- Run rows link to `/coach/<id>/activities/<activityId>` (context href); the coach deletes / re-runs there (existing rules).
+  PB Vault sending stays hidden for coach runs. The athlete's own templates are not listed (definitions stay private).
+- Choice: an all-athletes-per-template view is not provided.
+

@@ -92,3 +92,40 @@ export function compareOptions(runs) {
   }
   return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name))
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Scope of a run query. Without a valid ?rider= (or with the caller's own id) it is the caller's own
+ * account. With ?rider=<athlete> it is the athlete's account restricted to runs stamped by THIS coach
+ * (`coachId`); the database (is_coach_of in RLS) still decides whether anything is readable.
+ */
+export function resolveRunScope(riderParam, userId) {
+  const rider = typeof riderParam === 'string' && UUID_RE.test(riderParam) ? riderParam.toLowerCase() : null
+  if (!rider || rider === String(userId).toLowerCase()) return { ownerId: userId, coachId: null }
+  return { ownerId: rider, coachId: userId }
+}
+
+/** Applies a run scope to a template_executions query builder. */
+export function applyRunScope(query, scope) {
+  let q = query.eq('user_id', scope.ownerId)
+  if (scope.coachId) q = q.eq('by_coach', true).eq('run_by_coach_id', scope.coachId)
+  return q
+}
+
+/**
+ * Template groups for the coach's Templates section in athlete context: one per template the coach
+ * ran on the athlete. `stats`/`names` come from /api/templates/stats?rider=, `templates` are the
+ * templates the coach can read (own + system + public) and only decide the source label.
+ */
+export function athleteTemplateGroups(stats, names, templates, coachId) {
+  const byId = new Map((templates || []).map((t) => [t.id, t]))
+  return Object.entries(stats || {})
+    .map(([id, stat]) => {
+      const live = byId.get(id)
+      const info = names?.[id] || {}
+      const source = !live ? 'template removed' : !live.user_id ? 'system' : live.user_id === coachId ? 'yours' : 'template'
+      return { id, stat, name: live?.name || info.name || 'Template', category: live?.category || info.category || null, source }
+    })
+    .sort((a, b) => b.stat.count - a.stat.count || a.name.localeCompare(b.name))
+}

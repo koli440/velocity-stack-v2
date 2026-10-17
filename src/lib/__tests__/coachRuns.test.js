@@ -78,3 +78,37 @@ test('mapRunRow carries the coach stamp', () => {
   assert.equal(row.run_by_coach_id, 'c1')
   assert.equal(mapRunRow({ id: 'y', activity_id: 'a', summary: {} }).by_coach, false)
 })
+
+import { applyRunScope, athleteTemplateGroups, resolveRunScope } from '../coachRuns.js'
+
+const RIDER = '11111111-1111-4111-8111-111111111111'
+const COACH = '22222222-2222-4222-8222-222222222222'
+const recorder = () => {
+  const calls = []
+  const q = { eq: (k, v) => (calls.push([k, v]), q) }
+  return { q, calls }
+}
+
+test('resolveRunScope: own account unless a valid other rider is given', () => {
+  assert.deepEqual(resolveRunScope(null, COACH), { ownerId: COACH, coachId: null })
+  assert.deepEqual(resolveRunScope('nope', COACH), { ownerId: COACH, coachId: null })
+  assert.deepEqual(resolveRunScope(COACH, COACH), { ownerId: COACH, coachId: null })
+  assert.deepEqual(resolveRunScope(RIDER.toUpperCase(), COACH), { ownerId: RIDER, coachId: COACH })
+})
+
+test('applyRunScope restricts athlete scope to runs stamped by this coach', () => {
+  let r = recorder()
+  applyRunScope(r.q, resolveRunScope(RIDER, COACH))
+  assert.deepEqual(r.calls, [['user_id', RIDER], ['by_coach', true], ['run_by_coach_id', COACH]])
+  r = recorder()
+  applyRunScope(r.q, resolveRunScope(null, COACH))
+  assert.deepEqual(r.calls, [['user_id', COACH]])
+})
+
+test('athleteTemplateGroups labels sources and sorts by count', () => {
+  const stats = { a: { count: 1, metrics: {} }, b: { count: 3, metrics: {} }, c: { count: 2, metrics: {} } }
+  const names = { c: { name: 'Gone', category: null } }
+  const tpl = [{ id: 'a', name: 'Sys', user_id: null }, { id: 'b', name: 'Mine', user_id: COACH, category: 'x' }]
+  const g = athleteTemplateGroups(stats, names, tpl, COACH)
+  assert.deepEqual(g.map((x) => [x.name, x.source]), [['Mine', 'yours'], ['Gone', 'template removed'], ['Sys', 'system']])
+})

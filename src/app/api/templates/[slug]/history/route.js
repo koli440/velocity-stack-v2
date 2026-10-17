@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../../lib/supabaseServer'
-import { withTemplateSnapshot } from '../../../../../lib/coachRuns'
+import { applyRunScope, resolveRunScope, withTemplateSnapshot } from '../../../../../lib/coachRuns'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-// GET /api/templates/:slug/history[?rider=<athleteId>]
+// GET /api/templates/:slug/history[?rider=<athleteId>[&coach_only=1]]
 // Historical executions of a given template on the authenticated user's account (the rider's own runs
 // AND runs a coach made on his activities, flagged by_coach / run_by_coach_id), used by the Activity
 // Detail benchmarking panel. With ?rider= an active coach reads the athlete's history (RLS decides).
@@ -19,14 +19,19 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const riderParam = new URL(req.url).searchParams.get('rider')
+    const sp = new URL(req.url).searchParams
+    const riderParam = sp.get('rider')
     const ownerId = riderParam && UUID_RE.test(riderParam) ? riderParam.toLowerCase() : user.id
+    // ?coach_only=1 (Templates section in athlete context): only runs stamped by this coach.
+    const scope = sp.get('coach_only') === '1' ? resolveRunScope(riderParam, user.id) : { ownerId, coachId: null }
 
-    const { data, error } = await supabase
-      .from('template_executions')
-      .select('id, activity_id, template_id, summary, efforts, created_at, by_coach, run_by_coach_id, template_name, template_slug, template_category, activities(title, activity_date)')
-      .eq('template_slug', slug)
-      .eq('user_id', ownerId)
+    const { data, error } = await applyRunScope(
+      supabase
+        .from('template_executions')
+        .select('id, activity_id, template_id, summary, efforts, created_at, by_coach, run_by_coach_id, template_name, template_slug, template_category, activities(title, activity_date)')
+        .eq('template_slug', slug),
+      scope
+    )
       .order('created_at', { ascending: false })
       .limit(1000)
 
