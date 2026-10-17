@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import { NAV_ITEMS } from '../lib/navigation'
-import { parseCoachPath, navHref, isContextNavActive } from '../lib/coachContext'
+import { parseCoachPath, sidebarItems, isSidebarItemActive, isContextNavActive, navHref, logoHref, chromeVisibility } from '../lib/coachContext'
 import Icon from './Icon'
 
 export default function Sidebar({
@@ -13,6 +13,8 @@ export default function Sidebar({
   const router = useRouter()
   const pathname = usePathname()
   const { riderId } = parseCoachPath(pathname)
+  const items = sidebarItems(NAV_ITEMS, riderId)
+  const chrome = chromeVisibility(riderId)
 
   const handleNavigate = (path) => {
     router.push(path)
@@ -46,7 +48,7 @@ export default function Sidebar({
           {/* Logo & close icon for mobile */}
           <div className="flex items-center justify-between px-2">
             <div
-              onClick={() => handleNavigate('/')}
+              onClick={() => handleNavigate(logoHref(riderId))}
               className="flex items-center gap-2.5 cursor-pointer"
             >
               <div className="h-7 w-7 rounded-lg bg-emerald-500 dark:bg-brand-neon flex items-center justify-center font-black text-white dark:text-slate-950 text-base shadow-xs">
@@ -68,16 +70,16 @@ export default function Sidebar({
 
           {/* Navigation */}
           <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => (
+            {items.map((item) => (
               <button
                 key={item.key}
-                onClick={() => handleNavigate(navHref(item, riderId))}
-                className={navItemClass(isContextNavActive(item, pathname, riderId))}
+                onClick={() => handleNavigate(riderId ? item.href : navHref(item, riderId))}
+                className={navItemClass(riderId ? isSidebarItemActive(item, pathname) : isContextNavActive(item, pathname, riderId))}
               >
                 <Icon name={item.icon} size={18} /> {item.label}
               </button>
             ))}
-            {isAdmin && (
+            {isAdmin && chrome.adminLink && (
               <button
                 onClick={() => handleNavigate('/admin/suggestions')}
                 className={navItemClass(pathname?.startsWith('/admin'))}

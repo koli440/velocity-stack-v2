@@ -56,6 +56,76 @@ export function isContextNavActive(item, pathname, riderId) {
   return item.exact ? pathname === item.href : pathname.startsWith(item.href)
 }
 
+const ATHLETE_ICONS = Object.freeze({
+  overview: 'home',
+  activities: 'bike',
+  calendar: 'calendar',
+  'pb-vault': 'trophy',
+  templates: 'clipboard',
+  physiology: 'settings',
+})
+
+/**
+ * Sidebar / mobile drawer items. Outside athlete context: the coach's own items. In athlete context
+ * ONLY athlete-scoped pages (plus a way back to the coach dashboard); every item of the coach's own
+ * pages (telemetry, tools, feedback, own settings...) is hidden so nothing silently exits the context.
+ */
+export function sidebarItems(navItems, riderId) {
+  if (!riderId) return navItems
+  return [
+    ...ATHLETE_PAGES.map((p) => ({
+      key: p.key,
+      label: p.label,
+      icon: ATHLETE_ICONS[p.key] || 'home',
+      href: athletePath(riderId, p.sub),
+      exact: !p.sub,
+    })),
+    { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true, leavesContext: true },
+  ]
+}
+
+/** Active state for sidebarItems() entries. */
+export function isSidebarItemActive(item, pathname) {
+  if (!item.href) return false
+  if (item.key === 'coach-home') return false
+  return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
+}
+
+/** Which global chrome pieces to show. In athlete context the coach's own tools are hidden. */
+export function chromeVisibility(riderId) {
+  const own = !riderId
+  return {
+    search: own,
+    addSession: own,
+    notifications: own,
+    footerLinks: own,
+    adminLink: own,
+    mySettings: own,
+  }
+}
+
+/** Where the logo goes: the athlete overview in athlete context, own home otherwise. */
+export function logoHref(riderId) {
+  return riderId ? athletePath(riderId) : '/'
+}
+
+/** Activity detail href that keeps the athlete context. */
+export function activityHref(id, riderId) {
+  return riderId ? athletePath(riderId, `/activities/${id}`) : `/activities/${id}`
+}
+
+/** "Back" target of the activity detail page. */
+export function activityBackHref(riderId) {
+  return riderId ? athletePath(riderId, '/activities') : '/'
+}
+
+/** Keeps in-page links of reused components in the athlete context. */
+export function contextualHref(href, riderId) {
+  if (!riderId || typeof href !== 'string') return href
+  const m = /^\/activities\/([^/?#]+)$/.exec(href)
+  return m ? athletePath(riderId, `/activities/${m[1]}`) : href
+}
+
 /** Banner text for athlete context. */
 export function bannerText(name) {
   return `Coaching: ${name || 'athlete'}`

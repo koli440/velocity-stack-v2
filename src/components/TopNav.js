@@ -7,7 +7,9 @@ import Icon from './Icon'
 import SessionSearch from './SessionSearch'
 import NotificationBell from './NotificationBell'
 import AddSessionModal from './AddSessionModal'
+import { usePathname } from 'next/navigation'
 import { OPEN_ADD_SESSION_EVENT } from '../lib/navigation'
+import { parseCoachPath, chromeVisibility } from '../lib/coachContext'
 
 export default function TopNav({
   user,
@@ -17,6 +19,7 @@ export default function TopNav({
   tracks = [],
 }) {
   const [addOpen, setAddOpen] = useState(false)
+  const chrome = chromeVisibility(parseCoachPath(usePathname()).riderId)
 
   useEffect(() => {
     const open = () => setAddOpen(true)
@@ -40,12 +43,12 @@ export default function TopNav({
           <Icon name="menu" size={20} />
         </button>
 
-        <SessionSearch userId={user?.id} tracks={tracks} />
+        {chrome.search && <SessionSearch userId={user?.id} tracks={tracks} />}
       </div>
 
       {/* Right side: Profile, ThemeToggle and Sign Out */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {user && (
+        {user && chrome.addSession && (
           <button
             type="button"
             onClick={() => setAddOpen(true)}
@@ -61,7 +64,7 @@ export default function TopNav({
         {user && (
           <div className="flex items-center gap-1">
           <UserMenu user={user} profile={profile} displayName={displayName} />
-          <NotificationBell userId={user.id} />
+          {chrome.notifications && <NotificationBell userId={user.id} />}
           </div>
         )}
 

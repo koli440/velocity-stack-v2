@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import useContextHref from './useContextHref'
 import {
   ResponsiveContainer,
   LineChart,
@@ -51,6 +52,7 @@ export default function DurationalCurvesChart({
   weightKg = null, // activity weight snapshot (issue #143): enables the W/kg tab
   onPeriodChange, // (period: string, customRange?: { start: string, end: string }) => void
 }) {
+  const contextHref = useContextHref()
   const [activeMetric, setActiveMetric] = useState('Cadence')
   const [showBaseline, setShowBaseline] = useState(true)
   const [period, setPeriod] = useState(ALL_TIME)
@@ -277,7 +279,7 @@ export default function DurationalCurvesChart({
                         {showBaseline && dataPoint.baseline != null && dataPoint.baselineActivityId && (
                           <div className="pt-1 border-t border-slate-800">
                             <Link
-                              href={`/activities/${dataPoint.baselineActivityId}`}
+                              href={contextHref(`/activities/${dataPoint.baselineActivityId}`)}
                               className="text-[10px] font-bold text-orange-400 hover:text-orange-300 underline"
                             >
                               View activity{dataPoint.baselineActivityTitle ? `: ${dataPoint.baselineActivityTitle}` : ''}

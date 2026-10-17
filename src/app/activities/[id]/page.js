@@ -5,7 +5,8 @@ import Portal from '../../../components/Portal'
 import { formatDateTime } from '../../../lib/dateFormat'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, usePathname, useRouter } from 'next/navigation'
+import { parseCoachPath, activityBackHref } from '../../../lib/coachContext'
 import { supabase } from '../../../lib/supabase'
 import { deleteActivity } from '../../../lib/activityActions'
 import { syncFeedData } from '../../../lib/feedSync'
@@ -33,6 +34,8 @@ const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
 export default function ActivityDetailPage() {
   const router = useRouter()
   const params = useParams()
+  const backHref = activityBackHref(parseCoachPath(usePathname()).riderId)
+  const inAthleteContext = backHref !== '/'
   const activityId = params?.id
 
   const [loading, setLoading] = useState(true)
@@ -215,7 +218,7 @@ export default function ActivityDetailPage() {
 
     // Deleting changes records/milestones of later sessions (best effort).
     if (activity.user_id) await syncFeedData(supabase, activity.user_id).catch(() => {})
-    router.push('/')
+    router.push(backHref)
   }
 
   if (loading) {
@@ -235,10 +238,10 @@ export default function ActivityDetailPage() {
           Activity not found
         </h2>
         <Link
-          href="/"
+          href={backHref}
           className="inline-block py-2 px-4 rounded-xl bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 font-bold text-xs uppercase"
         >
-          ← Back to Cockpit
+          {inAthleteContext ? '← Back to activities' : '← Back to Cockpit'}
         </Link>
       </div>
     )
@@ -258,10 +261,10 @@ export default function ActivityDetailPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <Link
-            href="/"
+            href={backHref}
             className="text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-white transition flex items-center gap-1.5"
           >
-            ← Cockpit Telemetry
+            {inAthleteContext ? '← Activities' : '← Cockpit Telemetry'}
           </Link>
           <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
             {activity.title || 'Velodrome Session'}
