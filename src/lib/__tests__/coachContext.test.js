@@ -90,3 +90,36 @@ test('describeCoachEdit and coach_edited notification link', async () => {
   assert.equal(notificationHref({ type: 'coach_edited' }), '/settings#physiology')
   assert.equal(notificationHref({ type: 'coach_invite' }), '/settings#coaching')
 })
+
+test('sidebarItems hides the coach\'s own pages in athlete context', async () => {
+  const c = await import('../coachContext.js')
+  assert.equal(c.sidebarItems(NAV_ITEMS, null), NAV_ITEMS)
+  const items = c.sidebarItems(NAV_ITEMS, RID)
+  const hrefs = items.map((i) => i.href)
+  assert.deepEqual(hrefs, [
+    `/coach/${RID}`, `/coach/${RID}/activities`, `/coach/${RID}/calendar`, `/coach/${RID}/pb-vault`,
+    `/coach/${RID}/templates`, `/coach/${RID}/physiology`, '/coach',
+  ])
+  assert.ok(hrefs.every((h) => h.startsWith('/coach')))
+  assert.ok(!items.some((i) => ['home', 'gears', 'feedback', 'about', 'settings'].includes(i.key)))
+  const [overview, activities] = items
+  assert.equal(c.isSidebarItemActive(overview, `/coach/${RID}`), true)
+  assert.equal(c.isSidebarItemActive(overview, `/coach/${RID}/calendar`), false)
+  assert.equal(c.isSidebarItemActive(activities, `/coach/${RID}/activities/abc`), true)
+  assert.equal(c.isSidebarItemActive(items.at(-1), '/coach'), false)
+})
+
+test('chrome visibility and context-preserving links', async () => {
+  const c = await import('../coachContext.js')
+  assert.ok(Object.values(c.chromeVisibility(null)).every(Boolean))
+  assert.ok(Object.values(c.chromeVisibility(RID)).every((v) => v === false))
+  assert.equal(c.logoHref(null), '/')
+  assert.equal(c.logoHref(RID), `/coach/${RID}`)
+  assert.equal(c.activityHref('a1', null), '/activities/a1')
+  assert.equal(c.activityHref('a1', RID), `/coach/${RID}/activities/a1`)
+  assert.equal(c.activityBackHref(null), '/')
+  assert.equal(c.activityBackHref(RID), `/coach/${RID}/activities`)
+  assert.equal(c.contextualHref('/activities/a1', RID), `/coach/${RID}/activities/a1`)
+  assert.equal(c.contextualHref('/activities/a1', null), '/activities/a1')
+  assert.equal(c.contextualHref('/templates', RID), '/templates')
+})

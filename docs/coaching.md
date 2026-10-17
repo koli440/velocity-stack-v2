@@ -54,8 +54,12 @@ Context is URL based, never stored (`src/lib/coachContext.js` parses/builds the 
 - `app/coach/[riderId]/layout.js` checks `get_athlete_profile` (which only answers for an active coach), shows the
   persistent indigo banner "Coaching: <Name> - Exit" and the athlete tab bar; anyone else sees "not coaching".
 - The top-right user menu has a "Viewing as" section (Me + athletes, only when the user has athletes).
-- In athlete context the sidebar's Calendar / Personal Best Vault / Templates / Settings entries point at the athlete
-  (`navHref`); feed, notifications, tools and own settings stay the coach's own. The Coach/Rider toggle was removed.
+- In athlete context (`/coach/<id>/...`) the sidebar/mobile drawer shows ONLY athlete pages (Overview, Activities, Calendar,
+  Personal Bests, Templates, Physiology) plus "Coach dashboard" (`sidebarItems`). The coach's own pages are hidden: telemetry,
+  tools, About/Feedback, own settings, search, Add/Sync, notifications bell, footer links, admin link (`chromeVisibility`).
+  Leaving is always explicit: banner "Exit" / "Coach dashboard", and the user menu "Viewing as" (Me / athletes / Coach dashboard).
+  In-page links of reused components (calendar chips, activity detail back link, template runs, curve tooltips) keep the
+  context via `contextualHref` / `activityBackHref`. The Coach/Rider toggle was removed.
 - Rider side: history rows and the "Gear defaults" heading show a "Set by coach <name> - date" badge
   (`CoachBadge`), settings lists the audit trail ("Coach changes"), and the `coach_edited` notification links to
   `/settings#physiology`.

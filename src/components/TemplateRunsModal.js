@@ -6,12 +6,14 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Portal from './Portal'
+import useContextHref from './useContextHref'
 import Icon from './Icon'
 import { getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import { RUNS_PAGE_SIZE, metricLabel, orderMetricKeys, formatStatValue } from '../lib/templateStats'
 
 function Inner({ template, metricKeys, onClose }) {
+  const contextHref = useContextHref()
   const [runs, setRuns] = useState([])
   const [total, setTotal] = useState(0)
   const [hasMore, setHasMore] = useState(false)
@@ -126,7 +128,7 @@ function Inner({ template, metricKeys, onClose }) {
           <ul className="space-y-2">
             {runs.map((r) => (
               <li key={r.id} className="rounded-xl bg-slate-50 dark:bg-slate-900/40 p-3 text-[11px]">
-                <Link href={`/activities/${r.activity_id}`} className="text-sm font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-500 break-words">
+                <Link href={contextHref(`/activities/${r.activity_id}`)} className="text-sm font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-500 break-words">
                   {r.title || 'Untitled activity'}
                 </Link>
                 {r.date && <span className="text-slate-400"> · {new Date(r.date).toLocaleDateString()}</span>}

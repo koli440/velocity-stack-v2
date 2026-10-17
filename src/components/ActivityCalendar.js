@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { contextualHref, parseCoachPath } from '../lib/coachContext'
 import Icon from './ActivityIcons'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
@@ -21,10 +23,11 @@ const defaultFetchEvents = (args) => fetchActivitiesInRange(supabase, args)
 const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike' }
 
 function EventChip({ event }) {
+  const { riderId } = parseCoachPath(usePathname())
   const planned = event.kind === 'planned'
   return (
     <Link
-      href={event.href}
+      href={contextualHref(event.href, riderId)}
       className={`block rounded-lg px-1.5 py-1 text-[11px] leading-tight border transition hover:border-emerald-500 ${
         planned
           ? 'border-dashed border-sky-400/60 bg-sky-500/5'

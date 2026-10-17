@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { fetchMyCoaching, groupRelationships } from '../lib/coaching'
 import { authorName } from '../lib/social'
-import { viewingAsOptions, parseCoachPath, COACH_HOME_PATH } from '../lib/coachContext'
+import { viewingAsOptions, parseCoachPath, chromeVisibility, COACH_HOME_PATH } from '../lib/coachContext'
 import { usePathname } from 'next/navigation'
 import Avatar from './Avatar'
 
@@ -15,6 +15,7 @@ export default function UserMenu({ user, profile, displayName }) {
   const router = useRouter()
   const pathname = usePathname()
   const { riderId } = parseCoachPath(pathname)
+  const chrome = chromeVisibility(riderId)
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState({ athletes: [], hasAthletes: false })
   const ref = useRef(null)
@@ -76,7 +77,7 @@ export default function UserMenu({ user, profile, displayName }) {
             <div data-testid="viewing-as" className="pb-1 border-b border-slate-100 dark:border-slate-800">
               <p className="px-3 pt-1 pb-1 text-[10px] uppercase font-bold tracking-wider text-slate-400">Viewing as</p>
               <button role="menuitem" onClick={() => go('/')} className={row(!riderId)}>
-                Me
+                {riderId ? 'Me (exit coaching)' : 'Me'}
               </button>
               {options.athletes.map((a) => (
                 <button key={a.riderId} role="menuitem" onClick={() => go(a.href)} className={row(riderId === a.riderId)}>
@@ -88,9 +89,11 @@ export default function UserMenu({ user, profile, displayName }) {
               </button>
             </div>
           )}
-          <button role="menuitem" onClick={() => go('/settings')} className={row(false)}>
-            My settings
-          </button>
+          {chrome.mySettings && (
+            <button role="menuitem" onClick={() => go('/settings')} className={row(false)}>
+              My settings
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -64,9 +64,14 @@ export default function AthleteLayout({ children }) {
         className="sticky top-16 z-20 -mt-2 flex items-center justify-between gap-3 rounded-2xl bg-indigo-600 text-white px-4 py-2.5 shadow-md"
       >
         <span className="text-sm font-extrabold">{bannerText(athlete?.display_name)}</span>
-        <Link href="/" className="text-xs font-bold underline underline-offset-2 hover:text-indigo-100">
-          Exit
-        </Link>
+        <span className="flex items-center gap-4">
+          <Link href="/coach" className="text-xs font-bold underline underline-offset-2 hover:text-indigo-100">
+            Coach dashboard
+          </Link>
+          <Link href="/" className="text-xs font-bold underline underline-offset-2 hover:text-indigo-100">
+            Exit
+          </Link>
+        </span>
       </div>
       <nav className="flex flex-wrap gap-1" aria-label="Athlete sections">
         {ATHLETE_PAGES.map((p) => {
