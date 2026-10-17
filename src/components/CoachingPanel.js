@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
+import BotBadge from './BotBadge'
 import { authorName } from '../lib/social'
 import {
   groupRelationships,
@@ -27,6 +28,7 @@ function Person({ id, profiles, children }) {
       <Link href={`/riders/${id}`} className="text-xs font-bold text-slate-900 dark:text-white truncate hover:text-orange-500">
         {authorName(p)}
       </Link>
+      {p?.is_bot && <BotBadge />}
       {children}
     </div>
   )

@@ -51,3 +51,24 @@ select public.bots_run_range(current_date - 7, current_date - 1);
 - Data is plausible, not physically exact (simple speed/power model plus noise).
 - `pg_cron` schedule is not directly observable from GitHub; check
   `select * from cron.job_run_details` in the Supabase dashboard if needed.
+
+## Coaching with bots (SQL only)
+
+Bots take part in coaching so it can be tested alone (details in docs/coaching.md):
+
+- **Bot as athlete:** open a bot's rider profile and press *Invite as athlete*. The bot accepts instantly; use the
+  coach dashboard, `/coach/<botId>`, calendar and physiology edits.
+- **Bot as coach:** press *Request as my coach* on a bot profile (you must not have a coach yet). The bot accepts
+  instantly; Settings shows *My coach*, and you can revoke it.
+- **Let the bot coach change your data** (SQL editor / migrations only, not callable by clients). This runs the normal
+  triggers: "set by coach" badges, the audit list and a `coach_edited` notification appear on your account.
+
+```sql
+-- find ids
+select id, nickname from public.profiles where is_bot;
+select public.bots_coach_edit('<bot id>', '<your user id>', p_ftp_w => 310, p_weight_kg => 72.5);
+select public.bots_coach_edit('<bot id>', '<your user id>', p_lt1_power_w => 200, p_lt2_power_w => 280, p_effective_from => date '2026-01-01');
+select public.bots_coach_edit('<bot id>', '<your user id>', p_profile => '{"default_chainring": 50, "crank_length_mm": 170}');
+```
+
+It fails unless the bot is an active coach of that rider.

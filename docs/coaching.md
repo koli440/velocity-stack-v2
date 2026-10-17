@@ -1,7 +1,7 @@
 # Coaching (step 2: relationships, consent, read access)
 
 - Any account can coach; no flag. Either side initiates (coach: *Invite as athlete*, rider: *Request as my coach*);
-  the rider's acceptance (or own request) is the consent. Self-coaching, bots and blocked pairs are refused.
+  the rider's acceptance (or own request) is the consent. Self-coaching and blocked pairs are refused. Bots are allowed (see *Coaching with bots*).
 - A rider has at most one active coach. Accepting a new coach's invite swaps atomically (advisory lock + unique
   index); the UI warns first, naming the coach being replaced, and that coach gets a `coach_replaced` notification.
   `request_coach` is refused while the rider already has a coach, so a coach's acceptance never replaces one.
@@ -63,3 +63,15 @@ Context is URL based, never stored (`src/lib/coachContext.js` parses/builds the 
 
 Choices made: "weekly volume" is the last 7 days; PBs/templates are read-only in athlete context; activity detail
 opens the existing page (which falls back to the masked view) under `/coach/<id>/activities/<activityId>`.
+
+## Coaching with bots (`20261201000000_coaching_with_bots.sql`)
+Testing aid, since no real people are available. Bots cannot answer requests, so the SECURITY DEFINER paths answer for them:
+- `invite_athlete(bot)`: the bot (rider) accepts at once. Same atomic logic as `accept_coaching` (shared internal
+  `coaching_accept_as`): an existing coach of the bot is replaced and notified (`coach_replaced`), the inviter gets `coach_accepted`.
+  So any user can take over a bot athlete; that is intended for a shared test fixture.
+- `request_coach(bot)`: the bot (coach) accepts at once; still refused while the rider already has a coach.
+- Bots never initiate (refused in `create_coaching_request`), blocks (either direction) look like "Rider not found",
+  self-coaching and one-active-coach-per-rider hold. `coaching_accept_as` and `create_coaching_request` are not client-callable.
+- Coach dashboard, `/coach/<botId>`, calendar and physiology edits work on the bot's generated rides; the bot receives
+  `coach_edited` notifications (harmless).
+- A bot coach edits a rider's data via the SQL-only `bots_coach_edit` (see docs/bots.md), executable by `service_role`/migrations only.
