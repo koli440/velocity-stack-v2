@@ -267,6 +267,15 @@ set recovery 5min ±30% @ <55%FTP
 - The detector scans the power stream cyclically (work, then recovery if present, then
   back to work) looking for windows that satisfy each step's duration (or distance)
   range and band, up to `repeatCount` times.
+- **Back-to-back placement (no gaps, no overlaps):** for a repeat with several steps
+  (work + recovery, or a longer plain list) the detector first looks for a chain of windows
+  where each step starts exactly where the previous one ended. Among chains starting within
+  one first-step length of the earliest one, it picks the best fit (largest work-vs-recovery
+  power contrast), so the highlighted windows on the activity graph follow each other
+  seamlessly, also at `±0%`. The same applies to a set recovery, which is placed right after
+  the last rep of its set when it matches there. Only when no gapless chain matches does the
+  detector fall back to placing each step independently ("somewhere after"), which may leave
+  a gap. Windows never overlap. Stored executions are not re-detected.
 - It does **not** require finding the full configured `repeatCount` to produce a result:
   it reports however many complete work(+recovery) cycles were actually found
   (`reps_detected`), alongside the configured target (`reps_target`), so a partial match
