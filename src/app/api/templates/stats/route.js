@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
 import { aggregateTemplateStats } from '../../../../lib/templateStats'
-import { applyRunScope, parseRunFilter, resolveRunScope } from '../../../../lib/coachRuns'
+import { applyRunScope, attachSharedActivities, parseRunFilter, resolveRunScope } from '../../../../lib/coachRuns'
 
 // GET /api/templates/stats[?filter=all|coach|own][&rider=<athleteId>]
 // With ?rider= (coach in athlete context) only the runs THIS coach made on that athlete are counted.
@@ -29,7 +29,8 @@ export async function GET(req) {
     const { data, error } = await query.order('created_at', { ascending: false }).limit(5000)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400, ...noStore })
-    const stats = aggregateTemplateStats(data)
+    const rows = scope.coachId ? await attachSharedActivities(supabase, data) : data
+    const stats = aggregateTemplateStats(rows)
     const names = {}
     for (const row of data || []) {
       if (row.template_id && stats[row.template_id] && !names[row.template_id]) {

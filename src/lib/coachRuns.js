@@ -129,3 +129,35 @@ export function athleteTemplateGroups(stats, names, templates, coachId) {
     })
     .sort((a, b) => b.stat.count - a.stat.count || a.name.localeCompare(b.name))
 }
+
+/**
+ * A coach cannot read the raw `activities` table (RLS), so the embedded `activities(...)` of a run row is
+ * null (and `activities!inner` would drop the row). Title/date come from the masked shared_activities view.
+ */
+export async function attachSharedActivities(supabase, rows) {
+  const list = Array.isArray(rows) ? rows : []
+  const ids = [...new Set(list.map((r) => r.activity_id).filter(Boolean))]
+  if (!ids.length) return list
+  const { data, error } = await supabase.from('shared_activities').select('id, title, activity_date').in('id', ids)
+  if (error) throw new Error(error.message)
+  const byId = new Map((data || []).map((a) => [a.id, a]))
+  return list.map((r) => ({ ...r, activities: byId.get(r.activity_id) || r.activities || null }))
+}
+
+/** In-memory search / sort / paging of run rows (coach scope, where the DB cannot join activities). */
+export function pageRunRows(rows, { q = '', sort = 'date', dir = 'desc', limit = 25, offset = 0 } = {}) {
+  const act = (r) => (Array.isArray(r.activities) ? r.activities[0] : r.activities)
+  let list = [...(rows || [])]
+  if (q) list = list.filter((r) => String(act(r)?.title || '').toLowerCase().includes(q.toLowerCase()))
+  const sign = dir === 'asc' ? 1 : -1
+  const val = (r) => (sort === 'date' ? (act(r)?.activity_date ?? r.created_at) : r.summary?.[sort])
+  list = [...list].sort((a, b) => {
+    const x = val(a)
+    const y = val(b)
+    if (x == null && y == null) return String(a.id).localeCompare(String(b.id))
+    if (x == null) return 1
+    if (y == null) return -1
+    return (x < y ? -1 : x > y ? 1 : String(a.id).localeCompare(String(b.id))) * sign
+  })
+  return { rows: list.slice(offset, offset + limit), total: list.length }
+}
