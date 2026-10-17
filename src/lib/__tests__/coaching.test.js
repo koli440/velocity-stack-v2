@@ -146,7 +146,7 @@ test('migration: coaches never read raw activities, coordinates stay masked', ()
 })
 
 test('migration: never exposes secrets and every SECURITY DEFINER function pins search_path', () => {
-  assert.doesNotMatch(sql, /profile_secrets|public\.connections|auth\.users/)
+  assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /profile_secrets|public\.connections|auth\.users/)
   const defs = sql.match(/LANGUAGE (sql|plpgsql)[^$]*SECURITY DEFINER[^$]*\$\$/g) || []
   assert.ok(defs.length >= 10)
   for (const d of defs) assert.match(d, /SET search_path = public/)
