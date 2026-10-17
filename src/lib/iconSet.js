@@ -2,6 +2,7 @@
 // Inner SVG markup is static and trusted. Groups: nav, action, status, domain.
 export const ICON_SET = {
   // Navigation
+  calendar: { group: 'nav', replaces: '📅', svg: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>' },
   home: { group: 'nav', replaces: '🏠', svg: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>' },
   trophy: { group: 'nav', replaces: '🏆', svg: '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H4v2a3 3 0 0 0 4 3M16 6h4v2a3 3 0 0 1-4 3"/><path d="M12 13v4M8 21h8M10 17h4"/>' },
   gears: { group: 'nav', replaces: '🔧', svg: '<circle cx="9" cy="14" r="5"/><circle cx="9" cy="14" r="1.5"/><circle cx="19" cy="7" r="2.5"/><path d="M14 11l3-2.5"/>' },
