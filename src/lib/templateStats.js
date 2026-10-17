@@ -98,6 +98,8 @@ export function mapRunRow(row) {
     title: act?.title || null,
     date: act?.activity_date || row.created_at || null,
     metrics: runMetrics(row.summary),
+    by_coach: !!row.by_coach,
+    run_by_coach_id: row.run_by_coach_id || null,
   }
 }
 

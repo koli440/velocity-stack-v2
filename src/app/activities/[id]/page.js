@@ -34,7 +34,8 @@ const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
 export default function ActivityDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const backHref = activityBackHref(parseCoachPath(usePathname()).riderId)
+  const coachRiderId = parseCoachPath(usePathname()).riderId
+  const backHref = activityBackHref(coachRiderId)
   const inAthleteContext = backHref !== '/'
   const activityId = params?.id
 
@@ -417,6 +418,10 @@ export default function ActivityDetailPage() {
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
       {!sharedView && (
         <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} onVisibleWindowsChange={setHighlightWindows} />
+      )}
+      {/* Athlete context: an active coach runs his own / system templates on the athlete's activity. */}
+      {sharedView && coachRiderId && coachRiderId === activity?.user_id && (
+        <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} riderId={coachRiderId} onVisibleWindowsChange={setHighlightWindows} />
       )}
 
       {/* 5. Bottom panel: Quick track and gearing setup (own activities only) */}

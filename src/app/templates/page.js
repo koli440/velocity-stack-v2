@@ -32,6 +32,8 @@ export default function TemplatesPage() {
   const [category, setCategory] = useState('all')
   const [sort, setSort] = useState('name')
   const [stats, setStats] = useState({})
+  const [statNames, setStatNames] = useState({})
+  const [runFilter, setRunFilter] = useState('all')
   const [statsLoading, setStatsLoading] = useState(true)
   const [statsError, setStatsError] = useState(null)
   const [runsFor, setRunsFor] = useState(null)
@@ -73,16 +75,17 @@ export default function TemplatesPage() {
         setStats({})
         return
       }
-      const res = await fetch('/api/templates/stats', { headers: authHeader, cache: 'no-store' })
+      const res = await fetch(`/api/templates/stats?filter=${runFilter}`, { headers: authHeader, cache: 'no-store' })
       const json = await parseJsonResponse(res)
       if (!res.ok || json.error) throw new Error(json.error || 'Failed to load usage statistics.')
       setStats(json.stats || {})
+      setStatNames(json.names || {})
     } catch (err) {
       setStatsError(err.message)
     } finally {
       setStatsLoading(false)
     }
-  }, [])
+  }, [runFilter])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -91,11 +94,17 @@ export default function TemplatesPage() {
       setTab(id ? 'mine' : 'public')
       setAuthReady(true)
       load()
-      loadStats()
     })
-  }, [load, loadStats])
+  }, [load])
+
+  useEffect(() => {
+    loadStats()
+  }, [loadStats])
 
   const tabs = visibleTabs(userId)
+  // Templates only known through coach runs (the rider cannot read a coach's private template).
+  const visibleIds = new Set(templates.map((t) => t.id))
+  const coachOnly = Object.entries(stats).filter(([id]) => !visibleIds.has(id))
 
   const tabItems = useMemo(
     () => filterByTab(templates, tab, { userId, favoriteIds }),
@@ -247,6 +256,13 @@ export default function TemplatesPage() {
           <option value="category">Sort: Category</option>
           {userId && <option value="usage">Sort: Most used</option>}
         </select>
+        {userId && (
+          <select value={runFilter} onChange={(e) => setRunFilter(e.target.value)} className={input} aria-label="Run source" data-testid="run-source-filter">
+            <option value="all">Runs: All</option>
+            <option value="coach">Runs: By coach</option>
+            <option value="own">Runs: My own</option>
+          </select>
+        )}
       </div>
 
       {errorMsg && (
@@ -316,9 +332,28 @@ export default function TemplatesPage() {
         </div>
       )}
 
+      {userId && coachOnly.length > 0 && (
+        <div className="space-y-2" data-testid="coach-run-templates">
+          <h3 className="text-xs font-black uppercase tracking-wider text-sky-500">Run by your coach</h3>
+          <p className="text-[11px] text-slate-400">Templates your coach ran on your activities. Only the name and the results are shared, never the definition.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {coachOnly.map(([id, st]) => (
+              <div key={id} className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm flex flex-col gap-2">
+                <h3 className="font-extrabold text-slate-900 dark:text-white">{statNames[id]?.name || 'Template'}</h3>
+                <span className="self-start px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-500 text-[10px] font-black uppercase tracking-wider">run by coach</span>
+                <button onClick={() => setRunsFor({ id, name: statNames[id]?.name || 'Template' })} className="self-start font-bold text-emerald-500 hover:underline text-[11px]" aria-haspopup="dialog">
+                  View {st.count} {st.count === 1 ? 'run' : 'runs'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {runsFor && (
         <TemplateRunsModal
           template={runsFor}
+          filter={runFilter}
           metricKeys={orderMetricKeys(Object.keys(stats[runsFor.id]?.metrics || {}))}
           onClose={() => setRunsFor(null)}
         />

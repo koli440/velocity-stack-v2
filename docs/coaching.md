@@ -79,3 +79,20 @@ Testing aid, since no real people are available. Bots cannot answer requests, so
 - Coach dashboard, `/coach/<botId>`, calendar and physiology edits work on the bot's generated rides; the bot receives
   `coach_edited` notifications (harmless).
 - A bot coach edits a rider's data via the SQL-only `bots_coach_edit` (see docs/bots.md), executable by `service_role`/migrations only.
+
+## Coach template runs (`20261202000000_coach_template_runs.sql`)
+The active coach (`is_coach_of`) can run templates on an athlete's activity (`/coach/<id>/activities/<activityId>`, same picker).
+- **Stored on the rider's account** (`template_executions.user_id = rider`). Stamped by the DB (`by_coach`, `run_by_coach_id`,
+  `coach_key`); the only coach write path is `coach_save_template_run` / `coach_delete_template_run` (SECURITY DEFINER,
+  pinned search_path, check `auth.uid()` + `is_coach_of`). `coach_template_run_inputs` gives the evaluation inputs (no GPS).
+  No coach INSERT/UPDATE/DELETE RLS policy exists; riders cannot forge or clear the stamp.
+- **Templates**: coach's own + system only (never the rider's, nor others' public ones).
+- **Privacy**: runs keep a snapshot of template name/slug/category only (kept in sync on rename). `analysis_templates` RLS is
+  unchanged, so the rider never reads the coach's manifest/DSL; rider-facing APIs (activity runs, history, stats) read the
+  snapshot, not a join. A rider and a coach run of the same template on one activity coexist (unique on activity, template, coach_key).
+- **Delete / re-run**: coach only his own runs while active; the rider can delete any run on his account (re-run only own).
+- **Stats**: coach runs sit on the rider's account, so they appear in the rider's stats/history/compare (filter *By coach*,
+  badge "run by coach <name>") and never in the coach's own stats or his template's usage count (`user_id = coach` only).
+- **PB Vault**: never; the button is hidden for coach runs and the vault has no link to executions.
+- **No notification.** After the relationship ends runs stay, labelled with the coach's name, or "former coach" if the account is gone.
+  Deleting a template keeps coach runs (`template_id` becomes NULL, name snapshot stays).

@@ -55,5 +55,5 @@ test('escapeLike escapes wildcards', () => {
 
 test('mapRunRow shapes a row', () => {
   const r = mapRunRow(row('7', 't', '2026-05-01', { avg_power: 250, foo: 1 }, 'Hill'))
-  assert.deepEqual(r, { id: '7', activity_id: 'act-7', title: 'Hill', date: '2026-05-01', metrics: { avg_power: 250 } })
+  assert.deepEqual(r, { id: '7', activity_id: 'act-7', title: 'Hill', date: '2026-05-01', metrics: { avg_power: 250 }, by_coach: false, run_by_coach_id: null })
 })
