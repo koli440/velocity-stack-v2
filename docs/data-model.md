@@ -211,3 +211,18 @@ Client grants are column-level (INSERT: rider_id, note_date, title, body; UPDATE
 `created_by` / `updated_by` / `set_by_coach` / timestamps from `auth.uid()`, pins `rider_id`, and caps 20 notes per rider and day. Notes survive the end of coaching and the deletion of the
 coach account (FK `SET NULL`). See *Calendar notes* in coaching.md.
 
+
+## Planned workouts (`20261206000000_planned_workouts.sql`)
+
+`planned_workouts(id, rider_id -> profiles ON DELETE CASCADE, workout_date DATE, discipline ride|track|gym|other, title 1-80, description <= 2000,
+structure_dsl TEXT <= 4000, structure_manifest JSONB <= 20 kB, source_template_name TEXT, status planned|skipped, activity_id -> activities ON DELETE SET NULL (unique where not null),
+created_by / updated_by -> profiles ON DELETE SET NULL, set_by_coach, created_at, updated_at)`, index `(rider_id, workout_date)`.
+- The structure is a **snapshot copy** of a template's `dsl_source` + `manifest` (no template id / FK; only the template name for display).
+- RLS: SELECT/UPDATE/DELETE for `rider_id = auth.uid()` or `is_coach_of(rider_id)`; there is **no INSERT policy** (creation is via RPC only).
+  Client UPDATE grant: `workout_date, discipline, title, description, status`. Structure, link and stamps cannot be named by clients.
+- Trigger `planned_workouts_stamp` stamps `created_by` / `updated_by` / `set_by_coach` from `auth.uid()`, pins `rider_id`, trims text, caps 20 workouts per rider and day,
+  and verifies that a linked activity belongs to the same rider. CHECK: a linked workout is never `skipped`.
+- SECURITY DEFINER RPCs (pinned `search_path`, `auth.uid()` + `is_coach_of` checked, not executable by `anon`): `planned_workout_create(rider, date, discipline, title, description, template)`,
+  `planned_workout_set_template(id, template|NULL)`, `planned_workout_duplicate(id, date)`, `planned_workout_link(id, activity)`, `planned_workout_unlink(id)`.
+  A template is snapshotted server-side from the **caller's own or a system** template only.
+- Status shown in the UI: completed (linked) / skipped / missed (derived: past, unlinked, not skipped; never stored) / planned. See *Planned workouts* in coaching.md.
