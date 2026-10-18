@@ -2,6 +2,7 @@
 // Rows are written by database triggers (see 20261014000000_blocks_requests_notifications.sql).
 
 import { fetchProfilesByIds, authorName } from './social.js'
+import { fetchCommentInfo, activityCommentsHref } from './activityComments.js'
 
 export const NOTIFICATION_PAGE_SIZE = 20
 
@@ -26,6 +27,12 @@ export function describeNotification(notification, actor) {
       return `${name} chose a different coach — you no longer have access to their data`
     case 'coach_edited':
       return `${name} (your coach) updated your training settings`
+    case 'activity_comment':
+      return notification.activity_owned
+        ? `${name} commented on your activity`
+        : `${name} commented on an activity you follow`
+    case 'comment_mention':
+      return `${name} mentioned you in a comment`
     case 'suggestion_submitted':
       return `${name} submitted a suggestion for review`
     case 'suggestion_approved':
@@ -41,6 +48,10 @@ export function describeNotification(notification, actor) {
 export function notificationHref(notification) {
   if (notification?.type === 'coach_invite' || notification?.type === 'coach_request') return '/settings#coaching'
   if (notification?.type === 'coach_edited') return '/settings#physiology'
+  if (notification?.type === 'activity_comment' || notification?.type === 'comment_mention') {
+    // Only set when the activity is still visible to the recipient.
+    return notification.activity_info ? activityCommentsHref(notification.activity_id, notification.activity_info) : null
+  }
   return null
 }
 
@@ -52,15 +63,27 @@ export async function fetchNotifications(client, userId, limit = NOTIFICATION_PA
   if (!userId) return { notifications: [], error: null }
   const { data, error } = await client
     .from('notifications')
-    .select('id, type, actor_id, suggestion_id, created_at, read_at')
+    .select('id, type, actor_id, suggestion_id, activity_id, created_at, read_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)
   if (error) return { notifications: [], error }
   const rows = data || []
   const { profiles } = await fetchProfilesByIds(client, rows.map((n) => n.actor_id))
+  const { info } = await fetchCommentInfo(
+    client,
+    rows.filter((n) => n.activity_id).map((n) => n.activity_id)
+  )
   return {
-    notifications: rows.map((n) => ({ ...n, actor: profiles.get(n.actor_id) || null })),
+    notifications: rows.map((n) => {
+      const activity_info = n.activity_id ? info.get(n.activity_id) || null : null
+      return {
+        ...n,
+        actor: profiles.get(n.actor_id) || null,
+        activity_info,
+        activity_owned: activity_info?.owner_id === userId,
+      }
+    }),
     error: null,
   }
 }
