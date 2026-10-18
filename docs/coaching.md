@@ -127,3 +127,22 @@ Short day notes on a rider's calendar - e.g. "can train Tue/Thu evenings", "ill"
   with the activities. Works for bot athletes. Planned workouts (step 4b) will be added to the same day cell as `events`.
 - Pure logic and the data helpers: `src/lib/calendarNotes.js` (tests in `src/lib/__tests__/calendarNotes.test.js`).
 
+
+## Planned workouts (step 4b, `20261206000000_planned_workouts.sql`)
+
+Single workouts planned on a rider's calendar (no recurrence, no multi-week plans yet).
+- **Who**: the rider and the rider's ACTIVE coach (`is_coach_of`, block-aware, per statement -> revocation is immediate) can read, plan, edit, move, skip, link/unlink and delete
+  ANY planned workout on that calendar (each other's too). Pending / declined / ended / blocked coaches, other riders' coaches, followers and strangers get nothing.
+  Never in the feed, public profile or any follower-visible view. No notification, not in realtime.
+- **Definition**: date + discipline (`ride|track|gym|other`) + title + optional notes + an optional **snapshot** of a template's structure (DSL source + manifest), taken
+  server-side when planned (`planned_workout_create` / `planned_workout_set_template`). It is a copy, not a live reference: later edits of the template do not change it.
+  Allowed sources: the **caller's own** and system templates (a coach cannot snapshot the rider's templates, the rider cannot use the coach's). The coach's template row
+  and metadata are never exposed - only the snapshot and the template *name*; the rider sees the full structure of workouts planned for them.
+- **Stamps**: `created_by` / `updated_by` / `set_by_coach` come from `auth.uid()` in a trigger; clients cannot name those columns. Label: "planned by coach <name>",
+  "planned by former coach" when the account is gone. Workouts survive the end of coaching and coach account deletion (FKs `SET NULL`).
+- **Status**: `planned | skipped` stored; completed = linked to an activity; **missed** = past + unlinked + not skipped, derived in the UI.
+- **Linking**: the app only *suggests* a match (`suggestMatches`: same day + discipline, one-to-one); a rider or coach confirms or links/unlinks manually
+  (`planned_workout_link` / `_unlink`). The activity must belong to the same rider; an activity completes at most one workout and a workout has at most one activity (unique index).
+  Deleting the activity only clears the link. Linking clears "skipped".
+- **Limits**: title 80, notes 2000, DSL 4000 chars, manifest 20 kB, 20 workouts per rider and day.
+- Pure logic and data helpers: `src/lib/plannedWorkouts.js` (tests in `src/lib/__tests__/plannedWorkouts.test.js`).
