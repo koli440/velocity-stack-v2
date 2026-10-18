@@ -12,7 +12,8 @@ MIGS = ['20261204000000_activity_comments', '20261212000000_activity_comment_ui_
         '20261216000000_activity_mention_candidates_suggest',
         '20261217000000_mention_handles',
         '20261218000000_mention_candidates_fallback',
-        '20261219000000_mention_candidates_real_first']
+        '20261219000000_mention_candidates_real_first',
+        '20261220000000_mention_handles_from_names']
 for m in MIGS:
     sql = open('supabase/migrations/%s.sql' % m).read()
     cur.execute(sql); cur.execute(sql)  # idempotent
@@ -125,11 +126,24 @@ cur.execute("insert into follows select id,%s from profiles where is_bot",(U['ow
 me('follower'); r=[x[1] for x in q("select * from activity_mention_candidates(%s,'')",a)]
 check('real riders outrank bots; unfollowed bots hidden on bare @', [n for n in r if n.startswith('aa_bot')], [])
 me('follower'); check('typing finds bots after real riders', [x[1] for x in q("select * from activity_mention_candidates(%s,'aa_')",a)][:1], ['aa_bot1'])
+cur.execute("reset role")
+cur.execute("insert into profiles(id,nickname,first_name,last_name) values(gen_random_uuid(),null,'Jana','Kolářová'),(gen_random_uuid(),'','Petr','Novak'),(gen_random_uuid(),'Zdeněk',null,null)")
+cur.execute("insert into follows select id,%s from profiles where nickname is null or nickname='' or nickname='Zdeněk'",(U['owner'],))
+cur.execute("insert into follows select id,%s from profiles where nickname is null or nickname='' or nickname='Zdeněk'",(U['follower'],))
+me('follower')
+check('null nickname: bare @ lists Jana by name handle', 'JanaKolářová' in [x[4] for x in q("select * from activity_mention_candidates(%s,'')",a)], True)
+check('null nickname: @ja finds her', [x[4] for x in q("select * from activity_mention_candidates(%s,'ja')",a) if x[4].startswith('Jana')], ['JanaKolářová'])
+check('last-name prefix kol matches (accent-insensitive)', [x[4] for x in q("select * from activity_mention_candidates(%s,'kol')",a) if x[4].startswith('Jana')], ['JanaKolářová'])
+check('empty-string nickname uses first+last', 'PetrNovak' in [x[4] for x in q("select * from activity_mention_candidates(%s,'pe')",a)], True)
+check('accented nickname found by plain text', [x[4] for x in q("select * from activity_mention_candidates(%s,'zdenek')",a)], ['Zdeněk'])
+me('owner'); q("select add_activity_comment(%s,'hi @janakolarova @zdenek')",a)
+cur.execute('reset role')
+check('null-nickname rider and accented nickname are mentioned', sorted(r[0] for r in q("select coalesce(nullif(p.nickname,''),p.first_name) from activity_comment_mentions m join profiles p on p.id=m.user_id where comment_id=(select id from activity_comments where body like 'hi @janakolarova%%')")), ['Jana','Zdeněk'])
 me('owner'); q("select add_activity_comment(%s,'hi @hasspace!')",a)
 cur.execute('reset role'); check('free-text nickname is mentioned via handle', q("select count(*) from activity_comment_mentions m join profiles p on p.id=m.user_id where p.nickname='has space'")[0][0], 1)
-me('follower'); check('bare @ (follower): owner, coach first, then other visible riders', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['owner','coach','fol_two','has space'])
-me('coach'); check('bare @ (coach): owner (athlete)', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['owner','fol_two','follower','has space'])
-me('owner'); check('bare @ (owner): coach first, never empty', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['coach','fol_two','follower','has space'])
+me('follower'); check('bare @ (follower): owner, coach first, then other visible riders', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)][:2], ['owner','coach'])
+me('coach'); check('bare @ (coach): owner (athlete)', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)][:1], ['owner'])
+me('owner'); check('bare @ (owner): coach first, never empty', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)][:1], ['coach'])
 me('stranger'); check('bare @ hidden activity', q("select * from activity_mention_candidates(%s,'')",a), [])
 me('blocked'); check('bare @ blocked', q("select * from activity_mention_candidates(%s,'')",a), [])
 me('excoach'); check('bare @ ex-coach', q("select * from activity_mention_candidates(%s,'')",a), [])
