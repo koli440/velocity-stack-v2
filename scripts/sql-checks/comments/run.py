@@ -10,7 +10,8 @@ cur.execute(open(os.path.join(HERE, 'stub.sql')).read())
 MIGS = ['20261204000000_activity_comments', '20261212000000_activity_comment_ui_rpcs',
         '20261214000000_activity_comment_moderation',
         '20261216000000_activity_mention_candidates_suggest',
-        '20261217000000_mention_handles']
+        '20261217000000_mention_handles',
+        '20261218000000_mention_candidates_fallback']
 for m in MIGS:
     sql = open('supabase/migrations/%s.sql' % m).read()
     cur.execute(sql); cur.execute(sql)  # idempotent
@@ -120,9 +121,9 @@ me('stranger'); check('candidates hidden activity', q("select * from activity_me
 me('coach'); check('coach gets candidates', len(q("select * from activity_mention_candidates(%s,'o')",a))>0, True)
 me('owner'); q("select add_activity_comment(%s,'hi @hasspace!')",a)
 cur.execute('reset role'); check('free-text nickname is mentioned via handle', q("select count(*) from activity_comment_mentions m join profiles p on p.id=m.user_id where p.nickname='has space'")[0][0], 1)
-me('follower'); check('bare @ (follower): owner+coach', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['coach','owner'])
-me('coach'); check('bare @ (coach): owner (athlete)', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['owner'])
-me('owner'); check('bare @ (owner): coach only', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['coach'])
+me('follower'); check('bare @ (follower): owner, coach first, then other visible riders', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['owner','coach','fol_two','has space'])
+me('coach'); check('bare @ (coach): owner (athlete)', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['owner','fol_two','follower','has space'])
+me('owner'); check('bare @ (owner): coach first, never empty', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['coach','fol_two','follower','has space'])
 me('stranger'); check('bare @ hidden activity', q("select * from activity_mention_candidates(%s,'')",a), [])
 me('blocked'); check('bare @ blocked', q("select * from activity_mention_candidates(%s,'')",a), [])
 me('excoach'); check('bare @ ex-coach', q("select * from activity_mention_candidates(%s,'')",a), [])

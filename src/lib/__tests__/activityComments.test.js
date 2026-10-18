@@ -237,3 +237,11 @@ test('searchMentionCandidates surfaces RPC errors', async () => {
     console.error = orig
   }
 })
+
+test('picking a rider with a free-text nickname inserts the typeable handle', () => {
+  const row = { id: 'u', nickname: 'Koen Olijslagers', display_name: 'Koen Olijslagers', handle: 'KoenOlijslagers' }
+  const mention = activeMentionQuery('hi @', 4)
+  const next = applyMention('hi @', mention, 4, row.handle || row.nickname)
+  assert.equal(next.text, 'hi @KoenOlijslagers ')
+  assert.equal(mentionHandle(row.nickname), row.handle)
+})
