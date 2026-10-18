@@ -11,6 +11,7 @@ import { OPEN_ADD_SESSION_EVENT, ACTIVITIES_CHANGED_EVENT } from '../lib/navigat
 import ActivityFeed from './ActivityFeed'
 import EmptyFeedCard from './EmptyFeedCard'
 import { stravaFlagMessage } from '../lib/emptyFeed'
+import PowerProfileCard from './PowerProfileCard'
 
 export default function Dashboard({ initialActivities = [] }) {
   const [user, setUser] = useState(null)
@@ -243,8 +244,10 @@ export default function Dashboard({ initialActivities = [] }) {
         )}
       </div>
 
-      {/* Right column: placeholder for upcoming cards (power profile, this week) */}
-      <div className="w-full xl:w-80 shrink-0 space-y-3" />
+      {/* Right column: placeholder for upcoming cards (this week) */}
+      <div className="w-full xl:w-80 shrink-0 space-y-3">
+        <PowerProfileCard userId={user?.id} />
+      </div>
     </div>
   )
 }
