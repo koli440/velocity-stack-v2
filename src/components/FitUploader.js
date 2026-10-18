@@ -202,7 +202,7 @@ export default function FitUploader({
   }
 
   return (
-    <div className="bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl relative">
+    <div className="glass-dense bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl relative">
       {onClose && (
         <button
           type="button"

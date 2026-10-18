@@ -136,7 +136,7 @@ export default function AeroTestForm({ tracks = [], onSaved }) {
   }
 
   return (
-    <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-5">
+    <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-5">
       <h2 className="text-sm font-black uppercase tracking-wide text-slate-900 dark:text-white">
         <Icon name="wind" /> New Test
       </h2>

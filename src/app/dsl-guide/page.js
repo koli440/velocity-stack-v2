@@ -13,7 +13,7 @@ export const metadata = {
   description: 'How to write interval templates with the VelocityStack interval DSL.',
 }
 
-const CARD = 'rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4'
+const CARD = 'glass-dense rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4'
 const H2 = 'text-lg font-bold text-slate-900 dark:text-white mb-2'
 const CODE = 'font-mono text-xs bg-slate-100 dark:bg-slate-900 rounded px-1.5 py-0.5'
 

@@ -34,7 +34,7 @@ export default function GearsPage() {
   )
 
   const metric = (label, value, unit) => (
-    <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+    <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
       <span className="text-xs uppercase font-bold text-slate-400">{label}</span>
       <div className="text-3xl font-black text-emerald-500 dark:text-brand-neon tracking-tight mt-1">
         {value}
@@ -52,7 +52,7 @@ export default function GearsPage() {
         </p>
       </div>
 
-      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+      <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {field('Chainring (teeth)', chainring, setChainring, 1)}
           {field('Cog (teeth)', cog, setCog, 1)}
@@ -68,7 +68,7 @@ export default function GearsPage() {
         {metric('Speed at Cadence', speedKmh.toFixed(1), 'km/h')}
       </div>
 
-      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+      <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
         <h2 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3">Similar Gears</h2>
         <label className="block space-y-1.5 mb-4 max-w-xs">
           <span className="text-xs uppercase font-bold text-slate-400">Tolerance: ±{tolerancePct}%</span>

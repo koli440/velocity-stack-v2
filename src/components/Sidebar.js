@@ -40,7 +40,7 @@ export default function Sidebar({
 
       {/* 2. The panel itself */}
       <aside
-        className={`fixed md:sticky top-0 left-0 z-50 h-screen w-64 shrink-0 flex flex-col justify-between p-5 bg-white dark:bg-surface-darkCard border-r border-slate-200 dark:border-surface-darkBorder transition-transform duration-300 ease-in-out ${
+        className={`fixed md:sticky top-0 left-0 z-50 h-screen w-64 shrink-0 flex flex-col justify-between p-5 glass-nav bg-white dark:bg-surface-darkCard border-r border-slate-200 dark:border-surface-darkBorder transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >

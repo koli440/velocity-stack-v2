@@ -120,7 +120,7 @@ export default function FeedbackPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-surface-darkBorder dark:bg-surface-darkCard"
+        className="glass-dense space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-surface-darkBorder dark:bg-surface-darkCard"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
@@ -202,7 +202,7 @@ export default function FeedbackPage() {
                   {items.map((item) => (
                     <div
                       key={item.id}
-                      className="rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-sm dark:border-surface-darkBorder dark:bg-surface-darkCard"
+                      className="glass-card rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-sm dark:border-surface-darkBorder dark:bg-surface-darkCard"
                     >
                       <p className="font-bold text-slate-900 dark:text-white">
                         {CATEGORY_LABELS[item.category] || item.category} · {MODULE_LABELS[item.module] || item.module}

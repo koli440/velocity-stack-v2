@@ -62,7 +62,7 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60" role="dialog" aria-modal="true" aria-label="Edit activity">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4 bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl"
+        className="glass-modal w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4 bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl"
       >
         <h2 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">Edit activity</h2>
 

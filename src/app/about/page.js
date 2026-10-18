@@ -67,7 +67,7 @@ export default function AboutPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-surface-darkBorder">
+          <div className="glass-dense overflow-hidden rounded-2xl border border-slate-200 dark:border-surface-darkBorder">
             <Image
               src="/about-photo.jpg"
               alt="Built at the Track."
