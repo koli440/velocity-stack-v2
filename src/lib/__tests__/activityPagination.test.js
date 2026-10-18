@@ -99,7 +99,7 @@ import { FEED_ACTIVITY_COLUMNS } from '../activityPagination.js'
 
 test('feed columns skip heavy blobs but include persisted preview + badges', () => {
   assert.ok(!/time_series/.test(FEED_ACTIVITY_COLUMNS) && !/(^|, )curves_data/.test(FEED_ACTIVITY_COLUMNS))
-  for (const col of ['route_preview', 'badges', 'power_curve:curves_data->Power', 'visibility', 'raw_file_url']) {
+  for (const col of ['route_preview', 'badges', 'power_curve:curves_data->Power', 'power_preview', 'visibility', 'raw_file_url']) {
     assert.ok(FEED_ACTIVITY_COLUMNS.includes(col), col)
   }
 })

@@ -1,6 +1,6 @@
-// Hero card content (issue #216): a per-activity power profile when the activity has power
-// curve data, otherwise a distance / time / speed summary.
-import { buildRadarData, hasProfileData, mapCurvesToProfile } from './powerProfile.js'
+// Hero card content (issue #216): the activity's power-over-time series when it has a
+// persisted power_preview, otherwise a distance / time / speed summary.
+import { powerPreviewSeries } from './powerPreview.js'
 
 function formatTime(sec) {
   if (!sec) return null
@@ -22,9 +22,9 @@ export function summaryMetrics(act) {
   return items.filter(Boolean)
 }
 
-/** @returns {{ kind: 'profile', data: object[] } | { kind: 'summary', items: object[] }} */
+/** @returns {{ kind: 'power', data: object[] } | { kind: 'summary', items: object[] }} */
 export function heroCardContent(act) {
-  const points = mapCurvesToProfile(act?.power_curve)
-  if (hasProfileData(points)) return { kind: 'profile', data: buildRadarData({ power: points }) }
+  const data = powerPreviewSeries(act?.power_preview)
+  if (data) return { kind: 'power', data }
   return { kind: 'summary', items: summaryMetrics(act) }
 }
