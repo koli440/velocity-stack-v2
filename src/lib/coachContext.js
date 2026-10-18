@@ -101,6 +101,7 @@ export function chromeVisibility(riderId) {
     footerLinks: own,
     adminLink: own,
     mySettings: own,
+    help: own,
   }
 }
 

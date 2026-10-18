@@ -13,6 +13,7 @@ import EmptyFeedCard from './EmptyFeedCard'
 import { stravaFlagMessage } from '../lib/emptyFeed'
 import PowerProfileCard from './PowerProfileCard'
 import WeekStatsCard from './WeekStatsCard'
+import OnboardingChecklist from './OnboardingChecklist'
 
 export default function Dashboard({ initialActivities = [] }) {
   const [user, setUser] = useState(null)
@@ -172,6 +173,8 @@ export default function Dashboard({ initialActivities = [] }) {
       <div className="flex flex-col xl:flex-row gap-6 items-start">
       {/* Main Cockpit */}
       <div className="flex-1 w-full min-w-0 space-y-6">
+        <OnboardingChecklist />
+
         {/* Feed scope */}
         <div className="flex gap-2" role="tablist" aria-label="Feed scope">
           {[

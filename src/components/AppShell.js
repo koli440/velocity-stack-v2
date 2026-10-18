@@ -9,7 +9,9 @@ import Sidebar from './Sidebar'
 import TopNav from './TopNav'
 import Footer from './Footer'
 import AppBackground from './AppBackground'
+import OnboardingProvider from './OnboardingProvider'
 import { PROFILE_UPDATED_EVENT } from '../lib/navigation'
+import { parseCoachPath } from '../lib/coachContext'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
 
 export default function AppShell({ children }) {
@@ -120,7 +122,11 @@ export default function AppShell({ children }) {
     )
   }
 
+  // Onboarding/news are the signed-in user's own state: never active inside an athlete context.
+  const ownContext = !parseCoachPath(pathname).riderId
+
   return (
+    <OnboardingProvider userId={user?.id} enabled={!!user && ownContext}>
     <div className="app-shell-root flex min-h-screen bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
       <AppBackground />
 
@@ -150,5 +156,6 @@ export default function AppShell({ children }) {
         <Footer />
       </div>
     </div>
+    </OnboardingProvider>
   )
 }

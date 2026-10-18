@@ -200,3 +200,6 @@ text has errors) and read-only for existing workouts. Elapsed time x power; bloc
 dashed FTP line. %FTP / zone / W bands are scaled with the rider's FTP on the planned day (`ftp_history` of the *rider*, also for a coach); without FTP the axis is %FTP
 with a hint. Distance-keyed steps cannot be placed in time: skipped and flagged "partial preview". Not included: W' balance curve (needs CP / W' data that is not readily available)
 and day-chip thumbnails. Logic: `src/lib/workoutPreview.js` (tests in `src/lib/__tests__/workoutPreview.test.js`).
+
+## Onboarding / What's new state is always the signed-in user's own
+`user_onboarding_state` has no coach policy, and the onboarding provider is disabled in athlete context (`/coach/<id>/...`); see docs/news.md.

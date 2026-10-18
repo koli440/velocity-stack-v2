@@ -8,6 +8,7 @@ import { authorName } from '../lib/social'
 import { viewingAsOptions, parseCoachPath, chromeVisibility, COACH_HOME_PATH } from '../lib/coachContext'
 import { usePathname } from 'next/navigation'
 import Avatar from './Avatar'
+import { useOnboarding } from './OnboardingProvider'
 
 // Username menu (top right). Offers a "Viewing as" switcher (Me + my athletes) when the user
 // coaches anyone. The context is only the URL: picking an athlete navigates to /coach/<id>.
@@ -19,6 +20,7 @@ export default function UserMenu({ user, profile, displayName }) {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState({ athletes: [], hasAthletes: false })
   const ref = useRef(null)
+  const { openWelcome, unreadNews, enabled: onboardingEnabled } = useOnboarding()
 
   useEffect(() => {
     if (!user?.id) return
@@ -93,6 +95,27 @@ export default function UserMenu({ user, profile, displayName }) {
             <button role="menuitem" onClick={() => go('/settings')} className={row(false)}>
               My settings
             </button>
+          )}
+          {chrome.help && onboardingEnabled && (
+            <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
+              <p className="px-3 pt-1 pb-1 text-[10px] uppercase font-bold tracking-wider text-slate-400">Help</p>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false)
+                  openWelcome()
+                }}
+                className={row(false)}
+              >
+                Getting started
+              </button>
+              <button role="menuitem" onClick={() => go('/whats-new')} className={row(pathname === '/whats-new')}>
+                What&apos;s new{unreadNews.length > 0 ? ` (${unreadNews.length} new)` : ''}
+              </button>
+              <button role="menuitem" onClick={() => go('/dsl-guide')} className={row(false)}>
+                Template syntax guide
+              </button>
+            </div>
           )}
         </div>
       )}
