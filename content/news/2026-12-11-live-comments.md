@@ -1,6 +1,6 @@
 ---
-id: 2026-12-13-live-comments
-date: 2026-12-13
+id: 2026-12-11-live-comments
+date: 2026-12-11
 title: Live comments and unread dots
 link: /
 linkLabel: Open your feed
