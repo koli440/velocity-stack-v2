@@ -23,6 +23,7 @@ import { weightFromActivity } from '../../../lib/weightHistory'
 // Leaflet requires window/document -> dynamic import without SSR
 import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
 import Icon from '../../../components/Icon'
+import ActivityComments from '../../../components/ActivityComments'
 
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
   ssr: false,
@@ -424,6 +425,9 @@ export default function ActivityDetailPage() {
       {sharedView && coachRiderId && coachRiderId === activity?.user_id && (
         <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} riderId={coachRiderId} onVisibleWindowsChange={setHighlightWindows} />
       )}
+
+      {/* 4c. Comments: owner, coach and every rider who can see the activity (issues #222-#224) */}
+      <ActivityComments activityId={activityId} />
 
       {/* 5. Bottom panel: Quick track and gearing setup (own activities only) */}
       {!sharedView && (

@@ -11,6 +11,8 @@ import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
 import { authorName } from '../lib/social'
 import { PREFETCH_ROOT_MARGIN, canAutoLoad, didLoadFail } from '../lib/infiniteScroll'
 import { useEffect, useRef, useState } from 'react'
+import { supabase } from '../lib/supabase'
+import { fetchCommentInfo, commentCountLabel } from '../lib/activityComments'
 
 // Intensity bar fill width (0-100%) driven by intensity_factor (IF ~1.0+ = full).
 function intensityPct(intensityFactor) {
@@ -111,6 +113,25 @@ export default function ActivityFeed({
   const [supported] = useState(() => typeof IntersectionObserver !== 'undefined')
   const [hasFailed, setHasFailed] = useState(false)
   const count = activities.length
+  const [commentCounts, setCommentCounts] = useState(new Map())
+  const idsKey = activities.map((a) => a.id).join(',')
+
+  // Comment counts come from one RPC per page of cards; a failure just hides the chip.
+  useEffect(() => {
+    if (!idsKey) return undefined
+    let cancelled = false
+    fetchCommentInfo(supabase, idsKey.split(',')).then(({ info }) => {
+      if (cancelled) return
+      setCommentCounts((prev) => {
+        const next = new Map(prev)
+        for (const [id, row] of info) next.set(id, row.comment_count)
+        return next
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [idsKey])
 
   // Always expose the freshest props to the observer callback.
   latest.current = { hasMore, isLoadingMore, onLoadMore, count, hasFailed, supported }
@@ -224,6 +245,16 @@ export default function ActivityFeed({
                 {(
                   <div className="flex items-center gap-2">
                     {!isOwnFeed && act.author && <AuthorLine author={act.author} />}
+                    {commentCounts.get(act.id) > 0 && (
+                      <Link
+                        href={`${activityHref(act)}#comments`}
+                        data-testid="comment-count-chip"
+                        aria-label={commentCountLabel(commentCounts.get(act.id))}
+                        className="relative z-10 shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-orange-500"
+                      >
+                        💬 {commentCounts.get(act.id)}
+                      </Link>
+                    )}
                     <span className="ml-auto shrink-0 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                       {formatDate(act.activity_date || act.created_at)}
                     </span>
