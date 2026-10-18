@@ -66,6 +66,11 @@ export function activeMentionQuery(text, caret) {
   return { start, query }
 }
 
+// A bare "@" (empty query) must already open the suggestions; only "no mention" does not.
+export function shouldFetchMentions(query) {
+  return typeof query === 'string'
+}
+
 // Replaces the "@query" typed at `start`..`caret` with "@nickname " and returns the new
 // text and caret position.
 export function applyMention(text, mention, caret, nickname) {

@@ -8,7 +8,8 @@ uri = srv.get_uri()
 c = psycopg2.connect(uri); c.autocommit=True; cur=c.cursor()
 cur.execute(open(os.path.join(HERE, 'stub.sql')).read())
 MIGS = ['20261204000000_activity_comments', '20261212000000_activity_comment_ui_rpcs',
-        '20261214000000_activity_comment_moderation']
+        '20261214000000_activity_comment_moderation',
+        '20261216000000_activity_mention_candidates_suggest']
 for m in MIGS:
     sql = open('supabase/migrations/%s.sql' % m).read()
     cur.execute(sql); cur.execute(sql)  # idempotent
@@ -115,6 +116,12 @@ check('candidates exclude unmentionable', [r[1] for r in q("select * from activi
 check('candidates wildcard safe', q("select * from activity_mention_candidates(%s,'%%')",a), [])
 me('stranger'); check('candidates hidden activity', q("select * from activity_mention_candidates(%s,'f')",a), [])
 me('coach'); check('coach gets candidates', len(q("select * from activity_mention_candidates(%s,'o')",a))>0, True)
+me('follower'); check('bare @ (follower): owner+coach', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['coach','owner'])
+me('coach'); check('bare @ (coach): owner (athlete)', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['owner'])
+me('owner'); check('bare @ (owner): coach only', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['coach'])
+me('stranger'); check('bare @ hidden activity', q("select * from activity_mention_candidates(%s,'')",a), [])
+me('blocked'); check('bare @ blocked', q("select * from activity_mention_candidates(%s,'')",a), [])
+me('excoach'); check('bare @ ex-coach', q("select * from activity_mention_candidates(%s,'')",a), [])
 me('owner'); pub=A('public'); me('follower'); q("select add_activity_comment(%s,'x')",pub)
 r=q("select owner_id,comments_enabled,comment_count,coach_id,viewer_is_coach from activity_comment_info(array[%s::uuid,%s::uuid])",pub,a)
 check('info rows (public visible, followers visible to follower)', len(r),2)
