@@ -12,7 +12,7 @@ import { authorName } from '../lib/social'
 import { PREFETCH_ROOT_MARGIN, canAutoLoad, didLoadFail } from '../lib/infiniteScroll'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { fetchCommentInfo, commentCountLabel } from '../lib/activityComments'
+import { fetchCommentInfo, fetchUnreadCounts, commentCountLabel } from '../lib/activityComments'
 
 // Intensity bar fill width (0-100%) driven by intensity_factor (IF ~1.0+ = full).
 function intensityPct(intensityFactor) {
@@ -114,6 +114,7 @@ export default function ActivityFeed({
   const [hasFailed, setHasFailed] = useState(false)
   const count = activities.length
   const [commentCounts, setCommentCounts] = useState(new Map())
+  const [unread, setUnread] = useState(new Map())
   const idsKey = activities.map((a) => a.id).join(',')
 
   // Comment counts come from one RPC per page of cards; a failure just hides the chip.
@@ -125,6 +126,14 @@ export default function ActivityFeed({
       setCommentCounts((prev) => {
         const next = new Map(prev)
         for (const [id, row] of info) next.set(id, row.comment_count)
+        return next
+      })
+    })
+    fetchUnreadCounts(supabase, idsKey.split(',')).then(({ counts }) => {
+      if (cancelled) return
+      setUnread((prev) => {
+        const next = new Map(prev)
+        for (const id of idsKey.split(',')) next.set(id, counts.get(id) || 0)
         return next
       })
     })
@@ -253,6 +262,14 @@ export default function ActivityFeed({
                         className="relative z-10 shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-orange-500"
                       >
                         💬 {commentCounts.get(act.id)}
+                        {unread.get(act.id) > 0 && (
+                          <span
+                            data-testid="comment-unread-dot"
+                            title="New comments"
+                            aria-label="New comments"
+                            className="ml-1 inline-block w-2 h-2 rounded-full bg-orange-500 align-middle"
+                          />
+                        )}
                       </Link>
                     )}
                     <span className="ml-auto shrink-0 text-[11px] font-medium text-slate-500 dark:text-slate-400">

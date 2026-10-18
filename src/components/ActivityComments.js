@@ -17,11 +17,13 @@ import {
   fetchActivityComments,
   fetchCommentInfo,
   isValidCommentBody,
+  markCommentsRead,
   relativeTime,
   reportActivityComment,
   searchMentionCandidates,
   setCommentsEnabled,
   splitCommentBody,
+  subscribeActivityComments,
 } from '../lib/activityComments'
 import Avatar from './Avatar'
 import BotBadge from './BotBadge'
@@ -255,6 +257,27 @@ export default function ActivityComments({ activityId }) {
     supabase.auth.getUser().then(({ data }) => setUserId(data?.user?.id || null))
     load()
   }, [load])
+
+  // Live updates: reload on any change (RLS filters what arrives); a reload also covers
+  // comments we just posted ourselves, so nothing is duplicated.
+  useEffect(() => {
+    if (!activityId) return undefined
+    let timer = null
+    const unsubscribe = subscribeActivityComments(supabase, activityId, () => {
+      clearTimeout(timer)
+      timer = setTimeout(load, 200)
+    })
+    return () => {
+      clearTimeout(timer)
+      unsubscribe()
+    }
+  }, [activityId, load])
+
+  // Opening the thread (and every live update while it is open) marks it as read.
+  const loaded = !loading && !loadError && !!info
+  useEffect(() => {
+    if (loaded) markCommentsRead(supabase, activityId)
+  }, [loaded, activityId, comments.length])
 
   // Scroll to the thread when opened from a notification (#comments).
   useEffect(() => {

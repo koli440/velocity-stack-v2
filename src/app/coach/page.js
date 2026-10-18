@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import { fetchMyCoaching, groupRelationships, fetchCoachDashboard, authorName, COACHING_SETTINGS_PATH } from '../../lib/coaching'
+import { fetchCoachUnreadComments } from '../../lib/activityComments'
 import { athletePath, formatLastActivity, weeklyVolume } from '../../lib/coachContext'
 import Avatar from '../../components/Avatar'
 import BotBadge from '../../components/BotBadge'
@@ -21,9 +22,10 @@ export default function CoachDashboardPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) return router.push('/login')
       const me = session.user.id
-      const [{ rows, profiles, error }, dash] = await Promise.all([
+      const [{ rows, profiles, error }, dash, { counts: unreadByRider }] = await Promise.all([
         fetchMyCoaching(supabase, me),
         fetchCoachDashboard(supabase),
+        fetchCoachUnreadComments(supabase),
       ])
       if (cancelled) return
       const groups = groupRelationships(rows, me)
@@ -32,6 +34,7 @@ export default function CoachDashboardPage() {
         riderId: rel.rider_id,
         profile: profiles.get(rel.rider_id) || null,
         stats: byRider.get(rel.rider_id) || null,
+        unread: unreadByRider.get(rel.rider_id) || 0,
       }))
       const pending = [
         ...groups.outgoingInvites.map((r) => ({ id: r.id, other: r.rider_id, text: 'Invite sent, waiting for them to accept' })),
@@ -68,6 +71,14 @@ export default function CoachDashboardPage() {
                 <span className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
                   <Avatar url={a.profile?.avatar_url} name={name} size="w-7 h-7" textSize="text-xs" /> {name}
                   {a.profile?.is_bot && <BotBadge />}
+                  {a.unread > 0 && (
+                    <span
+                      data-testid="coach-unread-comments"
+                      className="ml-auto px-1.5 py-0.5 rounded-full bg-orange-500 text-white text-[10px] font-black"
+                    >
+                      {a.unread} new {a.unread === 1 ? 'comment' : 'comments'}
+                    </span>
+                  )}
                 </span>
                 <span className="block text-[11px] text-slate-500">
                   Last activity: {formatLastActivity(a.stats?.last_activity_at)}
