@@ -50,7 +50,7 @@ test('rows hold per-day events and weekly summaries', () => {
   const weeks = buildMonthGrid(new Date(2026, 9, 1))
   const rows = buildCalendarRows(weeks, ev, { anchor: new Date(2026, 9, 1), today: new Date(2026, 9, 14) })
   const wk = rows.find((r) => r.cells.some((c) => c.key === '2026-10-13'))
-  assert.deepEqual(wk.summary, { count: 2, durationS: 5400, distanceM: 30000 })
+  assert.deepEqual(wk.summary, { count: 2, durationS: 5400, distanceM: 30000, plannedCount: 0, plannedDurationS: 0 })
   const tue = wk.cells.find((c) => c.key === '2026-10-13')
   assert.deepEqual(tue.events.map((e) => e.id), ['2', '1'])
   assert.equal(wk.cells.find((c) => c.key === '2026-10-14').isToday, true)
@@ -78,4 +78,12 @@ test('fetchActivitiesInRange queries only the range and needed columns', async (
   assert.deepEqual(calls.find((c) => c[0] === 'eq'), ['eq', 'user_id', 'u1'])
   assert.ok(!calls.find((c) => c[0] === 'select')[1].includes('time_series'))
   assert.deepEqual(await fetchActivitiesInRange(client, {}), { data: [], error: null })
+})
+
+test('summarizeEvents keeps planned workouts out of the activity totals', () => {
+  const s = summarizeEvents([
+    { kind: 'activity', durationS: 3600, distanceM: 30000 },
+    { kind: 'planned', durationS: 1800, distanceM: 0 },
+  ])
+  assert.deepEqual(s, { count: 1, durationS: 3600, distanceM: 30000, plannedCount: 1, plannedDurationS: 1800 })
 })

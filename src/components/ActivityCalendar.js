@@ -8,6 +8,27 @@ import Icon from './ActivityIcons'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
 import CalendarNoteDialog from './CalendarNoteDialog'
+import PlannedWorkoutDialog, { STATUS_STYLES } from './PlannedWorkoutDialog'
+import { coachRunnableTemplates } from '../lib/coachRuns'
+import {
+  fetchPlannedInRange,
+  plannedToEvent,
+  plannedProfileIds,
+  PLANNED_STATUS_LABELS,
+  suggestMatches,
+  runForPlanned,
+  countPlannedByDay,
+  canMoveTo,
+  createPlanned,
+  updatePlanned,
+  movePlanned,
+  setPlannedSkipped,
+  deletePlanned,
+  duplicatePlanned,
+  setPlannedTemplate,
+  linkPlannedActivity,
+  unlinkPlannedActivity,
+} from '../lib/plannedWorkouts'
 import { fetchProfilesByIds } from '../lib/social'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
 import {
@@ -25,6 +46,7 @@ import {
 
 const defaultFetchEvents = (args) => fetchActivitiesInRange(supabase, args)
 const defaultFetchNotes = (args) => fetchNotesInRange(supabase, args)
+const defaultFetchPlanned = (args) => fetchPlannedInRange(supabase, args)
 
 const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike' }
 
@@ -50,6 +72,33 @@ function EventChip({ event }) {
           .join(' · ')}
       </span>
     </Link>
+  )
+}
+
+// Planned workouts open the detail dialog and can be dragged to another day (the dialog has a date field as fallback).
+function PlannedChip({ event, onOpen }) {
+  return (
+    <button
+      type="button"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', event.plannedId)
+        e.dataTransfer.effectAllowed = 'move'
+      }}
+      onClick={() => onOpen(event.plannedId)}
+      data-testid="calendar-planned"
+      data-status={event.status}
+      title={`${event.title} · ${PLANNED_STATUS_LABELS[event.status]}`}
+      className={`block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight border cursor-grab hover:border-emerald-500 transition ${STATUS_STYLES[event.status]}`}
+    >
+      <span className="flex items-center gap-1 font-bold min-w-0">
+        <span aria-hidden>{{ planned: '🗓', completed: '✓', skipped: '⤼', missed: '✗' }[event.status]}</span>
+        <span className="truncate">{event.title}</span>
+      </span>
+      <span className="block opacity-80 truncate">
+        {[PLANNED_STATUS_LABELS[event.status], event.durationS ? formatDuration(event.durationS) : null, event.metric?.value].filter(Boolean).join(' · ')}
+      </span>
+    </button>
   )
 }
 
@@ -86,6 +135,11 @@ function WeekSummary({ summary }) {
       {stat(`${formatDuration(summary.durationS)} h`, 'Time')}
       {stat(formatKm(summary.distanceM), 'Distance')}
       {stat(summary.count, summary.count === 1 ? 'Activity' : 'Activities')}
+      {summary.plannedCount > 0 && (
+        <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-sky-600 dark:text-sky-300 text-center md:text-left">
+          {summary.plannedCount} planned
+        </span>
+      )}
     </div>
   )
 }
@@ -97,8 +151,9 @@ function WeekSummary({ summary }) {
  *   returns day-cell events (see lib/calendar.js); only the visible range is requested.
  *   Defaults to the rider's activities from Supabase.
  * @param {Function} [fetchNotes]  same for calendar notes (RLS: only the rider and the rider's active coach get rows)
+ * @param {Function} [fetchPlanned]  same for planned workouts (RLS: only the rider and the rider's active coach get rows)
  */
-export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = defaultFetchEvents, fetchNotes = defaultFetchNotes }) {
+export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = defaultFetchEvents, fetchNotes = defaultFetchNotes, fetchPlanned = defaultFetchPlanned }) {
   const [sessionUserId, setSessionUserId] = useState(null)
   const riderId = riderIdProp || sessionUserId
 
@@ -113,6 +168,10 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   const [notes, setNotes] = useState([])
   const [names, setNames] = useState({})
   const [dialog, setDialog] = useState(null) // { day: Date, note: object|null }
+  const [planned, setPlanned] = useState([])
+  const [runs, setRuns] = useState([])
+  const [templates, setTemplates] = useState([])
+  const [pdialog, setPdialog] = useState(null) // { day: Date, id: string|null }
 
   const { start, end, startISO, endISO } = useMemo(() => monthRange(anchor), [anchor])
 
@@ -120,16 +179,31 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     if (!riderId) return
     setLoading(true)
     setError(null)
-    const [{ data, error: err }, { data: noteRows, error: noteErr }] = await Promise.all([
+    const range = { riderId, startDay: dayKey(start), endDay: dayKey(addDays(end, -1)) }
+    const [{ data, error: err }, { data: noteRows, error: noteErr }, { data: plannedRows, error: plannedErr }] = await Promise.all([
       fetchEvents({ riderId, startISO, endISO }),
-      fetchNotes({ riderId, startDay: dayKey(start), endDay: dayKey(addDays(end, -1)) }),
+      fetchNotes(range),
+      fetchPlanned(range),
     ])
     if (err) setError(err.message || 'Failed to load activities.')
     else if (noteErr) setError(noteErr.message || 'Failed to load notes.')
+    else if (plannedErr) setError(plannedErr.message || 'Failed to load planned workouts.')
     setEvents(data || [])
     setNotes(noteRows || [])
+    setPlanned(plannedRows || [])
+    // Run results of linked activities (RLS: rider and the rider's active coach).
+    const linkedIds = (plannedRows || []).map((w) => w.activity_id).filter(Boolean)
+    if (linkedIds.length) {
+      const { data: runRows } = await supabase
+        .from('template_executions')
+        .select('id, activity_id, template_name, summary, created_at')
+        .eq('user_id', riderId)
+        .in('activity_id', linkedIds)
+        .order('created_at', { ascending: false })
+      setRuns(runRows || [])
+    } else setRuns([])
     setLoading(false)
-  }, [riderId, fetchEvents, fetchNotes, start, end, startISO, endISO])
+  }, [riderId, fetchEvents, fetchNotes, fetchPlanned, start, end, startISO, endISO])
 
   useEffect(() => {
     let cancelled = false
@@ -140,10 +214,15 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   }, [load])
 
   const rows = useMemo(() => {
-    return buildCalendarRows(buildMonthGrid(anchor), events, { anchor, notes })
-  }, [anchor, events, notes])
+    const today = new Date()
+    return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => plannedToEvent(w, today))], { anchor, notes })
+  }, [anchor, events, notes, planned])
 
-  const nameKey = noteProfileIds(notes).sort().join(',')
+  const plannedById = useMemo(() => new Map(planned.map((w) => [w.id, w])), [planned])
+  const countByDay = useMemo(() => countPlannedByDay(planned), [planned])
+  const suggestions = useMemo(() => suggestMatches(planned, events), [planned, events])
+
+  const nameKey = [...new Set([...noteProfileIds(notes), ...plannedProfileIds(planned)])].sort().join(',')
   useEffect(() => {
     if (!nameKey) return
     let cancelled = false
@@ -175,6 +254,45 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     setDialog(null)
     await load()
     return null
+  }
+
+  const openPlanned = async (day, id) => {
+    setPdialog({ day, id })
+    if (!templates.length) {
+      const { data } = await supabase.from('analysis_templates').select('id, name, category, user_id').order('name')
+      setTemplates(coachRunnableTemplates(data, sessionUserId))
+    }
+  }
+
+  const refresh = async (fn) => {
+    const { error: err } = await fn()
+    if (err) return err
+    await load()
+    return null
+  }
+
+  const plannedActions = (id) => ({
+    create: (f) => refresh(() => createPlanned(supabase, { riderId, ...f })),
+    update: (f) => refresh(() => updatePlanned(supabase, id, f)),
+    setTemplate: (t) => refresh(() => setPlannedTemplate(supabase, id, t)),
+    move: (day) => refresh(() => movePlanned(supabase, id, day)),
+    duplicate: (day) => refresh(() => duplicatePlanned(supabase, id, day)),
+    skip: (v) => refresh(() => setPlannedSkipped(supabase, id, v)),
+    link: (a) => refresh(() => linkPlannedActivity(supabase, id, a)),
+    unlink: () => refresh(() => unlinkPlannedActivity(supabase, id)),
+    remove: () => refresh(() => deletePlanned(supabase, id)),
+  })
+
+  const dropOnDay = async (e, day) => {
+    e.preventDefault()
+    const w = plannedById.get(e.dataTransfer.getData('text/plain'))
+    if (!w) return
+    const target = dayKey(day)
+    const check = canMoveTo(w, target, countByDay)
+    if (!check.ok) return check.reason === 'Already on that day.' ? undefined : setError(check.reason)
+    const { error: err } = await movePlanned(supabase, w.id, target)
+    if (err) setError(err.message)
+    else await load()
   }
 
   const title = formatDate(anchor, { month: 'long', year: 'numeric' })
@@ -210,6 +328,8 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
               return (
                 <div
                   key={cell.key}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => dropOnDay(e, cell.date)}
                   className={`rounded-xl border p-1.5 min-h-[3rem] md:min-h-[6.5rem] space-y-1 ${hideOnMobile ? 'hidden md:block' : ''} ${
                     cell.isToday
                       ? 'border-emerald-500 bg-emerald-500/5'
@@ -221,6 +341,16 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                       <span className="md:hidden">{formatDate(cell.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                       <span className="hidden md:inline">{cell.date.getDate()}</span>
                     </span>
+                    <span className="flex items-center">
+                    <button
+                      type="button"
+                      aria-label={`Plan workout on ${formatDate(cell.date, { day: 'numeric', month: 'long' })}`}
+                      title="Plan workout"
+                      onClick={() => openPlanned(cell.date, null)}
+                      className="px-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-sky-600"
+                    >
+                      🗓
+                    </button>
                     <button
                       type="button"
                       aria-label={`Add note on ${formatDate(cell.date, { day: 'numeric', month: 'long' })}`}
@@ -230,9 +360,12 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                     >
                       +
                     </button>
+                    </span>
                   </div>
                   {cell.notes.map((n) => <NoteChip key={n.id} note={n} onOpen={(note) => setDialog({ day: cell.date, note })} />)}
-                  {cell.events.map((e) => <EventChip key={`${e.kind}-${e.id}`} event={e} />)}
+                  {cell.events.map((e) => (e.kind === 'planned'
+                    ? <PlannedChip key={`planned-${e.id}`} event={e} onOpen={(id) => openPlanned(cell.date, id)} />
+                    : <EventChip key={`${e.kind}-${e.id}`} event={e} />))}
                 </div>
               )
             })}
@@ -252,6 +385,27 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
           onClose={() => setDialog(null)}
         />
       )}
+      {pdialog && (() => {
+        const w = pdialog.id ? plannedById.get(pdialog.id) : null
+        if (pdialog.id && !w) return null
+        return (
+          <PlannedWorkoutDialog
+            key={pdialog.id || `new-${dayKey(pdialog.day)}`}
+            workout={w}
+            day={pdialog.day}
+            names={names}
+            viewerId={sessionUserId}
+            templates={templates}
+            activities={events}
+            workouts={planned}
+            countByDay={countByDay}
+            suggestedActivityId={w ? suggestions.get(w.id) : null}
+            run={w ? runForPlanned(w, runs) : null}
+            actions={plannedActions(pdialog.id)}
+            onClose={() => setPdialog(null)}
+          />
+        )
+      })()}
       {!loading && !error && events.length === 0 && (
         <p className="text-xs text-slate-400 text-center">No activities in this period.</p>
       )}
