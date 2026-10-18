@@ -1,6 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import WorkoutPreviewChart from './WorkoutPreviewChart'
+import { ftpAt } from '../lib/ftpHistory'
 import PlannedTemplatePicker from './PlannedTemplatePicker'
 import { DSL_GUIDE_PATH } from '../lib/dslGuide'
 import {
@@ -55,7 +57,7 @@ function RunResult({ run }) {
  * The rider and the rider's active coach may do everything here (the database decides).
  */
 export default function PlannedWorkoutDialog({
-  workout, day, names, viewerId, activities, workouts, countByDay, suggestedActivityId, run, actions, onClose,
+  workout, day, names, viewerId, activities, workouts, countByDay, suggestedActivityId, run, actions, onClose, ftpHistory = [],
 }) {
   const creating = !workout
   const [title, setTitle] = useState(workout?.title || '')
@@ -73,7 +75,15 @@ export default function PlannedWorkoutDialog({
 
   const status = workout ? plannedStatus(workout) : 'planned'
   const parsed = useMemo(() => parseStructure(dsl), [dsl])
-  const summary = useMemo(() => (parsed.manifest ? summarizeStructure(parsed.manifest) : null), [parsed])
+  // Keep the last valid structure while the text has errors so the preview does not flicker away.
+  const [lastManifest, setLastManifest] = useState(parsed.manifest)
+  useEffect(() => {
+    if (parsed.manifest) setLastManifest(parsed.manifest)
+    else if (parsed.empty) setLastManifest(null)
+  }, [parsed])
+  const shownManifest = parsed.manifest || (parsed.empty ? null : lastManifest)
+  const summary = useMemo(() => (shownManifest ? summarizeStructure(shownManifest) : null), [shownManifest])
+  const ftp = useMemo(() => ftpAt(ftpHistory, targetDay), [ftpHistory, targetDay])
   const linkable = useMemo(() => (workout ? linkableActivities(workout, workouts, activities) : []), [workout, workouts, activities])
   const linked = workout?.activity_id ? (activities || []).find((a) => a.id === workout.activity_id) : null
   const edited = workout ? plannedEditedLabel(workout, names, viewerId) : null
@@ -211,6 +221,8 @@ export default function PlannedWorkoutDialog({
         {summary && (
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-xs space-y-1" data-testid="planned-structure">
             <div className="font-bold text-slate-900 dark:text-white">Structure</div>
+            <WorkoutPreviewChart manifest={shownManifest} ftp={ftp} />
+            {parsed.errors.length > 0 && <div className="text-[11px] font-semibold text-amber-600">Showing the last valid version of the definition.</div>}
             <pre className="whitespace-pre-wrap font-sans text-slate-600 dark:text-slate-300">{summary.lines.join('\n')}</pre>
             <div className="text-slate-500 dark:text-slate-400">
               {summary.durationS ? `~${formatDuration(summary.durationS)} h${summary.partial ? '+' : ''}` : ''}

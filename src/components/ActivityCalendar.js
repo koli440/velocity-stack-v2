@@ -28,6 +28,7 @@ import {
   linkPlannedActivity,
   unlinkPlannedActivity,
 } from '../lib/plannedWorkouts'
+import { fetchFtpHistory } from '../lib/ftpHistory'
 import { fetchProfilesByIds } from '../lib/social'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
 import {
@@ -256,6 +257,16 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
 
   const openPlanned = (day, id) => setPdialog({ day, id })
 
+  const [ftpHistory, setFtpHistory] = useState([])
+  useEffect(() => {
+    if (!riderId) return undefined
+    let cancelled = false
+    fetchFtpHistory(supabase, riderId).then(({ history }) => !cancelled && setFtpHistory(history || [])).catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [riderId])
+
   const refresh = async (fn) => {
     const { error: err } = await fn()
     if (err) return err
@@ -392,6 +403,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
             countByDay={countByDay}
             suggestedActivityId={w ? suggestions.get(w.id) : null}
             run={w ? runForPlanned(w, runs) : null}
+            ftpHistory={ftpHistory}
             actions={plannedActions(pdialog.id)}
             onClose={() => setPdialog(null)}
           />

@@ -159,3 +159,11 @@ skip/unskip, link/unlink an activity (a same-day, same-discipline suggestion is 
 delete. When linked, the template run of the same template name on that activity is shown. Week totals count
 completed activities only; planned workouts are counted separately. Not included: running the planned structure's
 template on the linked activity (would need the template definition; the snapshot is not a template).
+
+### Workout preview
+
+The planned workout dialog shows a preview chart (`WorkoutPreviewChart`, SVG, theme-aware) rendered live from the DSL box (last valid version kept while the
+text has errors) and read-only for existing workouts. Elapsed time x power; blocks coloured by intensity, lighter part = band range, warm-up / cool-down as ramps,
+dashed FTP line. %FTP / zone / W bands are scaled with the rider's FTP on the planned day (`ftp_history` of the *rider*, also for a coach); without FTP the axis is %FTP
+with a hint. Distance-keyed steps cannot be placed in time: skipped and flagged "partial preview". Not included: W' balance curve (needs CP / W' data that is not readily available)
+and day-chip thumbnails. Logic: `src/lib/workoutPreview.js` (tests in `src/lib/__tests__/workoutPreview.test.js`).
