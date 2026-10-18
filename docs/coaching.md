@@ -124,7 +124,7 @@ Short day notes on a rider's calendar - e.g. "can train Tue/Thu evenings", "ill"
   Deleting the rider deletes them. No notification.
 - **UI**: shown first in the day cell of the month calendar (amber chip with the title, full text in the hover title); click opens a dialog to view/edit/delete,
   the "+" in the day header adds one. Same component on `/calendar` and `/coach/<riderId>/calendar`; notes are fetched for the visible grid range together
-  with the activities. Works for bot athletes. Planned workouts (step 4b) will be added to the same day cell as `events`.
+  with the activities. Works for bot athletes. Planned workouts (step 4b) share the day cell as `events` of kind `planned`.
 - Pure logic and the data helpers: `src/lib/calendarNotes.js` (tests in `src/lib/__tests__/calendarNotes.test.js`).
 
 
@@ -146,3 +146,14 @@ Single workouts planned on a rider's calendar (no recurrence, no multi-week plan
   Deleting the activity only clears the link. Linking clears "skipped".
 - **Limits**: title 80, notes 2000, DSL 4000 chars, manifest 20 kB, 20 workouts per rider and day.
 - Pure logic and data helpers: `src/lib/plannedWorkouts.js` (tests in `src/lib/__tests__/plannedWorkouts.test.js`).
+
+### Planned workouts UI
+
+`ActivityCalendar` (used by `/calendar` and `/coach/<riderId>/calendar`) fetches the visible grid range of planned
+workouts next to activities and notes. Chips are styled per status (planned dashed blue, completed green, skipped
+struck through, missed red) and can be dragged to another day; `PlannedWorkoutDialog` (🗓 button / chip click) offers
+create, edit, structure from a template (own + system only), move and duplicate via date fields (non-drag fallback),
+skip/unskip, link/unlink an activity (a same-day, same-discipline suggestion is preselected, the user confirms) and
+delete. When linked, the template run of the same template name on that activity is shown. Week totals count
+completed activities only; planned workouts are counted separately. Not included: running the planned structure's
+template on the linked activity (would need the template definition; the snapshot is not a template).

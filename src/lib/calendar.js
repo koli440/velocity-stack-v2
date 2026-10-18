@@ -4,6 +4,7 @@
 // Day items share one event model so planned workouts can be added later next to activities:
 //   { id, kind: 'activity' | 'planned', date: Date, title, discipline, distanceM, durationS,
 //     metric: { label, value } | null, href }
+// Planned workouts (src/lib/plannedWorkouts.js, kind 'planned', with a `status`) share the model but do not count in week totals.
 // Calendar notes (src/lib/calendarNotes.js) are not timed events: they sit on the day cell as `cell.notes`.
 
 import { groupNotesByDay } from './calendarNotes.js'
@@ -108,15 +109,21 @@ export function groupEventsByDay(events) {
   return map
 }
 
+/** Week totals cover completed activities only; planned workouts are counted separately. */
 export function summarizeEvents(events) {
   return events.reduce(
     (acc, e) => {
+      if (e.kind === 'planned') {
+        acc.plannedCount += 1
+        acc.plannedDurationS += e.durationS || 0
+        return acc
+      }
       acc.count += 1
       acc.durationS += e.durationS || 0
       acc.distanceM += e.distanceM || 0
       return acc
     },
-    { count: 0, durationS: 0, distanceM: 0 }
+    { count: 0, durationS: 0, distanceM: 0, plannedCount: 0, plannedDurationS: 0 }
   )
 }
 
