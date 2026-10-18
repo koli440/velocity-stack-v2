@@ -54,5 +54,33 @@ The webhook subscription (one per Strava app, callback `{app_base_url}/api/webho
 the first rider connects, or manually with `POST /api/webhooks/strava/subscribe` while signed in. The verify token and
 the cron token live in `public.sync_settings`; `app_base_url` there decides where pg_cron calls.
 
+## Planned workouts -> Intervals.icu (`20261208000000_planned_workout_intervals_push.sql`)
+A planned workout can be sent to the rider's Intervals.icu calendar as an event (`POST/PUT/DELETE /api/v1/athlete/{id}/events`,
+category `WORKOUT`, type Ride/WeightTraining/Workout, name, `start_date_local` at `T00:00:00`, description in Intervals.icu workout
+syntax, `external_id = velocity-stack:<planned workout id>`).
+
+- **Converter**: `src/lib/intervalsWorkout.js` (pure; `buildIntervalsEvent`, `plannedPushHash`, `pushState`). Warm-up/cool-down are
+  duration-only steps, repeats are `Main set Nx` blocks, sets are expanded (no nested repeats), `%FTP`/W/`% HR`/`% LTHR`/rpm bands are
+  sent as targets (single-sided bands use their bound), `%LT2` is sent as %FTP, `%LT1` as 75% FTP, power zones as %FTP of the default zone
+  model (custom zones are not applied). Best-effort, bpm, `%LT1HR`, km/h and W/kg bands have no target: the step keeps its duration and the
+  target is written as a note. Distance steps need a km/h band (duration = distance / mid speed), otherwise they are left out with a note.
+  Fixed track patterns have no steps and become a plain-text description. Every degradation is returned as a warning and shown in the app.
+- **Who / how**: `POST|DELETE /api/planned-workouts/<id>/intervals`. The request-scoped (RLS) client must see the workout (rider or ACTIVE,
+  non-blocked coach); only then the athlete's connection is loaded with the service role. 503 without `SUPABASE_SERVICE_ROLE_KEY`.
+  The key and athlete id never leave the server (not in responses, errors or logs).
+- **Connection check**: only an `active` Intervals connection can push; otherwise the app shows a link to Settings -> Connections.
+  401 (bad key) and 403 (read-only key) stop the push with an actionable message; network errors, 429 and 5xx are retried later.
+- **Mapping**: `planned_workout_pushes` (service-role writes, rider/active coach read): `intervals_event_id`, `pushed_hash`, `push_status`
+  (`pending|pushed|error|pending_delete`), `last_error`, `warnings`. A workout is *out of date* when its hash differs from `pushed_hash`.
+  Only events whose id we stored (or that carry our `external_id`) are updated or deleted; an event with a foreign `external_id` is never deleted.
+  If the event was deleted in Intervals.icu (404 on update) it is recreated (the plan in Velocity Stack wins).
+- **Scheduled push**: `planned-workout-push` (pg_cron every 15 min -> pg_net -> `/api/planned-workouts/push/run`, `x-sync-token`, like
+  `intervals-sync`; no external secrets). Riders opt in with `connections.push_planned_workouts` (default OFF, toggle in Settings ->
+  Connections). It pushes new/changed planned workouts from today to +60 days (max 25 per rider, 10 riders and 45 s per run), removes
+  skipped workouts, and always propagates deletions (tombstones) for riders with an active connection. A failing workout is retried
+  after 6 h unless edited; a 401/403 stops that rider and is shown in Settings. Disconnecting or switching the Intervals athlete turns the
+  setting off and forgets the mappings (existing events stay in Intervals.icu).
+- Not included: `.fit` / `.zwo` export, W/kg targets (no rider weight is sent), live verification against Intervals.icu with a real key.
+
 ## Tests
 CI runs `npm test` (`.github/workflows/test.yml`).

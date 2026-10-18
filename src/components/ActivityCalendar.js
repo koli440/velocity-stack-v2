@@ -9,6 +9,8 @@ import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
 import CalendarNoteDialog from './CalendarNoteDialog'
 import PlannedWorkoutDialog, { STATUS_STYLES } from './PlannedWorkoutDialog'
+import { fetchPushRows } from '../lib/plannedPushClient'
+import { pushState, PUSH_STATE_LABELS } from '../lib/intervalsWorkout'
 import {
   fetchPlannedInRange,
   plannedToEvent,
@@ -64,6 +66,11 @@ function EventChip({ event }) {
       <span className="flex items-center gap-1 font-bold text-slate-900 dark:text-white min-w-0">
         <Icon name={DISCIPLINE_ICON[event.discipline] || 'bike'} size={12} className="shrink-0 text-emerald-600 dark:text-brand-neon" />
         <span className="truncate">{event.title}</span>
+        {event.pushState && event.pushState !== 'not_pushed' && (
+          <span aria-label={PUSH_STATE_LABELS[event.pushState]} data-testid="calendar-planned-push" data-state={event.pushState} className="ml-auto shrink-0">
+            {{ pushed: '⇪', out_of_date: '⇪!', error: '⚠' }[event.pushState]}
+          </span>
+        )}
       </span>
       <span className="block text-slate-500 dark:text-slate-400 truncate">
         {[event.distanceM ? formatKm(event.distanceM) : null, event.durationS ? formatDuration(event.durationS) : null, event.metric?.value]
@@ -87,7 +94,7 @@ function PlannedChip({ event, onOpen }) {
       onClick={() => onOpen(event.plannedId)}
       data-testid="calendar-planned"
       data-status={event.status}
-      title={`${event.title} · ${PLANNED_STATUS_LABELS[event.status]}`}
+      title={`${event.title} · ${PLANNED_STATUS_LABELS[event.status]}${event.pushState && event.pushState !== 'not_pushed' ? ` · ${PUSH_STATE_LABELS[event.pushState]}` : ''}`}
       className={`block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight border cursor-grab hover:border-emerald-500 transition ${STATUS_STYLES[event.status]}`}
     >
       <span className="flex items-center gap-1 font-bold min-w-0">
@@ -170,6 +177,8 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   const [planned, setPlanned] = useState([])
   const [runs, setRuns] = useState([])
   const [pdialog, setPdialog] = useState(null) // { day: Date, id: string|null }
+  const [pushRows, setPushRows] = useState(new Map())
+  const [pushTick, setPushTick] = useState(0)
 
   const { start, end, startISO, endISO } = useMemo(() => monthRange(anchor), [anchor])
 
@@ -213,8 +222,17 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
 
   const rows = useMemo(() => {
     const today = new Date()
-    return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => plannedToEvent(w, today))], { anchor, notes })
-  }, [anchor, events, notes, planned])
+    return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => ({ ...plannedToEvent(w, today), pushState: pushState(w, pushRows.get(w.id)) }))], { anchor, notes })
+  }, [anchor, events, notes, planned, pushRows])
+
+  // Intervals.icu push status of the visible workouts (RLS: rider + active coach; empty for everyone else).
+  useEffect(() => {
+    let cancelled = false
+    fetchPushRows(supabase, planned.map((w) => w.id)).then((m) => !cancelled && setPushRows(m)).catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [planned, pushTick])
 
   const plannedById = useMemo(() => new Map(planned.map((w) => [w.id, w])), [planned])
   const countByDay = useMemo(() => countPlannedByDay(planned), [planned])
@@ -270,6 +288,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     move: (day) => refresh(() => movePlanned(supabase, id, day)),
     duplicate: (day) => refresh(() => duplicatePlanned(supabase, id, day)),
     skip: (v) => refresh(() => setPlannedSkipped(supabase, id, v)),
+    pushChanged: () => setPushTick((n) => n + 1),
     link: (a) => refresh(() => linkPlannedActivity(supabase, id, a)),
     unlink: () => refresh(() => unlinkPlannedActivity(supabase, id)),
     remove: () => refresh(() => deletePlanned(supabase, id)),

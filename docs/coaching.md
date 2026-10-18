@@ -15,6 +15,12 @@
 - Never exposed: connection tokens, `profile_secrets`, email. `get_athlete_profile` returns training fields only.
 - Known gap: `shared_activities` does not expose later snapshot columns (e.g. `ftp_at_activity_w`).
 
+## Pushing planned workouts to Intervals.icu (`20261208000000_planned_workout_intervals_push.sql`)
+The rider's ACTIVE coach (not pending/ended/blocked) can push, update and remove the athlete's planned workouts in the ATHLETE's Intervals.icu
+calendar from the planned workout dialog. The server checks access through RLS on `planned_workouts` and then uses the athlete's connection
+with the service role; the coach never sees the API key, the athlete id or the connection row (`planned_push_context` only returns
+`connected` / `auto_enabled`). The automatic push is the rider's own setting (coaches cannot change it). See docs/integrations.md.
+
 ## Coach edits (step 3, `20261130000000_coach_edits.sql`)
 Consent is wide: besides reading everything, the ACTIVE coach (`is_coach_of`) may write the rider's physiology and
 training settings, and **only** those:
