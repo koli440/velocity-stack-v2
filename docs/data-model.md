@@ -174,7 +174,7 @@ Month calendar of a rider's activities (Monday-start weeks). Each week row ends 
 `ActivityCalendar` takes an optional `riderId` (defaults to the signed-in user) and a `fetchEvents` function, so a
 coach view can reuse it later. Only the visible range is queried (`activity_date >= start AND < end`) with a minimal
 column list; days are bucketed in the browser's local time. Day cells hold generic events (`kind: 'activity' | 'planned'`)
-so planned workouts can be added alongside activities. Pure logic lives in `src/lib/calendar.js`. No DB changes.
+so planned workouts can be added alongside activities. Pure logic lives in `src/lib/calendar.js`. Day cells also carry calendar notes (see below).
 
 ## Coaching (`20261129000000_coaching_relationships.sql`)
 
