@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   COMMENT_MAX_LENGTH,
   activeMentionQuery,
+  shouldFetchMentions,
   activityCommentsHref,
   addActivityComment,
   applyMention,
@@ -182,4 +183,21 @@ test('unread helpers map rpc rows and skip empty input', async () => {
   assert.equal((await fetchCoachUnreadComments(client)).counts.get('r1'), 3)
   await markCommentsRead(client, 'a1')
   assert.deepEqual(calls.at(-1), ['mark_activity_comments_read', { p_activity: 'a1' }])
+})
+
+test('a bare @ opens mention suggestions immediately', () => {
+  const m = activeMentionQuery('hi @', 4)
+  assert.deepEqual(m, { start: 3, query: '' })
+  assert.equal(shouldFetchMentions(m.query), true)
+  assert.equal(shouldFetchMentions(activeMentionQuery('hi', 2)?.query ?? null), false)
+  assert.equal(shouldFetchMentions(activeMentionQuery('mail@', 5)?.query ?? null), false)
+  assert.equal(shouldFetchMentions(activeMentionQuery('@jo', 3).query), true)
+})
+
+test('searchMentionCandidates sends an empty query for a bare @', async () => {
+  let args
+  const client = { rpc: async (name, a) => { args = [name, a]; return { data: [{ id: 'u', nickname: 'coach' }], error: null } } }
+  const { candidates } = await searchMentionCandidates(client, { activityId: 'a1', query: '' })
+  assert.deepEqual(args, ['activity_mention_candidates', { p_activity: 'a1', p_query: '' }])
+  assert.equal(candidates.length, 1)
 })

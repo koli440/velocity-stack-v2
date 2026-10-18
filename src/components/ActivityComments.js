@@ -7,6 +7,7 @@ import { authorName } from '../lib/social'
 import {
   COMMENT_MAX_LENGTH,
   activeMentionQuery,
+  shouldFetchMentions,
   addActivityComment,
   applyMention,
   commentCountLabel,
@@ -45,7 +46,7 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
   const valid = isValidCommentBody(value)
 
   useEffect(() => {
-    if (mentionQuery === null || mentionQuery === '') {
+    if (!shouldFetchMentions(mentionQuery)) {
       setCandidates([])
       return undefined
     }
@@ -55,7 +56,7 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
       if (cancelled) return
       setCandidates(rows)
       setHighlight(0)
-    }, 150)
+    }, mentionQuery === '' ? 0 : 150)
     return () => {
       cancelled = true
       clearTimeout(timer)
