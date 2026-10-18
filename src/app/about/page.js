@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import Icon from '../../components/Icon'
+import SupportButton from '../../components/SupportButton'
 
 export const metadata = {
   title: 'About | VelocityStack',
@@ -121,8 +122,10 @@ export default function AboutPage() {
           <Link href="/report-bug" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">
             reporting a bug
           </Link>{' '}
-          to help us keep improving.
+          to help us keep improving. If you would like to chip in towards development and hosting
+          costs, you can buy us a coffee.
         </p>
+        <SupportButton className="mt-3" />
       </div>
     </section>
   )

@@ -6,6 +6,7 @@ import Portal from './Portal'
 import Icon from './Icon'
 import MarkdownBlocks from './MarkdownBlocks'
 import ChecklistItems from './ChecklistItems'
+import SupportButton from './SupportButton'
 import useModalA11y from './useModalA11y'
 import { WELCOME_STEPS } from '../lib/onboarding'
 
@@ -82,6 +83,13 @@ function WelcomeModalInner({ onClose, checklist, checklistDismissed, onRestoreCh
             </div>
           )}
         </div>
+
+        {last && (
+          <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-200 dark:border-surface-darkBorder">
+            <p className="text-xs text-slate-500 dark:text-slate-400">Free, ad-free and built by a track cyclist.</p>
+            <SupportButton />
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-slate-200 dark:border-surface-darkBorder">
           <button type="button" onClick={onClose} className={`${BTN} text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800`}>

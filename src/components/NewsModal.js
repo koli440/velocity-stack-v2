@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Portal from './Portal'
 import Icon from './Icon'
 import NewsEntries from './NewsEntries'
+import SupportButton from './SupportButton'
 import useModalA11y from './useModalA11y'
 
 function NewsModalInner({ entries, onClose }) {
@@ -33,6 +34,10 @@ function NewsModalInner({ entries, onClose }) {
         </div>
         <div className="px-5 py-3 overflow-y-auto">
           <NewsEntries entries={entries} onNavigate={onClose} />
+        </div>
+        <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-200 dark:border-surface-darkBorder">
+          <p className="text-xs text-slate-500 dark:text-slate-400">Enjoying Velocity Stack?</p>
+          <SupportButton />
         </div>
         <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-slate-200 dark:border-surface-darkBorder">
           <Link href="/whats-new" onClick={onClose} className="text-xs underline text-slate-600 dark:text-slate-300">
