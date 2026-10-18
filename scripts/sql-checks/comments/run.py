@@ -9,7 +9,8 @@ c = psycopg2.connect(uri); c.autocommit=True; cur=c.cursor()
 cur.execute(open(os.path.join(HERE, 'stub.sql')).read())
 MIGS = ['20261204000000_activity_comments', '20261212000000_activity_comment_ui_rpcs',
         '20261214000000_activity_comment_moderation',
-        '20261216000000_activity_mention_candidates_suggest']
+        '20261216000000_activity_mention_candidates_suggest',
+        '20261217000000_mention_handles']
 for m in MIGS:
     sql = open('supabase/migrations/%s.sql' % m).read()
     cur.execute(sql); cur.execute(sql)  # idempotent
@@ -108,14 +109,17 @@ check('delete does not reset limit', tryq("select add_activity_comment(%s,'z')",
 cur.execute("reset role"); cur.execute("set role anon"); check('anon denied', tryq("select add_activity_comment(%s,'z')",a).startswith('ERR'), True)
 
 a=A('followers'); cur.execute("reset role")
-cur.execute("insert into profiles(id,nickname) values(gen_random_uuid(),'fol_two'),(gen_random_uuid(),'has space')")
-cur.execute("insert into follows select id,%s from profiles where nickname='fol_two'",(U['owner'],))
+cur.execute("insert into profiles(id,nickname) values(gen_random_uuid(),'fol_two'),(gen_random_uuid(),'has space'),(gen_random_uuid(),'🚴')")
+cur.execute("insert into follows select id,%s from profiles where nickname in ('fol_two','has space')",(U['owner'],))
 me('owner'); check('candidates prefix', sorted(r[1] for r in q("select * from activity_mention_candidates(%s,'fo')",a)), ['fol_two','follower'])
 check('candidates exclude stranger/blocked', [r[1] for r in q("select * from activity_mention_candidates(%s,'s')",a)], [])
-check('candidates exclude unmentionable', [r[1] for r in q("select * from activity_mention_candidates(%s,'has')",a)], [])
+check('nickname with space is mentionable as handle', [r[4] for r in q("select * from activity_mention_candidates(%s,'has')",a)], ['hasspace'])
+check('emoji-only nickname never offered', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a) if r[1]=='🚴'], [])
 check('candidates wildcard safe', q("select * from activity_mention_candidates(%s,'%%')",a), [])
 me('stranger'); check('candidates hidden activity', q("select * from activity_mention_candidates(%s,'f')",a), [])
 me('coach'); check('coach gets candidates', len(q("select * from activity_mention_candidates(%s,'o')",a))>0, True)
+me('owner'); q("select add_activity_comment(%s,'hi @hasspace!')",a)
+cur.execute('reset role'); check('free-text nickname is mentioned via handle', q("select count(*) from activity_comment_mentions m join profiles p on p.id=m.user_id where p.nickname='has space'")[0][0], 1)
 me('follower'); check('bare @ (follower): owner+coach', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['coach','owner'])
 me('coach'); check('bare @ (coach): owner (athlete)', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['owner'])
 me('owner'); check('bare @ (owner): coach only', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['coach'])

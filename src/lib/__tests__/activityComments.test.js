@@ -4,6 +4,8 @@ import {
   COMMENT_MAX_LENGTH,
   activeMentionQuery,
   shouldFetchMentions,
+  mentionHandle,
+  mentionStatusText,
   activityCommentsHref,
   addActivityComment,
   applyMention,
@@ -200,4 +202,38 @@ test('searchMentionCandidates sends an empty query for a bare @', async () => {
   const { candidates } = await searchMentionCandidates(client, { activityId: 'a1', query: '' })
   assert.deepEqual(args, ['activity_mention_candidates', { p_activity: 'a1', p_query: '' }])
   assert.equal(candidates.length, 1)
+})
+
+test('mentionHandle turns free-text nicknames into typeable handles', () => {
+  assert.equal(mentionHandle('Koen Olijslagers'), 'KoenOlijslagers')
+  assert.equal(mentionHandle('José R.'), 'JoséR')
+  assert.equal(mentionHandle('anna_k-'), 'anna_k')
+  assert.equal(mentionHandle('🚴'), null)
+  assert.equal(mentionHandle(null), null)
+  assert.equal(mentionHandle('x'.repeat(60)).length, 40)
+})
+
+test('activeMentionQuery and splitCommentBody handle accented handles', () => {
+  assert.deepEqual(activeMentionQuery('hi @Jos', 7), { start: 3, query: 'Jos' })
+  const parts = splitCommentBody('hi @JoséR!', new Map([['joséR'.toLowerCase(), 'u1']]))
+  assert.deepEqual(parts.filter((p) => p.type === 'mention'), [{ type: 'mention', text: '@JoséR', userId: 'u1' }])
+})
+
+test('mentionStatusText explains empty and failed lookups', () => {
+  assert.equal(mentionStatusText('error'), "Couldn't load suggestions")
+  assert.equal(mentionStatusText('ready'), 'No matches')
+  assert.equal(mentionStatusText('loading'), 'Searching…')
+})
+
+test('searchMentionCandidates surfaces RPC errors', async () => {
+  const orig = console.error
+  console.error = () => {}
+  try {
+    const client = { rpc: async () => ({ data: null, error: { message: 'boom' } }) }
+    const res = await searchMentionCandidates(client, { activityId: 'a', query: '' })
+    assert.deepEqual(res.candidates, [])
+    assert.equal(res.error.message, 'boom')
+  } finally {
+    console.error = orig
+  }
 })

@@ -38,7 +38,7 @@ If an activity becomes private again, comments are **kept**: owner and coach kee
 
 ## Mentions
 `@nickname` is parsed server-side (`sync_comment_mentions`). Only users who **can see the activity** are stored/notified. The UI
-autocomplete uses `activity_mention_candidates(activity, query)` which returns only such riders (not blocked, can view, never self). A bare `@` opens the list at once with the relevant people (activity owner, owner's/own coach, riders you follow, your athletes when you are a coach, earlier commenters); typing filters by nickname prefix and then also offers other riders who can see the activity (`20261216000000`).
+autocomplete uses `activity_mention_candidates(activity, query)` which returns only such riders (not blocked, can view, never self). A bare `@` opens the list at once with the relevant people (activity owner, owner's/own coach, riders you follow, your athletes when you are a coach, earlier commenters); typing filters by nickname prefix and then also offers other riders who can see the activity (`20261216000000`). Handles: nicknames are free text, so the handle is the nickname minus characters that cannot be typed after `@` (`mention_handle()`, `20261217000000`; "Koen O." -> `@KoenO`); the parser and autocomplete both use it. The popover shows "No matches" / "Couldn't load suggestions" instead of staying silent.
 
 ## Notifications (in-app only)
 - `activity_comment`: to the owner, the active coach and earlier commenters (who can still see the activity), never to the author.

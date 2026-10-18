@@ -8,6 +8,7 @@ import {
   COMMENT_MAX_LENGTH,
   activeMentionQuery,
   shouldFetchMentions,
+  mentionStatusText,
   addActivityComment,
   applyMention,
   commentCountLabel,
@@ -38,6 +39,7 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
   const [value, setValue] = useState(initialValue)
   const [caret, setCaret] = useState(initialValue.length)
   const [candidates, setCandidates] = useState([])
+  const [mentionStatus, setMentionStatus] = useState('idle')
   const [highlight, setHighlight] = useState(0)
   const textareaRef = useRef(null)
   const mention = activeMentionQuery(value, caret)
@@ -48,12 +50,15 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
   useEffect(() => {
     if (!shouldFetchMentions(mentionQuery)) {
       setCandidates([])
+      setMentionStatus('idle')
       return undefined
     }
     let cancelled = false
+    setMentionStatus('loading')
     const timer = setTimeout(async () => {
-      const { candidates: rows } = await searchMentionCandidates(supabase, { activityId, query: mentionQuery })
+      const { candidates: rows, error: searchError } = await searchMentionCandidates(supabase, { activityId, query: mentionQuery })
       if (cancelled) return
+      setMentionStatus(searchError ? 'error' : 'ready')
       setCandidates(rows)
       setHighlight(0)
     }, mentionQuery === '' ? 0 : 150)
@@ -68,9 +73,10 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
   }, [autoFocus])
 
   const pick = (candidate) => {
-    const next = applyMention(value, mention, caret, candidate.nickname)
+    const next = applyMention(value, mention, caret, candidate.handle || candidate.nickname)
     setValue(next.text)
     setCandidates([])
+    setMentionStatus('idle')
     requestAnimationFrame(() => {
       const el = textareaRef.current
       if (!el) return
@@ -142,6 +148,15 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
           disabled={busy}
           className="w-full resize-y rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-orange-500 disabled:opacity-60"
         />
+        {mention && mentionStatus !== 'idle' && candidates.length === 0 && (
+          <div
+            role="status"
+            data-testid="mention-status"
+            className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-surface-darkCard px-3 py-2 text-xs text-slate-500 shadow-lg"
+          >
+            {mentionStatusText(mentionStatus)}
+          </div>
+        )}
         {candidates.length > 0 && mention && (
           <ul
             role="listbox"
@@ -159,8 +174,8 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
                   className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs ${i === highlight ? 'bg-orange-500/10' : ''}`}
                 >
                   <Avatar url={c.avatar_url} name={c.display_name || c.nickname} size="w-5 h-5" textSize="text-[9px]" />
-                  <span className="font-bold text-slate-900 dark:text-white">@{c.nickname}</span>
-                  {c.display_name && c.display_name !== c.nickname && (
+                  <span className="font-bold text-slate-900 dark:text-white">@{c.handle || c.nickname}</span>
+                  {c.display_name && c.display_name !== (c.handle || c.nickname) && (
                     <span className="text-slate-500 truncate">{c.display_name}</span>
                   )}
                 </button>
