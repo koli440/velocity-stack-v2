@@ -203,3 +203,9 @@ and day-chip thumbnails. Logic: `src/lib/workoutPreview.js` (tests in `src/lib/_
 
 ## Onboarding / What's new state is always the signed-in user's own
 `user_onboarding_state` has no coach policy, and the onboarding provider is disabled in athlete context (`/coach/<id>/...`); see docs/news.md.
+
+## Activity comments (#222)
+The active coach may **read and write comments** on the rider's activities, including private ones (the thread is then visible to
+owner + coach only), and gets `activity_comment` notifications. Comments are not athlete data: the coach can delete only own comments
+(the rider can delete any on their activity), and an ex-coach loses access immediately. The "never writable by a coach" list above is
+unchanged. See docs/comments.md.
