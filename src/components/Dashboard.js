@@ -157,7 +157,7 @@ export default function Dashboard({ initialActivities = [] }) {
   }, [])
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 items-start">
+    <div className="w-full">
       {/* Main Cockpit */}
       <div className="flex-1 w-full space-y-6">
         <div className="flex items-start justify-between gap-3">
@@ -169,6 +169,12 @@ export default function Dashboard({ initialActivities = [] }) {
               Live tracking & neuromuscular session analysis
             </p>
           </div>
+        </div>
+
+        {/* Stats cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <WeekStatsCard userId={user?.id} />
+          <PowerProfileCard userId={user?.id} />
         </div>
 
         {/* Feed scope */}
@@ -243,12 +249,6 @@ export default function Dashboard({ initialActivities = [] }) {
             }
           />
         )}
-      </div>
-
-      {/* Right column */}
-      <div className="w-full xl:w-80 shrink-0 space-y-3">
-        <PowerProfileCard userId={user?.id} />
-        <WeekStatsCard userId={user?.id} />
       </div>
     </div>
   )
