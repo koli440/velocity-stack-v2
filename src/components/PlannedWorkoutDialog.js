@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import WorkoutPreviewChart from './WorkoutPreviewChart'
 import { ftpAt } from '../lib/ftpHistory'
 import PlannedTemplatePicker from './PlannedTemplatePicker'
+import PlannedPushControls from './PlannedPushControls'
 import { DSL_GUIDE_PATH } from '../lib/dslGuide'
 import {
   PLANNED_DESCRIPTION_MAX,
@@ -286,6 +287,8 @@ export default function PlannedWorkoutDialog({
             </div>
           </div>
         )}
+
+        {workout && <PlannedPushControls workout={workout} onChanged={actions.pushChanged} />}
 
         <p className="text-[11px] text-slate-400">Only you and your active coach can see planned workouts. The structure is a copy taken when planned.</p>
         {error && <div className="rounded-lg bg-rose-500/10 border border-rose-500/30 p-2 text-xs font-semibold text-rose-500" role="alert">{error}</div>}

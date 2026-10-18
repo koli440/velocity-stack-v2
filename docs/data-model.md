@@ -226,3 +226,13 @@ created_by / updated_by -> profiles ON DELETE SET NULL, set_by_coach, created_at
   `planned_workout_set_structure(id, dsl|NULL, manifest|NULL, template_name)` (migration `20261207000000`; no table reads of `analysis_templates`), `planned_workout_duplicate(id, date)`, `planned_workout_link(id, activity)`, `planned_workout_unlink(id)`.
   A template is snapshotted server-side from the **caller's own or a system** template only.
 - Status shown in the UI: completed (linked) / skipped / missed (derived: past, unlinked, not skipped; never stored) / planned. See *Planned workouts* in coaching.md.
+
+## Intervals.icu push (`20261208000000_planned_workout_intervals_push.sql`)
+- `planned_workout_pushes(workout_id PK (no FK: tombstones outlive the workout), rider_id -> profiles ON DELETE CASCADE, intervals_event_id, pushed_hash,
+  pushed_at, pushed_date, push_status pending|pushed|error|pending_delete, attempted_hash, last_error, last_attempt_at, claimed_until, warnings JSONB)`.
+  RLS: select for the rider / active coach (never `pending_delete`); no client writes (service_role only).
+- Trigger `planned_workouts_push_tombstone` (AFTER DELETE): a pushed workout leaves a `pending_delete` row, a never-pushed one leaves nothing.
+- `connections` gains non-secret `push_planned_workouts` (default FALSE), `planned_push_attempt_at`, `planned_push_at`, `planned_push_error`
+  (SELECT granted to authenticated; written by `set_planned_push_enabled(bool)` / the service role). Trigger `connections_reset_planned_push`
+  clears the flag and the rider's mappings on disconnect or athlete change.
+- RPC `planned_push_context(p_rider)` -> `{connected, auto_enabled, is_self}` for the rider / active coach. Cron `planned-workout-push` via `sync_trigger_planned_push()`.

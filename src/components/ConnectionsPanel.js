@@ -13,6 +13,7 @@ import {
 } from '../lib/connections'
 import { describeSyncResult, backfillProgressText } from '../lib/syncPlan'
 import Icon from './Icon'
+import PlannedPushSetting from './PlannedPushSetting'
 
 const BACKFILL_OPTIONS = [
   { value: '30', label: 'Last 30 days' },
@@ -353,6 +354,7 @@ export default function ConnectionsPanel({ userId }) {
               </select>
             </div>
             <p className="text-[11px] text-slate-400">New rides are imported automatically about every 15 minutes.</p>
+            <PlannedPushSetting userId={userId} />
             {syncMsg && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
             <div className="flex items-center gap-4">
               {conn.status === 'error' && (
