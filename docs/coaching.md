@@ -109,3 +109,21 @@ Shows the template runs the **coach** made on **this athlete's** activities, gro
   PB Vault sending stays hidden for coach runs. The athlete's own templates are not listed (definitions stay private).
 - Choice: an all-athletes-per-template view is not provided.
 
+## Calendar notes (step 4a, `20261205000000_calendar_notes.sql`)
+
+Short day notes on a rider's calendar - e.g. "can train Tue/Thu evenings", "ill", "injury", "vacation", "work" - so the coach can plan the week.
+- **Shape**: one note = one rider, one day, a title (1-80 chars) and a text (<= 1000). No type, no date ranges, max 20 notes per rider and day.
+- **Who**: the rider and the rider's ACTIVE coach (`is_coach_of`, block-aware) can read, add, edit and delete ANY note on that calendar
+  (the coach may change the rider's notes and vice versa). Enforced by RLS on every statement, so revocation is immediate.
+  Pending / declined / ended / blocked coaches, other riders' coaches, followers and strangers get nothing. Notes are never in the feed,
+  public profile or any follower-visible view.
+- **Author labels**: `created_by` / `updated_by` / `set_by_coach` are stamped by a trigger from `auth.uid()`; clients cannot even name these
+  columns (column privileges) and the trigger overrides them. A note cannot be moved to another rider. The calendar labels notes with the
+  author's name ("You" for the viewer, "former coach" when the coach account is gone / unidentifiable) and "edited by ..." when the other party changed it.
+- **Lifecycle**: notes stay on the rider's calendar when the relationship ends or the coach account is deleted (`created_by` -> NULL, `set_by_coach` stays TRUE).
+  Deleting the rider deletes them. No notification.
+- **UI**: shown first in the day cell of the month calendar (amber chip with the title, full text in the hover title); click opens a dialog to view/edit/delete,
+  the "+" in the day header adds one. Same component on `/calendar` and `/coach/<riderId>/calendar`; notes are fetched for the visible grid range together
+  with the activities. Works for bot athletes. Planned workouts (step 4b) will be added to the same day cell as `events`.
+- Pure logic and the data helpers: `src/lib/calendarNotes.js` (tests in `src/lib/__tests__/calendarNotes.test.js`).
+

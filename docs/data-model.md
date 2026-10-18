@@ -202,3 +202,12 @@ PBs, aero tests, ftp/weight/lactate/power-zone history, and the `shared_activiti
 
 `template_executions` also has `by_coach`, `run_by_coach_id`, `coach_key` (uniqueness with activity+template) and name/slug/category
 snapshot columns; see *Coach template runs* in coaching.md.
+
+## Calendar notes (`20261205000000_calendar_notes.sql`)
+
+`calendar_notes(id, rider_id -> profiles ON DELETE CASCADE, note_date DATE, title TEXT 1-80, body TEXT <= 1000, created_by / updated_by -> profiles ON DELETE SET NULL,
+set_by_coach BOOLEAN, created_at, updated_at)`, index `(rider_id, note_date)`. RLS: SELECT/INSERT/UPDATE/DELETE for `rider_id = auth.uid()` or `is_coach_of(rider_id)`.
+Client grants are column-level (INSERT: rider_id, note_date, title, body; UPDATE: note_date, title, body); trigger `calendar_notes_stamp` trims text, stamps
+`created_by` / `updated_by` / `set_by_coach` / timestamps from `auth.uid()`, pins `rider_id`, and caps 20 notes per rider and day. Notes survive the end of coaching and the deletion of the
+coach account (FK `SET NULL`). See *Calendar notes* in coaching.md.
+
