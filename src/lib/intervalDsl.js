@@ -144,9 +144,6 @@ export const WKG_TARGET_TOLERANCE = 0.05
 export const MAX_NEST_DEPTH = 3 // repeated groups inside repeated groups
 export const MAX_GROUP_REPEAT = 100
 export const MAX_EXPANDED_STEPS = 200
-// "m" is minutes below this value ("10m", "90m") and metres from it up ("200m"): a distance window under
-// 100 m is not meaningful, so existing distance templates keep their meaning.
-export const MIN_METRES_VALUE = 100
 const ZONE_RANGE_RE = /^Z(\d+)\s*-\s*Z(\d+)$/i
 const ZONE_SINGLE_RE = /^Z(\d+)$/i
 const ZONE_MAX_RE = /^<\s*Z(\d+)$/i
@@ -445,8 +442,7 @@ export function parseIntervalDsl(text) {
     }
     const value = parseFloat(valueRaw)
     const unitText = unitRaw.toLowerCase()
-    let unit = unitText.startsWith('min') ? 'min' : unitText.startsWith('s') ? 'sec' : unitText
-    if (unit === 'm' && value < MIN_METRES_VALUE) unit = 'min'
+    const unit = unitText.startsWith('min') ? 'min' : unitText.startsWith('s') ? 'sec' : unitText
     const tolerance = parseFloat(toleranceRaw)
     const keyBy = unit === 'km' || unit === 'm' ? 'distance' : 'duration'
     const targetDurationSec = keyBy === 'duration' ? (unit === 'min' ? value * 60 : value) : null

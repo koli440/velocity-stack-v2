@@ -18,7 +18,7 @@ recovery 10min ±0% @ Z1
 work 40s ±0% @ Z5
 recovery 20s ±0% @ 50W
 
-recovery 10m ±0% @ Z2`
+recovery 10min ±0% @ Z2`
 
 const EXAMPLE_2 = `work 15min ±0% @ Z3
 recovery 8min ±0% @ <Z3
@@ -53,17 +53,18 @@ test('repeated groups ended by blank lines (issue example)', () => {
   assert.equal(p.steps[2].bandType, 'watts')
   assert.equal(p.steps[2].powerMin, 47.5)
   assert.equal(p.steps[2].powerMax, 52.5)
-  assert.equal(p.steps.at(-1).targetDurationSec, 600) // "10m" is minutes
+  assert.equal(p.steps.at(-1).targetDurationSec, 600) // "10min" is minutes
   assert.equal(p.steps.at(-1).keyBy, 'duration')
   assert.equal(p.structure.length, 5)
   assert.equal(p.structure[1].repeat, 6)
 })
 
-test('m is metres from 100 up, minutes below; unit aliases', () => {
+test('m is always metres; min/sec unit aliases', () => {
   const p = parseIntervalDsl('1x\nwork 200m ±10% @ best speed\nwork 90 mins ±0% @ Z2\nwork 30 secs ±0% @ Z2\nwork 5s ±0% @ Z2')
   assert.deepEqual(p.errors, [])
   assert.equal(p.steps[0].keyBy, 'distance')
   assert.equal(p.steps[0].targetDistanceM, 200)
+  assert.equal(parseIntervalDsl('1x\nwork 10m ±0% @ best speed').steps[0].keyBy, 'distance')
   assert.equal(p.steps[1].targetDurationSec, 5400)
   assert.equal(p.steps[2].targetDurationSec, 30)
   assert.equal(p.steps[3].targetDurationSec, 5)

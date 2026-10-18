@@ -237,9 +237,8 @@ work 15min ±0% @ Z3
 ```
 
 Step names are case-insensitive. A bare target (`50W`, `95%FTP`) means the target ±5%, stored as
-the range `47.5-52.5W`. Duration units also accept `m`/`mins`/`minutes` and `s`/`secs`/`seconds`;
-a bare `m` is **minutes below 100** (`10m`, `90m`) and **metres from 100 up** (`200m`), since a
-distance window under 100 m is not meaningful and `200m`/`250m` distance steps keep working.
+the range `47.5-52.5W`. Duration units also accept `mins`/`minutes` and `s`/`secs`/`seconds`. `m` is always
+**metres** (a distance step) and never minutes: write `10min` for ten minutes.
 
 A repeat count on its own line *after* the first line starts a **repeated group**: the steps below
 it repeat that many times. A group ends at the next blank line or at an `end` line (which closes

@@ -15,7 +15,7 @@ const LAP_EXAMPLE = `lap ${DEFAULT_LAP_LENGTH_M}m`
 
 export const DSL_STEP_PARTS = [
   { part: 'work | recovery', meaning: 'Step role. "work" is the effort you want analysed; "recovery" is the rest between efforts.' },
-  { part: '<value><unit>', meaning: 'Length of the step. Duration units: min, sec (also m/mins/minutes and s/secs/seconds). Distance units: km, m. A bare "m" below 100 is minutes ("10m"), from 100 up it is metres ("200m"). Decimals are allowed (1.5min).' },
+  { part: '<value><unit>', meaning: 'Length of the step. Duration units: min, sec (also mins/minutes and s/secs/seconds). Distance units: km, m ("m" is always metres, never minutes). Decimals are allowed (1.5min).' },
   { part: '±<n>%', meaning: 'Tolerance (0-100%) on the length when matching the step against an activity.' },
   { part: '@ <band>', meaning: 'Intensity target (power, speed, heart rate or cadence): a range, an upper/lower bound, or "best".' },
 ]
