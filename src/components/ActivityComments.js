@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import Portal from './Portal'
 import { supabase } from '../lib/supabase'
 import { authorName } from '../lib/social'
 import {
@@ -9,6 +10,7 @@ import {
   activeMentionQuery,
   shouldFetchMentions,
   mentionStatusText,
+  popoverPlacement,
   addActivityComment,
   applyMention,
   commentCountLabel,
@@ -42,6 +44,7 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
   const [mentionStatus, setMentionStatus] = useState('idle')
   const [highlight, setHighlight] = useState(0)
   const textareaRef = useRef(null)
+  const [placement, setPlacement] = useState(null)
   const mention = activeMentionQuery(value, caret)
   const mentionQuery = mention ? mention.query : null
   const length = commentLength(value)
@@ -67,6 +70,23 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
       clearTimeout(timer)
     }
   }, [activityId, mentionQuery])
+
+  const popoverOpen = Boolean(mention) && mentionStatus !== 'idle'
+  useEffect(() => {
+    if (!popoverOpen) return undefined
+    const update = () => {
+      const el = textareaRef.current
+      if (!el) return
+      setPlacement(popoverPlacement(el.getBoundingClientRect(), { width: window.innerWidth, height: window.innerHeight }))
+    }
+    update()
+    window.addEventListener('scroll', update, true)
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('resize', update)
+    }
+  }, [popoverOpen, candidates.length])
 
   useEffect(() => {
     if (autoFocus) textareaRef.current?.focus()
@@ -148,40 +168,41 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
           disabled={busy}
           className="w-full resize-y rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-orange-500 disabled:opacity-60"
         />
-        {mention && mentionStatus !== 'idle' && candidates.length === 0 && (
-          <div
-            role="status"
-            data-testid="mention-status"
-            className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-surface-darkCard px-3 py-2 text-xs text-slate-500 shadow-lg"
-          >
-            {mentionStatusText(mentionStatus)}
-          </div>
-        )}
-        {candidates.length > 0 && mention && (
-          <ul
-            role="listbox"
-            aria-label="Mention suggestions"
-            className="absolute left-0 right-0 top-full mt-1 z-20 max-h-56 overflow-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-surface-darkCard shadow-lg"
-          >
-            {candidates.map((c, i) => (
-              <li key={c.id} role="option" aria-selected={i === highlight}>
-                <button
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault()
-                    pick(c)
-                  }}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs ${i === highlight ? 'bg-orange-500/10' : ''}`}
-                >
-                  <Avatar url={c.avatar_url} name={c.display_name || c.nickname} size="w-5 h-5" textSize="text-[9px]" />
-                  <span className="font-bold text-slate-900 dark:text-white">@{c.handle || c.nickname}</span>
-                  {c.display_name && c.display_name !== (c.handle || c.nickname) && (
-                    <span className="text-slate-500 truncate">{c.display_name}</span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
+        {popoverOpen && placement && (
+          <Portal>
+            <div
+              data-testid="mention-popover"
+              style={{ position: 'fixed', zIndex: 80, ...placement }}
+              className="overflow-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg"
+            >
+              {candidates.length === 0 ? (
+                <div role="status" data-testid="mention-status" className="px-3 py-2 text-xs text-slate-500">
+                  {mentionStatusText(mentionStatus)}
+                </div>
+              ) : (
+                <ul role="listbox" aria-label="Mention suggestions">
+                  {candidates.map((c, i) => (
+                    <li key={c.id} role="option" aria-selected={i === highlight}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          pick(c)
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs ${i === highlight ? 'bg-orange-500/10' : ''}`}
+                      >
+                        <Avatar url={c.avatar_url} name={c.display_name || c.nickname} size="w-5 h-5" textSize="text-[9px]" />
+                        <span className="font-bold text-slate-900 dark:text-white">@{c.handle || c.nickname}</span>
+                        {c.display_name && c.display_name !== (c.handle || c.nickname) && (
+                          <span className="text-slate-500 truncate">{c.display_name}</span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Portal>
         )}
       </div>
       <div className="flex items-center gap-2">

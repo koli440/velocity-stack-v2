@@ -11,7 +11,8 @@ MIGS = ['20261204000000_activity_comments', '20261212000000_activity_comment_ui_
         '20261214000000_activity_comment_moderation',
         '20261216000000_activity_mention_candidates_suggest',
         '20261217000000_mention_handles',
-        '20261218000000_mention_candidates_fallback']
+        '20261218000000_mention_candidates_fallback',
+        '20261219000000_mention_candidates_real_first']
 for m in MIGS:
     sql = open('supabase/migrations/%s.sql' % m).read()
     cur.execute(sql); cur.execute(sql)  # idempotent
@@ -119,6 +120,11 @@ check('emoji-only nickname never offered', [r[1] for r in q("select * from activ
 check('candidates wildcard safe', q("select * from activity_mention_candidates(%s,'%%')",a), [])
 me('stranger'); check('candidates hidden activity', q("select * from activity_mention_candidates(%s,'f')",a), [])
 me('coach'); check('coach gets candidates', len(q("select * from activity_mention_candidates(%s,'o')",a))>0, True)
+cur.execute("reset role"); cur.execute("insert into profiles(id,nickname,is_bot) select gen_random_uuid(),'aa_bot'||g,true from generate_series(1,12) g")
+cur.execute("insert into follows select id,%s from profiles where is_bot",(U['owner'],))
+me('follower'); r=[x[1] for x in q("select * from activity_mention_candidates(%s,'')",a)]
+check('real riders outrank bots; unfollowed bots hidden on bare @', [n for n in r if n.startswith('aa_bot')], [])
+me('follower'); check('typing finds bots after real riders', [x[1] for x in q("select * from activity_mention_candidates(%s,'aa_')",a)][:1], ['aa_bot1'])
 me('owner'); q("select add_activity_comment(%s,'hi @hasspace!')",a)
 cur.execute('reset role'); check('free-text nickname is mentioned via handle', q("select count(*) from activity_comment_mentions m join profiles p on p.id=m.user_id where p.nickname='has space'")[0][0], 1)
 me('follower'); check('bare @ (follower): owner, coach first, then other visible riders', [r[1] for r in q("select * from activity_mention_candidates(%s,'')",a)], ['owner','coach','fol_two','has space'])
