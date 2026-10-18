@@ -157,10 +157,8 @@ export default function Dashboard({ initialActivities = [] }) {
   }, [])
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 items-start">
-      {/* Main Cockpit */}
-      <div className="flex-1 w-full space-y-6">
-        <div className="flex items-start justify-between gap-3">
+    <div className="w-full space-y-6">
+      <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
               Ride Telemetry
@@ -171,6 +169,9 @@ export default function Dashboard({ initialActivities = [] }) {
           </div>
         </div>
 
+      <div className="flex flex-col xl:flex-row gap-6 items-start">
+      {/* Main Cockpit */}
+      <div className="flex-1 w-full min-w-0 space-y-6">
         {/* Feed scope */}
         <div className="flex gap-2" role="tablist" aria-label="Feed scope">
           {[
@@ -247,8 +248,9 @@ export default function Dashboard({ initialActivities = [] }) {
 
       {/* Right column */}
       <div className="w-full xl:w-80 shrink-0 space-y-3">
-        <PowerProfileCard userId={user?.id} />
         <WeekStatsCard userId={user?.id} />
+        <PowerProfileCard userId={user?.id} />
+      </div>
       </div>
     </div>
   )
