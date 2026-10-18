@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
 import { calculateAvgSpeedKmh } from '../../../../lib/pbVault'
+import { scopeToOwner } from '../../../../lib/ownerScope'
 import { fetchDisciplines, findDisciplineDistance } from '../../../../lib/lookups'
 
 // GET /api/personal-bests/:id - fetch a single owned PB record (v1's 31_PB_detail.py).
@@ -13,9 +14,7 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data, error } = await supabase
-      .from('personal_bests')
-      .select('*')
+    const { data, error } = await scopeToOwner(supabase.from('personal_bests').select('*'), user.id)
       .eq('id', id)
       .single()
 
@@ -44,9 +43,7 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: existing, error: fetchError } = await supabase
-      .from('personal_bests')
-      .select('*')
+    const { data: existing, error: fetchError } = await scopeToOwner(supabase.from('personal_bests').select('*'), user.id)
       .eq('id', id)
       .single()
 

@@ -1,3 +1,4 @@
+import { visibleTemplatesFilter } from './ownerScope.js'
 // Pure helpers + permission rules for the /templates page and its API routes.
 
 export const TEMPLATE_TABS = ['mine', 'favorites', 'public', 'system']
@@ -64,6 +65,7 @@ export async function addFavorite(supabase, user, slug) {
     .from('analysis_templates')
     .select('id')
     .eq('slug', slug)
+    .or(visibleTemplatesFilter(user.id))
     .maybeSingle()
   if (tplErr || !tpl) return { status: 404, error: 'Template not found' }
 
@@ -80,6 +82,7 @@ export async function removeFavorite(supabase, user, slug) {
     .from('analysis_templates')
     .select('id')
     .eq('slug', slug)
+    .or(visibleTemplatesFilter(user.id))
     .maybeSingle()
   if (tplErr || !tpl) return { status: 404, error: 'Template not found' }
 

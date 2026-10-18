@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../../lib/supabaseServer'
+import { visibleTemplatesFilter } from '../../../../../lib/ownerScope'
 import { evaluateTemplate } from '../../../../../lib/templateEngine'
 import { weightFromActivity } from '../../../../../lib/weightHistory'
 import { ZONE_SNAPSHOT_COLUMN, zonesFromActivity } from '../../../../../lib/powerZones'
@@ -15,7 +16,7 @@ async function runAsCoach(supabase, user, activityId, { templateId, templateSlug
   const { data: inputs, error: inErr } = await supabase.rpc('coach_template_run_inputs', { p_activity: activityId })
   if (inErr || !inputs) return NextResponse.json(NOT_FOUND, { status: 404 })
 
-  let templateQuery = supabase.from('analysis_templates').select('*')
+  let templateQuery = supabase.from('analysis_templates').select('*').or(visibleTemplatesFilter(user.id))
   templateQuery = templateId ? templateQuery.eq('id', templateId) : templateQuery.eq('slug', templateSlug)
   const { data: found } = await templateQuery.limit(2)
   const [template] = coachRunnableTemplates(found, user.id)
@@ -75,7 +76,7 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    let templateQuery = supabase.from('analysis_templates').select('*')
+    let templateQuery = supabase.from('analysis_templates').select('*').or(visibleTemplatesFilter(user.id))
     templateQuery = templateId
       ? templateQuery.eq('id', templateId)
       : templateQuery.eq('slug', templateSlug)

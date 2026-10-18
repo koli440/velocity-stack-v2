@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../../lib/supabaseServer'
+import { visibleTemplatesFilter } from '../../../../../lib/ownerScope'
 import { applyRunScope, attachSharedActivities, resolveRunScope, withTemplateSnapshot } from '../../../../../lib/coachRuns'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -44,11 +45,10 @@ export async function GET(req, { params }) {
     const first = executions[0]
     let template = first ? { id: first.template_id, slug, name: first.template_name, category: first.template_category } : null
     if (!template) {
-      const { data: visible } = await supabase
-        .from('analysis_templates')
-        .select('id, slug, name, category')
-        .eq('slug', slug)
-        .maybeSingle()
+      // Own pages never see a coached rider's private templates; athlete context (explicit ?rider=) may.
+      let visibleQuery = supabase.from('analysis_templates').select('id, slug, name, category').eq('slug', slug)
+      if (ownerId === user.id) visibleQuery = visibleQuery.or(visibleTemplatesFilter(user.id))
+      const { data: visible } = await visibleQuery.limit(1).maybeSingle()
       template = visible || null
     }
     if (!template) {

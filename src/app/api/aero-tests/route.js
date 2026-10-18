@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../lib/supabaseServer'
+import { scopeToOwner } from '../../../lib/ownerScope'
 
 // GET /api/aero-tests - list the signed-in rider's own Aero Lab field tests (issue #50,
-// "Aero Lab"). RLS already scopes rows to auth.uid(), this just orders them for the UI.
+// "Aero Lab"). rows are filtered by owner explicitly (RLS alone would include coached riders' tests).
 export async function GET(req) {
   try {
     const { supabase, user } = await getRequestUser(req)
@@ -11,9 +12,8 @@ export async function GET(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data, error } = await supabase
-      .from('aero_tests')
-      .select('*')
+    // Explicit owner filter: RLS also lets an active coach read the coached riders' tests.
+    const { data, error } = await scopeToOwner(supabase.from('aero_tests').select('*'), user.id)
       .order('test_date', { ascending: false })
 
     if (error) {
