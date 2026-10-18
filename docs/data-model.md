@@ -246,3 +246,8 @@ created_by / updated_by -> profiles ON DELETE SET NULL, set_by_coach, created_at
   (SELECT granted to authenticated; written by `set_planned_push_enabled(bool)` / the service role). Trigger `connections_reset_planned_push`
   clears the flag and the rider's mappings on disconnect or athlete change.
 - RPC `planned_push_context(p_rider)` -> `{connected, auto_enabled, is_self}` for the rider / active coach. Cron `planned-workout-push` via `sync_trigger_planned_push()`.
+
+## Onboarding and news state (`20261211000000_user_onboarding_state.sql`)
+`user_onboarding_state(user_id PK -> profiles ON DELETE CASCADE, welcome_seen_at, onboarding_dismissed_at, news_seen_through TEXT, created_at, updated_at)`. Own-row SELECT/UPDATE
+RLS only (no coach/admin read, no client INSERT/DELETE); column-level UPDATE grant; trigger keeps `news_seen_through` monotonic. Created by a trigger on `profiles` or
+`ensure_my_onboarding_state()`; existing accounts are backfilled as onboarding done and news seen up to the migration date. See docs/news.md.
