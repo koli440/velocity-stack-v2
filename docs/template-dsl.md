@@ -15,8 +15,8 @@ used both server-side (template create/update validation) and client-side (live 
 
 ```
 <N>x
-work <value><unit> ±<tolerance>% @ <band>
-recovery <value><unit> ±<tolerance>% @ <band>
+work <value><unit> [±<tolerance>%] @ <band>
+recovery <value><unit> [±<tolerance>%] @ <band>
 ```
 
 - **Line 1 — repeat count** (optional, see [Plain lists and nested intervals](#plain-lists-and-nested-intervals)): `<N>x`, where `N` is an integer `>= 1`. This is the target
@@ -27,10 +27,13 @@ recovery <value><unit> ±<tolerance>% @ <band>
 - **Step lines**: one `work` line, and optionally one `recovery` line (omit it entirely
   for one-shot patterns).
   - `<role>` — `work` or `recovery`.
-  - `<value><unit>` — the target window size. `unit` is either a duration (`min`/`sec`,
-    e.g. `3min`, `30sec`) or a **distance** (`km`/`m`, e.g. `4km`, `200m`) — see
+  - `<value><unit>` — the target window size. `unit` is either a duration (`h`/`min`/`sec`,
+    e.g. `2h`, `3min`, `30sec`; `h` also as `hr`/`hrs`/`hour`/`hours`, decimals allowed: `1.5h` = 90min) or a **distance** (`km`/`m`, e.g. `4km`, `200m`) — see
     [Distance-keyed steps](#distance-keyed-steps) below.
-  - `±<tolerance>%` — a percentage tolerance applied to the target value to get an
+  - `±<tolerance>%` — **optional**; when left out it is `±0%` (so `work 15min @ Z3` and
+    `work 15min ±0% @ Z3` are identical). It is independent of the band: a bare band target
+    such as `50W` or `3W/kg` is still ±5% (that is the band, not the duration tolerance).
+    A percentage tolerance applied to the target value to get an
     acceptable range. E.g. `3min ±30%` → the detector accepts windows between `126s` and
     `234s`; `4km ±5%` → windows covering between `3.8km` and `4.2km`.
   - `@ <band>` — the power (or speed) band the window must satisfy (see below).
@@ -143,7 +146,7 @@ distance-keyed `work` step with a duration-keyed `recovery` step, as above).
 
 ### Warm-up and cool-down exclusion
 
-Optional `warmup <n><min|sec>` and `cooldown <n><min|sec>` lines (anywhere after the
+Optional `warmup <n><h|min|sec>` and `cooldown <n><h|min|sec>` lines (anywhere after the
 repeat line, each at most once; `warm-up`/`cool-down` are accepted too) make the detector
 ignore the first / last part of the activity, so a hard warm-up opener or a final sprint
 can't be mistaken for a rep. They apply to every step kind (threshold, `best`,
@@ -237,7 +240,7 @@ work 15min ±0% @ Z3
 ```
 
 Step names are case-insensitive. A bare target (`50W`, `95%FTP`) means the target ±5%, stored as
-the range `47.5-52.5W`. Duration units also accept `mins`/`minutes` and `s`/`secs`/`seconds`. `m` is always
+the range `47.5-52.5W`. Duration units also accept `mins`/`minutes`, `s`/`secs`/`seconds` and `h`/`hr`/`hrs`/`hour`/`hours` (`work 2h @ Z2`; `h` never clashes with `m`, `min` or `s`). `m` is always
 **metres** (a distance step) and never minutes: write `10min` for ten minutes.
 
 A repeat count on its own line *after* the first line starts a **repeated group**: the steps below
@@ -309,10 +312,10 @@ set recovery 5min ±30% @ <55%FTP
 
 - The repeat line is optional (implicit `1x`); `repeatCount >= 1` (and set count `>= 1` when using `S sets of Nx`).
 - Duration (or distance) must be `> 0`.
-- Tolerance must be between `0` and `100` (percent).
+- Tolerance is optional (default `0`); when given it must be between `0` and `100` (percent).
 - At least one `work` step is required.
 - `then` may not prefix the first step.
-- `warmup`/`cooldown` durations must be `> 0`, use `min`/`sec`, and appear at most once each.
+- `warmup`/`cooldown` durations must be `> 0`, use `h`/`min`/`sec`, and appear at most once each.
 - For `%FTP`/`W`/`km/h`/`bpm`/`%HRmax`/`rpm` bands, bounds must be `>= 0`, and when both a min and max are
   given, `min < max`.
 - A distance-keyed step's `best`/`max` band must specify a metric (`best power` or
@@ -540,7 +543,8 @@ Under `pattern sustained_tt` the same `lap` option keeps emitting the legacy
 Parsed manifests (`{ repeatCount, steps }`) can be converted back into editable DSL text
 with `stringifyIntervalDsl`, which the Template Creator UI uses when loading an existing
 template for editing. `stringifyIntervalDsl(parseIntervalDsl(text))` is stable — it
-reproduces an equivalent DSL string for any valid input.
+reproduces an equivalent DSL string for any valid input. Stringifying always writes the tolerance
+(`±0%` when it was omitted) and durations in `min`/`sec`, so hours are stored as seconds in the manifest.
 
 ## Heart rate and cadence examples
 

@@ -15,8 +15,8 @@ const LAP_EXAMPLE = `lap ${DEFAULT_LAP_LENGTH_M}m`
 
 export const DSL_STEP_PARTS = [
   { part: 'work | recovery', meaning: 'Step role. "work" is the effort you want analysed; "recovery" is the rest between efforts.' },
-  { part: '<value><unit>', meaning: 'Length of the step. Duration units: min, sec (also mins/minutes and s/secs/seconds). Distance units: km, m ("m" is always metres, never minutes). Decimals are allowed (1.5min).' },
-  { part: '±<n>%', meaning: 'Tolerance (0-100%) on the length when matching the step against an activity.' },
+  { part: '<value><unit>', meaning: 'Length of the step. Duration units: h, min, sec (also hr/hrs/hour/hours, mins/minutes and s/secs/seconds; 2h = 120min). Distance units: km, m ("m" is always metres, never minutes). Decimals are allowed (1.5min).' },
+  { part: '±<n>%', meaning: 'Optional tolerance (0-100%) on the length when matching the step against an activity. Left out it is ±0%, so "work 15min @ Z3" and "work 15min ±0% @ Z3" are the same. It is separate from the band: a bare target like 50W is still 50W ±5%.' },
   { part: '@ <band>', meaning: 'Intensity target (power, speed, heart rate or cadence): a range, an upper/lower bound, or "best".' },
 ]
 
@@ -26,12 +26,12 @@ export const DSL_OPTIONS = [
   { syntax: '3 sets of 5x', meaning: 'First line: 3 sets, each with 5 repeats of the block. Reps are numbered within each set.' },
   { syntax: 'set recovery 5min ±30% @ <55%FTP', meaning: 'Optional, only with sets: the rest searched for between sets (never after the last one). Same syntax as a step, but without then.' },
   { syntax: 'then work 1min ...', meaning: 'Prefix a step with "then" to make it start exactly where the previous step ended (over-unders, pyramids, ramps). Not allowed on the first step.' },
-  { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (min or sec). At most once.' },
+  { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (h, min or sec). At most once.' },
   { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: `Template runs always report avg W/kg, avg power, NP, avg speed, avg cadence and avg HR where data exists. Choose extra summary metrics per work effort and for the run: ${METRIC_LIST}. hr_recovery takes an optional window (default 60sec); np_wkg, avg_wkg and max_wkg are power per kg of the activity weight; the time_below/lt1/above_* metrics are seconds in lactate zones (power, or heart rate with the _hr suffix); time_z1 to time_z6 are seconds in each power zone. At most once.` },
   { syntax: 'pattern repeated_bursts', meaning: `Use instead of the repeat line to run a built-in detector: ${PATTERN_LIST}. Then add its option lines (${PATTERN_OPTION_LIST}). Only metrics is also allowed.` },
   { syntax: LAP_EXAMPLE, meaning: 'Track context: report per-lap split times (full laps only, from the speed stream) for every work effort, plus lap_count, best_lap_sec, slowest_lap_sec and avg_lap_sec for the run. At most once; also valid under pattern sustained_tt.' },
   { syntax: 'time & distance results', meaning: 'Automatic, no line needed. Duration steps (20min) report the distance covered plus average speed; distance steps (3km) and the legacy pursuit/flying/standing patterns report the exact elapsed time (interpolated, shown as a race time) plus average speed. Needs a speed stream; without one the run says so. Run summaries add best/avg/total time or distance, and a faster time counts as an improvement in comparisons.' },
-  { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity. At most once.' },
+  { syntax: 'cooldown 10min', meaning: 'Ignore the last 10 minutes of the activity (h, min or sec). At most once.' },
 ]
 
 export const DSL_BANDS = [
@@ -56,7 +56,7 @@ export const DSL_RULES = [
   'Every other line is one step, a warmup/cooldown line, or a repeated group ("6x" ... blank line/"end"); at least one "work" step is required.',
   'Repeated groups nest up to 3 levels, repeat 1-100 times, and expand to at most 200 steps in total.',
   'A repeat can have several work/recovery steps; they are matched in the order written.',
-  'Step values must be greater than 0; tolerance must be 0-100%.',
+  'Step values must be greater than 0; tolerance (optional, default ±0%) must be 0-100%.',
   'In a range, the minimum must be lower than the maximum.',
   'The tolerance sign is "±" (plus-minus).',
   '"best"/"max" on km/m steps must say "power" or "speed".',
@@ -69,6 +69,11 @@ export const DSL_GUIDE_EXAMPLES = [
     title: 'Plain list of steps (no repeat line)',
     description: 'Without a repeat line every step is simply done once, in order. Names are case-insensitive and a bare target like 50W means 50W ±5%.',
     dsl: 'work 15min ±0% @ Z3\nrecovery 8min ±0% @ <Z3\nWork 15min ±0% @ Z3\nRecovery 8min ±0% @ 50W\nwork 15min ±0% @ Z3',
+  },
+  {
+    title: 'Hours, no tolerance',
+    description: 'h is hours (1.5h = 90 minutes). The ±tolerance is optional and defaults to ±0%, so these lines match exactly like "work 2h ±0% @ Z2".',
+    dsl: 'work 2h @ Z2\nrecovery 10min @ <Z2\nwork 1.5h @ Z3',
   },
   {
     title: 'Repeated group inside a list',

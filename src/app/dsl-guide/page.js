@@ -36,7 +36,7 @@ recovery 2min ±50% @ <55%FTP`}
         </pre>
         <p className="mb-3">
           The first line is the repeat count (optional: without it the steps run once, in order); each other line is
-          a step in the form <code className={CODE}>role value unit ±tolerance% @ band</code>. Put{' '}
+          a step in the form <code className={CODE}>role value unit [±tolerance%] @ band</code>. Put{' '}
           <code className={CODE}>6x</code> on its own line further down to repeat the steps below it until a blank
           line or <code className={CODE}>end</code>; groups can be nested up to 3 levels.
         </p>
@@ -85,7 +85,7 @@ recovery 2min ±50% @ <55%FTP`}
       <div className={CARD}>
         <h2 className={H2}>Duration vs. distance steps</h2>
         <p>
-          Use <code className={CODE}>min</code>/<code className={CODE}>sec</code> to match by time, or{' '}
+          Use <code className={CODE}>h</code>/<code className={CODE}>min</code>/<code className={CODE}>sec</code> to match by time (<code className={CODE}>work 2h @ Z2</code>), or{' '}
           <code className={CODE}>km</code>/<code className={CODE}>m</code> to match by distance (e.g. a 4km
           individual pursuit or a 200m flying sprint). Because a distance window has no inherent power-vs-speed
           preference, <code className={CODE}>best</code>/<code className={CODE}>max</code> must be written as{' '}

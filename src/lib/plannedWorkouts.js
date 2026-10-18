@@ -99,7 +99,7 @@ export function parseStructure(text) {
 
 // --- Structure summary ----------------------------------------------------------------------
 
-const fmtMin = (sec) => (sec % 60 === 0 ? `${sec / 60}min` : sec >= 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : `${sec}sec`)
+const fmtMin = (sec) => (sec % 3600 === 0 && sec >= 3600 ? `${sec / 3600}h` : sec % 60 === 0 ? `${sec / 60}min` : sec >= 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : `${sec}sec`)
 
 function stepTarget(step) {
   const { bandType, powerMin: lo, powerMax: hi, bestMetric } = step
