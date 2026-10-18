@@ -5,9 +5,11 @@
 //   { id, kind: 'activity' | 'planned', date: Date, title, discipline, distanceM, durationS,
 //     metric: { label, value } | null, href }
 // Planned workouts (src/lib/plannedWorkouts.js, kind 'planned', with a `status`) share the model but do not count in week totals.
-// Calendar notes (src/lib/calendarNotes.js) are not timed events: they sit on the day cell as `cell.notes`.
+// Calendar notes (src/lib/calendarNotes.js) are not timed events: they sit on the day cell as `cell.notes`;
+// races (src/lib/calendarRaces.js) likewise as `cell.races`, and the week summary lists them as `summary.races`.
 
 import { groupNotesByDay } from './calendarNotes.js'
+import { groupRacesByDay } from './calendarRaces.js'
 
 export const CALENDAR_ACTIVITY_COLUMNS = [
   'id',
@@ -129,11 +131,12 @@ export function summarizeEvents(events) {
 
 /**
  * Turns week rows + events into rows of day cells with a per-week summary.
- * Cells: { date, key, inMonth, isToday, events, notes }.
+ * Cells: { date, key, inMonth, isToday, events, notes, races }; summary.races = the week's races in date order.
  */
-export function buildCalendarRows(weeks, events, { anchor, today = new Date(), notes = [] } = {}) {
+export function buildCalendarRows(weeks, events, { anchor, today = new Date(), notes = [], races = [] } = {}) {
   const byDay = groupEventsByDay(events)
   const notesByDay = groupNotesByDay(notes)
+  const racesByDay = groupRacesByDay(races)
   const todayKey = dayKey(today)
   return weeks.map((days) => {
     const cells = days.map((date) => {
@@ -145,9 +148,10 @@ export function buildCalendarRows(weeks, events, { anchor, today = new Date(), n
         isToday: key === todayKey,
         events: byDay[key] || [],
         notes: notesByDay[key] || [],
+        races: racesByDay[key] || [],
       }
     })
-    return { cells, summary: summarizeEvents(cells.flatMap((c) => c.events)) }
+    return { cells, summary: { ...summarizeEvents(cells.flatMap((c) => c.events)), races: cells.flatMap((c) => c.races) } }
   })
 }
 

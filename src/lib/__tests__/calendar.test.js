@@ -50,7 +50,7 @@ test('rows hold per-day events and weekly summaries', () => {
   const weeks = buildMonthGrid(new Date(2026, 9, 1))
   const rows = buildCalendarRows(weeks, ev, { anchor: new Date(2026, 9, 1), today: new Date(2026, 9, 14) })
   const wk = rows.find((r) => r.cells.some((c) => c.key === '2026-10-13'))
-  assert.deepEqual(wk.summary, { count: 2, durationS: 5400, distanceM: 30000, plannedCount: 0, plannedDurationS: 0 })
+  assert.deepEqual(wk.summary, { count: 2, durationS: 5400, distanceM: 30000, plannedCount: 0, plannedDurationS: 0, races: [] })
   const tue = wk.cells.find((c) => c.key === '2026-10-13')
   assert.deepEqual(tue.events.map((e) => e.id), ['2', '1'])
   assert.equal(wk.cells.find((c) => c.key === '2026-10-14').isToday, true)
