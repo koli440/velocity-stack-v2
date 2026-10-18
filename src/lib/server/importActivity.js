@@ -102,14 +102,12 @@ export async function importActivity({
     throw new ImportError(insertErr.message, 500)
   }
 
-  const curveRows = Object.entries(curves).map(([curveType, data]) => ({
-    activity_id: activity.id,
-    curve_type: curveType,
-    data,
-  }))
-  if (curveRows.length > 0) {
-    const { error: curveErr } = await supabase.from('activity_curves').insert(curveRows)
-    if (curveErr) console.warn(`activity_curves insert failed for ${activity.id}:`, curveErr.message)
+  const curveErr = await insertCurves(supabase, activity.id, curves)
+  if (curveErr) {
+    // Never leave a ride without its curves: roll the activity back so the next sync retries it.
+    const { error: rollbackErr } = await supabase.from('activities').delete().eq('id', activity.id)
+    if (rollbackErr) console.warn(`Rollback of activity ${activity.id} failed:`, rollbackErr.message)
+    throw new ImportError(`Saving curves failed: ${curveErr.message}`, 500)
   }
 
   if (plan.action === 'upgrade') {
@@ -120,6 +118,16 @@ export async function importActivity({
   }
 
   return { status: 'imported', activity }
+}
+
+/** One activity_curves row per metric; empty/null curves are skipped. Returns the insert error, if any. */
+export async function insertCurves(supabase, activityId, curves) {
+  const rows = Object.entries(curves || {})
+    .filter(([, data]) => data && Object.keys(data).length > 0)
+    .map(([curveType, data]) => ({ activity_id: activityId, curve_type: curveType, data }))
+  if (rows.length === 0) return null
+  const { error } = await supabase.from('activity_curves').insert(rows)
+  return error || null
 }
 
 function providerLabel(source) {

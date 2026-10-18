@@ -12,6 +12,7 @@
 import { createIntervalsProvider } from './intervalsProvider.js'
 import { createStravaProviderForConnection } from './stravaProvider.js'
 import { importActivity, loadImportProfile } from './importActivity.js'
+import { repairStravaActivities, STRAVA_REPAIR_PER_RUN } from './stravaRepair.js'
 import { loadExistingActivityFingerprints } from '../activityDuplicates.js'
 import {
   selectNewRides,
@@ -102,6 +103,7 @@ export async function syncConnection(service, conn, deps = {}) {
     createProvider = defaultCreateProvider,
     importFn = importActivity,
     maxBackfillRides,
+    repairFn = repairStravaActivities,
   } = deps
   const startedAt = now()
   const providerName = conn.provider || 'intervals'
@@ -115,6 +117,7 @@ export async function syncConnection(service, conn, deps = {}) {
     complete: true,
     more: false,
     budgetStopped: false,
+    repaired: 0,
   }
   let fatalMessage = null
   let softMessage = null
@@ -197,6 +200,22 @@ export async function syncConnection(service, conn, deps = {}) {
         progress.complete = step.complete
         if (step.complete || outcome.stop || outcome.handled < todo.length) stopped = true
         if (progress.handled >= Math.min(quota, maxFetches)) stopped = true
+      }
+    }
+
+    // ---- Repair: Strava rides imported without heartrate / curve rows (cheap, after new work) ----
+    if (isStrava && forwardDone && !result.budgetStopped && !fatalMessage) {
+      try {
+        const fixed = await repairFn(service, {
+          userId: conn.user_id,
+          provider,
+          maxFetches: Math.min(STRAVA_REPAIR_PER_RUN, maxFetches),
+        })
+        result.repaired = (fixed.curvesRebuilt || 0) + (fixed.reanalyzed || 0)
+        if (fixed.stop === 'budget') result.budgetStopped = true
+        if (fixed.error) softMessage = softMessage || `Repair issue: ${String(fixed.error).slice(0, 150)}`
+      } catch (err) {
+        console.warn('Strava repair failed:', err?.message)
       }
     }
   } catch (err) {

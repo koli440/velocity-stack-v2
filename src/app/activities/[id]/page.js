@@ -126,7 +126,8 @@ export default function ActivityDetailPage() {
             mapped[row.curve_type] = row.data
           }
         })
-        setCurvesMap(mapped)
+        // Fall back to the curves snapshot stored on the activity when no activity_curves rows exist.
+        setCurvesMap(Object.keys(mapped).length ? mapped : actData?.curves_data || {})
       }
 
       setLoading(false)

@@ -23,6 +23,15 @@ Data model details: [data-model.md](data-model.md).
   (webhook/new rides), which are always synced first. Backfills are shared fairly between riders. When the budget is
   spent, runs stop quietly and resume after the window resets (:00/:15/:30/:45, daily at midnight UTC).
 
+## Strava analysis and repair
+- Strava has no .fit export, so rides are analysed from streams (`analyzeStreams`) into the same `{ summary, curves, time_series }`
+  shape as the .fit path (`api/analyze.py`), including `time_series.heartrate` and the `HeartRate` curve.
+- If saving `activity_curves` fails, the import is rolled back and reported as failed (retried on the next run) instead of
+  leaving a ride without curves.
+- Each Strava sync run also repairs earlier imports: rides without `activity_curves` rows get them rebuilt from the stored
+  `curves_data` (no Strava request); rides without `time_series.heartrate` are re-fetched and re-analysed (max 3 per run,
+  from the shared backfill budget). Intervals.icu rides are never touched.
+
 ## Failures and health
 Each card shows a health line (Syncing normally / Sync looks delayed after 60 min / Sync stopped) and the last error.
 - Invalid Intervals.icu key, revoked or invalid Strava grant: status `error`, automatic sync stops; use **Reconnect**.

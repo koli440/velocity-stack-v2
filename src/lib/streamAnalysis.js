@@ -201,6 +201,7 @@ export function analyzeStreams(streamsData, { chainring = null, cog = null, isFi
     cadence: streams.cadence || [],
     torque: torqueStream || [],
     speed: effectiveSpeedStream || [],
+    heartrate: streams.heartrate || [],
     latitude: latitude || [],
     longitude: longitude || [],
     altitude: streams.altitude || [],
