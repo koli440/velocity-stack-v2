@@ -20,9 +20,11 @@ export function isValidCommentBody(body) {
 // Raw database errors are replaced by messages a rider can act on.
 export function commentErrorMessage(error) {
   const msg = String(error?.message || '')
+  if (/report limit/i.test(msg)) return 'You have reported too many comments. Please try again later.'
   if (/limit reached/i.test(msg)) return 'You are commenting too fast. Please try again in a while.'
   if (/turned off/i.test(msg)) return 'Comments are turned off for this activity.'
   if (/not found/i.test(msg)) return 'This activity or comment is no longer available.'
+  if (/own comment/i.test(msg)) return 'You cannot report your own comment.'
   if (/1-2000/.test(msg)) return `A comment must be 1-${COMMENT_MAX_LENGTH} characters.`
   return 'Something went wrong. Please try again.'
 }
@@ -183,4 +185,37 @@ export async function searchMentionCandidates(client, { activityId, query }) {
   })
   if (error) return { candidates: [], error }
   return { candidates: data || [], error: null }
+}
+
+// Owner switch: new comments are refused, existing ones stay readable. RLS limits the
+// update to the owner's own activity.
+export async function setCommentsEnabled(client, { activityId, enabled }) {
+  const { data, error } = await client
+    .from('activities')
+    .update({ comments_enabled: !!enabled })
+    .eq('id', activityId)
+    .select('id')
+  if (error) return { error }
+  return { error: data?.length ? null : new Error('Activity not found') }
+}
+
+export async function reportActivityComment(client, { commentId, reason }) {
+  const { error } = await client.rpc('report_activity_comment', {
+    p_comment: commentId,
+    p_reason: String(reason ?? '').trim().slice(0, 500) || null,
+  })
+  return { error: error || null }
+}
+
+export async function fetchCommentReports(client) {
+  const { data, error } = await client.rpc('admin_list_comment_reports')
+  return { reports: error ? [] : data || [], error: error || null }
+}
+
+export async function resolveCommentReport(client, { reportId, remove }) {
+  const { error } = await client.rpc('admin_resolve_comment_report', {
+    p_report: reportId,
+    p_remove: !!remove,
+  })
+  return { error: error || null }
 }

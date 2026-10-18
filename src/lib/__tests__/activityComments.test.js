@@ -140,3 +140,28 @@ test('fetchActivityComments joins authors and per-comment mentions', async () =>
   assert.equal(profiles.get('u1').nickname, 'ann')
   assert.equal(mentions.get('c1').get('bob'), 'u2')
 })
+
+test('moderation helpers call the right endpoints', async () => {
+  const calls = []
+  const client = {
+    rpc: async (n, a) => (calls.push([n, a]), { data: [{ id: 'r1' }], error: null }),
+    from: (t) => {
+      const b = new Proxy({}, {
+        get(_, op) {
+          if (op === 'then') return (res) => res({ data: [{ id: 'a1' }], error: null })
+          return (...args) => (calls.push([t, op, ...args]), b)
+        },
+      })
+      return b
+    },
+  }
+  const { reportActivityComment, fetchCommentReports, resolveCommentReport, setCommentsEnabled } = await import('../activityComments.js')
+  await reportActivityComment(client, { commentId: 'c1', reason: '  spam ' })
+  assert.deepEqual(calls[0], ['report_activity_comment', { p_comment: 'c1', p_reason: 'spam' }])
+  assert.equal((await fetchCommentReports(client)).reports.length, 1)
+  await resolveCommentReport(client, { reportId: 'r1', remove: true })
+  assert.deepEqual(calls[2], ['admin_resolve_comment_report', { p_report: 'r1', p_remove: true }])
+  assert.equal((await setCommentsEnabled(client, { activityId: 'a1', enabled: false })).error, null)
+  assert.ok(calls.some((c) => c[0] === 'activities' && c[1] === 'update' && c[2].comments_enabled === false))
+  assert.match(commentErrorMessage({ message: 'Report limit reached' }), /too many/)
+})
