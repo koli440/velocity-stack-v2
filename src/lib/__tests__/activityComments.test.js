@@ -5,6 +5,7 @@ import {
   activeMentionQuery,
   shouldFetchMentions,
   mentionHandle,
+  popoverPlacement,
   mentionStatusText,
   activityCommentsHref,
   addActivityComment,
@@ -244,4 +245,17 @@ test('picking a rider with a free-text nickname inserts the typeable handle', ()
   const next = applyMention('hi @', mention, 4, row.handle || row.nickname)
   assert.equal(next.text, 'hi @KoenOlijslagers ')
   assert.equal(mentionHandle(row.nickname), row.handle)
+})
+
+test('popoverPlacement opens below, flips above when cramped and stays on screen', () => {
+  const vp = { width: 400, height: 800 }
+  const below = popoverPlacement({ left: 20, top: 100, bottom: 160, width: 300 }, vp)
+  assert.equal(below.top, 164)
+  assert.equal(below.bottom, undefined)
+  assert.equal(below.maxHeight, 224)
+  const above = popoverPlacement({ left: 20, top: 600, bottom: 660, width: 300 }, { width: 400, height: 700 })
+  assert.equal(above.top, undefined)
+  assert.equal(above.bottom, 104)
+  const edge = popoverPlacement({ left: 380, top: 100, bottom: 160, width: 300 }, vp)
+  assert.ok(edge.left + edge.width <= 392)
 })

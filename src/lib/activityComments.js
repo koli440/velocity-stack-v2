@@ -84,6 +84,22 @@ export function mentionStatusText(status) {
   return 'No matches'
 }
 
+// Fixed-position placement for the suggestion popover (rendered in a portal so no card can
+// clip or cover it): below the textarea, or above it when there is not enough room below.
+export function popoverPlacement(rect, viewport, wanted = 224) {
+  const gap = 4
+  const below = viewport.height - rect.bottom - gap - 8
+  const above = rect.top - gap - 8
+  const up = below < Math.min(wanted, 120) && above > below
+  const room = Math.max(up ? above : below, 80)
+  const maxHeight = Math.min(wanted, room)
+  const width = Math.min(rect.width, viewport.width - 16)
+  const left = Math.max(8, Math.min(rect.left, viewport.width - width - 8))
+  return up
+    ? { left, width, maxHeight, bottom: viewport.height - rect.top + gap }
+    : { left, width, maxHeight, top: rect.bottom + gap }
+}
+
 // A bare "@" (empty query) must already open the suggestions; only "no mention" does not.
 export function shouldFetchMentions(query) {
   return typeof query === 'string'
