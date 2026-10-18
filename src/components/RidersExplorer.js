@@ -96,8 +96,8 @@ export function RiderCard({ rider, userId, onStatusChange }) {
   )
 }
 
-// Searchable, infinitely scrolling rider list. Used by the dashboard "Riders" tab and the
-// standalone /riders page.
+// Searchable, infinitely scrolling rider list. Used by the "Find riders" tab of the
+// /riders page.
 export default function RidersExplorer({ userId, onFollowChanged }) {
   const { term, setTerm, botsOnly, setBotsOnly, riders, hasMore, loading, error, loadMore, setStatus } =
     useRiderDiscovery()

@@ -3,6 +3,7 @@ export const NAV_ITEMS = [
   { key: 'home', label: 'Rider Telemetry', icon: 'home', href: '/', exact: true },
   { key: 'calendar', label: 'Calendar', icon: 'calendar', href: '/calendar' },
   { key: 'pb-vault', label: 'Personal Best Vault', icon: 'trophy', href: '/pb-vault' },
+  { key: 'riders', label: 'Riders', icon: 'users', href: '/riders' },
   { key: 'gears', label: 'Gear Architect', icon: 'gears', href: '/gears' },
   { key: 'pursuit', label: 'Pursuit Strategist', icon: 'stopwatch', href: '/pursuit' },
   { key: 'aero-lab', label: 'Aero Lab', icon: 'flask', href: '/aero-lab' },
