@@ -146,8 +146,8 @@ BEGIN
 
     SELECT COALESCE(array_agg(DISTINCT p.id), ARRAY[]::UUID[]) INTO v_new
     FROM (
-        SELECT DISTINCT lower(regexp_replace(m[1], '[.-]+$', '')) AS handle
-        FROM regexp_matches(c.body, '(?:^|[^A-Za-z0-9_])@([A-Za-z0-9_.-]{1,40})', 'g') AS m
+        SELECT DISTINCT lower(regexp_replace(g[1], '[.-]+$', '')) AS handle
+        FROM regexp_matches(c.body, '(?:^|[^A-Za-z0-9_])@([A-Za-z0-9_.-]{1,40})', 'g') AS m(g)
         LIMIT 10
     ) h
     JOIN public.profiles p ON lower(p.nickname) = h.handle
