@@ -152,8 +152,20 @@ export function summarizeStructure(manifest) {
   const sets = Math.max(1, Number(manifest.set_count) || 1)
   const lines = []
   if (manifest.warmup_sec) lines.push(`Warm-up ${fmtMin(manifest.warmup_sec)}`)
-  lines.push(sets > 1 ? `${sets} sets of ${reps}x` : `${reps}x`)
-  for (const s of steps) lines.push(`  ${stepText(s)}`)
+  const tree = Array.isArray(manifest.structure) && manifest.structure.length ? manifest.structure : null
+  // Without a repeat header a plain step list (or one with repeated groups) is shown without a "1x" line.
+  const pad = tree && reps === 1 && sets === 1 ? '' : '  '
+  if (!tree || reps > 1 || sets > 1) lines.push(sets > 1 ? `${sets} sets of ${reps}x` : `${reps}x`)
+  const writeItems = (items, indent) => {
+    for (const it of items) {
+      if (it.items) {
+        lines.push(`${indent}${it.repeat}x`)
+        writeItems(it.items, `${indent}  `)
+      } else lines.push(`${indent}${stepText(it)}`)
+    }
+  }
+  if (tree) writeItems(tree, pad)
+  else for (const s of steps) lines.push(`  ${stepText(s)}`)
   if (sets > 1 && manifest.set_recovery) lines.push(`Set recovery ${stepSize(manifest.set_recovery)}${stepTarget(manifest.set_recovery) ? ` @ ${stepTarget(manifest.set_recovery)}` : ''}`)
   if (manifest.cooldown_sec) lines.push(`Cool-down ${fmtMin(manifest.cooldown_sec)}`)
 

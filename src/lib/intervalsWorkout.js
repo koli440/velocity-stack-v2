@@ -171,6 +171,30 @@ function safeNotes(text) {
     .trim()
 }
 
+const leaves = (items) => items.flatMap((it) => (it.items ? Array.from({ length: it.repeat }, () => leaves(it.items)).flat() : [it]))
+
+/**
+ * Blocks for a step list with repeated groups: a top-level group becomes its own "Nx" block (Intervals.icu has no
+ * nested repeats, so groups inside it are written out), plain steps around it share "Main set" blocks.
+ */
+function mainBlocks(items, block) {
+  let plain = []
+  const flush = () => {
+    if (plain.length) block('Main set', plain, plain.map((s) => roleLabel(s.role)))
+    plain = []
+  }
+  for (const it of items) {
+    if (!it.items) {
+      plain.push(it)
+      continue
+    }
+    flush()
+    const body = leaves(it.items)
+    block(it.repeat > 1 ? `Main set ${it.repeat}x` : 'Main set', body, body.map((s) => roleLabel(s.role)))
+  }
+  flush()
+}
+
 /**
  * Intervals.icu workout text for a manifest (the `custom_intervals` shape of buildIntervalManifest).
  * @returns {{ text: string, structured: boolean, notes: string[], warnings: string[] }}
@@ -203,7 +227,8 @@ export function manifestToIntervalsText(manifest, { weightKg = null } = {}) {
   const labels = steps.map((s) => roleLabel(s.role))
   for (let set = 0; set < sets; set++) {
     if (set > 0 && manifest.set_recovery) block('Set recovery', [manifest.set_recovery], ['Recovery'])
-    block(reps > 1 ? `Main set ${reps}x` : 'Main set', steps, labels)
+    if (reps > 1 || !Array.isArray(manifest.structure) || !manifest.structure.length) block(reps > 1 ? `Main set ${reps}x` : 'Main set', steps, labels)
+    else mainBlocks(manifest.structure, block)
     // Notes/warnings of a repeated set are identical; keep them once.
   }
   if (manifest.cooldown_sec > 0) blocks.push(`Cooldown\n- Cooldown ${formatStepDuration(manifest.cooldown_sec)}`)

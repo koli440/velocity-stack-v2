@@ -15,12 +15,14 @@ const LAP_EXAMPLE = `lap ${DEFAULT_LAP_LENGTH_M}m`
 
 export const DSL_STEP_PARTS = [
   { part: 'work | recovery', meaning: 'Step role. "work" is the effort you want analysed; "recovery" is the rest between efforts.' },
-  { part: '<value><unit>', meaning: 'Length of the step. Duration units: min, sec. Distance units: km, m. Decimals are allowed (1.5min).' },
+  { part: '<value><unit>', meaning: 'Length of the step. Duration units: min, sec (also m/mins/minutes and s/secs/seconds). Distance units: km, m. A bare "m" below 100 is minutes ("10m"), from 100 up it is metres ("200m"). Decimals are allowed (1.5min).' },
   { part: '±<n>%', meaning: 'Tolerance (0-100%) on the length when matching the step against an activity.' },
   { part: '@ <band>', meaning: 'Intensity target (power, speed, heart rate or cadence): a range, an upper/lower bound, or "best".' },
 ]
 
 export const DSL_OPTIONS = [
+  { syntax: '6x', meaning: 'A repeat count on its own line (not the first line) starts a repeated group: the steps below it repeat 6 times. The group ends at the next blank line or an "end" line.' },
+  { syntax: 'end', meaning: 'Closes the innermost repeated group, so steps can follow it directly (and a group can contain another group). Groups nest up to 3 levels; a blank line closes all open groups.' },
   { syntax: '3 sets of 5x', meaning: 'First line: 3 sets, each with 5 repeats of the block. Reps are numbered within each set.' },
   { syntax: 'set recovery 5min ±30% @ <55%FTP', meaning: 'Optional, only with sets: the rest searched for between sets (never after the last one). Same syntax as a step, but without then.' },
   { syntax: 'then work 1min ...', meaning: 'Prefix a step with "then" to make it start exactly where the previous step ended (over-unders, pyramids, ramps). Not allowed on the first step.' },
@@ -50,8 +52,9 @@ export const DSL_BANDS = [
 ]
 
 export const DSL_RULES = [
-  'Line 1 must be the repeat count: "4x", "1x", etc. (1 or greater), or "3 sets of 5x" for sets.',
-  'Every following line is one step (or a warmup/cooldown line); at least one "work" step is required.',
+  'The repeat line is optional. Without it the steps run once, in order. A first line "4x" (1 or greater) repeats the whole description; "3 sets of 5x" adds sets.',
+  'Every other line is one step, a warmup/cooldown line, or a repeated group ("6x" ... blank line/"end"); at least one "work" step is required.',
+  'Repeated groups nest up to 3 levels, repeat 1-100 times, and expand to at most 200 steps in total.',
   'A repeat can have several work/recovery steps; they are matched in the order written.',
   'Step values must be greater than 0; tolerance must be 0-100%.',
   'In a range, the minimum must be lower than the maximum.',
@@ -59,7 +62,24 @@ export const DSL_RULES = [
   '"best"/"max" on km/m steps must say "power" or "speed".',
 ]
 
+export const DSL_NESTING_EXAMPLE = '3x\nwork 10min ±10% @ Z3\n2x\nwork 1min ±5% @ Z5\nrecovery 1min ±20% @ <Z2\nend\nrecovery 5min ±30% @ <Z2'
+
 export const DSL_GUIDE_EXAMPLES = [
+  {
+    title: 'Plain list of steps (no repeat line)',
+    description: 'Without a repeat line every step is simply done once, in order. Names are case-insensitive and a bare target like 50W means 50W ±5%.',
+    dsl: 'work 15min ±0% @ Z3\nrecovery 8min ±0% @ <Z3\nWork 15min ±0% @ Z3\nRecovery 8min ±0% @ 50W\nwork 15min ±0% @ Z3',
+  },
+  {
+    title: 'Repeated group inside a list',
+    description: 'A "6x" line repeats the steps below it until the next blank line.',
+    dsl: 'recovery 20min ±0% @ Z1\n\n6x\nwork 40sec ±0% @ Z5\nrecovery 20sec ±0% @ 50W\n\nrecovery 10min ±0% @ Z2',
+  },
+  {
+    title: 'Nested intervals',
+    description: 'A group inside a group; "end" closes the inner one so the recovery belongs to the outer repeat. (When the first line is a repeat count it applies to the whole description.)',
+    dsl: DSL_NESTING_EXAMPLE,
+  },
   {
     title: 'Repeated VO2max intervals (%FTP-banded)',
     description: 'Four 3-minute efforts at 90-110% FTP, each followed by 2 minutes of easy spinning.',
@@ -201,8 +221,12 @@ export const DSL_COMMON_MISTAKES = [
     fix: 'Unknown metric. Use the names listed under "metrics".',
   },
   {
-    dsl: 'work 3min ±30% @ 90-110%FTP',
-    fix: 'Missing the repeat line. Start with "1x" or "4x".',
+    dsl: '3x\n2x\n1x\n1x\n1x\nwork 1min ±5% @ Z3',
+    fix: 'Repeated groups can be nested at most 3 levels deep.',
+  },
+  {
+    dsl: '2x\nend',
+    fix: 'A repeated group needs steps, and "end" only closes a group that is open.',
   },
   {
     dsl: '1x\nwork 1km ±5% @ best',

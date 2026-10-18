@@ -19,7 +19,7 @@ work <value><unit> ±<tolerance>% @ <band>
 recovery <value><unit> ±<tolerance>% @ <band>
 ```
 
-- **Line 1 — repeat count**: `<N>x`, where `N` is an integer `>= 1`. This is the target
+- **Line 1 — repeat count** (optional, see [Plain lists and nested intervals](#plain-lists-and-nested-intervals)): `<N>x`, where `N` is an integer `>= 1`. This is the target
   number of times the work(+recovery) cycle should repeat. A manifest with `1x` and a
   single `work` line (no `recovery` line) is a **one-shot pattern**: it searches for a
   single occurrence rather than a repeating sequence — useful for things like a decisive
@@ -222,6 +222,65 @@ by their average within the tolerance, use a small tolerance (`±5%` or less) on
 steps so boundaries line up. A contiguous step is stored as `contiguous: true` on the
 step (omitted otherwise), and serialised back as a `then ` prefix.
 
+### Plain lists and nested intervals
+
+The leading repeat line is optional. Without it the description is a plain list of steps, each
+done once (an implicit `1x`), in order, so existing templates keep their meaning and a list such as
+the one below is valid as it is:
+
+```
+work 15min ±0% @ Z3
+recovery 8min ±0% @ <Z3
+Work 15min ±0% @ Z3
+recovery 8min ±0% @ 50W
+work 15min ±0% @ Z3
+```
+
+Step names are case-insensitive. A bare target (`50W`, `95%FTP`) means the target ±5%, stored as
+the range `47.5-52.5W`. Duration units also accept `m`/`mins`/`minutes` and `s`/`secs`/`seconds`;
+a bare `m` is **minutes below 100** (`10m`, `90m`) and **metres from 100 up** (`200m`), since a
+distance window under 100 m is not meaningful and `200m`/`250m` distance steps keep working.
+
+A repeat count on its own line *after* the first line starts a **repeated group**: the steps below
+it repeat that many times. A group ends at the next blank line or at an `end` line (which closes
+only the innermost open group). Groups can contain groups:
+
+```
+recovery 20min ±0% @ Z1
+
+6x
+work 40sec ±0% @ Z5
+recovery 20sec ±0% @ 50W
+
+recovery 10min ±0% @ Z2
+```
+
+```
+1x
+work 10min ±10% @ Z3
+2x
+work 1min ±5% @ Z5
+recovery 1min ±20% @ <Z2
+end
+recovery 5min ±30% @ <Z2
+```
+
+- A **first line** `Nx` (or `S sets of Nx`) keeps its old meaning: it repeats the whole description,
+  blank lines inside it do not end it, and `warmup`/`cooldown`/`metrics`/`lap` stay document-level.
+  To write a group followed by other steps starting with a group, begin with `1x` (as above) or put a
+  step first.
+- `warmup`, `cooldown`, `metrics` and `lap` lines close any open group. `set recovery` is not allowed
+  inside a group.
+- Limits and errors: nesting at most 3 levels deep, 1–100 repeats per group, at most 200 steps after
+  expansion; an empty group, a stray `end` and `S sets of Nx` anywhere but the first line are errors
+  (with line numbers). `then` still cannot be the first step of the description.
+- **Storage / consumers**: the matching engine, preview chart and run results use the expanded flat
+  `steps` list (so a `6x` group is six pairs of steps, matched in order like a multi-step block). When
+  groups are used the manifest also stores `structure` (steps and `{ repeat, items }` groups in written
+  order) so the text round-trips (`end` lines are written explicitly) and the Intervals.icu export can
+  write a top-level group as a native `Nx` section (groups nested inside it are written out, since
+  Intervals.icu has no nested repeats). The planned workout summary shows the nested structure.
+
 ### Sets
 
 Write `<S> sets of <N>x` on the first line (`set`/`sets`, case-insensitive) to repeat the
@@ -249,7 +308,7 @@ set recovery 5min ±30% @ <55%FTP
 
 ### Validation rules
 
-- `repeatCount >= 1` (and set count `>= 1` when using `S sets of Nx`).
+- The repeat line is optional (implicit `1x`); `repeatCount >= 1` (and set count `>= 1` when using `S sets of Nx`).
 - Duration (or distance) must be `> 0`.
 - Tolerance must be between `0` and `100` (percent).
 - At least one `work` step is required.

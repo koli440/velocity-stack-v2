@@ -35,8 +35,10 @@ work 3min ±30% @ 90-110%FTP
 recovery 2min ±50% @ <55%FTP`}
         </pre>
         <p className="mb-3">
-          The first line is the repeat count; each following line is a step in the form{' '}
-          <code className={CODE}>role value unit ±tolerance% @ band</code>.
+          The first line is the repeat count (optional: without it the steps run once, in order); each other line is
+          a step in the form <code className={CODE}>role value unit ±tolerance% @ band</code>. Put{' '}
+          <code className={CODE}>6x</code> on its own line further down to repeat the steps below it until a blank
+          line or <code className={CODE}>end</code>; groups can be nested up to 3 levels.
         </p>
         <dl className="space-y-2">
           {DSL_STEP_PARTS.map((p) => (

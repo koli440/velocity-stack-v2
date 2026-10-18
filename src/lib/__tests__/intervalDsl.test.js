@@ -70,9 +70,9 @@ test('parses an absolute-watts band (range, min-only, max-only)', () => {
 })
 
 test('each invalid-syntax case produces a line-numbered error', () => {
-  const missingRepeat = parseIntervalDsl('work 3min ±30% @ 90-110%FTP')
-  assert.equal(missingRepeat.errors.length > 0, true)
-  assert.equal(missingRepeat.errors[0].line, 1)
+  const garbageFirstLine = parseIntervalDsl('four times\nwork 3min ±30% @ 90-110%FTP')
+  assert.equal(garbageFirstLine.errors.length > 0, true)
+  assert.equal(garbageFirstLine.errors[0].line, 1)
 
   const badRepeat = parseIntervalDsl('0x\nwork 3min ±30% @ 90-110%FTP')
   assert.ok(badRepeat.errors.some((e) => e.line === 1))
