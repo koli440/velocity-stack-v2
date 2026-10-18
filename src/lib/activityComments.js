@@ -219,3 +219,45 @@ export async function resolveCommentReport(client, { reportId, remove }) {
   })
   return { error: error || null }
 }
+
+// ---- Realtime + unread --------------------------------------------------------------------
+
+// Marks the thread as read now (fire and forget; failures only leave the dot visible).
+export async function markCommentsRead(client, activityId) {
+  if (!activityId) return { error: null }
+  const { error } = await client.rpc('mark_activity_comments_read', { p_activity: activityId })
+  return { error: error || null }
+}
+
+// activity id -> unread comment count (only activities with unread comments are present).
+export async function fetchUnreadCounts(client, activityIds) {
+  const ids = [...new Set((activityIds || []).filter(Boolean))].slice(0, 100)
+  if (!ids.length) return { counts: new Map(), error: null }
+  const { data, error } = await client.rpc('activity_comment_unread', { p_ids: ids })
+  if (error) return { counts: new Map(), error }
+  return { counts: new Map((data || []).map((r) => [r.activity_id, r.unread_count])), error: null }
+}
+
+// rider id -> unread comments across the athlete's activities, for the coach dashboard.
+export async function fetchCoachUnreadComments(client) {
+  const { data, error } = await client.rpc('coach_unread_comments')
+  if (error) return { counts: new Map(), error }
+  return { counts: new Map((data || []).map((r) => [r.rider_id, r.unread_count])), error: null }
+}
+
+// Live changes of one activity's comments. Any event triggers onChange (callers reload, which
+// de-duplicates against optimistic posts). Returns an unsubscribe function.
+export function subscribeActivityComments(client, activityId, onChange) {
+  if (!activityId || !client.channel) return () => {}
+  const channel = client
+    .channel(`activity-comments-${activityId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'activity_comments', filter: `activity_id=eq.${activityId}` },
+      onChange
+    )
+    .subscribe()
+  return () => {
+    client.removeChannel(channel)
+  }
+}

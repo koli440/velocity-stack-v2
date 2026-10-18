@@ -165,3 +165,21 @@ test('moderation helpers call the right endpoints', async () => {
   assert.ok(calls.some((c) => c[0] === 'activities' && c[1] === 'update' && c[2].comments_enabled === false))
   assert.match(commentErrorMessage({ message: 'Report limit reached' }), /too many/)
 })
+
+test('unread helpers map rpc rows and skip empty input', async () => {
+  const { fetchUnreadCounts, fetchCoachUnreadComments, markCommentsRead } = await import('../activityComments.js')
+  const calls = []
+  const client = {
+    rpc: async (name, args) => {
+      calls.push([name, args])
+      if (name === 'activity_comment_unread') return { data: [{ activity_id: 'a1', unread_count: 2 }], error: null }
+      if (name === 'coach_unread_comments') return { data: [{ rider_id: 'r1', unread_count: 3 }], error: null }
+      return { data: null, error: null }
+    },
+  }
+  assert.equal((await fetchUnreadCounts(client, [])).counts.size, 0)
+  assert.equal((await fetchUnreadCounts(client, ['a1'])).counts.get('a1'), 2)
+  assert.equal((await fetchCoachUnreadComments(client)).counts.get('r1'), 3)
+  await markCommentsRead(client, 'a1')
+  assert.deepEqual(calls.at(-1), ['mark_activity_comments_read', { p_activity: 'a1' }])
+})
