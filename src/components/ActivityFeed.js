@@ -6,7 +6,7 @@ import Avatar from './Avatar'
 import Link from 'next/link'
 import Icon from './ActivityIcons'
 import BadgePill from './BadgePill'
-import RouteThumbnail from './RouteThumbnail'
+import HeroCardVisual from './HeroCardVisual'
 import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
 import { authorName } from '../lib/social'
 import { PREFETCH_ROOT_MARGIN, canAutoLoad, didLoadFail } from '../lib/infiniteScroll'
@@ -210,7 +210,7 @@ export default function ActivityFeed({
                 {cover?.url ? (
                   <CoverPhoto cover={cover} />
                 ) : (
-                  <RouteThumbnail hero preview={act.route_preview} className="absolute inset-0 w-full h-full p-3" />
+                  <HeroCardVisual activity={act} className="absolute inset-0 w-full h-full p-3" />
                 )}
                 <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-slate-950/75 to-transparent pointer-events-none" />
                 {badges.length > 0 && (

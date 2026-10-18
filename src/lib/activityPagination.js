@@ -10,7 +10,9 @@ export const DEFAULT_ACTIVITIES_PAGE_SIZE = 20
 
 // Feed columns (issue #49): explicit list instead of `*` so the heavy `time_series` /
 // `curves_data` blobs are not shipped for every card; the persisted `route_preview` and
-// `badges` columns carry everything the card needs.
+// `badges` columns carry everything the card needs. `power_curve` extracts only the small
+// Power durations object (issue #216) so hero cards can draw a power profile without
+// extra requests.
 const FEED_COLUMN_LIST = [
   'id',
   'user_id',
@@ -34,6 +36,7 @@ const FEED_COLUMN_LIST = [
   'visibility',
   'route_preview',
   'badges',
+  'power_curve:curves_data->Power',
   'tracks(name, length_m, surface)',
 ]
 
