@@ -26,7 +26,7 @@ test('planImport: intervals upgrades strava copy, strava skips intervals/manual'
   assert.equal(planImport({ ...cand, source: 'intervals', externalId: '9' }, [{ ...strava[0], source: 'intervals' }]).action, 'skip')
 })
 
-function fakeSupabase({ existing = [], insertError = null } = {}) {
+function fakeSupabase({ existing = [], insertError = null, curveError = null } = {}) {
   const calls = { inserts: [], deletes: [] }
   const client = {
     calls,
@@ -39,7 +39,7 @@ function fakeSupabase({ existing = [], insertError = null } = {}) {
           calls.inserts.push({ table, rows })
           const chain = {
             select: () => ({ single: () => Promise.resolve(insertError ? { data: null, error: insertError } : { data: { id: 'new1' }, error: null }) }),
-            then: (r) => r({ error: null }),
+            then: (r) => r({ error: table === 'activity_curves' ? curveError : null }),
           }
           return chain
         },
@@ -131,4 +131,28 @@ test('analyzeStreams derives speed from cadence for fixed gear, else unavailable
 test('filterRides keeps only rides', () => {
   const out = filterRides([{ id: 1, type: 'Ride' }, { id: 2, type: 'Run' }, { id: 3, type: 'VirtualRide' }])
   assert.deepEqual(out.map((r) => r.id), [1, 3])
+})
+
+test('importActivity: curve insert failure rolls the activity back and throws', async () => {
+  const supabase = fakeSupabase({ curveError: { message: 'permission denied for table activity_curves' } })
+  await assert.rejects(
+    importActivity({ supabase, userId: 'u1', provider, externalId: '42', profile }),
+    /Saving curves failed: permission denied/
+  )
+  assert.deepEqual(supabase.calls.deletes, [{ table: 'activities', id: 'new1' }])
+})
+
+test('analyzeStreams: emits heartrate in time_series and a HeartRate curve (same shape as analyze.py)', () => {
+  const n = 120
+  const r = analyzeStreams([
+    { type: 'watts', data: Array.from({ length: n }, (_, i) => 200 + (i % 10)) },
+    { type: 'cadence', data: Array.from({ length: n }, () => 90) },
+    { type: 'heartrate', data: Array.from({ length: n }, (_, i) => 120 + (i % 30)) },
+    { type: 'velocity_smooth', data: Array.from({ length: n }, () => 10) },
+  ])
+  assert.equal(r.time_series.heartrate.length, n)
+  assert.ok(r.curves.HeartRate['1m'] > 120)
+  for (const k of ['Power', 'Cadence', 'Speed', 'Torque', 'HeartRate']) assert.ok(r.curves[k]['15s'] > 0, k)
+  const none = analyzeStreams([{ type: 'watts', data: [100, 100] }])
+  assert.deepEqual(none.time_series.heartrate, [])
 })

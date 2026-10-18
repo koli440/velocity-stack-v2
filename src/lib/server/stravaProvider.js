@@ -229,6 +229,16 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
       return rides
     },
 
+    /** Streams request + analysis (same output shape as the .fit path); throws 404 ImportError without data. */
+    async analyzeStreamsFor(externalId, gearing = {}) {
+      const id = String(externalId)
+      const streamsRes = await get(`/activities/${encodeURIComponent(id)}/streams?keys=${STRAVA_STREAM_KEYS}&key_by_type=true`)
+      const streams = streamsRes.ok ? await streamsRes.json() : null
+      const analyzed = analyzeStreams(stravaStreamsToList(streams), gearing)
+      if (!analyzed) throw new ImportError(`No stream data is available in Strava for ride ${id}.`, 404)
+      return analyzed
+    },
+
     async fetchActivity(externalId, { gearing = {} } = {}) {
       const id = String(externalId)
       let detail
@@ -250,10 +260,7 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
         if (!isStravaRide(detail)) throw new ImportError(`Strava activity ${id} is not a ride.`, 422)
       }
 
-      const streamsRes = await get(`/activities/${encodeURIComponent(id)}/streams?keys=${STRAVA_STREAM_KEYS}&key_by_type=true`)
-      const streams = streamsRes.ok ? await streamsRes.json() : null
-      const analyzed = analyzeStreams(stravaStreamsToList(streams), gearing)
-      if (!analyzed) throw new ImportError(`No stream data is available in Strava for ride ${id}.`, 404)
+      const analyzed = await this.analyzeStreamsFor(id, gearing)
 
       // Streams carry no clock; the activity's start/duration drive de-duplication against other sources.
       const summary = {
