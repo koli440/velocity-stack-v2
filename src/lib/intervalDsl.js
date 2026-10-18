@@ -130,14 +130,20 @@ import {
 const METRICS_LINE_RE = /^metrics\b\s*:?\s*(.*)$/i
 const METRIC_TOKEN_RE = /^([a-z0-9_]+)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*(min|sec|s)\s*\))?$/i
 const REPEAT_LINE_RE = /^(?:(\d+)\s*sets?\s*of\s*)?(\d+)\s*x$/i
-const STEP_LINE_RE = /^(then\s+|set\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(min|sec|km|m)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
+const STEP_LINE_RE = /^(then\s+|set\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(minutes?|mins?|seconds?|secs?|km|m|s)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
 const EXCLUDE_LINE_RE = /^(warm-?up|cool-?down)\s+(\d+(?:\.\d+)?)\s*(min|sec)$/i
 const RANGE_BAND_RE = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W\/kg|W|km\/h)$/i
 const MAX_BAND_RE = /^<\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W\/kg|W|km\/h)$/i
 const MIN_BAND_RE = /^>\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W\/kg|W|km\/h)$/i
 // A bare target ('3W/kg') means the target ±5%, normalised to an explicit range so it round-trips.
+const END_LINE_RE = /^end$/i
+// A bare target ('50W', '95%FTP') means the target ±5%, like a bare W/kg target.
+const BARE_BAND_RE = /^(\d+(?:\.\d+)?)\s*(%FTP|W)$/i
 const BARE_WKG_RE = /^(\d+(?:\.\d+)?)\s*W\/kg$/i
 export const WKG_TARGET_TOLERANCE = 0.05
+export const MAX_NEST_DEPTH = 3 // repeated groups inside repeated groups
+export const MAX_GROUP_REPEAT = 100
+export const MAX_EXPANDED_STEPS = 200
 const ZONE_RANGE_RE = /^Z(\d+)\s*-\s*Z(\d+)$/i
 const ZONE_SINGLE_RE = /^Z(\d+)$/i
 const ZONE_MAX_RE = /^<\s*Z(\d+)$/i
@@ -196,6 +202,13 @@ function parseBand(bandText) {
     return { bandType: 'wkg', bestMetric: null, powerMin: round(target * (1 - WKG_TARGET_TOLERANCE)), powerMax: round(target * (1 + WKG_TARGET_TOLERANCE)) }
   }
 
+  m = text.match(BARE_BAND_RE)
+  if (m) {
+    const target = parseFloat(m[1])
+    const round = (v) => Math.round(v * 100) / 100
+    return { bandType: bandTypeForSuffix(m[2]), bestMetric: null, powerMin: round(target * (1 - WKG_TARGET_TOLERANCE)), powerMax: round(target * (1 + WKG_TARGET_TOLERANCE)) }
+  }
+
   m = text.match(ZONE_SINGLE_RE)
   if (m) return { bandType: 'zone', bestMetric: null, powerMin: parseInt(m[1], 10), powerMax: parseInt(m[1], 10) }
 
@@ -241,6 +254,7 @@ function parseBand(bandText) {
  *   pattern: 'repeated_bursts'|'flying_sprint'|'sustained_tt'|'standing_start'|null,  // fixed pattern (issue #128)
  *   patternOptions: object,                            // its manifest option keys (target_count, distance_m, ...)
  *   steps: Array<{role: 'work'|'recovery', keyBy: 'duration'|'distance', targetDurationSec: number|null, targetDistanceM: number|null, durationTolerancePct: number, contiguous?: true, bandType: 'pct_ftp'|'watts'|'speed_kmh'|'pct_hrmax'|'hr_bpm'|'cadence_rpm'|'pct_lt1'|'pct_lt2'|'pct_lt1_hr'|'pct_lt2_hr'|'wkg'|'zone'|'best', bestMetric: 'power'|'speed'|null, powerMin: number|null, powerMax: number|null}>,
+ *   structure: Array<step|{repeat: number, items: Array}>|null,  // written order with nested repeat groups; null without groups
  *   errors: Array<{line: number, message: string}>
  * }}
  */
@@ -261,10 +275,28 @@ export function parseIntervalDsl(text) {
   const rawLines = (text || '').split(/\r\n|\r|\n/)
   let sawRepeatLine = false
 
+  // Repeated groups ("6x" ... blank line / "end") nest inside the document; `tree` holds steps and group nodes
+  // ({ repeat, items }) in written order, `steps` is the expanded flat list the matching engine runs.
+  const tree = []
+  const stack = [{ items: tree }]
+  const groupLines = new WeakMap()
+  let stepCount = 0
+  let hasGroups = false
+  const closeGroup = () => {
+    const g = stack.pop()
+    if (!g.items.length) errors.push({ line: groupLines.get(g) || 1, message: `Repeat group "${g.repeat}x" has no steps; add work/recovery lines under it.` })
+  }
+  const closeAllGroups = () => {
+    while (stack.length > 1) closeGroup()
+  }
+
   rawLines.forEach((rawLine, idx) => {
     const lineNo = idx + 1
     const line = rawLine.trim()
-    if (!line) return // blank lines are allowed as spacing
+    if (!line) {
+      closeAllGroups() // a blank line ends open repeat groups (outside them it is just spacing)
+      return
+    }
 
     if (!sawRepeatLine) {
       const pm = line.match(PATTERN_LINE_RE)
@@ -276,24 +308,46 @@ export function parseIntervalDsl(text) {
         return
       }
       const m = line.match(REPEAT_LINE_RE)
-      if (!m) {
-        errors.push({ line: lineNo, message: `Expected a repeat count like "4x", "1x" or "3 sets of 5x" (or "pattern <name>"), got "${line}".` })
-        sawRepeatLine = true // avoid cascading "expected repeat line" errors
+      sawRepeatLine = true
+      if (m) {
+        repeatCount = parseInt(m[2], 10)
+        if (!(repeatCount >= 1)) {
+          errors.push({ line: lineNo, message: 'Repeat count must be 1 or greater.' })
+        }
+        if (m[1] != null) {
+          setCount = parseInt(m[1], 10)
+          if (!(setCount >= 1)) errors.push({ line: lineNo, message: 'Set count must be 1 or greater.' })
+        }
         return
       }
-      repeatCount = parseInt(m[2], 10)
-      if (!(repeatCount >= 1)) {
-        errors.push({ line: lineNo, message: 'Repeat count must be 1 or greater.' })
+      // No repeat line: the whole description is a single (1x) run of the steps, handled below.
+      repeatCount = 1
+    }
+
+    if (!pattern) {
+      const gm = line.match(REPEAT_LINE_RE)
+      if (gm) {
+        const count = parseInt(gm[2], 10)
+        if (gm[1] != null) errors.push({ line: lineNo, message: '"<S> sets of <N>x" is only allowed as the first line; use "<N>x" for a repeated group.' })
+        if (!(count >= 1)) errors.push({ line: lineNo, message: 'Repeat count must be 1 or greater.' })
+        else if (count > MAX_GROUP_REPEAT) errors.push({ line: lineNo, message: `A repeated group can repeat at most ${MAX_GROUP_REPEAT} times.` })
+        if (stack.length > MAX_NEST_DEPTH) errors.push({ line: lineNo, message: `Repeated groups can be nested at most ${MAX_NEST_DEPTH} levels deep.` })
+        const node = { repeat: count, items: [] }
+        groupLines.set(node, lineNo)
+        stack[stack.length - 1].items.push(node)
+        stack.push(node)
+        hasGroups = true
+        return
       }
-      if (m[1] != null) {
-        setCount = parseInt(m[1], 10)
-        if (!(setCount >= 1)) errors.push({ line: lineNo, message: 'Set count must be 1 or greater.' })
+      if (END_LINE_RE.test(line)) {
+        if (stack.length > 1) closeGroup()
+        else errors.push({ line: lineNo, message: '"end" has no open repeated group to close.' })
+        return
       }
-      sawRepeatLine = true
-      return
     }
 
     const ex = line.match(EXCLUDE_LINE_RE)
+    if (!pattern && (ex || METRICS_LINE_RE.test(line) || /^lap\b/i.test(line))) closeAllGroups() // document-level lines end open groups
     if (ex && pattern) {
       errors.push({ line: lineNo, message: `"${ex[1].toLowerCase()}" is not available with pattern ${pattern}.` })
       return
@@ -362,7 +416,7 @@ export function parseIntervalDsl(text) {
         line: lineNo,
         message:
           `Could not parse step line "${line}". Expected format: ` +
-          '"[then] work|recovery <value><min|sec|km|m> ±<tolerance>% @ <band>" (or "warmup <n>min|sec" / "cooldown <n>min|sec").',
+          '"[then] work|recovery <value><min|sec|km|m> ±<tolerance>% @ <band>" (or "warmup <n>min|sec" / "cooldown <n>min|sec", a group line like "6x", or "end").',
       })
       return
     }
@@ -380,11 +434,15 @@ export function parseIntervalDsl(text) {
         errors.push({ line: lineNo, message: 'Only one "set recovery" line is allowed.' })
       }
     }
-    if (contiguous && !steps.length) {
+    if (isSetRecovery && stack.length > 1) {
+      errors.push({ line: lineNo, message: '"set recovery" cannot be inside a repeated group.' })
+    }
+    if (contiguous && !stepCount) {
       errors.push({ line: lineNo, message: '"then" needs a preceding step in the same repeat; remove it from the first step.' })
     }
     const value = parseFloat(valueRaw)
-    const unit = unitRaw.toLowerCase()
+    const unitText = unitRaw.toLowerCase()
+    const unit = unitText.startsWith('min') ? 'min' : unitText.startsWith('s') ? 'sec' : unitText
     const tolerance = parseFloat(toleranceRaw)
     const keyBy = unit === 'km' || unit === 'm' ? 'distance' : 'duration'
     const targetDurationSec = keyBy === 'duration' ? (unit === 'min' ? value * 60 : value) : null
@@ -451,19 +509,31 @@ export function parseIntervalDsl(text) {
     if (isSetRecovery) {
       if (role === 'recovery' && !setRecovery) setRecovery = stepObj
     } else {
-      steps.push(stepObj)
+      stepCount++
+      stack[stack.length - 1].items.push(stepObj)
     }
   })
+  closeAllGroups()
+
+  const leafCount = (items) => items.reduce((n, it) => n + (it.items ? it.repeat * leafCount(it.items) : 1), 0)
+  const expand = (items) => items.flatMap((it) => (it.items ? Array.from({ length: it.repeat }, () => expand(it.items)).flat() : [{ ...it }]))
+  const total = leafCount(tree)
+  if (total > MAX_EXPANDED_STEPS) {
+    errors.push({ line: 1, message: `The repeated groups expand to ${total} steps; the limit is ${MAX_EXPANDED_STEPS}.` })
+    steps.push(...tree.filter((it) => !it.items))
+  } else {
+    steps.push(...expand(tree))
+  }
 
   if (!sawRepeatLine) {
-    errors.push({ line: 1, message: 'Empty template: expected a repeat count line like "4x".' })
+    errors.push({ line: 1, message: 'Empty template: expected work/recovery lines, optionally with a repeat count line like "4x".' })
   }
 
   if (!pattern && !steps.some((s) => s.role === 'work')) {
     errors.push({ line: rawLines.length || 1, message: 'Template must contain at least one "work" step.' })
   }
 
-  return { repeatCount, setCount, setRecovery, steps, warmupSec, cooldownSec, metrics, pattern, patternOptions, lapLengthM, errors }
+  return { repeatCount, setCount, setRecovery, steps, structure: hasGroups ? tree : null, warmupSec, cooldownSec, metrics, pattern, patternOptions, lapLengthM, errors }
 }
 
 function validateZoneBand({ powerMin, powerMax }) {
@@ -559,7 +629,7 @@ function metricsLine(metrics) {
  * @param {{repeatCount: number, steps: Array}} manifest
  * @returns {string}
  */
-export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {}, lapLengthM = null } = {}) {
+export function stringifyIntervalDsl({ repeatCount, steps = [], structure = null, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {}, lapLengthM = null } = {}) {
   if (pattern) {
     const lines = [`pattern ${pattern}`, ...formatLegacyOptions(pattern, patternOptions)]
     if (metrics && metrics.length) lines.push(metricsLine(metrics))
@@ -572,7 +642,18 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
     const valueText = step.keyBy === 'distance' ? formatDistance(step.targetDistanceM) : formatDuration(step.targetDurationSec)
     return `${prefix}${step.role} ${valueText} ±${formatNumber(step.durationTolerancePct)}% @ ${formatBand(step)}`
   }
-  steps.forEach((step) => lines.push(stepLine(step, step.contiguous ? 'then ' : '')))
+  const writeItems = (items, depth) => {
+    const pad = '  '.repeat(depth)
+    for (const it of items) {
+      if (it.items) {
+        lines.push(`${pad}${it.repeat}x`)
+        writeItems(it.items, depth + 1)
+        lines.push(`${pad}end`)
+      } else lines.push(pad + stepLine(it, it.contiguous ? 'then ' : ''))
+    }
+  }
+  if (Array.isArray(structure) && structure.length) writeItems(structure, 0)
+  else steps.forEach((step) => lines.push(stepLine(step, step.contiguous ? 'then ' : '')))
   if (setCount && setRecovery) lines.push(stepLine({ ...setRecovery, role: 'recovery' }, 'set '))
   if (lapLengthM) lines.push(`lap ${formatDistance(lapLengthM)}`)
   if (metrics && metrics.length) {
@@ -586,7 +667,7 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], warmupSec = null
  * Optional fields are omitted when unused so manifests of templates that do not
  * use newer grammar are byte-identical to those saved before it existed.
  */
-export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {}, lapLengthM = null }) {
+export function buildIntervalManifest({ repeatCount, steps, structure = null, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {}, lapLengthM = null }) {
   const summaryMetrics =
     metrics && metrics.length
       ? { summary_metrics: metrics.map((m) => ({ id: m.id, ...(m.windowSec ? { window_sec: m.windowSec } : {}) })) }
@@ -596,6 +677,7 @@ export function buildIntervalManifest({ repeatCount, steps, warmupSec = null, co
     pattern: 'custom_intervals',
     repeat_count: repeatCount,
     steps,
+    ...(Array.isArray(structure) && structure.length ? { structure } : {}),
     ...(warmupSec ? { warmup_sec: warmupSec } : {}),
     ...(cooldownSec ? { cooldown_sec: cooldownSec } : {}),
     ...(setCount ? { set_count: setCount } : {}),
@@ -620,6 +702,7 @@ export function manifestToDslInput(manifest = {}) {
   return {
     repeatCount: manifest.repeat_count,
     steps: manifest.steps || [],
+    structure: Array.isArray(manifest.structure) ? manifest.structure : null,
     warmupSec: manifest.warmup_sec ?? null,
     cooldownSec: manifest.cooldown_sec ?? null,
     setCount: manifest.set_count ?? null,
