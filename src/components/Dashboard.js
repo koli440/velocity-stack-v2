@@ -12,6 +12,7 @@ import ActivityFeed from './ActivityFeed'
 import EmptyFeedCard from './EmptyFeedCard'
 import { stravaFlagMessage } from '../lib/emptyFeed'
 import PowerProfileCard from './PowerProfileCard'
+import WeekStatsCard from './WeekStatsCard'
 
 export default function Dashboard({ initialActivities = [] }) {
   const [user, setUser] = useState(null)
@@ -244,9 +245,10 @@ export default function Dashboard({ initialActivities = [] }) {
         )}
       </div>
 
-      {/* Right column: placeholder for upcoming cards (this week) */}
+      {/* Right column */}
       <div className="w-full xl:w-80 shrink-0 space-y-3">
         <PowerProfileCard userId={user?.id} />
+        <WeekStatsCard userId={user?.id} />
       </div>
     </div>
   )
