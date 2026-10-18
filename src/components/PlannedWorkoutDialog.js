@@ -162,7 +162,7 @@ export default function PlannedWorkoutDialog({
 
         <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
           Title
-          <input className={field} value={title} maxLength={PLANNED_TITLE_MAX} onChange={(e) => setTitle(e.target.value)} placeholder={creating && templateId ? 'Defaults to the template name' : 'e.g. 4x5 min threshold'} autoFocus />
+          <input className={field} value={title} maxLength={PLANNED_TITLE_MAX} onChange={(e) => setTitle(e.target.value)} placeholder={creating && templateName ? 'Defaults to the template name' : 'e.g. 4x5 min threshold'} autoFocus />
         </label>
         <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
           Discipline
