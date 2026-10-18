@@ -4,11 +4,12 @@
 // friendly errors, derives status / labels, suggests activity matches and builds the readable structure summary.
 
 import { addDays, dayKey, parseDayKey } from './calendar.js'
-import { BAND_SUFFIXES } from './intervalDsl.js'
+import { BAND_SUFFIXES, buildIntervalManifest, parseIntervalDsl } from './intervalDsl.js'
 
 export const PLANNED_TITLE_MAX = 80
 export const PLANNED_DESCRIPTION_MAX = 2000
 export const PLANNED_PER_DAY_MAX = 20
+export const PLANNED_DSL_MAX = 4000
 export const PLANNED_DISCIPLINES = Object.freeze(['ride', 'track', 'gym', 'other'])
 export const PLANNED_DISCIPLINE_LABELS = Object.freeze({ ride: 'Ride', track: 'Track', gym: 'Gym', other: 'Other' })
 export const PLANNED_COLUMNS =
@@ -80,6 +81,22 @@ export function plannedProfileIds(workouts) {
   return [...ids]
 }
 
+// --- DSL snapshot ---------------------------------------------------------------------------
+
+/**
+ * Parses the workout DSL text with the template editor's parser (the same one the database never
+ * sees: it only checks size / shape). { empty } for blank text; else { dsl, manifest, errors }.
+ * `manifest` is null when there are errors. Errors are { line, message }.
+ */
+export function parseStructure(text) {
+  const dsl = String(text ?? '').replace(/\r\n?/g, '\n').trim()
+  if (!dsl) return { empty: true, dsl: '', manifest: null, errors: [] }
+  if (dsl.length > PLANNED_DSL_MAX) return { empty: false, dsl, manifest: null, errors: [{ line: 0, message: `The workout is limited to ${PLANNED_DSL_MAX} characters.` }] }
+  const parsed = parseIntervalDsl(dsl)
+  if (parsed.errors?.length) return { empty: false, dsl, manifest: null, errors: parsed.errors }
+  return { empty: false, dsl, manifest: buildIntervalManifest(parsed), errors: [] }
+}
+
 // --- Structure summary ----------------------------------------------------------------------
 
 const fmtMin = (sec) => (sec % 60 === 0 ? `${sec / 60}min` : sec >= 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : `${sec}sec`)
@@ -100,6 +117,13 @@ const stepSize = (s) => (s.keyBy === 'distance' && s.targetDistanceM ? (s.target
 function stepText(step) {
   const target = stepTarget(step)
   return `${step.role === 'recovery' ? 'Recovery' : 'Work'} ${stepSize(step)}${target ? ` @ ${target}` : ''}`.trim()
+}
+
+/** Summary of a workout, computed from its parsed DSL (falls back to the stored manifest). */
+export function workoutSummary(workout) {
+  if (!workout) return null
+  const parsed = workout.structure_dsl ? parseStructure(workout.structure_dsl) : null
+  return summarizeStructure(parsed?.manifest || workout.structure_manifest)
 }
 
 /** Mid-point intensity (fraction of FTP) of a %FTP band, or null when it has no usable numbers. */
@@ -172,7 +196,7 @@ export function suggestMatches(workouts, activities) {
   const out = new Map()
   const ordered = [...open].sort((a, b) => String(a.workout_date).localeCompare(String(b.workout_date)) || String(a.created_at).localeCompare(String(b.created_at)) || String(a.id).localeCompare(String(b.id)))
   for (const w of ordered) {
-    const est = summarizeStructure(w.structure_manifest)?.durationS || null
+    const est = workoutSummary(w)?.durationS || null
     const candidates = free
       .filter((a) => !taken.has(a.id) && dayKey(a.date) === w.workout_date && a.discipline === w.discipline)
       .sort((a, b) => (est ? Math.abs((a.durationS || 0) - est) - Math.abs((b.durationS || 0) - est) : 0) || a.date - b.date || String(a.id).localeCompare(String(b.id)))
@@ -184,13 +208,16 @@ export function suggestMatches(workouts, activities) {
   return out
 }
 
-/** Activities of the rider that the given workout could still be linked to (not linked elsewhere), nearest day first. */
+/**
+ * Activities the given workout can be linked to: those of the planned DAY only (local day, like the calendar
+ * cell), not linked to another workout, whatever their discipline (activities carry no discipline, the
+ * calendar derives ride/track from the track). Same-discipline ones first, then by time.
+ */
 export function linkableActivities(workout, workouts, activities) {
   const linkedElsewhere = new Set((workouts || []).filter((w) => w.activity_id && w.id !== workout.id).map((w) => w.activity_id))
-  const day = isDayKey(workout.workout_date) ? parseDayKey(workout.workout_date).getTime() : 0
   return (activities || [])
-    .filter((a) => a && a.kind !== 'planned' && !linkedElsewhere.has(a.id))
-    .sort((a, b) => Math.abs(a.date - day) - Math.abs(b.date - day) || a.date - b.date)
+    .filter((a) => a && a.kind !== 'planned' && dayKey(a.date) === workout.workout_date && !linkedElsewhere.has(a.id))
+    .sort((a, b) => (b.discipline === workout.discipline) - (a.discipline === workout.discipline) || a.date - b.date || String(a.id).localeCompare(String(b.id)))
 }
 
 /** The template run (on the linked activity) that belongs to the planned structure, else null. */
@@ -245,7 +272,7 @@ export function defaultDuplicateDay(workout) {
  * puts it; planned events carry their status for styling and open the detail dialog (no href).
  */
 export function plannedToEvent(workout, today = new Date()) {
-  const summary = summarizeStructure(workout.structure_manifest)
+  const summary = workoutSummary(workout)
   return {
     id: workout.id,
     kind: 'planned',
@@ -281,9 +308,11 @@ export async function fetchPlannedInRange(client, { riderId, startDay, endDay })
 
 const rpcError = (error) => (error ? new Error(error.message || 'Could not save the planned workout.') : null)
 
-/** Creates a workout; with `templateId` the structure snapshot is taken server-side. */
-export async function createPlanned(client, { riderId, day, discipline, title, description, templateId = null }) {
-  const v = validatePlanned({ title, description, discipline, day, hasTemplate: !!templateId })
+/** Creates a workout; `dsl` (may be empty) is the snapshot, `templateName` only labels where it came from. */
+export async function createPlanned(client, { riderId, day, discipline, title, description, dsl = '', templateName = null }) {
+  const st = parseStructure(dsl)
+  if (st.errors.length) return { data: null, error: new Error(st.errors[0].message) }
+  const v = validatePlanned({ title, description, discipline, day, hasTemplate: !st.empty && !!templateName })
   if (v.error) return { data: null, error: new Error(v.error) }
   if (!riderId || !day) return { data: null, error: new Error('Pick a day.') }
   const { data, error } = await client.rpc('planned_workout_create', {
@@ -292,7 +321,9 @@ export async function createPlanned(client, { riderId, day, discipline, title, d
     p_discipline: v.value.discipline,
     p_title: v.value.title,
     p_description: v.value.description,
-    p_template: templateId,
+    p_dsl: st.empty ? null : st.dsl,
+    p_manifest: st.empty ? null : st.manifest,
+    p_template_name: st.empty ? null : templateName || null,
   })
   return { data: data || null, error: rpcError(error) }
 }
@@ -338,6 +369,16 @@ async function rpc(client, name, args) {
 
 export const duplicatePlanned = (client, id, day) =>
   isDayKey(day) ? rpc(client, 'planned_workout_duplicate', { p_id: id, p_date: day }) : Promise.resolve({ data: null, error: new Error('Pick a day.') })
-export const setPlannedTemplate = (client, id, templateId) => rpc(client, 'planned_workout_set_template', { p_id: id, p_template: templateId || null })
+/** Replaces the DSL snapshot (blank clears it). */
+export function setPlannedStructure(client, id, { dsl = '', templateName = null } = {}) {
+  const st = parseStructure(dsl)
+  if (st.errors.length) return Promise.resolve({ data: null, error: new Error(st.errors[0].message) })
+  return rpc(client, 'planned_workout_set_structure', {
+    p_id: id,
+    p_dsl: st.empty ? null : st.dsl,
+    p_manifest: st.empty ? null : st.manifest,
+    p_template_name: st.empty ? null : templateName || null,
+  })
+}
 export const linkPlannedActivity = (client, id, activityId) => rpc(client, 'planned_workout_link', { p_id: id, p_activity: activityId })
 export const unlinkPlannedActivity = (client, id) => rpc(client, 'planned_workout_unlink', { p_id: id })

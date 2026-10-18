@@ -9,7 +9,6 @@ import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
 import CalendarNoteDialog from './CalendarNoteDialog'
 import PlannedWorkoutDialog, { STATUS_STYLES } from './PlannedWorkoutDialog'
-import { coachRunnableTemplates } from '../lib/coachRuns'
 import {
   fetchPlannedInRange,
   plannedToEvent,
@@ -25,7 +24,7 @@ import {
   setPlannedSkipped,
   deletePlanned,
   duplicatePlanned,
-  setPlannedTemplate,
+  setPlannedStructure,
   linkPlannedActivity,
   unlinkPlannedActivity,
 } from '../lib/plannedWorkouts'
@@ -170,7 +169,6 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   const [dialog, setDialog] = useState(null) // { day: Date, note: object|null }
   const [planned, setPlanned] = useState([])
   const [runs, setRuns] = useState([])
-  const [templates, setTemplates] = useState([])
   const [pdialog, setPdialog] = useState(null) // { day: Date, id: string|null }
 
   const { start, end, startISO, endISO } = useMemo(() => monthRange(anchor), [anchor])
@@ -256,13 +254,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     return null
   }
 
-  const openPlanned = async (day, id) => {
-    setPdialog({ day, id })
-    if (!templates.length) {
-      const { data } = await supabase.from('analysis_templates').select('id, name, category, user_id').order('name')
-      setTemplates(coachRunnableTemplates(data, sessionUserId))
-    }
-  }
+  const openPlanned = (day, id) => setPdialog({ day, id })
 
   const refresh = async (fn) => {
     const { error: err } = await fn()
@@ -274,7 +266,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   const plannedActions = (id) => ({
     create: (f) => refresh(() => createPlanned(supabase, { riderId, ...f })),
     update: (f) => refresh(() => updatePlanned(supabase, id, f)),
-    setTemplate: (t) => refresh(() => setPlannedTemplate(supabase, id, t)),
+    setStructure: (st) => refresh(() => setPlannedStructure(supabase, id, st)),
     move: (day) => refresh(() => movePlanned(supabase, id, day)),
     duplicate: (day) => refresh(() => duplicatePlanned(supabase, id, day)),
     skip: (v) => refresh(() => setPlannedSkipped(supabase, id, v)),
@@ -349,7 +341,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                       onClick={() => openPlanned(cell.date, null)}
                       className="px-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-sky-600"
                     >
-                      🗓
+                      +
                     </button>
                     <button
                       type="button"
@@ -358,7 +350,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                       onClick={() => setDialog({ day: cell.date, note: null })}
                       className="px-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600"
                     >
-                      +
+                      📝
                     </button>
                     </span>
                   </div>
@@ -395,7 +387,6 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
             day={pdialog.day}
             names={names}
             viewerId={sessionUserId}
-            templates={templates}
             activities={events}
             workouts={planned}
             countByDay={countByDay}

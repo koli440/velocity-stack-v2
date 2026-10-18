@@ -222,7 +222,7 @@ created_by / updated_by -> profiles ON DELETE SET NULL, set_by_coach, created_at
   Client UPDATE grant: `workout_date, discipline, title, description, status`. Structure, link and stamps cannot be named by clients.
 - Trigger `planned_workouts_stamp` stamps `created_by` / `updated_by` / `set_by_coach` from `auth.uid()`, pins `rider_id`, trims text, caps 20 workouts per rider and day,
   and verifies that a linked activity belongs to the same rider. CHECK: a linked workout is never `skipped`.
-- SECURITY DEFINER RPCs (pinned `search_path`, `auth.uid()` + `is_coach_of` checked, not executable by `anon`): `planned_workout_create(rider, date, discipline, title, description, template)`,
-  `planned_workout_set_template(id, template|NULL)`, `planned_workout_duplicate(id, date)`, `planned_workout_link(id, activity)`, `planned_workout_unlink(id)`.
+- SECURITY DEFINER RPCs (pinned `search_path`, `auth.uid()` + `is_coach_of` checked, not executable by `anon`): `planned_workout_create(rider, date, discipline, title, description, dsl, manifest, template_name)`,
+  `planned_workout_set_structure(id, dsl|NULL, manifest|NULL, template_name)` (migration `20261207000000`; no table reads of `analysis_templates`), `planned_workout_duplicate(id, date)`, `planned_workout_link(id, activity)`, `planned_workout_unlink(id)`.
   A template is snapshotted server-side from the **caller's own or a system** template only.
 - Status shown in the UI: completed (linked) / skipped / missed (derived: past, unlinked, not skipped; never stored) / planned. See *Planned workouts* in coaching.md.
