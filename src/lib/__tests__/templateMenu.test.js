@@ -64,7 +64,7 @@ function fakeClient({ template = { id: 't1' }, upsertError = null, deleteError =
     calls,
     from(table) {
       if (table === 'analysis_templates') {
-        return { select: () => ({ eq: (_c, slug) => ({ maybeSingle: async () => { calls.slug = slug; return { data: template, error: null } } }) }) }
+        return { select: () => ({ eq: (_c, slug) => ({ or: (f) => { calls.or = f; return { maybeSingle: async () => { calls.slug = slug; return { data: template, error: null } } } }, maybeSingle: async () => { calls.slug = slug; return { data: template, error: null } } }) }) }
       }
       assert.equal(table, 'template_favorites')
       return {

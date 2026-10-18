@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
+import { visibleTemplatesFilter } from '../../../../lib/ownerScope'
 import { buildIntervalManifest, parseIntervalDsl } from '../../../../lib/intervalDsl'
 
 // PATCH /api/templates/:slug - update a user-owned "custom_intervals" template
@@ -18,6 +19,7 @@ export async function PATCH(req, { params }) {
       .from('analysis_templates')
       .select('*')
       .eq('slug', slug)
+      .or(visibleTemplatesFilter(user.id))
       .single()
 
     if (fetchError || !existing) {
@@ -79,6 +81,7 @@ export async function DELETE(req, { params }) {
       .from('analysis_templates')
       .select('id, user_id, visibility')
       .eq('slug', slug)
+      .or(visibleTemplatesFilter(user.id))
       .single()
 
     if (fetchError || !existing) {

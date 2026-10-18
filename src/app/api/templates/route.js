@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../lib/supabaseServer'
+import { visibleTemplatesFilter } from '../../../lib/ownerScope'
 import { buildIntervalManifest, parseIntervalDsl } from '../../../lib/intervalDsl'
 
 // GET /api/templates - list all declarative analysis templates (Phase 2 manifests)
-// Visible rows are governed by RLS: system templates (user_id IS NULL), the
-// caller's own templates, and other users' public templates.
+// System templates (user_id IS NULL), the caller's own templates and other users' public templates.
+// Filtered explicitly: RLS also lets a coach read the coached riders' private templates.
 export async function GET(req) {
   try {
     const { supabase, user } = await getRequestUser(req)
     const { data, error } = await supabase
       .from('analysis_templates')
       .select('*')
+      .or(visibleTemplatesFilter(user?.id))
       .order('category')
       .order('name')
 

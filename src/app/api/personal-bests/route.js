@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../lib/supabaseServer'
 import { calculateAvgSpeedKmh } from '../../../lib/pbVault'
+import { scopeToOwner } from '../../../lib/ownerScope'
 import { fetchDisciplines, findDisciplineDistance } from '../../../lib/lookups'
 
 // GET /api/personal-bests - list the signed-in rider's own Personal Best records (issue #50,
-// "PB Vault"). RLS already scopes rows to auth.uid(), this just orders them for the UI.
+// "PB Vault"). rows are filtered by owner explicitly (RLS alone would include coached riders' PBs).
 export async function GET(req) {
   try {
     const { supabase, user } = await getRequestUser(req)
@@ -13,9 +14,8 @@ export async function GET(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data, error } = await supabase
-      .from('personal_bests')
-      .select('*')
+    // Explicit owner filter: RLS also lets an active coach read the coached riders' PBs.
+    const { data, error } = await scopeToOwner(supabase.from('personal_bests').select('*'), user.id)
       .order('achieved_date', { ascending: false })
       .order('created_at', { ascending: false })
 
