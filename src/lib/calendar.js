@@ -4,6 +4,9 @@
 // Day items share one event model so planned workouts can be added later next to activities:
 //   { id, kind: 'activity' | 'planned', date: Date, title, discipline, distanceM, durationS,
 //     metric: { label, value } | null, href }
+// Calendar notes (src/lib/calendarNotes.js) are not timed events: they sit on the day cell as `cell.notes`.
+
+import { groupNotesByDay } from './calendarNotes.js'
 
 export const CALENDAR_ACTIVITY_COLUMNS = [
   'id',
@@ -119,10 +122,11 @@ export function summarizeEvents(events) {
 
 /**
  * Turns week rows + events into rows of day cells with a per-week summary.
- * Cells: { date, key, inMonth, isToday, events }.
+ * Cells: { date, key, inMonth, isToday, events, notes }.
  */
-export function buildCalendarRows(weeks, events, { anchor, today = new Date() } = {}) {
+export function buildCalendarRows(weeks, events, { anchor, today = new Date(), notes = [] } = {}) {
   const byDay = groupEventsByDay(events)
+  const notesByDay = groupNotesByDay(notes)
   const todayKey = dayKey(today)
   return weeks.map((days) => {
     const cells = days.map((date) => {
@@ -133,6 +137,7 @@ export function buildCalendarRows(weeks, events, { anchor, today = new Date() } 
         inMonth: anchor ? date.getMonth() === anchor.getMonth() : true,
         isToday: key === todayKey,
         events: byDay[key] || [],
+        notes: notesByDay[key] || [],
       }
     })
     return { cells, summary: summarizeEvents(cells.flatMap((c) => c.events)) }

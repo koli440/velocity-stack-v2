@@ -7,18 +7,24 @@ import { contextualHref, parseCoachPath } from '../lib/coachContext'
 import Icon from './ActivityIcons'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
+import CalendarNoteDialog from './CalendarNoteDialog'
+import { fetchProfilesByIds } from '../lib/social'
+import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
 import {
   buildMonthGrid,
   buildCalendarRows,
   monthRange,
   shiftMonth,
+  addDays,
   formatDuration,
   formatKm,
   startOfDay,
+  dayKey,
   fetchActivitiesInRange,
 } from '../lib/calendar'
 
 const defaultFetchEvents = (args) => fetchActivitiesInRange(supabase, args)
+const defaultFetchNotes = (args) => fetchNotesInRange(supabase, args)
 
 const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike' }
 
@@ -47,6 +53,24 @@ function EventChip({ event }) {
   )
 }
 
+// Notes are the first thing in a day cell so the coach sees "ill" / "can train Tue" at a glance.
+function NoteChip({ note, onOpen }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(note)}
+      title={note.body ? `${note.title}\n${note.body}` : note.title}
+      data-testid="calendar-note"
+      className="block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight font-bold border border-amber-400/70 bg-amber-400/15 text-amber-900 dark:text-amber-200 hover:border-amber-500 transition"
+    >
+      <span className="flex items-center gap-1 min-w-0">
+        <span aria-hidden>📝</span>
+        <span className="truncate">{note.title}</span>
+      </span>
+    </button>
+  )
+}
+
 function WeekSummary({ summary }) {
   const stat = (value, label) => (
     <div className="text-center md:text-left">
@@ -72,20 +96,23 @@ function WeekSummary({ summary }) {
  * @param {(args: {riderId: string, startISO: string, endISO: string}) => Promise<{data: Array, error: Error|null}>} fetchEvents
  *   returns day-cell events (see lib/calendar.js); only the visible range is requested.
  *   Defaults to the rider's activities from Supabase.
+ * @param {Function} [fetchNotes]  same for calendar notes (RLS: only the rider and the rider's active coach get rows)
  */
-export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = defaultFetchEvents }) {
+export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = defaultFetchEvents, fetchNotes = defaultFetchNotes }) {
   const [sessionUserId, setSessionUserId] = useState(null)
   const riderId = riderIdProp || sessionUserId
 
   useEffect(() => {
-    if (riderIdProp) return
     supabase.auth.getSession().then(({ data: { session } }) => setSessionUserId(session?.user?.id ?? null))
-  }, [riderIdProp])
+  }, [])
 
   const [anchor, setAnchor] = useState(() => startOfDay(new Date()))
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [notes, setNotes] = useState([])
+  const [names, setNames] = useState({})
+  const [dialog, setDialog] = useState(null) // { day: Date, note: object|null }
 
   const { start, end, startISO, endISO } = useMemo(() => monthRange(anchor), [anchor])
 
@@ -93,11 +120,16 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     if (!riderId) return
     setLoading(true)
     setError(null)
-    const { data, error: err } = await fetchEvents({ riderId, startISO, endISO })
+    const [{ data, error: err }, { data: noteRows, error: noteErr }] = await Promise.all([
+      fetchEvents({ riderId, startISO, endISO }),
+      fetchNotes({ riderId, startDay: dayKey(start), endDay: dayKey(addDays(end, -1)) }),
+    ])
     if (err) setError(err.message || 'Failed to load activities.')
+    else if (noteErr) setError(noteErr.message || 'Failed to load notes.')
     setEvents(data || [])
+    setNotes(noteRows || [])
     setLoading(false)
-  }, [riderId, fetchEvents, startISO, endISO])
+  }, [riderId, fetchEvents, fetchNotes, start, end, startISO, endISO])
 
   useEffect(() => {
     let cancelled = false
@@ -108,8 +140,42 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   }, [load])
 
   const rows = useMemo(() => {
-    return buildCalendarRows(buildMonthGrid(anchor), events, { anchor })
-  }, [anchor, events])
+    return buildCalendarRows(buildMonthGrid(anchor), events, { anchor, notes })
+  }, [anchor, events, notes])
+
+  const nameKey = noteProfileIds(notes).sort().join(',')
+  useEffect(() => {
+    if (!nameKey) return
+    let cancelled = false
+    fetchProfilesByIds(supabase, nameKey.split(',')).then(({ profiles }) => {
+      if (cancelled) return
+      const out = {}
+      for (const [id, p] of profiles) if (p?.display_name) out[id] = p.display_name
+      setNames(out)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [nameKey])
+
+  const saveNote = async ({ title, body }) => {
+    const { day, note } = dialog
+    const { error: err } = note
+      ? await updateNote(supabase, note.id, { day: dayKey(day), title, body })
+      : await createNote(supabase, { riderId, day: dayKey(day), title, body })
+    if (err) return err
+    setDialog(null)
+    await load()
+    return null
+  }
+
+  const removeNote = async () => {
+    const { error: err } = await deleteNote(supabase, dialog.note.id)
+    if (err) return err
+    setDialog(null)
+    await load()
+    return null
+  }
 
   const title = formatDate(anchor, { month: 'long', year: 'numeric' })
 
@@ -140,7 +206,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
         {rows.map((row, ri) => (
           <div key={ri} className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5">
             {row.cells.map((cell) => {
-              const hideOnMobile = cell.events.length === 0 && !cell.isToday
+              const hideOnMobile = cell.events.length === 0 && cell.notes.length === 0 && !cell.isToday
               return (
                 <div
                   key={cell.key}
@@ -150,10 +216,22 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                       : 'border-slate-200 dark:border-slate-800'
                   } ${cell.inMonth ? '' : 'opacity-50'}`}
                 >
-                  <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                    <span className="md:hidden">{formatDate(cell.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
-                    <span className="hidden md:inline">{cell.date.getDate()}</span>
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    <span>
+                      <span className="md:hidden">{formatDate(cell.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                      <span className="hidden md:inline">{cell.date.getDate()}</span>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`Add note on ${formatDate(cell.date, { day: 'numeric', month: 'long' })}`}
+                      title="Add note"
+                      onClick={() => setDialog({ day: cell.date, note: null })}
+                      className="px-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600"
+                    >
+                      +
+                    </button>
                   </div>
+                  {cell.notes.map((n) => <NoteChip key={n.id} note={n} onOpen={(note) => setDialog({ day: cell.date, note })} />)}
                   {cell.events.map((e) => <EventChip key={`${e.kind}-${e.id}`} event={e} />)}
                 </div>
               )
@@ -162,6 +240,18 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
           </div>
         ))}
       </div>
+      {dialog && (
+        <CalendarNoteDialog
+          key={dialog.note?.id || `new-${dayKey(dialog.day)}`}
+          note={dialog.note}
+          dayLabel={formatDate(dialog.day, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          names={names}
+          viewerId={sessionUserId}
+          onSave={saveNote}
+          onDelete={removeNote}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {!loading && !error && events.length === 0 && (
         <p className="text-xs text-slate-400 text-center">No activities in this period.</p>
       )}
