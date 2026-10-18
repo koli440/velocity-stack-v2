@@ -5,8 +5,75 @@ import SupportButton from '../../components/SupportButton'
 
 export const metadata = {
   title: 'About | VelocityStack',
-  description: 'Precision engineering for the track cycling community.',
+  description: 'Precision engineering for the track cycling community: ride analysis, templates, planning and coaching.',
 }
+
+const link = 'font-semibold text-emerald-600 dark:text-brand-neon hover:underline'
+
+const GROUPS = [
+  {
+    icon: 'refresh',
+    title: 'Your rides',
+    items: [
+      { name: 'Import and sync', text: 'Connect Intervals.icu or Strava and rides sync automatically, or upload FIT files by hand. Duplicates are skipped.', href: '/settings', cta: 'Connect a source' },
+      { name: 'Activity analysis', text: 'Power, heart rate and map for every ride, with power, heart rate and other curves, zones and load based on the FTP and weight valid on that day.' },
+      { name: 'Comments', text: 'Talk about a ride with the riders who can see it.' },
+    ],
+  },
+  {
+    icon: 'clipboard',
+    title: 'Templates and records',
+    items: [
+      { name: 'Templates', text: 'Describe the efforts you care about in plain text, run the template on a ride, and see each effort found, checked against the plan and measured. Statistics build up over all your runs.', href: '/templates', cta: 'Browse templates' },
+      { name: 'Template syntax guide', text: 'Repeats, tolerances, hours and nested groups, with examples.', href: '/dsl-guide', cta: 'Read the guide' },
+      { name: 'Personal Best Vault', text: 'Lifetime records by distance and discipline across velodromes. Send an effort from a template run straight to the vault.', href: '/pb-vault', cta: 'Open the vault' },
+    ],
+  },
+  {
+    icon: 'flask',
+    title: 'Track tools',
+    items: [
+      { name: 'Pursuit Strategist', text: 'Lap-by-lap pacing based on real physics.', href: '/pursuit', cta: 'Plan a pursuit' },
+      { name: 'Gear Architect', text: 'Gear inch and development calculations.', href: '/gears', cta: 'Open gears' },
+      { name: 'Aero Lab', text: 'Field-test your position and equipment (CdA) without a wind tunnel.', href: '/aero-lab', cta: 'Open Aero Lab' },
+      { name: 'Velodromes', text: 'Track details for the velodromes in the database.', href: '/velodromes', cta: 'Browse velodromes' },
+    ],
+  },
+  {
+    icon: 'calendar',
+    title: 'Plan your training',
+    items: [
+      { name: 'Calendar', text: 'Rides, planned workouts, races and notes in one place.', href: '/calendar', cta: 'Open the calendar' },
+      { name: 'Planned workouts', text: 'Build a workout and see a preview chart. Push it to your Intervals.icu calendar, manually or automatically.' },
+      { name: 'Races and notes', text: 'Mark races and keep notes on any day.' },
+    ],
+  },
+  {
+    icon: 'users',
+    title: 'Riders and privacy',
+    items: [
+      { name: 'Riders', text: 'Find and follow other riders and see the sessions they share. A rider can require approval for new followers.', href: '/riders', cta: 'Find riders' },
+      { name: 'Privacy zone', text: 'Set a zone around home: other riders see rides masked inside it. Your raw GPS file and connection keys are never shared.', href: '/settings', cta: 'Set a zone' },
+    ],
+  },
+  {
+    icon: 'bell',
+    title: 'Staying up to date',
+    items: [
+      { name: 'What\u2019s new', text: 'Every notable feature and fix is listed, newest first.', href: '/whats-new', cta: 'See what\u2019s new' },
+      { name: 'Getting started', text: 'Reopen the welcome tour any time from Help in the top-right menu.' },
+    ],
+  },
+]
+
+const COACHING = [
+  ['You are in control', 'A coaching relationship only starts when the rider accepts. Either side can send the invite; accepting (or asking for a coach yourself) is the consent.'],
+  ['One active coach', 'A rider has at most one active coach at a time.'],
+  ['Revoke any time', 'The rider can end coaching whenever they like and access stops immediately. The coach can also leave.'],
+  ['What a coach sees', 'Everything about the athlete, including private activities, curves, templates and Personal Bests. Privacy-zone areas stay masked on maps, exactly as for other riders. Connection keys, email and raw GPS files are never visible.'],
+  ['What a coach can change', 'The athlete\u2019s FTP, weight, lactate thresholds, power zones and training defaults, plus planned workouts, races and notes on their calendar (and pushing workouts to their Intervals.icu).'],
+  ['Everything is labelled', 'Coach edits show a \u201cset by coach\u201d badge and the rider is notified. Coaches can also run templates on the athlete\u2019s activities.'],
+]
 
 export default function AboutPage() {
   return (
@@ -41,32 +108,11 @@ export default function AboutPage() {
               provide the data to back your decisions.
             </p>
           </div>
-
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-              <Icon name="settings" /> What is here
-            </h2>
-            <ul className="space-y-1.5 list-disc list-inside">
-              <li>
-                <strong className="text-slate-900 dark:text-white">Pursuit Strategist:</strong>{' '}
-                Advanced lap-by-lap pacing based on real physics.
-              </li>
-              <li>
-                <strong className="text-slate-900 dark:text-white">Gear Architect:</strong>{' '}
-                Dynamic gear inch and development calculations.
-              </li>
-              <li>
-                <strong className="text-slate-900 dark:text-white">PB Vault:</strong> A secure
-                home for your lifetime records across global velodromes.
-              </li>
-              <li>
-                <strong className="text-slate-900 dark:text-white">Aero Lab:</strong> Field-test
-                your position and equipment (CdA) without a wind tunnel.
-              </li>
-            </ul>
-          </div>
+          <p>
+            Everything below is live today. Several tools work without any data; the rest come
+            alive once your rides are in.
+          </p>
         </div>
-
         <div className="space-y-4">
           <div className="glass-dense overflow-hidden rounded-2xl border border-slate-200 dark:border-surface-darkBorder">
             <Image
@@ -93,6 +139,58 @@ export default function AboutPage() {
 
       <div className="border-t border-slate-200 dark:border-surface-darkBorder" />
 
+      {/* --- WHAT IS HERE --- */}
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
+          <Icon name="settings" /> What is here
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {GROUPS.map((g) => (
+            <div key={g.title} className="glass-dense rounded-2xl border border-slate-200 dark:border-surface-darkBorder p-4">
+              <h3 className="font-bold text-slate-900 dark:text-white mb-2">
+                <Icon name={g.icon} /> {g.title}
+              </h3>
+              <ul className="space-y-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                {g.items.map((it) => (
+                  <li key={it.name}>
+                    <strong className="text-slate-900 dark:text-white">{it.name}:</strong> {it.text}
+                    {it.href && (
+                      <>
+                        {' '}
+                        <Link href={it.href} className={link}>{it.cta} &rarr;</Link>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- COACHING --- */}
+      <div className="rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-5">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+          <Icon name="helmet" /> Coaching mode
+        </h2>
+        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 mb-4">
+          Any account can coach, or be coached. It is built on the rider&apos;s consent.
+        </p>
+        <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          {COACHING.map(([t, d]) => (
+            <div key={t}>
+              <dt className="font-bold text-slate-900 dark:text-white">{t}</dt>
+              <dd>{d}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-4 text-sm">
+          <Link href="/settings" className={link}>Manage coaching in Settings &rarr;</Link>
+        </p>
+      </div>
+
+      <div className="border-t border-slate-200 dark:border-surface-darkBorder" />
+
       {/* --- THE TECHNOLOGY --- */}
       <div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
@@ -112,8 +210,9 @@ export default function AboutPage() {
           <Icon name="heart" /> Support the Project
         </h2>
         <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-          VelocityStack is currently in <strong className="text-slate-900 dark:text-white">Alpha</strong>.
-          We are constantly adding new velodromes and features. If this tool helped you win a race
+          VelocityStack is still in <strong className="text-slate-900 dark:text-white">Alpha</strong>
+          and changing quickly: we keep adding velodromes and features (see{' '}
+          <Link href="/whats-new" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">what&apos;s new</Link>). If this tool helped you win a race
           or set a new PB, consider{' '}
           <Link href="/feedback" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">
             sharing feedback
