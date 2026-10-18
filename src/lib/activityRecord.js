@@ -6,6 +6,7 @@
 // persists the same set of activity-level metrics (issue #11).
 
 import { buildFeedPreview } from './routePreview.js'
+import { buildPowerPreview } from './powerPreview.js'
 import { zoneSignature } from './privacyZone.js'
 import { ftpAt } from './ftpHistory.js'
 import { weightAt } from './weightHistory.js'
@@ -108,6 +109,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     time_series: timeSeries || {},
     route_preview: buildFeedPreview(timeSeries || {}, privacyZone),
     route_preview_zone: zoneSignature(privacyZone),
+    power_preview: buildPowerPreview(timeSeries?.watts),
     curves_data: curvesData || {},
     raw_file_url: rawFileUrl,
     file_sha256: fileSha256,
