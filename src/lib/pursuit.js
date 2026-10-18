@@ -12,26 +12,10 @@
 // static reference list rather than a new DB table - mirroring the read-only, seed-only way the
 // `tracks` table itself is already used elsewhere in the app.
 
-// Standard 700c road wheel circumference in meters (matches the 2.140m constant used in v1 - a
-// 28" wheel, 700x23C/25C tyre).
-export const WHEEL_CIRCUMFERENCE_M = 2.14
+import { WHEEL_CIRCUMFERENCE_M } from './constants.js'
+import { formatMinSecMs, mpsToKmh } from './format.js'
 
-// Fixed catalogue of UCI track cycling disciplines: category, display name, race distance (m)
-// and whether the event starts from a flying (rolling) start rather than a standing start.
-export const DISCIPLINES = [
-  { category: 'Sprint', name: 'Flying 200m', distanceM: 200, flyingStart: true },
-  { category: 'Sprint', name: 'Kilo (1km Time Trial)', distanceM: 1000, flyingStart: false },
-  { category: 'Sprint', name: '500m Time Trial (Women)', distanceM: 500, flyingStart: false },
-  { category: 'Sprint', name: 'Team Sprint (Men, 3 laps)', distanceM: 750, flyingStart: false },
-  { category: 'Sprint', name: 'Team Sprint (Women, 2 laps)', distanceM: 500, flyingStart: false },
-  { category: 'Pursuit', name: 'Individual Pursuit (Men)', distanceM: 4000, flyingStart: false },
-  { category: 'Pursuit', name: 'Individual Pursuit (Women)', distanceM: 3000, flyingStart: false },
-  { category: 'Pursuit', name: 'Team Pursuit (Men)', distanceM: 4000, flyingStart: false },
-  { category: 'Pursuit', name: 'Team Pursuit (Women)', distanceM: 4000, flyingStart: false },
-  { category: 'Endurance', name: 'Scratch Race', distanceM: 10000, flyingStart: false },
-  { category: 'Endurance', name: 'Points Race', distanceM: 20000, flyingStart: false },
-  { category: 'Endurance', name: 'Madison', distanceM: 30000, flyingStart: false },
-]
+export { WHEEL_CIRCUMFERENCE_M }
 
 function round(value, decimals) {
   const factor = 10 ** decimals
@@ -43,12 +27,7 @@ function round(value, decimals) {
  * @param {number} totalSeconds
  * @returns {string}
  */
-export function formatTime(totalSeconds) {
-  const minutes = Math.floor(totalSeconds / 60)
-  const remainingSeconds = totalSeconds % 60
-  // Pad to width 6 ("SS.mmm") the same way Python's `:06.3f` does.
-  return `${minutes}:${remainingSeconds.toFixed(3).padStart(6, '0')}`
-}
+export const formatTime = formatMinSecMs
 
 /**
  * Works out how many whole laps a discipline's distance makes of a given track, mirroring v1's
@@ -74,6 +53,29 @@ export function getTrackLaps(trackLengthM, distanceM, tolerance = 0.05) {
     return { laps: Math.ceil(rawLaps), valid: true }
   }
   return { laps: 0, valid: false }
+}
+
+export const MIN_DISTANCE_M = 100
+export const MAX_DISTANCE_M = 100000
+
+/**
+ * Parses a user-entered distance override. Blank input means "use the default" (value: null).
+ * @param {string|number|null|undefined} input
+ * @returns {{ value: number|null, error: string|null }}
+ */
+export function parseDistanceOverride(input) {
+  if (input === null || input === undefined || String(input).trim() === '') {
+    return { value: null, error: null }
+  }
+  const n = Number(String(input).trim())
+  if (!Number.isFinite(n)) return { value: null, error: 'Distance must be a number.' }
+  if (n < MIN_DISTANCE_M || n > MAX_DISTANCE_M) {
+    return {
+      value: null,
+      error: `Distance must be between ${MIN_DISTANCE_M} and ${MAX_DISTANCE_M} m.`,
+    }
+  }
+  return { value: n, error: null }
 }
 
 /**
@@ -159,7 +161,7 @@ export function calculatePursuitStrategy({
       lap: i,
       lapTimeS: round(lapTime, 3),
       overallTimeS: round(elapsed, 3),
-      speedKmh: round((trackLengthM / lapTime) * 3.6, 1),
+      speedKmh: round(mpsToKmh(trackLengthM / lapTime), 1),
       cadenceRpm: Math.round(lapCadence),
     })
   }

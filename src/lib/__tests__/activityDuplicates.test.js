@@ -97,7 +97,10 @@ test('loadExistingActivityFingerprints queries activities scoped to the given us
   const result = await loadExistingActivityFingerprints(client, 'user-1')
 
   assert.equal(client.calls.table, 'activities')
-  assert.equal(client.calls.selectedColumns, 'file_sha256, start_time, elapsed_time_s')
+  assert.equal(
+    client.calls.selectedColumns,
+    'id, file_sha256, start_time, elapsed_time_s, source, external_source, external_id'
+  )
   assert.equal(client.calls.userId, 'user-1')
   assert.deepEqual(result, rows)
 })
@@ -111,4 +114,33 @@ test('loadExistingActivityFingerprints returns an empty array when there is no d
   const client = createFakeClient({ rows: null })
   const result = await loadExistingActivityFingerprints(client, 'user-1')
   assert.deepEqual(result, [])
+})
+
+import { sourcePriority, resolveDuplicate } from '../activityDuplicates.js'
+import { buildActivityInsert } from '../activityRecord.js'
+
+test('sourcePriority ranks intervals > strava > manual', () => {
+  assert.ok(sourcePriority('intervals') > sourcePriority('strava'))
+  assert.ok(sourcePriority('strava') > sourcePriority('manual'))
+  assert.equal(sourcePriority(null), sourcePriority('manual'))
+})
+
+test('resolveDuplicate upgrades only a Strava copy outranked by the candidate; manual/bot are never replaced', () => {
+  assert.equal(resolveDuplicate({ source: 'intervals' }, { source: 'strava' }), 'upgrade')
+  assert.equal(resolveDuplicate({ source: 'intervals' }, { source: 'manual' }), 'skip')
+  assert.equal(resolveDuplicate({ source: 'strava' }, { source: 'manual' }), 'skip')
+  assert.equal(resolveDuplicate({ source: 'intervals' }, { source: 'bot' }), 'skip')
+  assert.equal(resolveDuplicate({ source: 'strava' }, { source: 'intervals' }), 'skip')
+  assert.equal(resolveDuplicate({ source: 'manual' }, { source: 'manual' }), 'skip')
+})
+
+test('buildActivityInsert sets source and external ids', () => {
+  const manual = buildActivityInsert({}, { title: 't', userId: 'u' })
+  assert.equal(manual.source, 'manual')
+  assert.equal(manual.external_source, null)
+  assert.equal(manual.external_id, null)
+  const icu = buildActivityInsert({}, { title: 't', userId: 'u', source: 'intervals', externalSource: 'intervals', externalId: 42 })
+  assert.equal(icu.source, 'intervals')
+  assert.equal(icu.external_source, 'intervals')
+  assert.equal(icu.external_id, '42')
 })

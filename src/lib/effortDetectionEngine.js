@@ -2,6 +2,9 @@
  * Universal effort detection engine for VelocityStack
  */
 
+import { DEFAULT_LAP_LENGTH_M, MPS_TO_KMH } from './constants.js'
+import { ZONES_UNAVAILABLE_MESSAGE, zoneBandWatts, zoneLabel, zoneOfPower } from './powerZones.js'
+
 // Helper function: moving average to smooth out noise
 function movingAverage(arr, windowSize = 3) {
   if (!arr || arr.length === 0) return []
@@ -23,16 +26,40 @@ export function analyzeSessionEfforts({
   steps = null,
   repeatCount = null,
   ftpAtActivityW = null,
+  hrMaxBpm = null,
+  lt = null,
+  weightKg = null,
+  zones = null,
+  setCount = null,
+  setRecovery = null,
+  warmupSec = null,
+  cooldownSec = null,
 }) {
-  const { watts = [], cadence = [], torque = [], speed = [] } = timeSeries
+  const { watts = [], cadence = [], torque = [], speed = [], heartrate = [] } = timeSeries
 
-  if (!watts.length && !cadence.length) {
+  if (!watts.length && !cadence.length && !(discipline === 'custom_intervals' && heartrate.length)) {
     return { pattern: 'none', efforts: [], message: 'Missing per-second data for analysis.' }
   }
 
   // 0. Profile: user-authored interval DSL (issue #14, distance-keyed steps added in #43)
   if (discipline === 'custom_intervals') {
-    return detectCustomIntervalSequence({ watts, speed, steps: steps || [], repeatCount: repeatCount || 1, ftpAtActivityW })
+    return detectCustomIntervalSequence({
+      watts,
+      speed,
+      heartrate,
+      cadence,
+      steps: steps || [],
+      repeatCount: repeatCount || 1,
+      ftpAtActivityW,
+      hrMaxBpm,
+      lt,
+      weightKg,
+      zones,
+      warmupSec,
+      cooldownSec,
+      setCount,
+      setRecovery,
+    })
   }
 
   // 1. Profile: Sustained effort (Pursuit)
@@ -117,8 +144,8 @@ function detectSustainedTimeTrial(watts, cadence, userRole) {
     label = '4 km Pursuit (Elite)'
   }
 
-  const speedKmh = Math.round(((dist / best.dur) * 3.6) * 10) / 10
-  const lapTime250m = (best.dur / (dist / 250)).toFixed(2)
+  const speedKmh = Math.round(((dist / best.dur) * MPS_TO_KMH) * 10) / 10
+  const lapTime250m = (best.dur / (dist / DEFAULT_LAP_LENGTH_M)).toFixed(2)
 
   return {
     pattern: 'sustained_tt',
@@ -307,14 +334,63 @@ function metersAt(speedPrefix, start, end) {
   return windowSum(speedPrefix, start, end) / 3.6
 }
 
-function computeMetrics(wattsPrefix, speedPrefix, start, end) {
+// `P` bundles the per-stream prefix sums: { watts, speed, hr, cadence } (each null when absent).
+function computeMetrics(P, start, end) {
   return {
-    avgPower: wattsPrefix ? windowAvg(wattsPrefix, start, end) : null,
-    avgSpeedKmh: speedPrefix ? windowAvg(speedPrefix, start, end) : null,
+    avgPower: P.watts ? windowAvg(P.watts, start, end) : null,
+    avgSpeedKmh: P.speed ? windowAvg(P.speed, start, end) : null,
+    avgHr: P.hr ? windowAvg(P.hr, start, end) : null,
+    avgCadence: P.cadence ? windowAvg(P.cadence, start, end) : null,
   }
 }
 
-function stepBandMatches({ avgPower, avgSpeedKmh }, step, ftpAtActivityW) {
+function inRange(value, step) {
+  if (value == null) return false
+  if (step.powerMin != null && value < step.powerMin) return false
+  if (step.powerMax != null && value > step.powerMax) return false
+  return true
+}
+
+// Lactate-threshold bands (issue #121): the reference value comes from the activity's LT snapshot.
+const LT_BANDS = {
+  pct_lt1: { metric: 'avgPower', ref: 'lt1Power' },
+  pct_lt2: { metric: 'avgPower', ref: 'lt2Power' },
+  pct_lt1_hr: { metric: 'avgHr', ref: 'lt1Hr' },
+  pct_lt2_hr: { metric: 'avgHr', ref: 'lt2Hr' },
+}
+
+// "Z3", "Z2-Z3", "<Z2", ">Z4": the zone band as written in the DSL.
+function zoneTargetLabel({ powerMin, powerMax }) {
+  if (powerMin != null && powerMax != null) return powerMin === powerMax ? zoneLabel(powerMin) : `${zoneLabel(powerMin)}-${zoneLabel(powerMax)}`
+  return powerMax != null ? `<${zoneLabel(powerMax)}` : `>${zoneLabel(powerMin)}`
+}
+
+export function isLtBand(bandType) {
+  return Object.prototype.hasOwnProperty.call(LT_BANDS, bandType)
+}
+
+function isHrLtBand(bandType) {
+  return isLtBand(bandType) && LT_BANDS[bandType].metric === 'avgHr'
+}
+
+function stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm = null, lt = null, weightKg = null, zones = null) {
+  const { avgPower, avgSpeedKmh, avgHr, avgCadence } = metrics
+  if (step.bandType === 'zone') {
+    const band = zoneBandWatts(zones, step)
+    if (!band || avgPower == null) return false
+    return inRange(avgPower, { powerMin: band.min, powerMax: band.max })
+  }
+  if (step.bandType === 'wkg') {
+    if (!weightKg || avgPower == null) return false
+    return inRange(avgPower / weightKg, step)
+  }
+  if (isLtBand(step.bandType)) {
+    const { metric, ref } = LT_BANDS[step.bandType]
+    const value = metrics[metric]
+    const reference = lt ? lt[ref] : null
+    if (!reference || value == null) return false
+    return inRange((value / reference) * 100, step)
+  }
   if (step.bandType === 'pct_ftp') {
     if (!ftpAtActivityW || avgPower == null) return false
     const pct = (avgPower / ftpAtActivityW) * 100
@@ -334,18 +410,25 @@ function stepBandMatches({ avgPower, avgSpeedKmh }, step, ftpAtActivityW) {
     if (step.powerMax != null && avgSpeedKmh > step.powerMax) return false
     return true
   }
+  if (step.bandType === 'hr_bpm') return inRange(avgHr, step)
+  if (step.bandType === 'pct_hrmax') {
+    if (!hrMaxBpm || avgHr == null) return false
+    return inRange((avgHr / hrMaxBpm) * 100, step)
+  }
+  if (step.bandType === 'cadence_rpm') return inRange(avgCadence, step)
   return true
 }
 
 /** Earliest duration-keyed window (duration within tolerance) whose metric satisfies the step's band. */
-function findThresholdWindowDuration(wattsPrefix, speedPrefix, cursor, step, ftpAtActivityW) {
-  const n = (wattsPrefix || speedPrefix || [0]).length - 1
+function findThresholdWindowDuration(P, cursor, step, ftpAtActivityW, hrMaxBpm, exact = false) {
+  const n = P.n
   const { durMin, durMax } = durationRange(step)
 
-  for (let s = cursor; s + durMin <= n; s++) {
+  const sLimit = exact ? cursor + 1 : Infinity
+  for (let s = cursor; s + durMin <= n && s < sLimit; s++) {
     for (let d = durMin; d <= durMax && s + d <= n; d++) {
-      const metrics = computeMetrics(wattsPrefix, speedPrefix, s, s + d)
-      if (stepBandMatches(metrics, step, ftpAtActivityW)) {
+      const metrics = computeMetrics(P, s, s + d)
+      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt, P.weightKg, P.zones)) {
         return { start: s, end: s + d, ...metrics }
       }
     }
@@ -353,19 +436,25 @@ function findThresholdWindowDuration(wattsPrefix, speedPrefix, cursor, step, ftp
   return null
 }
 
+// How many seconds a step may span; distance-keyed steps are bounded by the stream length.
+function durationReach(step, P) {
+  return step.keyBy === 'distance' ? P.n : durationRange(step).durMax
+}
+
 /** Single best duration-keyed window (duration within tolerance), optimising `step.bestMetric`. */
 function overlaps(blocked, s, e) {
   return blocked.some(([bs, be]) => s < be && e > bs)
 }
 
-function findBestWindowDuration(wattsPrefix, speedPrefix, cursor, step, blocked = []) {
-  const metricPrefix = step.bestMetric === 'speed' ? speedPrefix : wattsPrefix
+function findBestWindowDuration(P, cursor, step, blocked = [], exact = false) {
+  const metricPrefix = step.bestMetric === 'speed' ? P.speed : P.watts
   if (!metricPrefix) return null
-  const n = metricPrefix.length - 1
+  const n = P.n
   const { durMin, durMax } = durationRange(step)
 
   let best = null
-  for (let s = cursor; s + durMin <= n; s++) {
+  const sLimit = exact ? cursor + 1 : Infinity
+  for (let s = cursor; s + durMin <= n && s < sLimit; s++) {
     for (let d = durMin; d <= durMax && s + d <= n; d++) {
       if (blocked.length && overlaps(blocked, s, s + d)) continue
       const value = windowAvg(metricPrefix, s, s + d)
@@ -375,7 +464,7 @@ function findBestWindowDuration(wattsPrefix, speedPrefix, cursor, step, blocked 
     }
   }
   if (!best) return null
-  return { start: best.start, end: best.end, ...computeMetrics(wattsPrefix, speedPrefix, best.start, best.end) }
+  return { start: best.start, end: best.end, ...computeMetrics(P, best.start, best.end) }
 }
 
 /**
@@ -386,14 +475,16 @@ function findBestWindowDuration(wattsPrefix, speedPrefix, cursor, step, blocked 
  * oldest second from a window can only shrink its distance (speed >= 0),
  * so a longer window is needed to reach the same distance target.
  */
-function findThresholdWindowDistance(wattsPrefix, speedPrefix, cursor, step, ftpAtActivityW) {
+function findThresholdWindowDistance(P, cursor, step, ftpAtActivityW, hrMaxBpm, exact = false) {
+  const speedPrefix = P.speed
   if (!speedPrefix) return null
-  const n = speedPrefix.length - 1
+  const n = P.n
   const { distMin, distMax } = distanceRange(step)
 
   let eLo = cursor
   let eHi = cursor
-  for (let s = cursor; s < n; s++) {
+  const sLimit = exact ? cursor + 1 : Infinity
+  for (let s = cursor; s < n && s < sLimit; s++) {
     if (eLo < s + 1) eLo = s + 1
     if (eHi < s + 1) eHi = s + 1
     while (eLo <= n && metersAt(speedPrefix, s, eLo) < distMin) eLo++
@@ -406,8 +497,8 @@ function findThresholdWindowDistance(wattsPrefix, speedPrefix, cursor, step, ftp
     // end-point for this start — even when its distance slightly overshoots distMax.
     const loopEnd = Math.max(eHi, eLo + 1)
     for (let e = eLo; e < loopEnd && e <= n; e++) {
-      const metrics = computeMetrics(wattsPrefix, speedPrefix, s, e)
-      if (stepBandMatches(metrics, step, ftpAtActivityW)) {
+      const metrics = computeMetrics(P, s, e)
+      if (stepBandMatches(metrics, step, ftpAtActivityW, hrMaxBpm, P.lt, P.weightKg, P.zones)) {
         return { start: s, end: e, ...metrics, distanceM: metersAt(speedPrefix, s, e) }
       }
     }
@@ -416,17 +507,19 @@ function findThresholdWindowDistance(wattsPrefix, speedPrefix, cursor, step, ftp
 }
 
 /** Single best distance-keyed window (distance within tolerance), optimising `step.bestMetric`. */
-function findBestWindowDistance(wattsPrefix, speedPrefix, cursor, step, blocked = []) {
+function findBestWindowDistance(P, cursor, step, blocked = [], exact = false) {
+  const speedPrefix = P.speed
   if (!speedPrefix) return null
-  const metricPrefix = step.bestMetric === 'speed' ? speedPrefix : wattsPrefix
+  const metricPrefix = step.bestMetric === 'speed' ? speedPrefix : P.watts
   if (!metricPrefix) return null
-  const n = speedPrefix.length - 1
+  const n = P.n
   const { distMin, distMax } = distanceRange(step)
 
   let eLo = cursor
   let eHi = cursor
   let best = null
-  for (let s = cursor; s < n; s++) {
+  const sLimit = exact ? cursor + 1 : Infinity
+  for (let s = cursor; s < n && s < sLimit; s++) {
     if (eLo < s + 1) eLo = s + 1
     if (eHi < s + 1) eHi = s + 1
     while (eLo <= n && metersAt(speedPrefix, s, eLo) < distMin) eLo++
@@ -447,7 +540,7 @@ function findBestWindowDistance(wattsPrefix, speedPrefix, cursor, step, blocked 
   return {
     start: best.start,
     end: best.end,
-    ...computeMetrics(wattsPrefix, speedPrefix, best.start, best.end),
+    ...computeMetrics(P, best.start, best.end),
     distanceM: best.distanceM,
   }
 }
@@ -459,18 +552,57 @@ function findBestWindowDistance(wattsPrefix, speedPrefix, cursor, step, blocked 
  *   declaration order (typically [work] or [work, recovery]). `speed` is the per-second km/h
  *   stream; required for distance-keyed steps, unused otherwise.
  */
-export function detectCustomIntervalSequence({ watts = [], speed = [], steps = [], repeatCount = 1, ftpAtActivityW = null }) {
-  if ((!watts.length && !speed.length) || !steps.length) {
+export function detectCustomIntervalSequence({
+  watts = [],
+  speed = [],
+  heartrate = [],
+  cadence = [],
+  steps = [],
+  repeatCount = 1,
+  ftpAtActivityW = null,
+  hrMaxBpm = null,
+  lt = null,
+  weightKg = null,
+  zones = null,
+  warmupSec = null,
+  cooldownSec = null,
+  setCount = null,
+  setRecovery = null,
+}) {
+  const allSteps = setRecovery ? [...steps, setRecovery] : steps
+  const usesHr = allSteps.some((s) => s.bandType === 'hr_bpm' || s.bandType === 'pct_hrmax' || isHrLtBand(s.bandType))
+  const usesCadence = allSteps.some((s) => s.bandType === 'cadence_rpm')
+  const hr = usesHr ? heartrate : []
+  const cad = usesCadence ? cadence : []
+  if ((!watts.length && !speed.length && !hr.length && !cad.length) || !steps.length) {
     return { pattern: 'custom_intervals', efforts: [] }
   }
 
-  const n = Math.max(watts.length, speed.length)
+  const totalN = Math.max(watts.length, speed.length, hr.length, cad.length)
+  // Warm-up/cool-down exclusion: only seconds in [start, n) are searched.
+  const start0 = Math.max(0, Math.floor(warmupSec || 0))
+  const n = Math.max(0, totalN - Math.floor(cooldownSec || 0))
+  if (start0 >= n) return { pattern: 'custom_intervals', efforts: [] }
   const hasWatts = watts.length > 0
   const hasSpeed = speed.some((v) => (v || 0) > 0)
-  const wattsPrefix = hasWatts ? buildPrefixSum(watts, n) : null
-  const speedPrefix = hasSpeed ? buildPrefixSum(speed.map((v) => Math.max(0, v || 0)), n) : null
+  const hasHr = hr.some((v) => (v || 0) > 0)
+  const hasCadence = cad.length > 0
+  const wattsPrefix = hasWatts ? buildPrefixSum(watts, totalN) : null
+  const speedPrefix = hasSpeed ? buildPrefixSum(speed.map((v) => Math.max(0, v || 0)), totalN) : null
+  const P = {
+    n,
+    lt,
+    weightKg,
+    zones,
+    watts: wattsPrefix,
+    speed: speedPrefix,
+    hr: hasHr ? buildPrefixSum(hr.map((v) => Math.max(0, v || 0)), totalN) : null,
+    cadence: hasCadence ? buildPrefixSum(cad.map((v) => Math.max(0, v || 0)), totalN) : null,
+  }
+  // %HRmax bands need a reference: the supplied max HR, else the highest HR in the stream.
+  const effectiveHrMax = hrMaxBpm || (hasHr ? Math.max(...hr.map((v) => v || 0)) : null)
 
-  const hasDistanceStep = steps.some((s) => s.keyBy === 'distance')
+  const hasDistanceStep = allSteps.some((s) => s.keyBy === 'distance')
   if (hasDistanceStep && !speedPrefix) {
     return {
       pattern: 'custom_intervals',
@@ -479,21 +611,49 @@ export function detectCustomIntervalSequence({ watts = [], speed = [], steps = [
     }
   }
 
+  if (usesHr && !P.hr) {
+    return { pattern: 'custom_intervals', efforts: [], message: 'No heart rate stream available on this activity to match bpm/%HRmax steps.' }
+  }
+  const ltSteps = allSteps.filter((s) => isLtBand(s.bandType))
+  const missingLt = ltSteps.find((s) => !(lt && lt[LT_BANDS[s.bandType].ref]))
+  if (missingLt) {
+    const label = { pct_lt1: 'LT1 power', pct_lt2: 'LT2 power', pct_lt1_hr: 'LT1 heart rate', pct_lt2_hr: 'LT2 heart rate' }[missingLt.bandType]
+    return {
+      pattern: 'custom_intervals',
+      efforts: [],
+      message: `No ${label} was set for this activity's date; add it under lactate thresholds in your profile.`,
+    }
+  }
+  if (allSteps.some((s) => s.bandType === 'zone')) {
+    if (!zones) return { pattern: 'custom_intervals', efforts: [], message: ZONES_UNAVAILABLE_MESSAGE }
+    if (!hasWatts) return { pattern: 'custom_intervals', efforts: [], message: 'No power stream available on this activity to match power zone steps.' }
+  }
+  if (allSteps.some((s) => s.bandType === 'wkg') && !weightKg) {
+    return {
+      pattern: 'custom_intervals',
+      efforts: [],
+      message: "No body weight was set for this activity's date; add it under body weight in your profile.",
+    }
+  }
+  if (usesCadence && !P.cadence) {
+    return { pattern: 'custom_intervals', efforts: [], message: 'No cadence stream available on this activity to match rpm steps.' }
+  }
+
   const efforts = []
-  let cursor = 0
+  let cursor = start0
 
   // A lone "best" step repeated N times means "the N best non-overlapping
   // efforts": take the global best, block it out, and search the whole
   // activity again (rather than only looking after the previous one).
-  const single = steps.length === 1 && steps[0].bandType === 'best' ? steps[0] : null
+  const single = !setCount && steps.length === 1 && steps[0].bandType === 'best' ? steps[0] : null
   const ranked = []
   if (single) {
     const blocked = []
     for (let rep = 0; rep < repeatCount; rep++) {
       const found =
         single.keyBy === 'distance'
-          ? findBestWindowDistance(wattsPrefix, speedPrefix, 0, single, blocked)
-          : findBestWindowDuration(wattsPrefix, speedPrefix, 0, single, blocked)
+          ? findBestWindowDistance(P, start0, single, blocked)
+          : findBestWindowDuration(P, start0, single, blocked)
       if (!found) break
       blocked.push([found.start, found.end])
       ranked.push([{ step: single, found }])
@@ -501,7 +661,56 @@ export function detectCustomIntervalSequence({ watts = [], speed = [], steps = [
     ranked.sort((a, b) => a[0].found.start - b[0].found.start)
   }
 
-  for (let rep = 0; rep < repeatCount; rep++) {
+  const locate = (step, from, exact = false) =>
+    step.keyBy === 'distance'
+      ? step.bandType === 'best'
+        ? findBestWindowDistance(P, from, step, [], exact)
+        : findThresholdWindowDistance(P, from, step, ftpAtActivityW, effectiveHrMax, exact)
+      : step.bandType === 'best'
+      ? findBestWindowDuration(P, from, step, [], exact)
+      : findThresholdWindowDuration(P, from, step, ftpAtActivityW, effectiveHrMax, exact)
+
+  // Earliest chain of back-to-back windows at or after `from`, refined to the best fit: among
+  // chains starting within one first-step length of the earliest, prefer the one with the
+  // largest work-vs-recovery power contrast (ties keep the earliest).
+  const placeChain = (from, anchored) => {
+    const tryAt = (s0) => {
+      const windows = []
+      let cur = s0
+      for (const step of steps) {
+        const found = locate(step, cur, true)
+        if (!found) return null
+        windows.push({ step, found })
+        cur = found.end
+      }
+      return windows
+    }
+    const contrast = (windows) =>
+      windows.reduce((sum, { step, found }) => sum + (found.avgPower || 0) * (step.role === 'recovery' ? -1 : 1), 0)
+    // After a previous rep the next one should continue seamlessly when it can.
+    if (anchored) {
+      const right = tryAt(from)
+      if (right) return right
+    }
+    let best = null
+    let bestScore = -Infinity
+    let limit = n
+    for (let s0 = from; s0 < limit && s0 < n; s0++) {
+      const windows = tryAt(s0)
+      if (!windows) continue
+      if (!best) limit = s0 + durationReach(steps[0], P)
+      const score = contrast(windows)
+      if (score > bestScore) {
+        best = windows
+        bestScore = score
+      }
+    }
+    return best
+  }
+
+  const setsN = setCount || 1
+  const totalReps = repeatCount * setsN
+  for (let rep = 0; rep < totalReps; rep++) {
     const repWindows = []
     let repCursor = cursor
 
@@ -510,15 +719,21 @@ export function detectCustomIntervalSequence({ watts = [], speed = [], steps = [
       repWindows.push(...ranked[rep])
     }
 
-    for (const step of single ? [] : steps) {
-      const isDistance = step.keyBy === 'distance'
-      const found = isDistance
-        ? step.bandType === 'best'
-          ? findBestWindowDistance(wattsPrefix, speedPrefix, repCursor, step)
-          : findThresholdWindowDistance(wattsPrefix, speedPrefix, repCursor, step, ftpAtActivityW)
-        : step.bandType === 'best'
-        ? findBestWindowDuration(wattsPrefix, speedPrefix, repCursor, step)
-        : findThresholdWindowDuration(wattsPrefix, speedPrefix, repCursor, step, ftpAtActivityW)
+    // Preferred: the earliest placement where every step of the repeat follows the previous one
+    // back-to-back (end of step N = start of step N+1). Only when no such chain exists do we fall
+    // back to placing each step independently, which can leave gaps.
+    if (!single && steps.length > 1) {
+      const chain = placeChain(repCursor, efforts.length > 0)
+      if (chain) {
+        repWindows.push(...chain)
+        repCursor = chain[chain.length - 1].found.end
+      }
+    }
+
+    for (const step of single || repWindows.length ? [] : steps) {
+      // `then` steps must start exactly where the previous step in this repeat ended.
+      const exact = Boolean(step.contiguous) && repWindows.length > 0
+      const found = locate(step, repCursor, exact)
 
       if (!found) {
         repWindows.length = 0
@@ -534,6 +749,8 @@ export function detectCustomIntervalSequence({ watts = [], speed = [], steps = [
     // collected however many complete reps we could ("at least N" semantics).
     if (!repWindows.length) break
 
+    const setIdx = Math.floor(rep / repeatCount)
+    const setTag = setCount ? { set: setIdx + 1, rep_in_set: (rep % repeatCount) + 1 } : {}
     repWindows.forEach(({ step, found }) => {
       const avgPower = found.avgPower != null ? Math.round(found.avgPower) : null
       const avgSpeedKmh = found.avgSpeedKmh != null ? Math.round(found.avgSpeedKmh * 10) / 10 : null
@@ -543,6 +760,7 @@ export function detectCustomIntervalSequence({ watts = [], speed = [], steps = [
       const effort = {
         id: `custom_${step.role}_${found.start}`,
         role: step.role,
+        ...setTag,
         start_sec: found.start,
         end_sec: found.end,
         duration_sec: found.end - found.start,
@@ -551,6 +769,14 @@ export function detectCustomIntervalSequence({ watts = [], speed = [], steps = [
         band_type: step.bandType,
         ...(step.bandType === 'best' ? { best_metric: step.bestMetric } : {}),
         ...(avgSpeedKmh != null ? { avg_speed_kmh: avgSpeedKmh } : {}),
+        ...(usesHr && found.avgHr != null && (step.bandType === 'hr_bpm' || step.bandType === 'pct_hrmax' || isHrLtBand(step.bandType))
+          ? { avg_hr_bpm: Math.round(found.avgHr) }
+          : {}),
+        ...(step.bandType === 'cadence_rpm' && found.avgCadence != null ? { avg_cadence_rpm: Math.round(found.avgCadence) } : {}),
+        ...(isLtBand(step.bandType) && lt?.lt1Power && avgPower != null ? { pct_of_lt1: Math.round((avgPower / lt.lt1Power) * 1000) / 10 } : {}),
+        ...(isLtBand(step.bandType) && lt?.lt2Power && avgPower != null ? { pct_of_lt2: Math.round((avgPower / lt.lt2Power) * 1000) / 10 } : {}),
+        ...(step.bandType === 'zone' && avgPower != null ? { avg_zone: zoneOfPower(zones, avgPower), target_zone: zoneTargetLabel(step) } : {}),
+        ...(weightKg && avgPower != null && (step.bandType === 'wkg') ? { avg_wkg: Math.round((avgPower / weightKg) * 100) / 100 } : {}),
         ...(ftpAtActivityW && avgPower != null ? { pct_of_ftp: Math.round((avgPower / ftpAtActivityW) * 1000) / 10 } : {}),
       }
 
@@ -564,6 +790,32 @@ export function detectCustomIntervalSequence({ watts = [], speed = [], steps = [
     })
 
     cursor = repCursor
+
+    // End of a set (but not the last): look for the set recovery after the final rep.
+    if (setCount && (rep + 1) % repeatCount === 0 && rep + 1 < totalReps) {
+      if (setRecovery) {
+        // Prefer the window starting right where the last rep ended; otherwise search ahead.
+        const found = locate(setRecovery, cursor, true) || locate(setRecovery, cursor)
+        // Without the set recovery the next set cannot be located: stop here.
+        if (!found) break
+        const avgPower = found.avgPower != null ? Math.round(found.avgPower) : null
+        const avgSpeedKmh = found.avgSpeedKmh != null ? Math.round(found.avgSpeedKmh * 10) / 10 : null
+        efforts.push({
+          id: `custom_set_recovery_${found.start}`,
+          role: 'set_recovery',
+          set: setIdx + 1,
+          start_sec: found.start,
+          end_sec: found.end,
+          duration_sec: found.end - found.start,
+          avg_power: avgPower,
+          max_power: hasWatts && avgPower != null ? Math.max(...watts.slice(found.start, found.end)) : null,
+          band_type: setRecovery.bandType,
+          ...(setRecovery.bandType === 'zone' && avgPower != null ? { avg_zone: zoneOfPower(zones, avgPower), target_zone: zoneTargetLabel(setRecovery) } : {}),
+          ...(avgSpeedKmh != null ? { avg_speed_kmh: avgSpeedKmh } : {}),
+        })
+        cursor = found.end
+      }
+    }
   }
 
   return { pattern: 'custom_intervals', efforts }

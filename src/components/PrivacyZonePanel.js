@@ -65,7 +65,7 @@ export default function PrivacyZonePanel({ userId, onChanged }) {
   if (!userId) return null
 
   return (
-    <div className="glass-card p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder space-y-3">
+    <div className="glass-dense p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder space-y-3">
       <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 dark:text-white">Privacy zone</h3>
       <p className="text-[11px] text-slate-500">
         Other riders never receive raw GPS, and the route shown in shared feeds hides everything inside this circle

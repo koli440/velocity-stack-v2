@@ -1,10 +1,12 @@
 import {
   DSL_BANDS,
+  DSL_OPTIONS,
   DSL_COMMON_MISTAKES,
   DSL_GUIDE_EXAMPLES,
   DSL_RULES,
   DSL_STEP_PARTS,
 } from '../../lib/dslGuide'
+import Icon from '../../components/Icon'
 
 export const metadata = {
   title: 'DSL Syntax Guide | VelocityStack',
@@ -19,7 +21,7 @@ export default function DslGuidePage() {
   return (
     <section className="max-w-4xl mx-auto space-y-8 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
       <div>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white">📐 DSL Syntax Guide</h1>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white"><Icon name="ruler" /> DSL Syntax Guide</h1>
         <p className="mt-2 font-semibold text-slate-500 dark:text-slate-400">
           Describe an interval session as plain text; VelocityStack finds matching efforts in your rides.
         </p>
@@ -33,8 +35,10 @@ work 3min ±30% @ 90-110%FTP
 recovery 2min ±50% @ <55%FTP`}
         </pre>
         <p className="mb-3">
-          The first line is the repeat count; each following line is a step in the form{' '}
-          <code className={CODE}>role value unit ±tolerance% @ band</code>.
+          The first line is the repeat count (optional: without it the steps run once, in order); each other line is
+          a step in the form <code className={CODE}>role value unit [±tolerance%] @ band</code>. Put{' '}
+          <code className={CODE}>6x</code> on its own line further down to repeat the steps below it until a blank
+          line or <code className={CODE}>end</code>; groups can be nested up to 3 levels.
         </p>
         <dl className="space-y-2">
           {DSL_STEP_PARTS.map((p) => (
@@ -58,9 +62,30 @@ recovery 2min ±50% @ <55%FTP`}
       </div>
 
       <div className={CARD}>
+        <h2 className={H2}>Warm-up, cool-down, sets, multi-step blocks and contiguous steps</h2>
+        <ul className="space-y-2 mb-3">
+          {DSL_OPTIONS.map((o) => (
+            <li key={o.syntax}>
+              <code className={CODE}>{o.syntax}</code> — {o.meaning}
+            </li>
+          ))}
+        </ul>
+        <p>
+          A repeat can contain several <code className={CODE}>work</code>/<code className={CODE}>recovery</code>{' '}
+          lines. They are matched one after another in the order written; prefix a step with{' '}
+          <code className={CODE}>then</code> to require it to start right where the previous one ended.
+        </p>
+        <p className="mt-2">
+          Write <code className={CODE}>3 sets of 5x</code> on the first line for sets: the block repeats 5 times per
+          set, three times. An optional <code className={CODE}>set recovery</code> line is the rest searched for
+          between sets.
+        </p>
+      </div>
+
+      <div className={CARD}>
         <h2 className={H2}>Duration vs. distance steps</h2>
         <p>
-          Use <code className={CODE}>min</code>/<code className={CODE}>sec</code> to match by time, or{' '}
+          Use <code className={CODE}>h</code>/<code className={CODE}>min</code>/<code className={CODE}>sec</code> to match by time (<code className={CODE}>work 2h @ Z2</code>), or{' '}
           <code className={CODE}>km</code>/<code className={CODE}>m</code> to match by distance (e.g. a 4km
           individual pursuit or a 200m flying sprint). Because a distance window has no inherent power-vs-speed
           preference, <code className={CODE}>best</code>/<code className={CODE}>max</code> must be written as{' '}

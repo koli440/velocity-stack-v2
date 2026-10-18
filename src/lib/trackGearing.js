@@ -15,7 +15,9 @@
 
 // Standard 700c track tubular wheel diameter in inches, matching TRACK_WHEEL_DIAMETER_INCHES in
 // api/analyze.py and the constant baked into calcGearInches().
-export const TRACK_WHEEL_DIAMETER_INCHES = 26.8
+import { TRACK_WHEEL_DIAMETER_INCHES } from './constants.js'
+
+export { TRACK_WHEEL_DIAMETER_INCHES }
 
 /**
  * Distance (in meters) the wheel travels per crank revolution for a fixed-gear track bike.

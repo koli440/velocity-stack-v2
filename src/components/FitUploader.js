@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
+import { fetchWeightHistory } from '../lib/weightHistory'
+import { fetchFtpHistory } from '../lib/ftpHistory'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import VelodromePicker from './VelodromePicker'
+import Icon from './Icon'
 
 export default function FitUploader({
   tracks = [],
@@ -142,6 +145,8 @@ export default function FitUploader({
         .select('ftp_w')
         .eq('id', currentUser.id)
         .maybeSingle()
+      const { history: ftpHistory } = await fetchFtpHistory(supabase, currentUser.id)
+      const { history: weightHistory } = await fetchWeightHistory(supabase, currentUser.id)
 
       const activityRecord = buildActivityInsert(analysis.summary, {
         title,
@@ -156,6 +161,8 @@ export default function FitUploader({
         fileSha256,
         processingStatus: 'baseline_completed',
         ftpWatts: profile?.ftp_w ?? null,
+        ftpHistory,
+        weightHistory,
       })
 
       const { data: activity, error: actError } = await supabase
@@ -202,7 +209,7 @@ export default function FitUploader({
           onClick={onClose}
           className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg"
         >
-          ✕
+          <Icon name="close" size={18} />
         </button>
       )}
 
@@ -217,7 +224,7 @@ export default function FitUploader({
 
       <form onSubmit={handleSave} className="space-y-4">
         <label className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition bg-slate-50 dark:bg-slate-900/40">
-          <span className="text-2xl mb-1">📁</span>
+          <span className="mb-1 text-slate-400"><Icon name="folder" size={28} /></span>
           <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
             {fileSelected ? fileSelected : 'Choose a .FIT telemetry file'}
           </span>
@@ -295,7 +302,7 @@ export default function FitUploader({
 
             {analysis?.summary?.speed_source === 'gps' && (
               <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-[11px] font-semibold">
-                <span>📍</span>
+                <span><Icon name="pin" /></span>
                 <span>
                   This file does not contain a speed sensor - speed, distance and moving time
                   are derived from the GPS route.
@@ -316,7 +323,7 @@ export default function FitUploader({
 
             {analysis?.summary?.speed_source === 'unavailable' && (
               <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] font-semibold">
-                <span>⚠️</span>
+                <span><Icon name="alert" /></span>
                 <span>
                   This file does not contain a speed sensor, a GPS route, or fixed-gear confirmation
                   - speed, distance and moving time cannot be reliably derived, so they are not

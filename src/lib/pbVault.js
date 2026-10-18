@@ -4,60 +4,17 @@
 // load_discipline_data / get_track_laps_info helpers in utils.py). v1 stored PBs in a Google
 // Sheet keyed by a free-text UserID; v2 persists them in the `personal_bests` table (see
 // supabase/migrations/20261007000000_personal_bests.sql), scoped to the authenticated user via
-// RLS. Disciplines are a fixed reference list (mirroring v1's "Disciplines" sheet), not user
-// data, so - like Pursuit Strategist (#52) - they're kept as a static catalogue here rather than
-// a DB table.
+// RLS. Disciplines are shared reference data read from the `disciplines` table
+// (src/lib/lookups.js); users suggest new ones and an admin approves them.
 
-// Fixed catalogue of track cycling disciplines a rider can log a PB against, with their race
-// distance in meters (used to compute average speed). Mirrors v1's "Disciplines" Google Sheet
-// worksheet verbatim (name + distance + category) - this previously held an invented, UCI-generic
-// list that didn't match any of v1's actual discipline names, so every migrated PB's
-// getDisciplineDistance() lookup would silently fail.
-export const DISCIPLINES = [
-  { category: 'Sprint', name: '200m Flying', distanceM: 200 },
-  { category: 'Time Trial', name: '500m TT', distanceM: 500 },
-  { category: 'Time Trial', name: '666m TT', distanceM: 666 },
-  { category: 'Time Trial', name: '750m TT', distanceM: 750 },
-  { category: 'Time Trial', name: '750m Team Sprint', distanceM: 750 },
-  { category: 'Time Trial', name: '800m TT', distanceM: 800 },
-  { category: 'Time Trial', name: '1000m TT', distanceM: 1000 },
-  { category: 'Endurance', name: '2000m Individual Pursuit', distanceM: 2000 },
-  { category: 'Endurance', name: '3000m Individual Pursuit', distanceM: 3000 },
-  { category: 'Endurance', name: '4000m Individual Pursuit', distanceM: 4000 },
-  { category: 'Endurance', name: '4000m Team Pursuit', distanceM: 4000 },
-  { category: 'BMX', name: 'BMX Race', distanceM: 350 },
-]
+import { formatTime, mpsToKmh } from './format.js'
 
 export const SPLIT_MODES = {
   LAPS: 'laps',
   DISTANCE: 'distance',
 }
 
-/**
- * Looks up a discipline's race distance by name, falling back to null if unknown (e.g. a
- * custom/legacy discipline string from an older record).
- * @param {string} name
- * @returns {number|null}
- */
-export function getDisciplineDistance(name) {
-  const match = DISCIPLINES.find((d) => d.name === name)
-  return match ? match.distanceM : null
-}
-
-/**
- * Formats a duration in seconds as v1's `format_time()` does: `M:SS.mmm`, e.g. 210 -> "3:30.000".
- * Mirrors Python's `:06.3f` zero-padding on the seconds portion.
- * @param {number} totalSeconds
- * @returns {string}
- */
-export function formatTime(totalSeconds) {
-  if (totalSeconds == null || Number.isNaN(Number(totalSeconds)) || totalSeconds < 0) {
-    return '--:--'
-  }
-  const minutes = Math.floor(totalSeconds / 60)
-  const remainingSeconds = totalSeconds % 60
-  return `${minutes}:${remainingSeconds.toFixed(3).padStart(6, '0')}`
-}
+export { formatTime }
 
 /**
  * Parses a minutes/seconds pair (as entered via two separate inputs, like v1's m/s number_input
@@ -93,7 +50,7 @@ export function totalSecondsToMinutesSeconds(totalSeconds) {
  */
 export function calculateAvgSpeedKmh(distanceM, totalSeconds) {
   if (!distanceM || !totalSeconds || totalSeconds <= 0) return 0
-  return Math.round((distanceM / totalSeconds) * 3.6 * 100) / 100
+  return Math.round(mpsToKmh(distanceM / totalSeconds) * 100) / 100
 }
 
 /**
@@ -120,7 +77,7 @@ export function buildLapAnalysis(lapTimes, segmentDistanceM) {
   let cumulative = 0
   return lapTimes.map((time, index) => {
     cumulative += time
-    const speedKmh = time > 0 ? (segmentDistanceM / time) * 3.6 : 0
+    const speedKmh = time > 0 ? mpsToKmh(segmentDistanceM / time) : 0
     return {
       segment: index + 1,
       time,
@@ -143,4 +100,64 @@ export function formatDate(isoDate) {
   const day = String(date.getDate()).padStart(2, '0')
   const month = String(date.getMonth() + 1).padStart(2, '0')
   return `${day}. ${month}. ${date.getFullYear()}`
+}
+
+/**
+ * Picks the PB Vault discipline whose distance is closest to a template effort's distance
+ * (within `tolerance`, default 5%). Disciplines that don't fit the track length are skipped
+ * when a track is known. Returns null when nothing is close enough.
+ * @param {Array<object>} disciplines - central disciplines (see lookups.mapDisciplineRow)
+ * @param {number} distanceM
+ * @param {number|null} [trackLengthM]
+ * @param {number} [tolerance]
+ */
+export function matchDisciplineByDistance(disciplines, distanceM, trackLengthM = null, tolerance = 0.05) {
+  const target = Number(distanceM)
+  if (!(target > 0)) return null
+  let best = null
+  let bestDiff = Infinity
+  for (const d of disciplines || []) {
+    if (!(d.distanceM > 0)) continue
+    if (trackLengthM && d.minTrackLengthM != null && trackLengthM < d.minTrackLengthM) continue
+    if (trackLengthM && d.maxTrackLengthM != null && trackLengthM > d.maxTrackLengthM) continue
+    const diff = Math.abs(d.distanceM - target)
+    if (diff / d.distanceM <= tolerance && diff < bestDiff) {
+      best = d
+      bestDiff = diff
+    }
+  }
+  return best
+}
+
+/**
+ * Builds the values to prefill the "Add Personal Best" form from a template run effort and its
+ * activity. Everything is only a suggestion; the user reviews and saves.
+ * @param {object} effort - template run effort (distance_m, target_distance_m, duration_sec, ...)
+ * @param {object} activity - activity row (activity_date, track_id, tracks, chainring, cog, name)
+ * @param {Array<object>} disciplines
+ */
+export function buildPbPrefillFromEffort(effort, activity, disciplines) {
+  const track = activity?.tracks || null
+  // Time-keyed efforts report the distance covered, which is not a discipline distance.
+  const distance = effort?.keyed_by === 'time' ? null : effort?.target_distance_m ?? effort?.distance_m
+  const discipline = matchDisciplineByDistance(disciplines, distance, track?.length_m ?? null)
+  const date = String(activity?.activity_date || activity?.created_at || '').slice(0, 10)
+  const prefill = {
+    discipline: discipline ? discipline.name : null,
+    trackId: activity?.track_id || null,
+    achievedDate: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null,
+    chainring: activity?.chainring ? Number(activity.chainring) : null,
+    cog: activity?.cog ? Number(activity.cog) : null,
+  }
+  const seconds = Number(effort?.elapsed_time_sec) > 0 ? effort.elapsed_time_sec : effort?.duration_sec
+  if (Number(seconds) > 0) {
+    Object.assign(prefill, totalSecondsToMinutesSeconds(seconds))
+  }
+  const notes = []
+  if (activity?.name) notes.push(`From activity: ${activity.name}`)
+  if (effort?.distance_m != null) notes.push(`Detected distance: ${effort.distance_m} m`)
+  if (effort?.avg_power != null) notes.push(`Avg power: ${effort.avg_power} W`)
+  if (effort?.avg_speed_kmh != null) notes.push(`Avg speed: ${effort.avg_speed_kmh} km/h`)
+  prefill.notes = notes.join('\n')
+  return prefill
 }

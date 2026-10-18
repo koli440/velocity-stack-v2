@@ -3,14 +3,17 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
+import Link from 'next/link'
+import { fetchFollowingFeedPage } from '../lib/social'
 import { syncFeedData, syncFeedDataIfNeeded } from '../lib/feedSync'
-import { fetchFollowingFeedPage, fetchDiscoverFeedPage, fetchBlockedIds } from '../lib/social'
-import FollowPanel from './FollowPanel'
 import { fetchCoverPhotos } from '../lib/activityPhotos'
 import { OPEN_ADD_SESSION_EVENT, ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
-import RosterPanel from './RosterPanel'
 import ActivityFeed from './ActivityFeed'
-import RidersExplorer from './RidersExplorer'
+import EmptyFeedCard from './EmptyFeedCard'
+import { stravaFlagMessage } from '../lib/emptyFeed'
+import PowerProfileCard from './PowerProfileCard'
+import WeekStatsCard from './WeekStatsCard'
+import OnboardingChecklist from './OnboardingChecklist'
 
 export default function Dashboard({ initialActivities = [] }) {
   const [user, setUser] = useState(null)
@@ -26,14 +29,23 @@ export default function Dashboard({ initialActivities = [] }) {
   const [followingActivities, setFollowingActivities] = useState([])
   const [hasMoreFollowing, setHasMoreFollowing] = useState(false)
   const [isLoadingFollowing, setIsLoadingFollowing] = useState(false)
-  const [discoverActivities, setDiscoverActivities] = useState([])
-  const [hasMoreDiscover, setHasMoreDiscover] = useState(false)
-  const [isLoadingDiscover, setIsLoadingDiscover] = useState(false)
   const [coverPhotos, setCoverPhotos] = useState(new Map())
+  const [activitiesLoaded, setActivitiesLoaded] = useState(initialActivities.length > 0)
+  const [stravaNotice, setStravaNotice] = useState(null)
+
+  // Result of the Strava OAuth round trip when it started from the welcome card (?strava=...).
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const flag = url.searchParams.get('strava')
+    if (!flag) return
+    setStravaNotice(stravaFlagMessage(flag))
+    url.searchParams.delete('strava')
+    window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+  }, [])
 
   // Signed cover-photo URLs for everything currently shown (one query + one signing call).
   useEffect(() => {
-    const ids = [...activities, ...followingActivities, ...discoverActivities].map((a) => a.id)
+    const ids = [...activities, ...followingActivities].map((a) => a.id)
     if (!ids.length) return
     let cancelled = false
     fetchCoverPhotos(supabase, ids).then(({ covers, error }) => {
@@ -42,7 +54,7 @@ export default function Dashboard({ initialActivities = [] }) {
     return () => {
       cancelled = true
     }
-  }, [activities, followingActivities, discoverActivities])
+  }, [activities, followingActivities])
 
   const reloadFollowingFeed = async (userId) => {
     const targetId = userId || user?.id
@@ -68,27 +80,6 @@ export default function Dashboard({ initialActivities = [] }) {
     setIsLoadingFollowing(false)
   }
 
-  const loadDiscover = async (page = 0) => {
-    if (!user?.id) return
-    setIsLoadingDiscover(true)
-    const { ids: excludeIds } = await fetchBlockedIds(supabase, user.id)
-    const { data, hasMore, error } = await fetchDiscoverFeedPage(supabase, {
-      userId: user.id,
-      excludeIds,
-      page,
-    })
-    if (!error) {
-      setDiscoverActivities((prev) => (page === 0 ? data : [...prev, ...data]))
-      setHasMoreDiscover(hasMore)
-    }
-    setIsLoadingDiscover(false)
-  }
-
-  const reloadSocialFeeds = () => {
-    if (scope === 'following') reloadFollowingFeed()
-    if (scope === 'discover') loadDiscover(0)
-  }
-
   // Resets back to the first page, e.g. after login or a sync/import.
   const reloadActivities = async (userId) => {
     const targetId = userId || user?.id
@@ -106,6 +97,7 @@ export default function Dashboard({ initialActivities = [] }) {
       if (!error) {
         setActivities(data)
         setHasMoreActivities(hasMore)
+        setActivitiesLoaded(true)
       }
     }
 
@@ -166,10 +158,8 @@ export default function Dashboard({ initialActivities = [] }) {
   }, [])
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 items-start">
-      {/* Main Cockpit */}
-      <div className="flex-1 w-full space-y-6">
-        <div className="flex items-start justify-between gap-3">
+    <div className="w-full space-y-6">
+      <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
               Ride Telemetry
@@ -180,13 +170,16 @@ export default function Dashboard({ initialActivities = [] }) {
           </div>
         </div>
 
+      <div className="flex flex-col xl:flex-row gap-6 items-start">
+      {/* Main Cockpit */}
+      <div className="flex-1 w-full min-w-0 space-y-6">
+        <OnboardingChecklist />
+
         {/* Feed scope */}
         <div className="flex gap-2" role="tablist" aria-label="Feed scope">
           {[
             ['mine', 'My sessions'],
             ['following', 'Following'],
-            ['discover', 'Discover'],
-            ['riders', 'Riders'],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -196,7 +189,6 @@ export default function Dashboard({ initialActivities = [] }) {
               onClick={() => {
                 setScope(value)
                 if (value === 'following') reloadFollowingFeed()
-                if (value === 'discover') loadDiscover(0)
               }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
                 scope === value
@@ -209,10 +201,19 @@ export default function Dashboard({ initialActivities = [] }) {
           ))}
         </div>
 
-        {scope === 'riders' ? (
-          <RidersExplorer userId={user?.id} onFollowChanged={reloadSocialFeeds} />
-        ) : scope === 'mine' ? (
+        {scope === 'mine' ? (
+          <>
+          {activities.length === 0 && (
+            <EmptyFeedCard
+              userId={user?.id}
+              activitiesLoaded={activitiesLoaded}
+              activityCount={activities.length}
+              onRefresh={() => user?.id && reloadActivities(user.id)}
+              notice={stravaNotice}
+            />
+          )}
           <ActivityFeed
+            key="mine"
             activities={activities}
             onAddWorkout={() => window.dispatchEvent(new Event(OPEN_ADD_SESSION_EVENT))}
             coverPhotos={coverPhotos}
@@ -220,19 +221,10 @@ export default function Dashboard({ initialActivities = [] }) {
             isLoadingMore={isLoadingMore}
             onLoadMore={loadMoreActivities}
           />
-        ) : scope === 'discover' ? (
-          <ActivityFeed
-            title="Discover"
-            isOwnFeed={false}
-            coverPhotos={coverPhotos}
-            activities={discoverActivities}
-            hasMore={hasMoreDiscover}
-            isLoadingMore={isLoadingDiscover}
-            onLoadMore={() => loadDiscover(Math.ceil(discoverActivities.length / DEFAULT_ACTIVITIES_PAGE_SIZE))}
-            emptyMessage={isLoadingDiscover ? 'Loading…' : 'No public sessions from other riders yet.'}
-          />
+          </>
         ) : (
           <ActivityFeed
+            key="following"
             title="Following"
             isOwnFeed={false}
             coverPhotos={coverPhotos}
@@ -241,19 +233,27 @@ export default function Dashboard({ initialActivities = [] }) {
             isLoadingMore={isLoadingFollowing}
             onLoadMore={loadMoreFollowing}
             emptyMessage={
-              isLoadingFollowing
-                ? 'Loading…'
-                : 'Nothing here yet. Follow riders in the Riders panel to see the sessions they share.'
+              isLoadingFollowing ? (
+                'Loading…'
+              ) : (
+                <>
+                  Nothing here yet.{' '}
+                  <Link href="/riders" className="font-bold text-orange-500 hover:text-orange-600">
+                    Find riders to follow
+                  </Link>{' '}
+                  to see the sessions they share.
+                </>
+              )
             }
           />
         )}
       </div>
 
-      {/* Right panel */}
+      {/* Right column */}
       <div className="w-full xl:w-80 shrink-0 space-y-3">
-        <FollowPanel userId={user?.id} onChanged={reloadSocialFeeds} />
-
-        <RosterPanel />
+        <WeekStatsCard userId={user?.id} />
+        <PowerProfileCard userId={user?.id} />
+      </div>
       </div>
     </div>
   )

@@ -1,20 +1,22 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Portal from './Portal'
 import { useRouter } from 'next/navigation'
 import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 import FitUploader from './FitUploader'
 import IntervalsSyncModal from './IntervalsSyncModal'
 import BulkImportModal from './BulkImportModal'
+import Icon from './Icon'
 
 const CHOICES = [
-  { key: 'sync', icon: '🔄', label: 'Sync Intervals.icu', hint: 'Pick recent rides from your Intervals.icu account' },
-  { key: 'import', icon: '📦', label: 'Import History', hint: 'Bulk-import a .zip or .fit archive' },
-  { key: 'fit', icon: '➕', label: 'Add .fit / workout session', hint: 'Upload a single .fit file or log a workout' },
+  { key: 'sync', icon: 'refresh', label: 'Sync Intervals.icu', hint: 'Pick recent rides from your Intervals.icu account' },
+  { key: 'import', icon: 'package', label: 'Import History', hint: 'Bulk-import a .zip or .fit archive' },
+  { key: 'fit', icon: 'plus', label: 'Add .fit / workout session', hint: 'Upload a single .fit file or log a workout' },
 ]
 
 // Top-banner "Add / Sync" flow: asks what to do, then shows the chosen existing flow.
-export default function AddSessionModal({ isOpen, onClose, user, tracks = [] }) {
+function AddSessionModalInner({ isOpen, onClose, user, tracks = [] }) {
   const router = useRouter()
   const [flow, setFlow] = useState(null)
   const firstChoice = useRef(null)
@@ -91,7 +93,7 @@ export default function AddSessionModal({ isOpen, onClose, user, tracks = [] }) 
             What would you like to do?
           </h2>
           <button type="button" onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
-            ✕
+            <Icon name="close" size={18} />
           </button>
         </div>
         {CHOICES.map((c, i) => (
@@ -102,7 +104,7 @@ export default function AddSessionModal({ isOpen, onClose, user, tracks = [] }) 
             onClick={() => setFlow(c.key)}
             className="w-full text-left flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
           >
-            <span className="text-xl">{c.icon}</span>
+            <span className="text-xl text-emerald-500 dark:text-brand-neon"><Icon name={c.icon} size={22} /></span>
             <span>
               <span className="block text-xs font-bold text-slate-900 dark:text-white">{c.label}</span>
               <span className="block text-[11px] text-slate-500">{c.hint}</span>
@@ -111,5 +113,13 @@ export default function AddSessionModal({ isOpen, onClose, user, tracks = [] }) 
         ))}
       </div>
     </div>
+  )
+}
+
+export default function AddSessionModal(props) {
+  return (
+    <Portal>
+      <AddSessionModalInner {...props} />
+    </Portal>
   )
 }

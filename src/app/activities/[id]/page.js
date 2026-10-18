@@ -1,9 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Portal from '../../../components/Portal'
+import { formatDateTime } from '../../../lib/dateFormat'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, usePathname, useRouter } from 'next/navigation'
+import { parseCoachPath, activityBackHref } from '../../../lib/coachContext'
 import { supabase } from '../../../lib/supabase'
 import { deleteActivity } from '../../../lib/activityActions'
 import { syncFeedData } from '../../../lib/feedSync'
@@ -13,10 +16,14 @@ import ActivityStreamsChart from '../../../components/ActivityStreamsChart'
 import ActivityMetricsGrid from '../../../components/ActivityMetricsGrid'
 import TemplateRunsSection from '../../../components/TemplateRunsSection'
 import VelodromePicker from '../../../components/VelodromePicker'
+import { fetchTracks } from '../../../lib/lookups'
 import EditActivityModal from '../../../components/EditActivityModal'
+import { weightFromActivity } from '../../../lib/weightHistory'
 
 // Leaflet requires window/document -> dynamic import without SSR
 import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
+import Icon from '../../../components/Icon'
+import ActivityComments from '../../../components/ActivityComments'
 
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
   ssr: false,
@@ -28,6 +35,9 @@ const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
 export default function ActivityDetailPage() {
   const router = useRouter()
   const params = useParams()
+  const coachRiderId = parseCoachPath(usePathname()).riderId
+  const backHref = activityBackHref(coachRiderId)
+  const inAthleteContext = backHref !== '/'
   const activityId = params?.id
 
   const [loading, setLoading] = useState(true)
@@ -66,7 +76,7 @@ export default function ActivityDetailPage() {
           .select('*, tracks(*)')
           .eq('id', activityId)
           .maybeSingle(),
-        supabase.from('tracks').select('*').order('name'),
+        fetchTracks(supabase),
         supabase
           .from('activity_curves')
           .select('curve_type, data')
@@ -117,7 +127,8 @@ export default function ActivityDetailPage() {
             mapped[row.curve_type] = row.data
           }
         })
-        setCurvesMap(mapped)
+        // Fall back to the curves snapshot stored on the activity when no activity_curves rows exist.
+        setCurvesMap(Object.keys(mapped).length ? mapped : actData?.curves_data || {})
       }
 
       setLoading(false)
@@ -210,7 +221,7 @@ export default function ActivityDetailPage() {
 
     // Deleting changes records/milestones of later sessions (best effort).
     if (activity.user_id) await syncFeedData(supabase, activity.user_id).catch(() => {})
-    router.push('/')
+    router.push(backHref)
   }
 
   if (loading) {
@@ -230,16 +241,16 @@ export default function ActivityDetailPage() {
           Activity not found
         </h2>
         <Link
-          href="/"
+          href={backHref}
           className="inline-block py-2 px-4 rounded-xl bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 font-bold text-xs uppercase"
         >
-          ← Back to Cockpit
+          {inAthleteContext ? '← Back to activities' : '← Back to Cockpit'}
         </Link>
       </div>
     )
   }
 
-  const actDate = new Date(activity.activity_date || activity.created_at).toLocaleDateString('en-US', {
+  const actDate = formatDateTime(activity.activity_date || activity.created_at, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -253,10 +264,10 @@ export default function ActivityDetailPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <Link
-            href="/"
+            href={backHref}
             className="text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-white transition flex items-center gap-1.5"
           >
-            ← Cockpit Telemetry
+            {inAthleteContext ? '← Activities' : '← Cockpit Telemetry'}
           </Link>
           <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
             {activity.title || 'Velodrome Session'}
@@ -271,7 +282,7 @@ export default function ActivityDetailPage() {
               onClick={() => setShowEdit(true)}
               className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wider transition"
             >
-              ✏️ Edit
+              <Icon name="edit" /> Edit
             </button>
             <button
               type="button"
@@ -279,7 +290,7 @@ export default function ActivityDetailPage() {
               disabled={deleting}
               className="py-2 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
             >
-              🗑 Delete Activity
+              <Icon name="trash" /> Delete Activity
             </button>
           </div>
         )}
@@ -290,8 +301,8 @@ export default function ActivityDetailPage() {
       )}
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
-          <div className="glass-modal w-full max-w-sm space-y-4 bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl">
+        <Portal><div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
+          <div className="w-full max-w-sm space-y-4 bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl">
             <h2 className="text-base font-black text-slate-900 dark:text-white">Delete this activity?</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               This permanently deletes &quot;{activity.title || 'Velodrome Session'}&quot; and all linked data (curves, analysis, photos). This cannot be undone.
@@ -315,7 +326,7 @@ export default function ActivityDetailPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div></Portal>
       )}
 
       <EditActivityModal
@@ -337,7 +348,7 @@ export default function ActivityDetailPage() {
         <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
           {activity.tracks && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span>🏟️</span>
+              <span><Icon name="velodrome" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
                 {activity.tracks.name} ({activity.tracks.length_m} m)
               </span>
@@ -345,25 +356,25 @@ export default function ActivityDetailPage() {
           )}
           {activity.bike_model && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span>🚴</span>
+              <span><Icon name="bike" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{activity.bike_model}</span>
             </div>
           )}
           {activity.handlebar_setup && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span>🎯</span>
+              <span><Icon name="target" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{activity.handlebar_setup}</span>
             </div>
           )}
           {activity.helmet && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span>🪖</span>
+              <span><Icon name="helmet" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{activity.helmet}</span>
             </div>
           )}
           {activity.perceived_exertion && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-orange-500/10 text-orange-500 border border-orange-500/20 font-black">
-              <span>🔥</span>
+              <span><Icon name="flame" /></span>
               <span>RPE: {activity.perceived_exertion}/10</span>
             </div>
           )}
@@ -372,9 +383,9 @@ export default function ActivityDetailPage() {
 
       {/* 2b. GPS route map (only for activities with a satellite recording, e.g. road rides) */}
       {Array.isArray(activity.time_series?.latitude) && activity.time_series.latitude.length > 1 && (
-        <div className="glass-card bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+        <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
           <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <span>🗺️</span> Route Map
+            <Icon name="map" /> Route Map
           </h3>
           <ActivityMap
             latitude={activity.time_series.latitude}
@@ -392,7 +403,7 @@ export default function ActivityDetailPage() {
       <ActivityMetricsGrid activity={activity} curvesMap={curvesMap} masterCurves={masterCurves || {}} />
 
       {/* 3c. Telemetry chart over time/distance: speed, HR, power, cadence, torque (issue #12) */}
-      <ActivityStreamsChart timeSeries={activity.time_series} highlightWindows={highlightWindows} />
+      <ActivityStreamsChart timeSeries={activity.time_series} activity={activity} highlightWindows={highlightWindows} />
 
       {/* 4. Durational Curves Chart: current ride vs. a selectable baseline/"history
            curve" (all-time, last 30/90 days, this calendar year, last floating year,
@@ -402,19 +413,27 @@ export default function ActivityDetailPage() {
         masterCurves={masterCurves}
         baselineCurves={baselineCurves}
         baselineLoading={baselineLoading}
+        weightKg={sharedView ? null : weightFromActivity(activity)}
         onPeriodChange={handleBaselinePeriodChange}
       />
 
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
       {!sharedView && (
-        <TemplateRunsSection activityId={activityId} onVisibleWindowsChange={setHighlightWindows} />
+        <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} onVisibleWindowsChange={setHighlightWindows} />
       )}
+      {/* Athlete context: an active coach runs his own / system templates on the athlete's activity. */}
+      {sharedView && coachRiderId && coachRiderId === activity?.user_id && (
+        <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} riderId={coachRiderId} onVisibleWindowsChange={setHighlightWindows} />
+      )}
+
+      {/* 4c. Comments: owner, coach and every rider who can see the activity (issues #222-#224) */}
+      <ActivityComments activityId={activityId} />
 
       {/* 5. Bottom panel: Quick track and gearing setup (own activities only) */}
       {!sharedView && (
-      <div className="glass-card bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+      <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <span>⚙️</span> Track & Gearing Setup for this Ride
+          <Icon name="settings" /> Track & Gearing Setup for this Ride
         </h3>
 
         <form onSubmit={handleUpdateGear} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
@@ -471,7 +490,7 @@ export default function ActivityDetailPage() {
 
           {saveSuccess && (
             <span className="font-bold text-emerald-500 animate-fade-in">
-              ✓ Setup saved
+              <Icon name="check" /> Setup saved
             </span>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
-import { parseIntervalDsl } from '../../../../lib/intervalDsl'
+import { visibleTemplatesFilter } from '../../../../lib/ownerScope'
+import { buildIntervalManifest, parseIntervalDsl } from '../../../../lib/intervalDsl'
 
 // PATCH /api/templates/:slug - update a user-owned "custom_intervals" template
 // (issue #14 — Template Creator). System templates (user_id IS NULL) and
@@ -18,6 +19,7 @@ export async function PATCH(req, { params }) {
       .from('analysis_templates')
       .select('*')
       .eq('slug', slug)
+      .or(visibleTemplatesFilter(user.id))
       .single()
 
     if (fetchError || !existing) {
@@ -38,12 +40,13 @@ export async function PATCH(req, { params }) {
     if (visibility !== undefined) updates.visibility = visibility === 'public' ? 'public' : 'private'
 
     if (dslSource !== undefined) {
-      const { repeatCount, steps, errors } = parseIntervalDsl(dslSource)
+      const parsedDsl = parseIntervalDsl(dslSource)
+      const { errors } = parsedDsl
       if (errors.length) {
         return NextResponse.json({ error: 'Invalid interval DSL', errors }, { status: 400 })
       }
       updates.dsl_source = dslSource
-      updates.manifest = { pattern: 'custom_intervals', repeat_count: repeatCount, steps }
+      updates.manifest = buildIntervalManifest(parsedDsl)
     }
 
     const { data, error } = await supabase
@@ -76,8 +79,9 @@ export async function DELETE(req, { params }) {
 
     const { data: existing, error: fetchError } = await supabase
       .from('analysis_templates')
-      .select('id, user_id')
+      .select('id, user_id, visibility')
       .eq('slug', slug)
+      .or(visibleTemplatesFilter(user.id))
       .single()
 
     if (fetchError || !existing) {
@@ -86,6 +90,13 @@ export async function DELETE(req, { params }) {
 
     if (existing.user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    if (existing.visibility !== 'private') {
+      return NextResponse.json(
+        { error: 'Only private templates can be deleted. Make it private first.' },
+        { status: 409 }
+      )
     }
 
     const { error } = await supabase.from('analysis_templates').delete().eq('slug', slug)
@@ -99,3 +110,5 @@ export async function DELETE(req, { params }) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+export const dynamic = 'force-dynamic'

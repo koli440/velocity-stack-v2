@@ -17,12 +17,39 @@ import {
   YAxis,
   Tooltip,
   ReferenceArea,
+  ReferenceLine,
 } from 'recharts'
+import { ltFromActivity } from '../lib/lactateThresholds'
+import { zoneRanges, zonesFromActivity } from '../lib/powerZones'
 import { STREAM_METRICS, buildStreamSeries, formatAxisTick, formatElapsed } from '../lib/activityStreams'
 
-function MetricLane({ metric, data, mode, syncId, highlightWindows }) {
+// Lactate threshold lines (issue #121) drawn on the power and heart-rate lanes.
+function thresholdLines(metric, lt) {
+  if (!lt) return []
+  if (metric.key === 'watts') return [['LT1', lt.lt1Power], ['LT2', lt.lt2Power]].filter(([, v]) => v != null)
+  if (metric.key === 'heartrate') return [['LT1', lt.lt1Hr], ['LT2', lt.lt2Hr]].filter(([, v]) => v != null)
+  return []
+}
+
+// Power zone bands (issue #194) behind the power lane; Z1 and Z6 are open-ended and clipped to the data.
+const ZONE_COLORS = ['#94a3b8', '#22c55e', '#eab308', '#f97316', '#ef4444', '#a855f7']
+
+function zoneBands(metric, zones, data) {
+  if (!zones || metric.key !== 'watts') return []
+  const peak = data.reduce((m, d) => (d.watts != null && d.watts > m ? d.watts : m), 0)
+  const top = Math.max(peak, zones.bounds[zones.bounds.length - 1] + 1)
+  return zoneRanges(zones).map((r) => ({ label: r.label, y1: r.minW ?? 0, y2: r.maxW ?? top, color: ZONE_COLORS[r.zone - 1] }))
+}
+
+function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones }) {
   const hasData = data.some((d) => d[metric.key] != null)
   if (!hasData) return null
+  const lines = thresholdLines(metric, lt)
+  const bands = zoneBands(metric, zones, data)
+  const lineValues = lines.map(([, v]) => v)
+  const yDomain = lineValues.length
+    ? [(min) => Math.min(min, ...lineValues), (max) => Math.max(max, ...lineValues)]
+    : ['auto', 'auto']
 
   return (
     <div className="flex items-center gap-3">
@@ -47,6 +74,9 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows }) {
                   ifOverflow="visible"
                 />
               ))}
+            {bands.map((b) => (
+              <ReferenceArea key={b.label} y1={b.y1} y2={b.y2} fill={b.color} fillOpacity={0.08} stroke="none" ifOverflow="hidden" />
+            ))}
             <defs>
               <linearGradient id={`fill-${metric.key}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={metric.color} stopOpacity={0.35} />
@@ -59,7 +89,18 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows }) {
                 stationary stretches (repeated distance values) still take up as much horizontal
                 space as they do in time mode. */}
             <XAxis dataKey="x" type="number" domain={['dataMin', 'dataMax']} hide />
-            <YAxis hide domain={['auto', 'auto']} />
+            <YAxis hide domain={yDomain} />
+            {lines.map(([name, value]) => (
+              <ReferenceLine
+                key={name}
+                y={value}
+                stroke={name === 'LT1' ? '#22c55e' : '#f43f5e'}
+                strokeDasharray="4 3"
+                strokeWidth={1}
+                ifOverflow="extendDomain"
+                label={{ value: `${name} ${value}`, position: 'insideTopRight', fontSize: 8, fill: '#94a3b8' }}
+              />
+            ))}
             <Tooltip
               cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '3 3' }}
               content={({ active, payload, label }) => {
@@ -93,7 +134,9 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows }) {
   )
 }
 
-export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows = [] }) {
+export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows = [], activity = null }) {
+  const lt = useMemo(() => ltFromActivity(activity), [activity])
+  const zones = useMemo(() => zonesFromActivity(activity, lt), [activity, lt])
   const [mode, setMode] = useState('time')
 
   const data = useMemo(() => buildStreamSeries(timeSeries, mode), [timeSeries, mode])
@@ -138,7 +181,7 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
 
       <div className="space-y-1.5">
         {STREAM_METRICS.map((metric) => (
-          <MetricLane key={metric.key} metric={metric} data={data} mode={mode} syncId="activity-streams" highlightWindows={highlightWindows} />
+          <MetricLane key={metric.key} metric={metric} data={data} mode={mode} syncId="activity-streams" highlightWindows={highlightWindows} lt={lt} zones={zones} />
         ))}
       </div>
 

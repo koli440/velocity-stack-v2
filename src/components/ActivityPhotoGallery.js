@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Portal from './Portal'
 import { supabase } from '../lib/supabase'
 import {
   MAX_PHOTOS_PER_ACTIVITY,
@@ -139,7 +140,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
       </div>
 
       {lightbox && (
-        <div
+        <Portal><div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 p-4 bg-slate-950/90"
           role="dialog"
           aria-modal="true"
@@ -165,7 +166,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
               </button>
             )}
           </div>
-        </div>
+        </div></Portal>
       )}
     </div>
   )

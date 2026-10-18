@@ -11,18 +11,17 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
+import DisciplineSuggest from '../../components/DisciplineSuggest'
+import { fetchDisciplines, fetchTracks } from '../../lib/lookups'
 import {
-  DISCIPLINES,
   getTrackLaps,
+  parseDistanceOverride,
   calculatePursuitStrategy,
   formatTime,
   pacingStrategyLabel,
 } from '../../lib/pursuit'
 import VelodromePicker from '../../components/VelodromePicker'
-
-// Sorted, de-duplicated discipline categories (Endurance, Pursuit, Sprint). v1 defaulted the
-// category picker to index 1 of its alphabetically-sorted list, which lands on "Pursuit" here too.
-const CATEGORIES = Array.from(new Set(DISCIPLINES.map((d) => d.category))).sort()
+import Icon from '../../components/Icon'
 
 const STRATEGY_BANNER = {
   negative: {
@@ -48,14 +47,16 @@ const STRATEGY_BANNER = {
 export default function PursuitPage() {
   const [tracks, setTracks] = useState([])
   const [loadingTracks, setLoadingTracks] = useState(true)
+  const [homeTrackId, setHomeTrackId] = useState(null)
 
-  const [country, setCountry] = useState('')
   const [trackId, setTrackId] = useState('')
   const [category, setCategory] = useState('')
   const [disciplineName, setDisciplineName] = useState('')
 
   const [targetMin, setTargetMin] = useState(3)
   const [targetSec, setTargetSec] = useState(30)
+  const [disciplines, setDisciplines] = useState([])
+  const [distanceInput, setDistanceInput] = useState('')
   const [startPenalty, setStartPenalty] = useState(5)
   const [pacingDrift, setPacingDrift] = useState(0)
   const [chainring, setChainring] = useState(58)
@@ -63,13 +64,27 @@ export default function PursuitPage() {
 
   useEffect(() => {
     let active = true
-    supabase
-      .from('tracks')
-      .select('*')
-      .order('name', { ascending: true })
-      .then(({ data, error }) => {
+    fetchTracks(supabase)
+      .then(async ({ data, error }) => {
+        let home = null
+        try {
+          const { data: auth } = await supabase.auth.getUser()
+          if (auth?.user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('home_track_id')
+              .eq('id', auth.user.id)
+              .maybeSingle()
+            home = profile?.home_track_id || null
+          }
+        } catch {}
         if (!active) return
-        if (!error && data) setTracks(data)
+        if (!error && data) {
+          setTracks(data)
+          const pick = data.find((t) => t.id === home) || data[0]
+          if (pick) setTrackId((cur) => cur || pick.id)
+          setHomeTrackId(home)
+        }
         setLoadingTracks(false)
       })
     return () => {
@@ -77,33 +92,28 @@ export default function PursuitPage() {
     }
   }, [])
 
-  const countries = useMemo(
-    () => Array.from(new Set(tracks.map((t) => t.country_code).filter(Boolean))).sort(),
-    [tracks]
-  )
-
   useEffect(() => {
-    if (!country && countries.length > 0) setCountry(countries[0])
-  }, [countries, country])
-
-  const filteredTracks = useMemo(
-    () => tracks.filter((t) => t.country_code === country),
-    [tracks, country]
-  )
-
-  useEffect(() => {
-    if (filteredTracks.length > 0 && !filteredTracks.some((t) => t.id === trackId)) {
-      setTrackId(filteredTracks[0].id)
+    let active = true
+    fetchDisciplines(supabase).then((list) => {
+      if (active) setDisciplines(list)
+    })
+    return () => {
+      active = false
     }
-  }, [filteredTracks, trackId])
+  }, [])
+
+  const CATEGORIES = useMemo(
+    () => Array.from(new Set(disciplines.map((d) => d.category))).sort(),
+    [disciplines]
+  )
 
   useEffect(() => {
-    if (!category) setCategory(CATEGORIES[1] || CATEGORIES[0])
-  }, [category])
+    if (!category && CATEGORIES.length > 0) setCategory(CATEGORIES.includes('Endurance') ? 'Endurance' : CATEGORIES[0])
+  }, [category, CATEGORIES])
 
   const filteredDisciplines = useMemo(
-    () => DISCIPLINES.filter((d) => d.category === category),
-    [category]
+    () => disciplines.filter((d) => d.category === category),
+    [disciplines, category]
   )
 
   useEffect(() => {
@@ -112,17 +122,22 @@ export default function PursuitPage() {
       !filteredDisciplines.some((d) => d.name === disciplineName)
     ) {
       setDisciplineName(filteredDisciplines[0].name)
+      setDistanceInput('')
     }
   }, [filteredDisciplines, disciplineName])
 
   const selectedTrack = tracks.find((t) => t.id === trackId) || null
-  const selectedDiscipline = DISCIPLINES.find((d) => d.name === disciplineName) || null
+  const selectedDiscipline = disciplines.find((d) => d.name === disciplineName) || null
   const trackLengthM = selectedTrack ? Number(selectedTrack.length_m) : 0
   const targetSeconds = (Number(targetMin) || 0) * 60 + (Number(targetSec) || 0)
 
+  const override = parseDistanceOverride(distanceInput)
+  const distanceM = override.value ?? selectedDiscipline?.distanceM ?? 0
+  const isOverridden = override.value !== null && override.value !== selectedDiscipline?.distanceM
+
   const lapsInfo =
-    selectedTrack && selectedDiscipline
-      ? getTrackLaps(trackLengthM, selectedDiscipline.distanceM)
+    selectedTrack && selectedDiscipline && !override.error
+      ? getTrackLaps(trackLengthM, distanceM)
       : { laps: 0, valid: false }
 
   const strategy =
@@ -130,7 +145,7 @@ export default function PursuitPage() {
       ? calculatePursuitStrategy({
           trackLengthM,
           laps: lapsInfo.laps,
-          totalDistanceM: selectedDiscipline.distanceM,
+          totalDistanceM: distanceM,
           targetSeconds,
           startPenaltyS: Number(startPenalty) || 0,
           pacingDriftS: Number(pacingDrift) || 0,
@@ -184,7 +199,7 @@ export default function PursuitPage() {
   )
 
   const metric = (label, value, unit) => (
-    <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+    <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
       <span className="text-xs uppercase font-bold text-slate-400">{label}</span>
       <div className="text-2xl sm:text-3xl font-black text-emerald-500 dark:text-brand-neon tracking-tight mt-1">
         {value}
@@ -197,7 +212,7 @@ export default function PursuitPage() {
     <div className="w-full space-y-6">
       <div>
         <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
-          ⏱️ Pursuit Strategist
+          <Icon name="stopwatch" /> Pursuit Strategist
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Tempo optimization: lock in a target time and work out the lap-by-lap pacing plan.
@@ -205,7 +220,7 @@ export default function PursuitPage() {
       </div>
 
       {/* Event settings */}
-      <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
+      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
         <h2 className="text-xs uppercase font-bold text-slate-400">Event Settings</h2>
 
         {loadingTracks ? (
@@ -220,19 +235,6 @@ export default function PursuitPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {select(
-                'Country',
-                country,
-                setCountry,
-                countries.map((c) => ({ value: c, label: c }))
-              )}
-              <div className="block space-y-1.5">
-                <span className="text-xs uppercase font-bold text-slate-400">Track</span>
-                <VelodromePicker tracks={filteredTracks} value={trackId} onChange={setTrackId} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {select(
                 'Category',
                 category,
                 setCategory,
@@ -241,14 +243,55 @@ export default function PursuitPage() {
               {select(
                 'Discipline',
                 disciplineName,
-                setDisciplineName,
+                (v) => {
+                  setDisciplineName(v)
+                  setDistanceInput('')
+                },
                 filteredDisciplines.map((d) => ({ value: d.name, label: d.name }))
               )}
             </div>
+            <DisciplineSuggest categories={CATEGORIES} />
+
+            <div className="relative z-30 block space-y-1.5">
+              <span className="text-xs uppercase font-bold text-slate-400">Velodrome</span>
+              <VelodromePicker tracks={tracks} value={trackId} onChange={setTrackId} favoriteId={homeTrackId} />
+            </div>
 
             {selectedDiscipline && (
+              <div className="space-y-1.5">
+                <span className="text-xs uppercase font-bold text-slate-400">
+                  Distance (m) — default {selectedDiscipline.distanceM}
+                </span>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={100}
+                    max={100000}
+                    value={distanceInput}
+                    placeholder={String(selectedDiscipline.distanceM)}
+                    onChange={(e) => setDistanceInput(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 dark:border-surface-darkBorder bg-transparent px-3 py-2 text-sm"
+                  />
+                  {distanceInput !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => setDistanceInput('')}
+                      className="shrink-0 rounded-lg border border-slate-200 dark:border-surface-darkBorder px-3 py-2 text-xs font-bold"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                {override.error && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{override.error}</p>
+                )}
+              </div>
+            )}
+            {selectedDiscipline && (
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Distance: <span className="font-bold">{selectedDiscipline.distanceM}m</span> | Total
+                Distance: <span className="font-bold">{distanceM}m</span>
+                {isOverridden && ' (custom)'} | Total
                 Laps:{' '}
                 <span className="font-bold">
                   {lapsInfo.valid ? lapsInfo.laps : '—'}
@@ -266,7 +309,7 @@ export default function PursuitPage() {
       </div>
 
       {/* Target time */}
-      <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
+      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
         <h2 className="text-xs uppercase font-bold text-slate-400">Target Time</h2>
         <div className="grid grid-cols-2 gap-4 max-w-xs">
           {field('Min', targetMin, setTargetMin, { min: 0, max: 60, step: 1 })}
@@ -275,7 +318,7 @@ export default function PursuitPage() {
       </div>
 
       {/* Pacing + gear */}
-      <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-5">
+      <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-5">
         <div>
           <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">Pacing Parameters</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -323,7 +366,7 @@ export default function PursuitPage() {
       </div>
 
       {!strategy ? (
-        <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm text-sm text-slate-500 dark:text-slate-400">
+        <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm text-sm text-slate-500 dark:text-slate-400">
           {tracks.length === 0
             ? 'Add a track to the database to use the strategist.'
             : 'Distance must be longer than 1 lap and must cleanly divide the selected track to compute a strategy.'}
@@ -332,7 +375,7 @@ export default function PursuitPage() {
         <>
           {/* Summary metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {metric('Distance', `${selectedDiscipline.distanceM}`, 'm')}
+            {metric('Distance', `${distanceM}`, 'm')}
             {metric('Track', `${trackLengthM}`, 'm')}
             {metric('Target', formatTime(targetSeconds))}
             {metric('Avg Speed', strategy.avgSpeedKmh.toFixed(2), 'km/h')}
@@ -349,8 +392,8 @@ export default function PursuitPage() {
           </div>
 
           {/* Splits table */}
-          <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm overflow-x-auto">
-            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">📋 Splits</h2>
+          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm overflow-x-auto">
+            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3"><Icon name="clipboard" /> Splits</h2>
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-surface-darkBorder">
@@ -379,8 +422,8 @@ export default function PursuitPage() {
           </div>
 
           {/* Tempo analysis */}
-          <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
-            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">📈 Tempo Analysis</h2>
+          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3"><Icon name="trend" /> Tempo Analysis</h2>
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -411,8 +454,8 @@ export default function PursuitPage() {
             </div>
           </div>
 
-          <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
-            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">⚙️ Cadence (RPM)</h2>
+          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+            <h2 className="text-xs uppercase font-bold text-slate-400 mb-3"><Icon name="settings" /> Cadence (RPM)</h2>
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -444,8 +487,8 @@ export default function PursuitPage() {
           </div>
 
           {/* Training notes */}
-          <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-2 text-sm text-slate-600 dark:text-slate-300">
-            <h2 className="text-xs uppercase font-bold text-slate-400 mb-1">💡 Training Notes</h2>
+          <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            <h2 className="text-xs uppercase font-bold text-slate-400 mb-1"><Icon name="bulb" /> Training Notes</h2>
             <p>
               1. <span className="font-bold">Standing start lap:</span> you need to rip it in{' '}
               <span className="font-bold">{strategy.firstLapTimeS}s</span>.

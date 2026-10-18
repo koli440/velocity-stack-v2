@@ -135,3 +135,95 @@ test('evaluateTemplate (custom_intervals): distance-keyed step reports no match 
   assert.equal(result.efforts.length, 0)
   assert.equal(result.summary.reps_detected, 0)
 })
+
+test('evaluateTemplate (custom_intervals): heart-rate-banded template works on an HR-only activity', () => {
+  const heartrate = [...repeatWatts(100, 20), ...repeatWatts(160, 60), ...repeatWatts(110, 30), ...repeatWatts(160, 60), ...repeatWatts(110, 30)]
+  const template = {
+    slug: 'hr',
+    manifest: {
+      pattern: 'custom_intervals',
+      repeat_count: 2,
+      steps: [
+        { role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'pct_hrmax', powerMin: 85, powerMax: 100 },
+        { role: 'recovery', keyBy: 'duration', targetDurationSec: 30, durationTolerancePct: 10, bandType: 'hr_bpm', powerMin: null, powerMax: 120 },
+      ],
+    },
+  }
+  const result = evaluateTemplate(template, { heartrate }, null, 180)
+  assert.equal(result.summary.reps_detected, 2)
+  assert.equal(result.efforts.filter((e) => e.role === 'work').length, 2)
+})
+
+test('evaluateTemplate (custom_intervals): manifest warmup_sec/cooldown_sec exclude the head and tail', () => {
+  const watts = [...repeatWatts(300, 60), ...repeatWatts(100, 200), ...repeatWatts(300, 60)]
+  const step = { role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 0, bandType: 'watts', powerMin: 290, powerMax: 310 }
+  const base = { pattern: 'custom_intervals', repeat_count: 2, steps: [step] }
+  assert.equal(evaluateTemplate({ slug: 'a', manifest: base }, { watts }).summary.reps_detected, 2)
+  assert.equal(evaluateTemplate({ slug: 'a', manifest: { ...base, warmup_sec: 60 } }, { watts }).summary.reps_detected, 1)
+  assert.equal(evaluateTemplate({ slug: 'a', manifest: { ...base, warmup_sec: 60, cooldown_sec: 60 } }, { watts }).summary.reps_detected, 0)
+})
+
+test('evaluateTemplate (custom_intervals): multi-step blocks get step_index, per-step summaries and rep-level drop-off', () => {
+  const block = (a, b) => [...repeatWatts(a, 60), ...repeatWatts(b, 30), ...repeatWatts(80, 60)]
+  const watts = [...block(200, 300), ...block(180, 270)]
+  const mk = (role, dur, min, max) => ({ role, keyBy: 'duration', targetDurationSec: dur, durationTolerancePct: 0, bandType: 'watts', powerMin: min, powerMax: max })
+  const template = {
+    slug: 'ms',
+    manifest: {
+      pattern: 'custom_intervals',
+      repeat_count: 2,
+      steps: [mk('work', 60, 170, 210), mk('work', 30, 260, 310), mk('recovery', 60, null, 90)],
+    },
+  }
+  const r = evaluateTemplate(template, { watts })
+  assert.equal(r.summary.reps_detected, 2)
+  assert.deepEqual(r.efforts.map((e) => [e.rep, e.step_index]), [[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+  assert.equal(r.summary.step_summaries.length, 3)
+  assert.equal(r.summary.step_summaries[1].avg_power, 285)
+  // rep power = (200*60+300*30)/90 = 233 vs (180*60+270*30)/90 = 210 -> drop-off ~9.9%
+  assert.ok(r.summary.dropoff_pct > 9 && r.summary.dropoff_pct < 11)
+})
+
+test('evaluateTemplate (custom_intervals): classic work/recovery output has no multi-step fields (regression)', () => {
+  const r = evaluateTemplate(customTemplate(), { watts: buildTwoCycleStream() }, 220)
+  assert.equal(r.summary.step_summaries, undefined)
+  assert.ok(r.efforts.every((e) => e.step_index === undefined))
+})
+
+test('evaluateTemplate (custom_intervals): over-unders from DSL text via the manifest builder', async () => {
+  const { parseIntervalDsl, buildIntervalManifest } = await import('../intervalDsl.js')
+  const dsl = '2x\nwork 2min ±0% @ 245-255W\nthen work 1min ±0% @ 295-305W\nthen work 2min ±0% @ 245-255W\nrecovery 4min ±0% @ <110W'
+  const manifest = buildIntervalManifest(parseIntervalDsl(dsl))
+  const rep = [...repeatWatts(250, 120), ...repeatWatts(300, 60), ...repeatWatts(250, 120), ...repeatWatts(100, 240)]
+  const r = evaluateTemplate({ slug: 'ou', manifest }, { watts: [...rep, ...rep] })
+  assert.equal(r.summary.reps_detected, 2)
+  assert.equal(r.efforts.length, 8)
+  assert.deepEqual(r.efforts.slice(0, 4).map((e) => e.step_index), [1, 2, 3, 4])
+  assert.deepEqual(r.summary.step_summaries.map((s) => s.avg_power), [250, 300, 250, 100])
+  assert.equal(r.summary.dropoff_pct, 0)
+})
+
+test('evaluateTemplate (custom_intervals): sets summary, set recoveries excluded from work stats', async () => {
+  const { parseIntervalDsl, buildIntervalManifest } = await import('../intervalDsl.js')
+  const dsl = '2 sets of 3x\nwork 30sec ±0% @ 299-315W\nrecovery 30sec ±0% @ <70W\nset recovery 2min ±0% @ <50W'
+  const manifest = buildIntervalManifest(parseIntervalDsl(dsl))
+  const setBlock = (w) => [...Array.from({ length: 3 }, () => [...repeatWatts(w, 30), ...repeatWatts(60, 30)]).flat()]
+  const watts = [...repeatWatts(100, 30), ...setBlock(300), ...repeatWatts(40, 120), ...setBlock(310)]
+  const r = evaluateTemplate({ slug: 'sets', manifest }, { watts })
+  assert.equal(r.summary.reps_detected, 6)
+  assert.equal(r.summary.reps_target, 6)
+  assert.equal(r.summary.sets_target, 2)
+  assert.equal(r.summary.sets_detected, 2)
+  assert.deepEqual(r.summary.set_summaries.map((s) => [s.set, s.reps_detected, s.avg_power]), [[1, 3, 300], [2, 3, 310]])
+  assert.equal(r.summary.avg_power, 305)
+  assert.equal(r.efforts.filter((e) => e.role === 'set_recovery').length, 1)
+  assert.deepEqual(r.efforts.filter((e) => e.role === 'work').map((e) => e.rep), [1, 2, 3, 4, 5, 6])
+  const starts = r.efforts.map((e) => e.start_sec)
+  assert.deepEqual(starts, [...starts].sort((a, b) => a - b))
+})
+
+test('evaluateTemplate (custom_intervals): no set fields for non-set templates (regression)', () => {
+  const r = evaluateTemplate(customTemplate(), { watts: buildTwoCycleStream() }, 220)
+  assert.equal(r.summary.sets_target, undefined)
+  assert.equal(r.summary.set_summaries, undefined)
+})

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import useContextHref from './useContextHref'
 import {
   ResponsiveContainer,
   LineChart,
@@ -12,6 +13,7 @@ import {
   CartesianGrid,
   Legend,
 } from 'recharts'
+import { wattsPerKg } from '../lib/wkg'
 import { BASELINE_PERIOD_LABELS, BASELINE_PERIODS } from '../lib/baselineCurves'
 
 const DURATION_ORDER = [
@@ -24,6 +26,7 @@ const METRICS = [
   { key: 'Cadence', label: 'Cadence', unit: 'RPM', color: '#f97316' },
   { key: 'Speed', label: 'Speed', unit: 'km/h', color: '#38bdf8' },
   { key: 'Power', label: 'Power', unit: 'W', color: '#a855f7' },
+  { key: 'PowerWkg', label: 'W/kg', unit: 'W/kg', color: '#c084fc', source: 'Power', perKg: true },
   { key: 'Torque', label: 'Torque', unit: 'Nm', color: '#eab308' },
   { key: 'HeartRate', label: 'HeartRate', unit: 'BPM', color: '#ef4444' },
 ]
@@ -46,15 +49,23 @@ export default function DurationalCurvesChart({
   masterCurves = null, // Legacy all-time Master curve (kept for the "All-time" option)
   baselineCurves = null, // { period, start, end, curves: { [metric]: { [durationKey]: { value, activityId, activityTitle, activityDate } } } }
   baselineLoading = false,
+  weightKg = null, // activity weight snapshot (issue #143): enables the W/kg tab
   onPeriodChange, // (period: string, customRange?: { start: string, end: string }) => void
 }) {
+  const contextHref = useContextHref()
   const [activeMetric, setActiveMetric] = useState('Cadence')
   const [showBaseline, setShowBaseline] = useState(true)
   const [period, setPeriod] = useState(ALL_TIME)
   const [customRange, setCustomRange] = useState({ start: '', end: '' })
 
-  const activeCurveRaw = curves[activeMetric] || {}
-  const currentMetricConfig = METRICS.find((m) => m.key === activeMetric) || METRICS[0]
+  const visibleMetrics = METRICS.filter((m) => !m.perKg || weightKg)
+  const currentMetricConfig = visibleMetrics.find((m) => m.key === activeMetric) || visibleMetrics[0]
+  // W/kg views are the Power curves divided by the ride's weight (baseline: at this ride's weight).
+  const dataKey = currentMetricConfig.source || currentMetricConfig.key
+  const convert = (v) => (currentMetricConfig.perKg ? wattsPerKg(v, weightKg) : v)
+  const activeCurveRaw = Object.fromEntries(
+    Object.entries(curves[dataKey] || {}).map(([k, v]) => [k, convert(v)]).filter(([, v]) => v != null)
+  )
 
   const isCustomPeriod = period === BASELINE_PERIODS.CUSTOM
   const isAllTime = period === ALL_TIME
@@ -84,10 +95,10 @@ export default function DurationalCurvesChart({
   // used as a fallback for callers that don't wire up onPeriodChange/baselineCurves at all.
   const baselinePoints = useMemo(() => {
     if (baselineCurves && baselineCurves.curves) {
-      return baselineCurves.curves[activeMetric] || {}
+      return baselineCurves.curves[dataKey] || {}
     }
     if (isAllTime) {
-      const masterCurveRaw = (masterCurves && masterCurves[activeMetric]) || {}
+      const masterCurveRaw = (masterCurves && masterCurves[dataKey]) || {}
       return Object.fromEntries(
         Object.entries(masterCurveRaw)
           .filter(([, value]) => value !== undefined && value !== null)
@@ -95,7 +106,7 @@ export default function DurationalCurvesChart({
       )
     }
     return {}
-  }, [baselineCurves, isAllTime, masterCurves, activeMetric])
+  }, [baselineCurves, isAllTime, masterCurves, dataKey])
 
   const baselineLabel = PERIOD_OPTIONS.find((p) => p.key === period)?.label || 'Baseline'
 
@@ -108,10 +119,11 @@ export default function DurationalCurvesChart({
     })
     .map((timeKey) => {
       const baselinePoint = baselinePoints[timeKey]
+      const baselineValue = baselinePoint ? convert(baselinePoint.value) : null
       return {
         duration: timeKey,
         current: activeCurveRaw[timeKey] !== undefined ? Number(activeCurveRaw[timeKey]) : null,
-        baseline: baselinePoint ? baselinePoint.value : null,
+        baseline: baselineValue,
         baselineActivityId: baselinePoint?.activityId ?? null,
         baselineActivityTitle: baselinePoint?.activityTitle ?? null,
       }
@@ -146,8 +158,8 @@ export default function DurationalCurvesChart({
           )}
 
           <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-800">
-            {METRICS.map((metric) => {
-              const isSelected = activeMetric === metric.key
+            {visibleMetrics.map((metric) => {
+              const isSelected = currentMetricConfig.key === metric.key
               return (
                 <button
                   key={metric.key}
@@ -267,7 +279,7 @@ export default function DurationalCurvesChart({
                         {showBaseline && dataPoint.baseline != null && dataPoint.baselineActivityId && (
                           <div className="pt-1 border-t border-slate-800">
                             <Link
-                              href={`/activities/${dataPoint.baselineActivityId}`}
+                              href={contextHref(`/activities/${dataPoint.baselineActivityId}`)}
                               className="text-[10px] font-bold text-orange-400 hover:text-orange-300 underline"
                             >
                               View activity{dataPoint.baselineActivityTitle ? `: ${dataPoint.baselineActivityTitle}` : ''}
@@ -308,7 +320,7 @@ export default function DurationalCurvesChart({
           </ResponsiveContainer>
         ) : (
           <div className="h-full flex items-center justify-center text-xs font-semibold text-slate-400">
-            No data is available for the selected metric ({activeMetric}).
+            No data is available for the selected metric ({currentMetricConfig.label}).
           </div>
         )}
       </div>

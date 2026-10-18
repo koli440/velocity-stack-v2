@@ -6,15 +6,23 @@
 // Also used to edit an existing template the current user owns.
 
 import { useEffect, useMemo, useState } from 'react'
+import Portal from './Portal'
 import { getAuthHeader } from '../lib/supabase'
-import { parseIntervalDsl } from '../lib/intervalDsl'
+import { BAND_SUFFIXES, parseIntervalDsl } from '../lib/intervalDsl'
 import { DSL_GUIDE_PATH } from '../lib/dslGuide'
+import { formatLegacyOptions } from '../lib/legacyPatterns'
+import Icon from './Icon'
 
+const DEFAULT_DSL = '4x\nwork 3min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP'
 const CATEGORIES = ['road', 'track', 'gym']
 
 function formatBandLabel(step) {
   if (step.bandType === 'best') return `best ${step.bestMetric || 'power'} effort`
-  const suffix = step.bandType === 'watts' ? 'W' : step.bandType === 'speed_kmh' ? 'km/h' : '% FTP'
+  if (step.bandType === 'zone') {
+    if (step.powerMin != null && step.powerMax != null) return step.powerMin === step.powerMax ? `Z${step.powerMin}` : `Z${step.powerMin}-Z${step.powerMax}`
+    return step.powerMax != null ? `<Z${step.powerMax}` : `>Z${step.powerMin}`
+  }
+  const suffix = step.bandType === 'pct_ftp' ? '% FTP' : BAND_SUFFIXES[step.bandType] || '% FTP'
   if (step.powerMin != null && step.powerMax != null) return `${step.powerMin}-${step.powerMax}${suffix}`
   if (step.powerMax != null) return `<${step.powerMax}${suffix}`
   if (step.powerMin != null) return `>${step.powerMin}${suffix}`
@@ -22,6 +30,7 @@ function formatBandLabel(step) {
 }
 
 function formatDurationLabel(sec) {
+  if (sec % 3600 === 0 && sec >= 3600) return `${sec / 3600}h`
   if (sec % 60 === 0 && sec >= 60) return `${sec / 60}:00`
   const m = Math.floor(sec / 60)
   const s = sec % 60
@@ -37,24 +46,31 @@ function formatValueLabel(step) {
   return step.keyBy === 'distance' ? formatDistanceLabel(step.targetDistanceM) : formatDurationLabel(step.targetDurationSec)
 }
 
-export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editingTemplate = null }) {
+function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate = null }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('road')
   const [visibility, setVisibility] = useState('private')
-  const [dslSource, setDslSource] = useState('4x\nwork 3min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP')
+  const [dslSource, setDslSource] = useState(DEFAULT_DSL)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
 
+  const originalDsl = editingTemplate ? editingTemplate.dsl_source || '' : DEFAULT_DSL
+
+  // Re-seed the form each time the modal opens so stale edits don't persist.
   useEffect(() => {
+    if (!isOpen) return
     if (editingTemplate) {
       setName(editingTemplate.name || '')
       setDescription(editingTemplate.description || '')
       setCategory(editingTemplate.category || 'road')
       setVisibility(editingTemplate.visibility || 'private')
       setDslSource(editingTemplate.dsl_source || '')
+    } else {
+      setDslSource(DEFAULT_DSL)
     }
-  }, [editingTemplate])
+    setSaveError(null)
+  }, [editingTemplate, isOpen])
 
   const parsed = useMemo(() => parseIntervalDsl(dslSource), [dslSource])
 
@@ -100,14 +116,14 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
       <div className="glass-modal w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl p-6 space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-            <span>✏️</span> {editingTemplate ? 'Edit Template' : 'Create Template'}
+            <Icon name="edit" /> {editingTemplate ? 'Edit Template' : 'Create Template'}
           </h2>
           <button
             type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-bold"
           >
-            ✕ Close
+            <Icon name="close" /> Close
           </button>
         </div>
 
@@ -170,7 +186,17 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
         </div>
 
         <div>
-          <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Interval DSL</label>
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Interval DSL</label>
+            <button
+              type="button"
+              onClick={() => setDslSource(originalDsl)}
+              disabled={dslSource === originalDsl}
+              className="text-[10px] font-black uppercase tracking-wider text-orange-500 disabled:opacity-40"
+            >
+              Reset to default
+            </button>
+          </div>
           <textarea
             value={dslSource}
             onChange={(e) => setDslSource(e.target.value)}
@@ -193,9 +219,23 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
                   Line {e.line}: {e.message}
                 </div>
               ))}
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                Valid example:
+                <pre className="mt-1 font-mono whitespace-pre-wrap">{DEFAULT_DSL}</pre>
+              </div>
             </div>
           ) : (
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              {parsed.pattern ? (
+                <>
+                  Pattern {parsed.pattern}
+                  {formatLegacyOptions(parsed.pattern, parsed.patternOptions).length > 0 &&
+                    ` (${formatLegacyOptions(parsed.pattern, parsed.patternOptions).join(', ')})`}
+                  {parsed.metrics?.length > 0 && ` — metrics: ${parsed.metrics.map((m) => m.id).join(', ')}`}
+                </>
+              ) : (
+              <>
+              {parsed.setCount ? `${parsed.setCount} sets × ` : ''}
               {parsed.repeatCount} × [
               {parsed.steps
                 .map(
@@ -206,6 +246,21 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
                 )
                 .join(' → ')}
               ]
+              {parsed.setRecovery &&
+                ` with set recovery ${formatValueLabel(parsed.setRecovery)} ±${parsed.setRecovery.durationTolerancePct}% @ ${formatBandLabel(
+                  parsed.setRecovery
+                )}`}
+              {parsed.lapLengthM > 0 && ` — ${parsed.lapLengthM} m laps`}
+              {parsed.metrics?.length > 0 && ` — metrics: ${parsed.metrics.map((m) => m.id).join(', ')}`}
+              {(parsed.warmupSec || parsed.cooldownSec) &&
+                ` (ignoring ${[
+                  parsed.warmupSec ? `first ${formatDurationLabel(parsed.warmupSec)}` : null,
+                  parsed.cooldownSec ? `last ${formatDurationLabel(parsed.cooldownSec)}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' and ')})`}
+              </>
+              )}
             </p>
           )}
         </div>
@@ -217,13 +272,16 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
         )}
 
         <div className="border-t border-slate-100 dark:border-slate-800/60 pt-3">
+          <p className="text-[10px] text-slate-400 mb-1.5">
+            Band hints: 90-110%FTP, 95-105%LT2, 3-3.5W/kg, or a power zone such as Z3, Z2-Z3, &lt;Z2, &gt;Z4.
+          </p>
           <a
             href={DSL_GUIDE_PATH}
             target="_blank"
             rel="noopener noreferrer"
             className="text-[11px] font-black uppercase tracking-wider text-orange-500"
           >
-            📐 DSL Syntax Guide ↗
+            <Icon name="ruler" /> DSL Syntax Guide ↗
           </a>
         </div>
 
@@ -246,5 +304,13 @@ export default function TemplateCreatorModal({ isOpen, onClose, onSaved, editing
         </div>
       </div>
     </div>
+  )
+}
+
+export default function TemplateCreatorModal(props) {
+  return (
+    <Portal>
+      <TemplateCreatorModalInner {...props} />
+    </Portal>
   )
 }

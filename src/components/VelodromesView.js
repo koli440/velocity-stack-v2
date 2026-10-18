@@ -2,6 +2,10 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
+import Icon from './Icon'
+import SuggestionNotice from './SuggestionNotice'
+import { getAuthHeader } from '../lib/supabase'
+import { buildVelodromePayload } from '../lib/velodromeSuggestions'
 
 // Dynamic import of the Leaflet map
 const VelodromeMap = dynamic(() => import('./VelodromeMap'), {
@@ -13,55 +17,77 @@ const VelodromeMap = dynamic(() => import('./VelodromeMap'), {
   )
 })
 
-export default function VelodromesView({ tracks = [], onRefreshTracks }) {
+export default function VelodromesView({ tracks = [] }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [search, setSearch] = useState('')
   const [surfaceFilter, setSurfaceFilter] = useState('ALL')
   const [indoorFilter, setIndoorFilter] = useState('ALL')
+  const [countryFilter, setCountryFilter] = useState('ALL')
+  const [showCountries, setShowCountries] = useState(false)
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
   const [submitting, setSubmitting] = useState(false)
 
-  const [formData, setFormData] = useState({
+  const emptyForm = {
     name: '',
     country_code: '',
     length_m: '250',
     surface: 'Wood',
     is_indoor: true,
-    elevation_m: '100',
+    elevation_m: '',
     latitude: '',
     longitude: '',
-    notes: ''
-  })
+    notes: '',
+    website_url: '',
+    pricing_url: '',
+    booking_url: ''
+  }
+  const [formData, setFormData] = useState(emptyForm)
+  const [editingTrack, setEditingTrack] = useState(null)
+
+  const openAdd = () => {
+    if (showAddModal && !editingTrack) return setShowAddModal(false)
+    setEditingTrack(null)
+    setFormData(emptyForm)
+    setShowAddModal(true)
+  }
+
+  const openEdit = (t) => {
+    setEditingTrack(t)
+    setFormData(Object.fromEntries(
+      Object.keys(emptyForm).map(k => [k, t[k] == null ? (k === 'is_indoor' ? false : '') : t[k]])
+    ))
+    setShowAddModal(true)
+    window.scrollTo?.({ top: 0, behavior: 'smooth' })
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const { payload, error } = buildVelodromePayload(formData, editingTrack)
+    if (error) {
+      alert(error)
+      return
+    }
     setSubmitting(true)
 
     try {
-      const res = await fetch('/api/tracks', {
+      const res = await fetch('/api/suggestions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+        body: JSON.stringify({
+          entity_type: 'velodrome',
+          target_id: editingTrack ? editingTrack.id : null,
+          payload
+        })
       })
 
       const json = await res.json()
       if (res.ok) {
-        alert('🏁 Velodrome added successfully!')
+        alert('Thanks! Your suggestion was submitted for admin review. It will not appear immediately.')
         setShowAddModal(false)
-        setFormData({
-          name: '',
-          country_code: '',
-          length_m: '250',
-          surface: 'Wood',
-          is_indoor: true,
-          elevation_m: '100',
-          latitude: '',
-          longitude: '',
-          notes: ''
-        })
-        if (onRefreshTracks) onRefreshTracks()
+        setEditingTrack(null)
+        setFormData(emptyForm)
       } else {
-        alert('Error: ' + json.error)
+        alert(res.status === 401 ? 'Please log in to submit suggestions.' : 'Error: ' + json.error)
       }
     } catch (err) {
       alert('Failed: ' + err.message)
@@ -75,6 +101,36 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
   const indoorCount = tracks.filter(t => t.is_indoor).length
   const outdoorCount = totalTracks - indoorCount
   const uniqueCountries = new Set(tracks.map(t => t.country_code).filter(Boolean)).size
+
+  const countryList = [...new Set(tracks.map(t => t.country_code).filter(Boolean))].sort()
+
+  const clearTileFilters = () => {
+    setIndoorFilter('ALL')
+    setCountryFilter('ALL')
+    setShowCountries(false)
+  }
+  const toggleIndoorTile = (value) => {
+    setCountryFilter('ALL')
+    setShowCountries(false)
+    setIndoorFilter(indoorFilter === value ? 'ALL' : value)
+  }
+  const toggleCountriesTile = () => {
+    if (showCountries) {
+      setShowCountries(false)
+      setCountryFilter('ALL')
+    } else {
+      setShowCountries(true)
+    }
+  }
+  const activeTile = showCountries
+    ? 'COUNTRIES'
+    : indoorFilter === 'INDOOR' ? 'INDOOR' : indoorFilter === 'OUTDOOR' ? 'OUTDOOR' : 'TOTAL'
+  const tileClass = (id) =>
+    `text-left bg-white dark:bg-surface-darkCard p-4 rounded-2xl border shadow-sm transition cursor-pointer hover:border-emerald-500 ${
+      activeTile === id
+        ? 'border-emerald-500 ring-2 ring-emerald-500/40'
+        : 'border-slate-200 dark:border-surface-darkBorder'
+    }`
 
   // Filtering
   const filteredTracks = tracks.filter(t => {
@@ -91,7 +147,9 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
       (indoorFilter === 'INDOOR' && t.is_indoor) ||
       (indoorFilter === 'OUTDOOR' && !t.is_indoor)
 
-    return matchesSearch && matchesSurface && matchesIndoor
+    const matchesCountry = countryFilter === 'ALL' || t.country_code === countryFilter
+
+    return matchesSearch && matchesSurface && matchesIndoor && matchesCountry
   })
 
   return (
@@ -108,39 +166,60 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         </div>
 
         <button
-          onClick={() => setShowAddModal(!showAddModal)}
+          onClick={openAdd}
           className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider shadow-sm transition"
         >
-          {showAddModal ? 'Close Form' : '+ Add Velodrome'}
+          {showAddModal && !editingTrack ? 'Close Form' : '+ Suggest Velodrome'}
         </button>
       </div>
 
-      {/* KPI Indicators */}
+      {/* KPI Indicators (clickable filters) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        <button type="button" aria-pressed={activeTile === 'TOTAL'} onClick={clearTileFilters} className={tileClass('TOTAL')}>
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Tracks</div>
           <div className="text-3xl font-black text-slate-900 dark:text-white mt-1">{totalTracks}</div>
-        </div>
-        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        </button>
+        <button type="button" aria-pressed={activeTile === 'INDOOR'} onClick={() => toggleIndoorTile('INDOOR')} className={tileClass('INDOOR')}>
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Indoor Ovals</div>
           <div className="text-3xl font-black text-amber-500 dark:text-amber-400 mt-1">{indoorCount}</div>
-        </div>
-        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        </button>
+        <button type="button" aria-pressed={activeTile === 'OUTDOOR'} onClick={() => toggleIndoorTile('OUTDOOR')} className={tileClass('OUTDOOR')}>
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Outdoor Tracks</div>
           <div className="text-3xl font-black text-sky-500 dark:text-sky-400 mt-1">{outdoorCount}</div>
-        </div>
-        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        </button>
+        <button type="button" aria-pressed={activeTile === 'COUNTRIES'} onClick={toggleCountriesTile} className={tileClass('COUNTRIES')}>
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Countries</div>
           <div className="text-3xl font-black text-emerald-500 dark:text-brand-neon mt-1">{uniqueCountries}</div>
-        </div>
+        </button>
       </div>
+
+      {showCountries && (
+        <div className="flex flex-wrap gap-2">
+          {countryList.map(c => (
+            <button
+              key={c}
+              type="button"
+              aria-pressed={countryFilter === c}
+              onClick={() => setCountryFilter(countryFilter === c ? 'ALL' : c)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold border transition ${
+                countryFilter === c
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Form for adding a track */}
       {showAddModal && (
-        <form onSubmit={handleSubmit} className="glass-dense bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-emerald-500/40 shadow-md space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-emerald-500/40 shadow-md space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-            🏁 Add New Track Oval
+            <Icon name="flag" /> {editingTrack ? `Suggest edit: ${editingTrack.name}` : 'Suggest New Track Oval'}
           </h3>
+          <SuggestionNotice />
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
@@ -200,8 +279,8 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
                 onChange={e => setFormData({...formData, is_indoor: e.target.value === 'true'})}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
               >
-                <option value="true">🏟️ Indoor</option>
-                <option value="false">☀️ Outdoor</option>
+                <option value="true">Indoor</option>
+                <option value="false">Outdoor</option>
               </select>
             </div>
             <div>
@@ -226,12 +305,45 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">Website</label>
+              <input
+                type="url"
+                placeholder="https://..."
+                value={formData.website_url}
+                onChange={e => setFormData({...formData, website_url: e.target.value})}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">Pricing / price list</label>
+              <input
+                type="url"
+                placeholder="https://..."
+                value={formData.pricing_url}
+                onChange={e => setFormData({...formData, pricing_url: e.target.value})}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">Booking form</label>
+              <input
+                type="url"
+                placeholder="https://..."
+                value={formData.booking_url}
+                onChange={e => setFormData({...formData, booking_url: e.target.value})}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={submitting}
             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition text-xs uppercase tracking-wider"
           >
-            {submitting ? 'Saving to Database...' : 'Save Velodrome'}
+            {submitting ? 'Submitting...' : 'Submit for review'}
           </button>
         </form>
       )}
@@ -240,21 +352,21 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
       <section className="space-y-2">
         <div className="flex justify-between items-center">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            🌍 Worldwide Radar
+            <Icon name="globe" /> Worldwide Radar
           </h2>
           <span className="text-xs text-slate-400">
-            {tracks.filter(t => t.latitude).length} mapped
+            {filteredTracks.filter(t => t.latitude).length} mapped
           </span>
         </div>
-        <VelodromeMap tracks={tracks} />
+        <VelodromeMap tracks={filteredTracks} />
       </section>
 
       {/* Filter controls */}
-      <div className="glass-dense bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
+      <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <input
             type="text"
-            placeholder="🔍 Search tracks..."
+            placeholder="Search tracks..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500 w-44"
@@ -266,8 +378,8 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
             className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500"
           >
             <option value="ALL">All Types</option>
-            <option value="INDOOR">🏟️ Indoor</option>
-            <option value="OUTDOOR">☀️ Outdoor</option>
+            <option value="INDOOR">Indoor</option>
+            <option value="OUTDOOR">Outdoor</option>
           </select>
 
           <select
@@ -315,7 +427,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
           {filteredTracks.map(t => (
             <div
               key={t.id}
-              className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder hover:border-slate-400 dark:hover:border-slate-600 transition shadow-sm flex flex-col justify-between"
+              className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder hover:border-slate-400 dark:hover:border-slate-600 transition shadow-sm flex flex-col justify-between"
             >
               <div>
                 <div className="flex justify-between items-start gap-2 mb-2">
@@ -353,11 +465,24 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
                 {t.notes && (
                   <p className="text-xs text-slate-400 italic line-clamp-2 mt-1">"{t.notes}"</p>
                 )}
+
+                <div className="flex flex-wrap gap-3 text-xs mt-2">
+                  {[['website_url', 'Website'], ['pricing_url', 'Pricing'], ['booking_url', 'Book']].map(([k, label]) =>
+                    t[k] ? (
+                      <a key={k} href={t[k]} target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-brand-neon font-semibold underline">
+                        {label}
+                      </a>
+                    ) : null
+                  )}
+                  <button type="button" onClick={() => openEdit(t)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline ml-auto">
+                    Suggest edit
+                  </button>
+                </div>
               </div>
 
               {t.latitude && t.longitude && (
                 <div className="text-[11px] text-slate-400 font-mono pt-3 border-t border-slate-100 dark:border-slate-800/50 mt-3">
-                  📍 {t.latitude.toFixed(4)}, {t.longitude.toFixed(4)}
+                  <Icon name="pin" size={12} /> {t.latitude.toFixed(4)}, {t.longitude.toFixed(4)}
                 </div>
               )}
             </div>
@@ -365,7 +490,7 @@ export default function VelodromesView({ tracks = [], onRefreshTracks }) {
         </div>
       ) : (
         /* Table */
-        <div className="glass-dense overflow-x-auto bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+        <div className="overflow-x-auto bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
           <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
             <thead className="bg-slate-50 dark:bg-slate-900/60 text-[11px] uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-800">
               <tr>

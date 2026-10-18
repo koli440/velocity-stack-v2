@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, getAuthHeader } from '../../lib/supabase'
+import { fetchTracks } from '../../lib/lookups'
 import { parseJsonResponse } from '../../lib/httpJson'
 import {
   ResponsiveContainer,
@@ -15,6 +16,7 @@ import {
   Cell,
 } from 'recharts'
 import AeroTestForm from '../../components/AeroTestForm'
+import Icon from '../../components/Icon'
 
 // Color scale for the CdA comparison chart: lower CdA (better) is greener, higher (worse) is
 // redder - approximates v1's plotly "Reds_r" continuous color scale with a small fixed palette.
@@ -69,10 +71,7 @@ export default function AeroLabPage() {
       loadAeroTests()
     })
 
-    supabase
-      .from('tracks')
-      .select('*')
-      .order('name')
+    fetchTracks(supabase)
       .then(({ data }) => {
         setTracks(data || [])
       })
@@ -125,7 +124,7 @@ export default function AeroLabPage() {
     <div className="w-full space-y-6">
       <div>
         <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
-          🧪 Aero Lab: CdA Optimization
+          <Icon name="flask" /> Aero Lab: CdA Optimization
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Logged in as: <span className="font-semibold">{user?.email}</span>
@@ -140,11 +139,11 @@ export default function AeroLabPage() {
 
       <details className="glass-card bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm p-5">
         <summary className="text-sm font-black uppercase tracking-wide text-slate-900 dark:text-white cursor-pointer">
-          📖 READ FIRST: Testing Protocol &amp; Best Practices
+          <Icon name="book" /> READ FIRST: Testing Protocol &amp; Best Practices
         </summary>
         <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
           <h3 className="font-bold text-slate-900 dark:text-white">
-            🎯 Goal: Get consistent and repeatable CdA data
+            <Icon name="target" /> Goal: Get consistent and repeatable CdA data
           </h3>
           <p>
             Field testing is based on the <span className="font-semibold">Chung Method</span>{' '}
@@ -184,7 +183,7 @@ export default function AeroLabPage() {
 
       <div className="space-y-4">
         <h2 className="text-sm font-black uppercase tracking-wide text-slate-900 dark:text-white">
-          📊 Aero Test Analysis &amp; History
+          <Icon name="chart" /> Aero Test Analysis &amp; History
         </h2>
 
         {loading ? (

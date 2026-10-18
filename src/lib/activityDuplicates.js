@@ -60,14 +60,35 @@ export function findDuplicate(candidate, existingFingerprints = []) {
  *
  * @param {import('@supabase/supabase-js').SupabaseClient} supabase
  * @param {string} userId
- * @returns {Promise<Array<{ file_sha256: string|null, start_time: string|null, elapsed_time_s: number|null }>>}
+ * @returns {Promise<Array<{ id: string, source: string|null, external_source: string|null, external_id: string|null, file_sha256: string|null, start_time: string|null, elapsed_time_s: number|null }>>}
  */
 export async function loadExistingActivityFingerprints(supabase, userId) {
   const { data, error } = await supabase
     .from('activities')
-    .select('file_sha256, start_time, elapsed_time_s')
+    .select('id, file_sha256, start_time, elapsed_time_s, source, external_source, external_id')
     .eq('user_id', userId)
 
   if (error) throw error
   return data || []
+}
+
+const SOURCE_PRIORITY = { intervals: 3, strava: 2 }
+
+/** Intervals.icu (has the .fit file) > Strava > manual / anything else. Mirrors SQL activity_source_priority(). */
+export function sourcePriority(source) {
+  return SOURCE_PRIORITY[source] ?? 1
+}
+
+/**
+ * Decides what to do with an incoming activity that duplicates an existing one:
+ * 'upgrade' when the incoming source outranks an existing auto-imported (Strava) copy (replace it), else 'skip'.
+ * Manual and bot activities are never replaced: deleting them would also drop their kudos, comments and photos.
+ *
+ * @param {{ source?: string|null }} candidate
+ * @param {{ source?: string|null }} existing
+ * @returns {'upgrade'|'skip'}
+ */
+export function resolveDuplicate(candidate, existing) {
+  const replaceable = existing?.source === 'strava'
+  return replaceable && sourcePriority(candidate?.source) > sourcePriority(existing?.source) ? 'upgrade' : 'skip'
 }

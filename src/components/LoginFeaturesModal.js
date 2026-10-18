@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Portal from './Portal'
 import Link from 'next/link'
+import Icon from './Icon'
 
 /* ---------- Static visuals (no data/auth needed) ---------- */
 
@@ -80,12 +82,12 @@ function VelodromeVisual() {
 function MoreVisual() {
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2.5">
-      {MORE_TILES.map(([title, desc]) => (
+      {MORE_TILES.map(([icon, title, desc]) => (
         <div
           key={title}
           className="border border-white/15 rounded-2xl p-3.5 bg-white/10"
         >
-          <b className="block text-[13px] mb-1 text-white">{title}</b>
+          <b className="flex items-center gap-1.5 text-[13px] mb-1 text-white"><Icon name={icon} size={14} /> {title}</b>
           <span className="text-xs text-white/70">{desc}</span>
         </div>
       ))}
@@ -94,12 +96,12 @@ function MoreVisual() {
 }
 
 const MORE_TILES = [
-  ['🌬 Aero Lab', 'Log and compare aero tests'],
-  ['👥 Riders', 'Profiles, follow, feed'],
-  ['🔄 Intervals.icu sync', 'Import automatically'],
-  ['📁 FIT upload', 'Drop in files directly'],
-  ['📈 Duration curves', 'Power across durations'],
-  ['🗺 Activity maps', 'Routes, streams, privacy zones'],
+  ['wind', 'Aero Lab', 'Log and compare aero tests'],
+  ['users', 'Riders', 'Profiles, follow, feed'],
+  ['refresh', 'Intervals.icu sync', 'Import automatically'],
+  ['folder', 'FIT upload', 'Drop in files directly'],
+  ['trend', 'Duration curves', 'Power across durations'],
+  ['map', 'Activity maps', 'Routes, streams, privacy zones'],
 ]
 
 /* ---------- Feature copy: edit here ---------- */
@@ -175,7 +177,7 @@ const FEATURES = [
 
 const FOCUSABLE = 'a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])'
 
-export default function LoginFeaturesModal({ open, onClose }) {
+function LoginFeaturesModalInner({ open, onClose }) {
   const [active, setActive] = useState(0)
   const dialogRef = useRef(null)
   const onCloseRef = useRef(onClose)
@@ -246,7 +248,7 @@ export default function LoginFeaturesModal({ open, onClose }) {
             aria-label="Close"
             className="text-xl leading-none text-white/70 hover:text-white"
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
         </div>
 
@@ -286,7 +288,7 @@ export default function LoginFeaturesModal({ open, onClose }) {
                   {f.name}
                   {f.starred && (
                     <span aria-label="Unique to Velocity Stack" className="hidden md:inline ml-auto text-[11px] text-emerald-300">
-                      ★
+                      <Icon name="star" size={12} />
                     </span>
                   )}
                 </button>
@@ -344,5 +346,13 @@ export default function LoginFeaturesModal({ open, onClose }) {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginFeaturesModal(props) {
+  return (
+    <Portal>
+      <LoginFeaturesModalInner {...props} />
+    </Portal>
   )
 }

@@ -15,6 +15,7 @@ import {
 } from 'recharts'
 import { supabase, getAuthHeader } from '../../../lib/supabase'
 import { parseJsonResponse } from '../../../lib/httpJson'
+import Icon from '../../../components/Icon'
 import {
   formatTime,
   formatDate,
@@ -165,7 +166,7 @@ export default function PbDetailPage() {
   }
 
   const metric = (label, value, unit) => (
-    <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+    <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
       <span className="text-xs uppercase font-bold text-slate-400">{label}</span>
       <div className="text-2xl font-black text-emerald-500 dark:text-brand-neon tracking-tight mt-1">
         {value}
@@ -184,7 +185,7 @@ export default function PbDetailPage() {
 
       <div>
         <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
-          🏆 {pb.event_name || 'Unnamed Session'}
+          <Icon name="trophy" /> {pb.event_name || 'Unnamed Session'}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {pb.discipline} | {pb.track_name || 'No track'} | {formatDate(pb.achieved_date)}
@@ -199,15 +200,15 @@ export default function PbDetailPage() {
       </div>
 
       {pb.notes && (
-        <div className="glass-card bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-sm text-slate-600 dark:text-slate-300">
-          📝 <span className="font-semibold">Notes:</span> {pb.notes}
+        <div className="bg-white dark:bg-surface-darkCard p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-sm text-slate-600 dark:text-slate-300">
+          <Icon name="notes" /> <span className="font-semibold">Notes:</span> {pb.notes}
         </div>
       )}
 
       {lapAnalysis.length > 0 && (
-        <div className="glass-dense bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
+        <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-            ⏱️ Performance Analysis ({pb.split_mode === 'laps' ? 'Laps' : 'Fixed Distance'})
+            <Icon name="stopwatch" /> Performance Analysis ({pb.split_mode === 'laps' ? 'Laps' : 'Fixed Distance'})
           </h2>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -250,12 +251,12 @@ export default function PbDetailPage() {
         </div>
       )}
 
-      <div className="glass-card bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
+      <div className="bg-white dark:bg-surface-darkCard rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
         <button
           onClick={() => setIsEditing((v) => !v)}
           className="w-full text-left px-5 py-4 text-sm font-bold text-slate-900 dark:text-white flex items-center justify-between"
         >
-          ✏️ Edit PB Details
+          <Icon name="edit" /> Edit PB Details
           <span className="text-xs">{isEditing ? '▾' : '▸'}</span>
         </button>
 
@@ -355,7 +356,7 @@ export default function PbDetailPage() {
       </div>
 
       <div className="bg-rose-500/5 border border-rose-500/30 rounded-2xl p-5 space-y-3">
-        <p className="text-xs font-bold text-rose-500 uppercase tracking-wider">🗑️ Danger Zone</p>
+        <p className="text-xs font-bold text-rose-500 uppercase tracking-wider"><Icon name="trash" /> Danger Zone</p>
         <p className="text-xs text-rose-500/80">Are you sure? This cannot be undone.</p>
         <button
           onClick={handleDelete}

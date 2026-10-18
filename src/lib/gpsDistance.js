@@ -9,7 +9,7 @@
 // JS mirror of the GPS-derivation logic in api/analyze.py - both must stay numerically in sync
 // (see src/app/api/sync/intervals/route.js for the JS caller).
 
-const EARTH_RADIUS_M = 6371000
+import { EARTH_RADIUS_M, MPS_TO_KMH } from './constants.js'
 
 function toRad(deg) {
   return (deg * Math.PI) / 180
@@ -52,7 +52,7 @@ export function deriveSpeedAndDistanceFromGps(latStream, lngStream) {
       const dtS = i - prevIdx
       const stepM = haversineDistanceM(latStream[prevIdx], lngStream[prevIdx], lat, lng)
       distanceM += stepM
-      speedKmh[i] = dtS > 0 ? Math.round(((stepM / dtS) * 3.6 * 10)) / 10 : 0
+      speedKmh[i] = dtS > 0 ? Math.round(((stepM / dtS) * MPS_TO_KMH * 10)) / 10 : 0
     }
     prevIdx = i
   }

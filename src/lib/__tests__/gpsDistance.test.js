@@ -13,9 +13,9 @@ test('haversineDistanceM matches a known 1-degree-latitude distance (~111.2 km)'
 })
 
 test('deriveSpeedAndDistanceFromGps derives plausible speed from a steady-moving trace', () => {
-  // ~0.0001 deg longitude steps along the equator ~= 11.1 m per 1s sample ~= 40 km/h
-  const lat = [0, 0, 0, 0]
-  const lng = [0, 0.0001, 0.0002, 0.0003]
+  // ~0.0001 deg longitude steps ~= 11.1 m per 1s sample ~= 40 km/h (avoids 0,0, which is treated as "no fix")
+  const lat = [1, 1, 1, 1]
+  const lng = [1, 1.0001, 1.0002, 1.0003]
   const { speedKmh, distanceM } = deriveSpeedAndDistanceFromGps(lat, lng)
   assert.equal(speedKmh.length, 4)
   assert.equal(speedKmh[0], 0) // no prior point to compare against

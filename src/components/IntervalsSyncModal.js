@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import { buildActivityInsert } from '../lib/activityRecord'
-import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
+import Portal from './Portal'
+import { formatDateTime } from '../lib/dateFormat'
+import { supabase, getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import VelodromePicker from './VelodromePicker'
+import Icon from './Icon'
 
-export default function IntervalsSyncModal({
+function IntervalsSyncModalInner({
   isOpen,
   onClose,
   currentUser,
@@ -40,25 +41,31 @@ export default function IntervalsSyncModal({
 
       try {
         // 1. Get the credentials from the profile
-        const [{ data: base, error: baseErr }, { data: secrets, error: secretsErr }] = await Promise.all([
+        const [{ data: profile, error: profileErr }, { data: conn }, { data: secrets }] = await Promise.all([
           supabase.from('profiles').select('home_track_id').eq('id', currentUser.id).maybeSingle(),
+          supabase
+            .from('connections')
+            .select('status')
+            .eq('user_id', currentUser.id)
+            .eq('provider', 'intervals')
+            .maybeSingle(),
           supabase
             .from('profile_secrets')
             .select('intervals_athlete_id, intervals_api_key')
             .eq('user_id', currentUser.id)
             .maybeSingle(),
         ])
-        const profileErr = baseErr || secretsErr
-        const profile = { ...(base || {}), ...(secrets || {}) }
+        const connected = conn ? conn.status !== 'disconnected' : false
+        const legacy = !!(secrets?.intervals_athlete_id && secrets?.intervals_api_key) && conn?.status !== 'disconnected'
 
-        if (profileErr || !profile?.intervals_athlete_id || !profile?.intervals_api_key) {
+        if (profileErr || !(connected || legacy)) {
           setHasCredentials(false)
           setLoading(false)
           return
         }
 
         setHasCredentials(true)
-        if (profile.home_track_id) {
+        if (profile?.home_track_id) {
           setSelectedTrackId(profile.home_track_id)
           setIsFixedGear(true)
         }
@@ -66,12 +73,8 @@ export default function IntervalsSyncModal({
         // 2. Call the API route to list rides
         const res = await fetch('/api/sync/intervals', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'list',
-            athleteId: profile.intervals_athlete_id,
-            apiKey: profile.intervals_api_key,
-          }),
+          headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+          body: JSON.stringify({ action: 'list' }),
         })
 
         const data = await parseJsonResponse(res)
@@ -92,41 +95,24 @@ export default function IntervalsSyncModal({
 
   if (!isOpen) return null
 
-  // Import the specific selected ride
+  // Import the specific selected ride. The server fetches, analyzes, de-duplicates (upgrading a
+  // lower-priority copy of the same ride when applicable) and saves it; credentials and the user
+  // identity are resolved server-side from the session.
   const handleImportSelected = async (selectedRide) => {
     if (!currentUser?.id) return
     setImportingId(selectedRide.id)
     setErrorMsg(null)
 
     try {
-      const [{ data: base }, { data: secrets }] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('default_chainring, default_cog, crank_length_mm, ftp_w')
-          .eq('id', currentUser.id)
-          .single(),
-        supabase
-          .from('profile_secrets')
-          .select('intervals_athlete_id, intervals_api_key')
-          .eq('user_id', currentUser.id)
-          .maybeSingle(),
-      ])
-      const profile = { ...(base || {}), ...(secrets || {}) }
-
-      // 1. Call the API route to import the streams and curves (we pass the full ride ID)
       const res = await fetch('/api/sync/intervals', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({
           action: 'import',
-          athleteId: profile.intervals_athlete_id,
-          apiKey: profile.intervals_api_key,
           activityId: selectedRide.id,
-          // Track bikes are fixed-gear without a speed sensor - the server uses these values
-          // to derive speed from cadence if the ride contains no real speedometer data or
-          // GPS route, and the user confirmed via the checkbox that the bike is indeed without freewheel.
-          chainring: profile.default_chainring || 58,
-          cog: profile.default_cog || 14,
+          trackId: selectedTrackId || null,
+          // Used server-side to derive speed from cadence only when the ride has no speed
+          // sensor or GPS route and the user confirmed the bike is fixed-gear.
           isFixedGear,
         }),
       })
@@ -136,60 +122,8 @@ export default function IntervalsSyncModal({
         throw new Error(result.error || 'Import failed.')
       }
 
-      const { summary = {}, curves = {}, time_series = {} } = result
-
-      // 1b. Guard against re-importing a ride that's already in the vault (issue #41) - this
-      // path has no raw .fit file to hash, so duplicates are caught by matching start time +
-      // duration against the athlete's existing activities instead.
-      const existingFingerprints = await loadExistingActivityFingerprints(supabase, currentUser.id)
-      const duplicate = findDuplicate(
-        { startTime: summary.start_time, elapsedTimeS: summary.elapsed_time_s },
-        existingFingerprints
-      )
-      if (duplicate) {
-        throw new Error(
-          'This ride appears to already be in your vault (matching start time/duration). Import blocked to avoid a duplicate.'
-        )
-      }
-
-      // 2. Insert into the activities table (same mapping logic as a manual upload, see
-      // src/lib/activityRecord.js — both import paths produce an identical set of metrics)
-      const newActivity = buildActivityInsert(summary, {
-        title: selectedRide.name || 'Intervals.icu Sync',
-        userId: currentUser.id,
-        trackId: selectedTrackId,
-        chainring: profile.default_chainring || 58,
-        cog: profile.default_cog || 14,
-        crankLengthMm: profile.crank_length_mm || 165.0,
-        timeSeries: time_series,
-        curvesData: curves,
-        processingStatus: 'baseline_completed',
-        ftpWatts: profile.ftp_w ?? null,
-        fallbackActivityDate: selectedRide.start_date_local,
-      })
-
-      const { data: actData, error: actErr } = await supabase
-        .from('activities')
-        .insert([newActivity])
-        .select()
-        .single()
-
-      if (actErr) throw actErr
-
-      // 3. Insert the load curves into activity_curves
-      const curveInserts = Object.entries(curves).map(([curveType, curveData]) => ({
-        activity_id: actData.id,
-        curve_type: curveType,
-        data: curveData,
-      }))
-
-      if (curveInserts.length > 0) {
-        await supabase.from('activity_curves').insert(curveInserts)
-      }
-
-      // 4. Successful completion and redirection
       if (onImportSuccess) {
-        onImportSuccess(actData.id)
+        onImportSuccess(result.activityId)
       }
     } catch (err) {
       setErrorMsg(err.message)
@@ -214,11 +148,11 @@ export default function IntervalsSyncModal({
             onClick={onClose}
             className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
 
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-base">🔄</span>
+            <span className="text-base"><Icon name="refresh" size={18} /></span>
             <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white">
               Sync from Intervals.icu
             </h2>
@@ -253,18 +187,18 @@ export default function IntervalsSyncModal({
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3">
           {errorMsg && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold">
-              ⚠️ {errorMsg}
+              <Icon name="alert" /> {errorMsg}
             </div>
           )}
 
           {!hasCredentials && (
             <div className="text-center py-8 space-y-2">
-              <span className="text-3xl">🔑</span>
+              <span className="text-slate-400"><Icon name="key" size={30} /></span>
               <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
                 Missing Intervals.icu credentials
               </div>
               <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                Open your rider profile and enter the Intervals Athlete ID and API Key.
+                Open your rider profile and connect Intervals.icu under Connections.
               </p>
             </div>
           )}
@@ -277,7 +211,7 @@ export default function IntervalsSyncModal({
 
           {!loading && hasCredentials && activitiesList.length === 0 && !errorMsg && (
             <div className="text-center py-10 text-xs text-slate-400">
-              No bike rides were found on Intervals.icu in the last 30 days.
+              No bike rides were found in your Intervals.icu import window (change it in profile settings).
             </div>
           )}
 
@@ -285,7 +219,7 @@ export default function IntervalsSyncModal({
             <div className="space-y-2">
               {activitiesList.map((ride) => {
                 const isImporting = importingId === ride.id
-                const rideDate = new Date(ride.start_date_local).toLocaleDateString('en-US', {
+                const rideDate = formatDateTime(ride.start_date_local, {
                   day: 'numeric',
                   month: 'short',
                   year: 'numeric',
@@ -350,5 +284,12 @@ export default function IntervalsSyncModal({
         </div>
       </div>
     </div>
+  )
+}
+export default function IntervalsSyncModal(props) {
+  return (
+    <Portal>
+      <IntervalsSyncModalInner {...props} />
+    </Portal>
   )
 }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { filterTracks, formatTrackMeta } from '../lib/trackSearch'
+import Icon from './Icon'
 
 // Shared searchable velodrome picker. Controlled via `value` (track id or '') / `onChange(id)`.
 // Reuse this anywhere a velodrome must be chosen. `emptyLabel` set => user can clear the selection.
@@ -120,7 +121,7 @@ export default function VelodromePicker({
             onClick={() => choose('')}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
           >
-            ✕
+            <Icon name="close" size={16} />
           </button>
         )}
       </div>
@@ -130,7 +131,7 @@ export default function VelodromePicker({
       {open && (
         <ul
           role="listbox"
-          className="glass-modal absolute z-40 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
+          className="glass-popover absolute z-40 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
         >
           {emptyLabel && (
             <li
@@ -159,7 +160,7 @@ export default function VelodromePicker({
               } ${t.id === value ? 'font-black' : ''}`}
             >
               <div className="text-xs font-bold text-slate-900 dark:text-white">
-                {t.id === favorite?.id && <span title="Your home velodrome">★ </span>}
+                {t.id === favorite?.id && <span title="Your home velodrome"><Icon name="star" size={12} /> </span>}
                 {t.name}
               </div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">{formatTrackMeta(t)}</div>

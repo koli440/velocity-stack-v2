@@ -2,20 +2,24 @@
 
 import { useEffect, useState } from 'react'
 import ThemeToggle from './ThemeToggle'
-import Avatar from './Avatar'
+import UserMenu from './UserMenu'
+import Icon from './Icon'
+import SessionSearch from './SessionSearch'
 import NotificationBell from './NotificationBell'
 import AddSessionModal from './AddSessionModal'
+import { usePathname } from 'next/navigation'
 import { OPEN_ADD_SESSION_EVENT } from '../lib/navigation'
+import { parseCoachPath, chromeVisibility } from '../lib/coachContext'
 
 export default function TopNav({
   user,
   profile,
   onOpenMobileMenu,
-  onOpenSettings,
   onSignOut,
   tracks = [],
 }) {
   const [addOpen, setAddOpen] = useState(false)
+  const chrome = chromeVisibility(parseCoachPath(usePathname()).riderId)
 
   useEffect(() => {
     const open = () => setAddOpen(true)
@@ -36,21 +40,15 @@ export default function TopNav({
           className="md:hidden p-2 rounded-xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard text-slate-700 dark:text-white"
           aria-label="Open navigation menu"
         >
-          ☰
+          <Icon name="menu" size={20} />
         </button>
 
-        <div className="w-full">
-          <input
-            type="text"
-            placeholder="🔍 Search sessions, tracks, laps..."
-            className="w-full bg-slate-50 dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-xl px-3.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-          />
-        </div>
+        {chrome.search && <SessionSearch userId={user?.id} tracks={tracks} />}
       </div>
 
       {/* Right side: Profile, ThemeToggle and Sign Out */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {user && (
+        {user && chrome.addSession && (
           <button
             type="button"
             onClick={() => setAddOpen(true)}
@@ -65,14 +63,8 @@ export default function TopNav({
 
         {user && (
           <div className="flex items-center gap-1">
-          <button
-            onClick={onOpenSettings}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition shadow-2xs"
-          >
-            <Avatar url={profile?.avatar_url} name={displayName} size="w-6 h-6" textSize="text-[10px]" />
-            <span className="hidden sm:inline">{displayName}</span>
-          </button>
-          <NotificationBell userId={user.id} />
+          <UserMenu user={user} profile={profile} displayName={displayName} />
+          {chrome.notifications && <NotificationBell userId={user.id} />}
           </div>
         )}
 

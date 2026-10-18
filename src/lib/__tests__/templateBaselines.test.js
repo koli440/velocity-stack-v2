@@ -24,3 +24,14 @@ test('computeBaselines: no history', () => {
   assert.equal(r.previous, null)
   assert.equal(r.last90.count, 0)
 })
+
+test('computeBaselines: orders by ride date, not run creation time', () => {
+  const history = [
+    { activity_id: 'old', created_at: day(300), activities: { activity_date: day(10) }, summary: { p: 1 } },
+    { activity_id: 'new', created_at: day(20), activities: { activity_date: day(100) }, summary: { p: 2 } },
+    { activity_id: 'later', created_at: day(5), activities: { activity_date: day(200) }, summary: { p: 3 } },
+  ]
+  const r = computeBaselines(history, { activityId: 'cur', runAt: day(150) })
+  assert.equal(r.previous.activity_id, 'new')
+  assert.equal(r.allTime.count, 2)
+})

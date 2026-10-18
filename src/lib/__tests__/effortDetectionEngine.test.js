@@ -335,3 +335,299 @@ test('detectCustomIntervalSequence: repeated "best" stops when no room remains',
   })
   assert.equal(result.efforts.length, 2)
 })
+
+// ---- HR / cadence bands (issue #123) ----
+
+test('hr_bpm band matches work/recovery on a synthetic heart-rate stream', () => {
+  const hr = [...repeatWatts(100, 20), ...repeatWatts(160, 60), ...repeatWatts(110, 30), ...repeatWatts(162, 60), ...repeatWatts(105, 30)]
+  const steps = [
+    { role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'hr_bpm', powerMin: 150, powerMax: 170 },
+    { role: 'recovery', keyBy: 'duration', targetDurationSec: 30, durationTolerancePct: 10, bandType: 'hr_bpm', powerMin: null, powerMax: 120 },
+  ]
+  const { efforts } = detectCustomIntervalSequence({ heartrate: hr, steps, repeatCount: 2 })
+  assert.equal(efforts.length, 4)
+  assert.deepEqual(efforts.map((e) => e.role), ['work', 'recovery', 'work', 'recovery'])
+  assert.ok(efforts[0].start_sec >= 5 && efforts[0].start_sec <= 22)
+  assert.ok(efforts[0].avg_hr_bpm >= 150 && efforts[0].avg_hr_bpm <= 170)
+  assert.equal(efforts[0].avg_power, null)
+})
+
+test('pct_hrmax uses the supplied max HR, falling back to the stream max', () => {
+  const hr = [...repeatWatts(100, 30), ...repeatWatts(180, 60)]
+  const steps = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'pct_hrmax', powerMin: 90, powerMax: 100 }]
+  // stream max = 180, so 180bpm = 100%
+  assert.equal(detectCustomIntervalSequence({ heartrate: hr, steps, repeatCount: 1 }).efforts.length, 1)
+  // with HRmax 200 the 180bpm effort is only 90% (still in band); with 220 it is 82% (out of band)
+  assert.equal(detectCustomIntervalSequence({ heartrate: hr, steps, repeatCount: 1, hrMaxBpm: 200 }).efforts.length, 1)
+  assert.equal(detectCustomIntervalSequence({ heartrate: hr, steps, repeatCount: 1, hrMaxBpm: 220 }).efforts.length, 0)
+})
+
+test('cadence_rpm band matches on the cadence stream, independent of power', () => {
+  const cadence = [...repeatWatts(60, 20), ...repeatWatts(100, 60), ...repeatWatts(60, 20)]
+  const watts = repeatWatts(200, 100)
+  const steps = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'cadence_rpm', powerMin: 95, powerMax: 105 }]
+  const { efforts } = detectCustomIntervalSequence({ watts, cadence, steps, repeatCount: 1 })
+  assert.equal(efforts.length, 1)
+  assert.ok(efforts[0].avg_cadence_rpm >= 95 && efforts[0].avg_cadence_rpm <= 105)
+  assert.equal(efforts[0].avg_power, 200)
+})
+
+test('hr/cadence steps report a message instead of throwing when the stream is missing', () => {
+  const hrStep = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'hr_bpm', powerMin: 100, powerMax: null }]
+  const r1 = detectCustomIntervalSequence({ watts: repeatWatts(200, 100), steps: hrStep, repeatCount: 1 })
+  assert.deepEqual(r1.efforts, [])
+  assert.match(r1.message, /heart rate/)
+  const cadStep = [{ ...hrStep[0], bandType: 'cadence_rpm' }]
+  const r2 = detectCustomIntervalSequence({ watts: repeatWatts(200, 100), steps: cadStep, repeatCount: 1 })
+  assert.match(r2.message, /cadence/)
+})
+
+test('watts-only templates ignore hr/cadence streams (unchanged behaviour)', () => {
+  const steps = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 10, bandType: 'watts', powerMin: 190, powerMax: 210 }]
+  const base = detectCustomIntervalSequence({ watts: repeatWatts(200, 100), steps, repeatCount: 1 })
+  const withExtras = detectCustomIntervalSequence({ watts: repeatWatts(200, 100), heartrate: repeatWatts(150, 500), cadence: repeatWatts(90, 500), steps, repeatCount: 1 })
+  assert.deepEqual(withExtras, base)
+})
+
+// ---- warm-up / cool-down exclusion (issue #124) ----
+
+const W = (min, max, tol, band = 'watts') => ({ role: 'work', keyBy: 'duration', targetDurationSec: min, durationTolerancePct: tol, bandType: band, powerMin: max[0], powerMax: max[1] })
+
+test('warmup exclusion ignores a matching block inside the warm-up, cooldown ignores one at the end', () => {
+  // 60s@300W (a decoy "effort" in the warm-up) + 300s@150W + 60s@300W (decoy in cooldown)
+  const watts = [...repeatWatts(300, 60), ...repeatWatts(150, 300), ...repeatWatts(300, 60)]
+  const steps = [W(60, [290, 310], 0)]
+  const all = detectCustomIntervalSequence({ watts, steps, repeatCount: 2 })
+  assert.equal(all.efforts.length, 2)
+
+  const noWarm = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, warmupSec: 60 })
+  assert.equal(noWarm.efforts.length, 1)
+  assert.ok(noWarm.efforts[0].start_sec >= 350)
+
+  const noCool = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, cooldownSec: 60 })
+  assert.equal(noCool.efforts.length, 1)
+  assert.ok(noCool.efforts[0].end_sec <= 60)
+
+  const none = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, warmupSec: 60, cooldownSec: 60 })
+  assert.deepEqual(none.efforts, [])
+})
+
+test('warmup/cooldown also bound "best" searches (single and ranked) and distance steps', () => {
+  const watts = [...repeatWatts(400, 60), ...repeatWatts(200, 240), ...repeatWatts(250, 60), ...repeatWatts(450, 60)]
+  const best = [{ role: 'work', keyBy: 'duration', targetDurationSec: 60, durationTolerancePct: 0, bandType: 'best', bestMetric: 'power', powerMin: null, powerMax: null }]
+  const r = detectCustomIntervalSequence({ watts, steps: best, repeatCount: 1, warmupSec: 60, cooldownSec: 60 })
+  assert.equal(r.efforts[0].start_sec, 300)
+  assert.equal(r.efforts[0].avg_power, 250)
+
+  const speed = [...repeatWatts(50, 100), ...repeatWatts(20, 100), ...repeatWatts(30, 100)]
+  const dist = [{ role: 'work', keyBy: 'distance', targetDistanceM: 500, durationTolerancePct: 10, bandType: 'best', bestMetric: 'speed', powerMin: null, powerMax: null }]
+  const d = detectCustomIntervalSequence({ watts: repeatWatts(200, 300), speed, steps: dist, repeatCount: 1, warmupSec: 100 })
+  assert.ok(d.efforts[0].start_sec >= 100)
+  assert.ok(d.efforts[0].avg_speed_kmh <= 31)
+})
+
+test('exclusion consuming the whole activity yields no efforts without throwing', () => {
+  const r = detectCustomIntervalSequence({ watts: repeatWatts(300, 100), steps: [W(30, [200, 400], 10)], repeatCount: 1, warmupSec: 60, cooldownSec: 60 })
+  assert.deepEqual(r.efforts, [])
+})
+
+test('without warmup/cooldown results are identical to the legacy call shape', () => {
+  const watts = buildTwoCycleStream()
+  const steps = [W(60, [200, 240], 15), { ...W(30, [null, 100], 20), role: 'recovery' }]
+  assert.deepEqual(
+    detectCustomIntervalSequence({ watts, steps, repeatCount: 2, warmupSec: 0, cooldownSec: null }),
+    detectCustomIntervalSequence({ watts, steps, repeatCount: 2 })
+  )
+})
+
+// ---- multi-step blocks (issue #124) ----
+
+test('multi-step block: two work steps + recovery per repeat are matched in order', () => {
+  // 2 x [ 60s@200 , 30s@300 , 60s@80 ]
+  const block = [...repeatWatts(200, 60), ...repeatWatts(300, 30), ...repeatWatts(80, 60)]
+  const watts = [...block, ...block]
+  const steps = [
+    W(60, [190, 210], 0),
+    W(30, [290, 310], 0),
+    { ...W(60, [null, 90], 0), role: 'recovery' },
+  ]
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 2 })
+  assert.equal(efforts.length, 6)
+  assert.deepEqual(efforts.map((e) => e.role), ['work', 'work', 'recovery', 'work', 'work', 'recovery'])
+  assert.deepEqual(efforts.map((e) => e.avg_power).slice(0, 3), [200, 300, 80])
+  for (let i = 1; i < efforts.length; i++) assert.ok(efforts[i].start_sec >= efforts[i - 1].end_sec)
+})
+
+// ---- contiguous steps: over-unders, pyramids, ramps (issue #125) ----
+
+const S = (sec, band, extra = {}) => ({ role: 'work', keyBy: 'duration', targetDurationSec: sec, durationTolerancePct: 0, bandType: 'watts', powerMin: band[0], powerMax: band[1], ...extra })
+
+test('over-unders: contiguous under/over/under steps are matched back-to-back, once per repeat', () => {
+  const rep = [...repeatWatts(250, 120), ...repeatWatts(300, 60), ...repeatWatts(250, 120), ...repeatWatts(100, 240)]
+  const watts = [...repeatWatts(100, 30), ...rep, ...rep]
+  const steps = [S(120, [245, 255]), S(60, [295, 305], { contiguous: true }), S(120, [245, 255], { contiguous: true }), { ...S(240, [null, 110]), role: 'recovery' }]
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 2 })
+  assert.equal(efforts.length, 8)
+  assert.deepEqual(efforts.map((e) => e.duration_sec), [120, 60, 120, 240, 120, 60, 120, 240])
+  assert.ok(efforts[0].start_sec >= 20 && efforts[0].start_sec <= 30)
+  efforts.slice(0, 3).concat(efforts.slice(4, 7)).forEach((e, i) => {
+    const expected = [250, 300, 250][i % 3]
+    assert.ok(Math.abs(e.avg_power - expected) <= 10, `${e.avg_power} vs ${expected}`)
+  })
+  for (let i = 1; i < 4; i++) assert.equal(efforts[i].start_sec, efforts[i - 1].end_sec)
+  for (let i = 5; i < 8; i++) assert.equal(efforts[i].start_sec, efforts[i - 1].end_sec)
+})
+
+test('contiguous steps do not skip ahead: a gap between steps rejects the repeat, a plain step would match', () => {
+  const watts = [...repeatWatts(250, 120), ...repeatWatts(100, 30), ...repeatWatts(300, 60)]
+  const strict = [S(120, [245, 255]), S(60, [295, 305], { contiguous: true })]
+  assert.deepEqual(detectCustomIntervalSequence({ watts, steps: strict, repeatCount: 1 }).efforts, [])
+  const loose = [S(120, [245, 255]), S(60, [295, 305])]
+  const r = detectCustomIntervalSequence({ watts, steps: loose, repeatCount: 1 })
+  assert.equal(r.efforts.length, 2)
+  assert.ok(r.efforts[1].start_sec >= 145 && r.efforts[1].start_sec <= 150)
+})
+
+test('pyramid: ascending then descending contiguous steps', () => {
+  const watts = [...repeatWatts(100, 20), ...repeatWatts(200, 60), ...repeatWatts(250, 120), ...repeatWatts(300, 180), ...repeatWatts(250, 120), ...repeatWatts(200, 60), ...repeatWatts(100, 20)]
+  const steps = [S(60, [195, 205]), S(120, [245, 255], { contiguous: true }), S(180, [295, 305], { contiguous: true }), S(120, [245, 255], { contiguous: true }), S(60, [195, 205], { contiguous: true })]
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 1 })
+  assert.equal(efforts.length, 5)
+  efforts.forEach((e, i) => assert.ok(Math.abs(e.avg_power - [200, 250, 300, 250, 200][i]) <= 10))
+  for (let i = 1; i < efforts.length; i++) assert.equal(efforts[i].start_sec, efforts[i - 1].end_sec)
+  assert.deepEqual(efforts.map((e) => e.duration_sec), [60, 120, 180, 120, 60])
+})
+
+test('ramp: stepwise ascending targets; stops matching when a step is not reached', () => {
+  const mk = (top) => [...repeatWatts(150, 60), ...repeatWatts(200, 60), ...repeatWatts(250, 60), ...repeatWatts(top, 60)]
+  const steps = [S(60, [145, 155]), S(60, [195, 205], { contiguous: true }), S(60, [245, 255], { contiguous: true }), S(60, [295, 305], { contiguous: true })]
+  assert.equal(detectCustomIntervalSequence({ watts: mk(300), steps, repeatCount: 1 }).efforts.length, 4)
+  assert.equal(detectCustomIntervalSequence({ watts: mk(270), steps, repeatCount: 1 }).efforts.length, 0)
+})
+
+test('contiguous steps work on distance-keyed and best steps', () => {
+  const speed = [...repeatWatts(36, 100), ...repeatWatts(18, 100)] // 10 m/s then 5 m/s
+  const steps = [
+    { role: 'work', keyBy: 'distance', targetDistanceM: 500, durationTolerancePct: 0, bandType: 'speed_kmh', powerMin: 35, powerMax: 37 },
+    { role: 'work', keyBy: 'distance', targetDistanceM: 250, durationTolerancePct: 0, bandType: 'best', bestMetric: 'speed', powerMin: null, powerMax: null, contiguous: true },
+  ]
+  const { efforts } = detectCustomIntervalSequence({ watts: repeatWatts(200, 200), speed, steps, repeatCount: 1 })
+  assert.equal(efforts.length, 2)
+  assert.equal(efforts[1].start_sec, efforts[0].end_sec)
+})
+
+// ---- sets (issue #126) ----
+
+const R = (sec, band) => ({ role: 'recovery', keyBy: 'duration', targetDurationSec: sec, durationTolerancePct: 0, bandType: 'watts', powerMin: band[0], powerMax: band[1] })
+
+function setStream(sets, reps) {
+  const out = [...repeatWatts(100, 30)]
+  for (let s = 0; s < sets; s++) {
+    for (let r = 0; r < reps; r++) out.push(...repeatWatts(300, 30), ...repeatWatts(60, 30))
+    if (s < sets - 1) out.push(...repeatWatts(40, 120))
+  }
+  return out
+}
+
+test('sets: 3 sets of 4 reps with set recovery are tagged and separated', () => {
+  const steps = [S(30, [295, 305]), R(30, [null, 70])]
+  const setRecovery = R(120, [null, 50])
+  const { efforts } = detectCustomIntervalSequence({ watts: setStream(3, 4), steps, repeatCount: 4, setCount: 3, setRecovery })
+  const work = efforts.filter((e) => e.role === 'work')
+  const setRec = efforts.filter((e) => e.role === 'set_recovery')
+  assert.equal(work.length, 12)
+  assert.equal(setRec.length, 2)
+  assert.deepEqual(work.map((e) => [e.set, e.rep_in_set]), Array.from({ length: 12 }, (_, i) => [Math.floor(i / 4) + 1, (i % 4) + 1]))
+  assert.deepEqual(setRec.map((e) => e.set), [1, 2])
+  setRec.forEach((e) => assert.ok(e.duration_sec === 120 && e.avg_power <= 50))
+  for (let i = 1; i < efforts.length; i++) assert.ok(efforts[i].start_sec >= efforts[i - 1].end_sec)
+})
+
+test('sets: incomplete trailing set is dropped; missing set recovery stops detection', () => {
+  const steps = [S(30, [295, 305]), R(30, [null, 70])]
+  const setRecovery = R(120, [null, 50])
+  const two = detectCustomIntervalSequence({ watts: setStream(2, 4), steps, repeatCount: 4, setCount: 3, setRecovery })
+  assert.equal(two.efforts.filter((e) => e.role === 'work').length, 8)
+  const noGap = [...repeatWatts(100, 30), ...Array.from({ length: 8 }, () => [...repeatWatts(300, 30), ...repeatWatts(60, 30)]).flat()]
+  const r = detectCustomIntervalSequence({ watts: noGap, steps, repeatCount: 4, setCount: 2, setRecovery })
+  assert.equal(r.efforts.filter((e) => e.role === 'work').length, 4)
+  assert.equal(r.efforts.filter((e) => e.role === 'set_recovery').length, 0)
+})
+
+test('sets without set recovery line: sets follow each other; "best" is not short-circuited', () => {
+  const steps = [S(30, [295, 305]), R(30, [null, 70])]
+  const r = detectCustomIntervalSequence({ watts: setStream(2, 3), steps, repeatCount: 3, setCount: 2 })
+  assert.equal(r.efforts.filter((e) => e.role === 'work').length, 6)
+  assert.deepEqual([...new Set(r.efforts.map((e) => e.set))], [1, 2])
+  const best = [{ role: 'work', keyBy: 'duration', targetDurationSec: 30, durationTolerancePct: 0, bandType: 'best', bestMetric: 'power', powerMin: null, powerMax: null }]
+  const b = detectCustomIntervalSequence({ watts: setStream(2, 2), steps: best, repeatCount: 2, setCount: 2 })
+  assert.equal(b.efforts.length, 4)
+  assert.deepEqual(b.efforts.map((e) => e.set), [1, 1, 2, 2])
+})
+
+test('sets: warm-up/cool-down exclusion still applies', () => {
+  const steps = [S(30, [295, 305]), R(30, [null, 70])]
+  const watts = [...repeatWatts(300, 30), ...setStream(1, 2)] // decoy work inside the warm-up
+  const r = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, setCount: 1, warmupSec: 30 })
+  assert.ok(r.efforts[0].start_sec >= 30 && r.efforts[0].start_sec <= 60)
+})
+
+test('legacy (no sets) detection output has no set tags', () => {
+  const { efforts } = detectCustomIntervalSequence({ watts: setStream(1, 3), steps: [S(30, [295, 305])], repeatCount: 3 })
+  assert.ok(efforts.every((e) => e.set === undefined && e.rep_in_set === undefined))
+})
+
+// ---- contiguous back-to-back steps (issue #198) ----
+const seg = (w, n) => new Array(n).fill(w)
+const ZONES = { bounds: [146, 195, 260, 273, 312], lt1: 195, lt2: 260, pcts: [75, 100, 100, 105, 120], estimated: true, source: 'ftp' }
+const zoneStep = (role, sec, tol, min, max) => ({
+  role, keyBy: 'duration', targetDurationSec: sec, targetDistanceM: null, durationTolerancePct: tol,
+  bandType: 'zone', bestMetric: null, powerMin: min, powerMax: max,
+})
+
+function assertSeamless(efforts) {
+  for (let i = 1; i < efforts.length; i++) assert.equal(efforts[i].start_sec, efforts[i - 1].end_sec, `step ${i} follows step ${i - 1}`)
+}
+
+for (const tol of [0, 2, 10]) {
+  test(`3x work 15min Z3 / recovery 8min <Z2 at ±${tol}%: windows are back-to-back`, () => {
+    const watts = [...seg(120, 300), ...seg(235, 920), ...seg(120, 470), ...seg(235, 905), ...seg(120, 490), ...seg(235, 900), ...seg(100, 200)]
+    const steps = []
+    for (let i = 0; i < 3; i++) {
+      steps.push(zoneStep('work', 900, tol, 3, 3))
+      if (i < 2) steps.push(zoneStep('recovery', 480, tol, null, 2))
+    }
+    const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 1, zones: ZONES })
+    assert.equal(efforts.length, 5)
+    assertSeamless(efforts)
+    efforts.forEach((e) => {
+      const target = e.role === 'work' ? 900 : 480
+      assert.ok(Math.abs(e.duration_sec - target) <= Math.round(target * tol / 100), `duration ${e.duration_sec}`)
+    })
+    if (tol === 0) assert.ok(Math.abs(efforts[0].start_sec - 300) <= 20)
+  })
+}
+
+test('work/recovery repeats and sets: reps and set recovery are back-to-back', () => {
+  const rep = [...seg(230, 60), ...seg(80, 30)]
+  const watts = [...seg(100, 20), ...rep, ...rep, ...seg(60, 45), ...rep, ...rep, ...seg(100, 20)]
+  const steps = [
+    { role: 'work', targetDurationSec: 60, durationTolerancePct: 0, bandType: 'watts', powerMin: 200, powerMax: 260 },
+    { role: 'recovery', targetDurationSec: 30, durationTolerancePct: 0, bandType: 'watts', powerMin: null, powerMax: 100 },
+  ]
+  const setRecovery = { role: 'recovery', targetDurationSec: 45, durationTolerancePct: 0, bandType: 'watts', powerMin: null, powerMax: 70 }
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 2, setCount: 2, setRecovery })
+  assert.equal(efforts.length, 9)
+  assertSeamless(efforts)
+})
+
+test('gapped data still falls back to independent placement (backward compatible)', () => {
+  const watts = [...seg(230, 60), ...seg(150, 20), ...seg(80, 30)]
+  const steps = [
+    { role: 'work', targetDurationSec: 60, durationTolerancePct: 0, bandType: 'watts', powerMin: 200, powerMax: 260 },
+    { role: 'recovery', targetDurationSec: 30, durationTolerancePct: 0, bandType: 'watts', powerMin: null, powerMax: 100 },
+  ]
+  const { efforts } = detectCustomIntervalSequence({ watts, steps, repeatCount: 1 })
+  assert.equal(efforts.length, 2)
+  assert.equal(efforts[1].start_sec, 80)
+})

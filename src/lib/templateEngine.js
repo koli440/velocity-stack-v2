@@ -6,6 +6,9 @@
 // template-specific benchmark metrics (drop-off %, pacing index, recovery, …).
 
 import { analyzeSessionEfforts } from './effortDetectionEngine.js'
+import { applySummaryMetrics, attachWkg, withDefaultMetrics } from './summaryMetrics.js'
+import { applyEffortMetrics } from './effortMetrics.js'
+import { computeLapSplits, lapSummary } from './lapSplits.js'
 
 function avg(arr) {
   if (!arr || arr.length === 0) return null
@@ -118,7 +121,7 @@ function evaluateFlyingSprint(template, timeSeries, detection) {
 }
 
 function evaluateSustainedTT(template, timeSeries, detection) {
-  const { watts = [], heartrate = [] } = timeSeries
+  const { watts = [], heartrate = [], speed = [] } = timeSeries
   const manifest = template.manifest
   const effort = (detection.efforts || [])[0]
   if (!effort) return { efforts: [], summary: {} }
@@ -157,6 +160,7 @@ function evaluateSustainedTT(template, timeSeries, detection) {
     pacing_index: pacing,
     dropoff_pct: dropoff,
     lap_splits_250m: lapSplits,
+    ...(manifest.lap_length_m ? { lap_splits_sec: computeLapSplits(speed, start, end, manifest.lap_length_m)?.lap_splits_sec ?? null } : {}),
     pw_hr_decoupling_pct: pwHrDecoupling,
   }
 
@@ -208,41 +212,123 @@ function evaluateStandingStart(template, timeSeries, detection) {
 function evaluateCustomIntervals(template, timeSeries, detection, ftpAtActivityW) {
   const { watts = [], speed = [] } = timeSeries
   const manifest = template.manifest || {}
-  const repsTarget = manifest.repeat_count || null
+  const repsTarget = manifest.repeat_count ? manifest.repeat_count * (manifest.set_count || 1) : null
 
   const rawEfforts = detection.efforts || []
 
   // Group the flat efforts list back into reps: each rep is the (ordered)
   // run of steps the DSL declares — typically [work] or [work, recovery].
   const stepsPerRep = (manifest.steps || []).length || 1
+  const setCount = manifest.set_count || null
+  // Set recoveries (issue #126) sit between reps and are not part of any rep.
+  const setRecoveries = rawEfforts.filter((e) => e.role === 'set_recovery')
+  const repEffortsFlat = rawEfforts.filter((e) => e.role !== 'set_recovery')
   const reps = []
-  for (let i = 0; i < rawEfforts.length; i += stepsPerRep) {
-    reps.push(rawEfforts.slice(i, i + stepsPerRep))
+  for (let i = 0; i < repEffortsFlat.length; i += stepsPerRep) {
+    reps.push(repEffortsFlat.slice(i, i + stepsPerRep))
   }
 
-  const efforts = reps.flatMap((repEfforts, repIdx) =>
-    repEfforts.map((e) => ({
+  // A "multi-step block" has more than one work step per repeat (or more than
+  // one recovery). Plain work(+recovery) templates keep the exact original output.
+  const manifestSteps = manifest.steps || []
+  const workStepsPerRep = manifestSteps.filter((s) => s.role === 'work').length
+  const isMultiStep = workStepsPerRep > 1 || manifestSteps.length > 2
+
+  const repEffortsOut = reps.flatMap((repEfforts, repIdx) =>
+    repEfforts.map((e, stepIdx) => ({
       ...e,
       rep: repIdx + 1,
+      ...(isMultiStep ? { step_index: stepIdx + 1 } : {}),
       // Pace against whichever stream the effort was actually measured on
       // (distance-keyed "best speed" steps have no avg_power at all).
       pacing_index: pacingIndex(e.avg_power != null ? watts : speed, e.start_sec, e.end_sec),
     }))
   )
+  const efforts = setCount
+    ? [
+        ...repEffortsOut,
+        ...setRecoveries.map((e) => ({
+          ...e,
+          pacing_index: pacingIndex(e.avg_power != null ? watts : speed, e.start_sec, e.end_sec),
+        })),
+      ].sort((a, b) => a.start_sec - b.start_sec)
+    : repEffortsOut
+
+  const lapLengthM = manifest.lap_length_m || null
+  if (lapLengthM) {
+    efforts.forEach((e) => {
+      if (e.role !== 'work') return
+      const lap = computeLapSplits(speed, e.start_sec, e.end_sec, lapLengthM)
+      e.lap_length_m = lapLengthM
+      e.lap_splits_sec = lap ? lap.lap_splits_sec : null
+    })
+  }
 
   const workEfforts = efforts.filter((e) => e.role === 'work')
-  const workPowers = workEfforts.map((e) => e.avg_power).filter((p) => typeof p === 'number')
   const workSpeeds = workEfforts.map((e) => e.avg_speed_kmh).filter((s) => typeof s === 'number')
-  const dropoff = dropoffPct(workEfforts.map((e) => e.avg_power))
   const isDistanceKeyed = workEfforts.some((e) => e.target_distance_m != null)
+
+  // Per-rep power: the work effort's own average, or for multi-step reps the
+  // duration-weighted mean over the rep's work steps, so drop-off compares like with like.
+  const repPowers = reps
+    .map((repEfforts) => {
+      const work = repEfforts.filter((e) => e.role === 'work' && typeof e.avg_power === 'number')
+      if (!work.length) return null
+      if (work.length === 1) return work[0].avg_power
+      const totalDur = work.reduce((a, e) => a + (e.duration_sec || 0), 0)
+      return totalDur ? Math.round(work.reduce((a, e) => a + e.avg_power * (e.duration_sec || 0), 0) / totalDur) : null
+    })
+    .filter((p) => typeof p === 'number')
+  const dropoff = isMultiStep
+    ? dropoffPct(repPowers)
+    : dropoffPct(workEfforts.map((e) => e.avg_power))
+  const workPowers = isMultiStep ? repPowers : workEfforts.map((e) => e.avg_power).filter((p) => typeof p === 'number')
+
+  const stepSummaries = isMultiStep
+    ? manifestSteps.map((step, i) => {
+        const same = efforts.filter((e) => e.step_index === i + 1)
+        const powers = same.map((e) => e.avg_power).filter((p) => typeof p === 'number')
+        return {
+          step_index: i + 1,
+          role: step.role,
+          count: same.length,
+          avg_power: powers.length ? Math.round(avg(powers)) : null,
+        }
+      })
+    : null
+
+  const setSummaries = setCount
+    ? Array.from({ length: setCount }, (_, i) => {
+        const inSet = reps.filter((r) => r[0]?.set === i + 1)
+        const powers = inSet
+          .flatMap((r) => r.filter((e) => e.role === 'work' && typeof e.avg_power === 'number'))
+          .map((e) => e.avg_power)
+        return {
+          set: i + 1,
+          reps_detected: inSet.length,
+          avg_power: powers.length ? Math.round(avg(powers)) : null,
+        }
+      })
+    : null
 
   return {
     efforts,
     summary: {
       reps_detected: reps.length,
       reps_target: repsTarget,
+      ...(setCount
+        ? {
+            sets_target: setCount,
+            sets_detected: setSummaries.filter((s) => s.reps_detected > 0).length,
+            set_summaries: setSummaries,
+          }
+        : {}),
       dropoff_pct: dropoff,
       avg_power: workPowers.length ? Math.round(avg(workPowers)) : null,
+      ...(lapLengthM
+        ? { lap_length_m: lapLengthM, ...lapSummary(workEfforts.map((e) => (e.lap_splits_sec ? { lap_splits_sec: e.lap_splits_sec } : null))) }
+        : {}),
+      ...(stepSummaries ? { step_summaries: stepSummaries } : {}),
       ...(isDistanceKeyed
         ? {
             target_distance_m: workEfforts[0]?.target_distance_m ?? null,
@@ -267,14 +353,23 @@ const EVALUATORS = {
  * @param {object} timeSeries - { watts, cadence, torque, speed, heartrate }
  * @param {number|null} [ftpAtActivityW] - the activity's own FTP snapshot (issue #14);
  *   only used by the `custom_intervals` pattern's %FTP-banded steps.
+ * @param {number|null} [hrMaxBpm] - reference max heart rate for `%HRmax` bands (issue #123);
+ *   when omitted the highest value in the activity's heart rate stream is used.
+ * @param {{lt1Power, lt1Hr, lt2Power, lt2Hr}|null} [lt] - the activity's lactate threshold
+ *   snapshot (issue #121; see ltFromActivity); used by `%LT1`/`%LT2` bands and the LT time metrics.
+ * @param {number|null} [weightKg] - the activity's body weight snapshot (issue #143); adds W/kg
+ *   to efforts and the summary, and powers the W/kg summary metrics. Optional: null = no W/kg.
+ * @param {object|null} [zones] - the activity's resolved power zones (issue #194; see zonesFromActivity);
+ *   used by `@ Z3`-style bands and the time_z1..time_z6 metrics.
  * @returns {{ efforts: object[], summary: object }}
  */
-export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null) {
+export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = null, hrMaxBpm = null, lt = null, weightKg = null, zones = null) {
   const manifest = template.manifest || {}
   const pattern = manifest.pattern || 'repeated_bursts'
   const evaluator = EVALUATORS[pattern]
 
-  if (!timeSeries || (!timeSeries.watts?.length && !timeSeries.cadence?.length)) {
+  const hrOnlyCustom = pattern === 'custom_intervals' && timeSeries?.heartrate?.length
+  if (!timeSeries || (!timeSeries.watts?.length && !timeSeries.cadence?.length && !hrOnlyCustom)) {
     return { efforts: [], summary: { reason: 'Activity has no time_series data to evaluate.' } }
   }
 
@@ -295,13 +390,31 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
     discipline: disciplineHint,
     timeSeries,
     ...(pattern === 'custom_intervals'
-      ? { steps: manifest.steps || [], repeatCount: manifest.repeat_count || 1, ftpAtActivityW }
+      ? {
+          steps: manifest.steps || [],
+          repeatCount: manifest.repeat_count || 1,
+          ftpAtActivityW,
+          hrMaxBpm,
+          lt,
+          weightKg,
+          zones,
+          warmupSec: manifest.warmup_sec || null,
+          cooldownSec: manifest.cooldown_sec || null,
+          setCount: manifest.set_count || null,
+          setRecovery: manifest.set_recovery || null,
+        }
       : {}),
   })
 
-  if (!evaluator) {
-    return { efforts: detection.efforts || [], summary: {} }
+  const result = evaluator
+    ? evaluator(template, timeSeries, detection, ftpAtActivityW)
+    : { efforts: detection.efforts || [], summary: {} }
+
+  if (detection.message && !result.efforts?.length && result.summary && !result.summary.reason) {
+    result.summary.reason = detection.message
   }
 
-  return evaluator(template, timeSeries, detection, ftpAtActivityW)
+  const withTimeDistance = applyEffortMetrics(result, timeSeries, manifest)
+  const withMetrics = applySummaryMetrics(withDefaultMetrics(manifest.summary_metrics), withTimeDistance, timeSeries, ftpAtActivityW, lt, weightKg, zones)
+  return attachWkg(withMetrics, weightKg)
 }

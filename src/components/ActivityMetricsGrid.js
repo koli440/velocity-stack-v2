@@ -16,7 +16,14 @@
 // user preferences - theme_preference, ftp_w, ...), not in localStorage.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { formatTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
+import { activityLtSummary } from '../lib/lactateThresholds'
+import { formatZoneRange, zoneBreakdown, zonesFromActivity } from '../lib/powerZones'
+import { weightFromActivity } from '../lib/weightHistory'
+import { ftpFromActivity } from '../lib/ftpHistory'
+import { wattsPerKg } from '../lib/wkg'
+import Icon from './Icon'
 
 function formatDuration(totalSeconds) {
   if (totalSeconds == null) return '—'
@@ -53,7 +60,7 @@ const DEFAULT_GROUP_COLOR = { border: 'border-l-slate-300 dark:border-l-slate-70
 function MetricCard({ label, value, hint, badge, accent = DEFAULT_GROUP_COLOR }) {
   return (
     <div
-      className={`glass-card p-3 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder border-l-4 ${accent.border} space-y-0.5`}
+      className={`p-3 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder border-l-4 ${accent.border} space-y-0.5`}
     >
       <div className="flex items-center justify-between gap-1">
         <span className={`text-[10px] uppercase font-bold block ${accent.label}`}>{label}</span>
@@ -90,7 +97,7 @@ function pbBadge(current, master) {
   if (isPB) {
     return (
       <span className="text-[9px] font-black py-0.5 px-1.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap">
-        🏆 PB
+        <Icon name="trophy" size={12} /> PB
       </span>
     )
   }
@@ -100,6 +107,61 @@ function pbBadge(current, master) {
       {pct}% PB
     </span>
   )
+}
+
+// Lactate thresholds valid on the activity's date (issue #121) and time spent around them.
+function ltMetrics(summary) {
+  if (!summary) return []
+  const { lt, power, hr } = summary
+  const pair = (a, b, unit) => (a == null && b == null ? null : `${a ?? '—'} / ${b ?? '—'} ${unit}`)
+  const out = []
+  const powerPair = pair(lt.lt1Power, lt.lt2Power, 'W')
+  const hrPair = pair(lt.lt1Hr, lt.lt2Hr, 'bpm')
+  if (powerPair) out.push({ id: 'lt_power', group: 'Power', label: 'LT1 / LT2 Power', value: powerPair, hint: 'Thresholds at activity date' })
+  if (hrPair) out.push({ id: 'lt_hr', group: 'Heart Rate & Cadence', label: 'LT1 / LT2 HR', value: hrPair, hint: 'Thresholds at activity date' })
+  power.forEach((z) =>
+    out.push({ id: `lt_power_${z.id}`, group: 'Power', label: `Time ${z.label} (power)`, value: formatDuration(z.seconds) })
+  )
+  hr.forEach((z) =>
+    out.push({ id: `lt_hr_${z.id}`, group: 'Heart Rate & Cadence', label: `Time ${z.label} (HR)`, value: formatDuration(z.seconds) })
+  )
+  return out
+}
+
+// Power zones (issue #194): time in Z1-Z6 from the activity's own zone snapshot (LT, FTP, boundaries).
+function zoneMetrics(activity, ltSummary) {
+  const zones = zonesFromActivity(activity, ltSummary?.lt)
+  if (!zones) return []
+  return zoneBreakdown(activity?.time_series?.watts, zones).map((z) => ({
+    id: `zone_${z.zone}`,
+    group: 'Power',
+    label: `Time ${z.label} ${z.name}`,
+    value: formatDuration(z.seconds),
+    hint: `${formatZoneRange(z)} · ${z.pct}%${zones.estimated ? ' · est. from FTP' : ''}`,
+  }))
+}
+
+// Power-to-weight (issue #143): uses the activity's own weight / FTP / LT snapshots; empty without a weight.
+function wkgMetrics(activity, ltSummary, powerCurve, windows) {
+  const kg = weightFromActivity(activity)
+  if (!kg) return []
+  const fmt = (w) => {
+    const v = wattsPerKg(w, kg)
+    return v == null ? '—' : `${v.toFixed(2)} W/kg`
+  }
+  const hint = `At ${kg} kg`
+  const out = [
+    { id: 'weight', group: 'Power', label: 'Body Weight', value: `${kg} kg`, hint: 'Weight at activity date' },
+    { id: 'avg_wkg', group: 'Power', label: 'Avg W/kg', value: fmt(activity?.avg_power_w), hint },
+    { id: 'np_wkg', group: 'Power', label: 'Normalized W/kg', value: fmt(activity?.normalized_power_w), hint },
+    ...windows.map((win) => ({ id: `avg_wkg_${win}`, group: 'Power', label: `Avg W/kg @${win}`, value: fmt(powerCurve[win]), hint })),
+  ]
+  const ftp = ftpFromActivity(activity)
+  if (ftp) out.push({ id: 'ftp_wkg', group: 'Power', label: 'FTP W/kg', value: fmt(ftp), hint: `${ftp} W at activity date` })
+  const lt = ltSummary?.lt
+  if (lt?.lt1Power) out.push({ id: 'lt1_wkg', group: 'Power', label: 'LT1 W/kg', value: fmt(lt.lt1Power), hint: `${lt.lt1Power} W` })
+  if (lt?.lt2Power) out.push({ id: 'lt2_wkg', group: 'Power', label: 'LT2 W/kg', value: fmt(lt.lt2Power), hint: `${lt.lt2Power} W` })
+  return out
 }
 
 function pbHint(master, unit) {
@@ -113,6 +175,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
   const startTime = activity?.start_time || activity?.activity_date
   const hasFtp = activity?.intensity_factor != null && activity?.training_load != null
   const speedHint = speedSourceHint(activity?.speed_source)
+  const ltSummary = useMemo(() => activityLtSummary(activity), [activity])
 
   // Historical maxima for the comparison badge (see former BenchmarkCards)
   const powerMaster5s = masterCurves?.Power?.['5s'] ?? null
@@ -188,7 +251,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
         group: 'Time & Distance',
         label: 'Start Time',
         value: startTime
-          ? new Date(startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+          ? formatTime(startTime)
           : '—',
       },
       { id: 'distance', group: 'Time & Distance', label: 'Distance', value: formatDistance(activity?.distance_m), hint: speedHint },
@@ -226,14 +289,14 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
         group: 'Load',
         label: 'Intensity Factor',
         value: hasFtp ? activity.intensity_factor.toFixed(2) : '—',
-        hint: !hasFtp ? 'Set FTP in profile' : undefined,
+        hint: !hasFtp ? 'Set FTP in settings' : undefined,
       },
       {
         id: 'training_load',
         group: 'Load',
         label: 'Training Load',
         value: hasFtp ? Math.round(activity.training_load) : '—',
-        hint: !hasFtp ? 'Set FTP in profile' : undefined,
+        hint: !hasFtp ? 'Set FTP in settings' : undefined,
       },
       { id: 'elevation_gain', group: 'Load', label: 'Elevation Gain', value: formatValue(activity?.elevation_gain_m, 'm') },
       { id: 'elevation_loss', group: 'Load', label: 'Elevation Loss', value: formatValue(activity?.elevation_loss_m, 'm') },
@@ -258,9 +321,12 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
         hint: pbHint(torqueMaster1s, 'Nm'),
         badge: pbBadge(activity?.peak_torque_nm, torqueMaster1s),
       },
+      ...ltMetrics(ltSummary),
+      ...zoneMetrics(activity, ltSummary),
+      ...wkgMetrics(activity, ltSummary, powerCurve, powerWindows),
     ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activity, hasFtp, powerCurve, speedHint, startTime, powerMaster5s, cadenceMaster1s, speedMaster5s, torqueMaster1s])
+  }, [activity, ltSummary, hasFtp, powerCurve, speedHint, startTime, powerMaster5s, cadenceMaster1s, speedMaster5s, torqueMaster1s])
 
   if (!activity) return null
 
@@ -279,7 +345,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-          <span>📊</span> Activity Metrics
+          <Icon name="chart" /> Activity Metrics
         </h3>
 
         <div className="relative" ref={menuRef}>
@@ -288,7 +354,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
             onClick={() => setMenuOpen((v) => !v)}
             className="py-1.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[10px] uppercase tracking-wider transition flex items-center gap-1.5"
           >
-            <span>⚙️</span> Manage Metrics
+            <Icon name="settings" /> Manage Metrics
             {hiddenIds.length > 0 && (
               <span className="text-[9px] font-black py-0.5 px-1.5 rounded-full bg-orange-500/10 text-orange-500">
                 {hiddenIds.length} hidden
@@ -297,7 +363,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
           </button>
 
           {menuOpen && (
-            <div className="glass-modal absolute right-0 mt-2 w-64 max-h-80 overflow-y-auto rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder shadow-lg z-20 p-2 space-y-1">
+            <div className="glass-popover absolute right-0 mt-2 w-64 max-h-80 overflow-y-auto rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder shadow-lg z-20 p-2 space-y-1">
               {metrics.map((m) => {
                 const isHidden = hiddenIds.includes(m.id)
                 return (

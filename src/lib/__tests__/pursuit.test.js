@@ -3,7 +3,6 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   WHEEL_CIRCUMFERENCE_M,
-  DISCIPLINES,
   formatTime,
   getTrackLaps,
   pacingStrategyLabel,
@@ -144,12 +143,12 @@ test('calculatePursuitStrategy: negative drift makes each flying lap faster than
   assert.ok(Math.abs(result.elapsedTimeS - 150) < 0.01)
 })
 
-test('DISCIPLINES is a non-empty, well-formed reference catalogue', () => {
-  assert.ok(DISCIPLINES.length > 0)
-  for (const d of DISCIPLINES) {
-    assert.equal(typeof d.category, 'string')
-    assert.equal(typeof d.name, 'string')
-    assert.ok(d.distanceM > 0)
-    assert.equal(typeof d.flyingStart, 'boolean')
-  }
+test('parseDistanceOverride validates and defaults', async () => {
+  const { parseDistanceOverride } = await import('../pursuit.js')
+  assert.deepEqual(parseDistanceOverride(''), { value: null, error: null })
+  assert.equal(parseDistanceOverride('3000').value, 3000)
+  assert.ok(parseDistanceOverride('abc').error)
+  assert.ok(parseDistanceOverride('-5').error)
+  assert.ok(parseDistanceOverride('50').error)
+  assert.ok(parseDistanceOverride('1e9').error)
 })

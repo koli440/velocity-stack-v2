@@ -1,17 +1,20 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { NAV_ITEMS, isNavItemActive } from '../lib/navigation'
+import { NAV_ITEMS } from '../lib/navigation'
+import { parseCoachPath, sidebarItems, isSidebarItemActive, isContextNavActive, navHref, logoHref, chromeVisibility } from '../lib/coachContext'
+import Icon from './Icon'
 
 export default function Sidebar({
   isOpen = false,
   onClose,
-  onOpenSettings,
+  isAdmin = false,
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [isCoach, setIsCoach] = useState(true)
+  const { riderId } = parseCoachPath(pathname)
+  const items = sidebarItems(NAV_ITEMS, riderId)
+  const chrome = chromeVisibility(riderId)
 
   const handleNavigate = (path) => {
     router.push(path)
@@ -45,7 +48,7 @@ export default function Sidebar({
           {/* Logo & close icon for mobile */}
           <div className="flex items-center justify-between px-2">
             <div
-              onClick={() => handleNavigate('/')}
+              onClick={() => handleNavigate(logoHref(riderId))}
               className="flex items-center gap-2.5 cursor-pointer"
             >
               <div className="h-7 w-7 rounded-lg bg-emerald-500 dark:bg-brand-neon flex items-center justify-center font-black text-white dark:text-slate-950 text-base shadow-xs">
@@ -61,47 +64,32 @@ export default function Sidebar({
               onClick={onClose}
               className="md:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-1"
             >
-              ✕
+              <Icon name="close" size={18} />
             </button>
           </div>
 
           {/* Navigation */}
           <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => (
+            {items.map((item) => (
               <button
                 key={item.key}
-                onClick={() => {
-                  if (item.action === 'settings') {
-                    if (onClose) onClose()
-                    if (onOpenSettings) onOpenSettings()
-                  } else {
-                    handleNavigate(item.href)
-                  }
-                }}
-                className={navItemClass(isNavItemActive(item, pathname))}
+                onClick={() => handleNavigate(riderId ? item.href : navHref(item, riderId))}
+                className={navItemClass(riderId ? isSidebarItemActive(item, pathname) : isContextNavActive(item, pathname, riderId))}
               >
-                <span>{item.icon}</span> {item.label}
+                <Icon name={item.icon} size={18} /> {item.label}
               </button>
             ))}
+            {isAdmin && chrome.adminLink && (
+              <button
+                onClick={() => handleNavigate('/admin/suggestions')}
+                className={navItemClass(pathname?.startsWith('/admin'))}
+              >
+                <Icon name="check" size={18} /> Suggestions
+              </button>
+            )}
           </nav>
         </div>
 
-        {/* Bottom Coach / Rider switch */}
-        <div className="pt-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between px-2">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            {isCoach ? 'Coach View' : 'Rider View'}
-          </span>
-          <button
-            onClick={() => setIsCoach(!isCoach)}
-            className={`w-11 h-6 flex items-center rounded-full p-1 transition duration-300 ${
-              isCoach
-                ? 'bg-emerald-500 dark:bg-brand-neon justify-end'
-                : 'bg-slate-300 dark:bg-slate-700 justify-start'
-            }`}
-          >
-            <div className="bg-white dark:bg-slate-950 w-4 h-4 rounded-full shadow-md"></div>
-          </button>
-        </div>
       </aside>
     </>
   )

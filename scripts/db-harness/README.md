@@ -1,0 +1,11 @@
+# Scratch Postgres harness
+
+Applies ALL `supabase/migrations` on a throw-away local Postgres with stubbed Supabase pieces (roles, `auth.*`, `storage.*`, pg_net, pg_cron)
+and runs adversarial SQL tests. Not part of CI; dependencies are not in package.json:
+
+    mkdir /tmp/pg && cd /tmp/pg && npm i embedded-postgres pg
+    cp <repo>/scripts/db-harness/*.mjs . 
+    MIG=<repo>/supabase/migrations/20261208000000_planned_workout_intervals_push.sql \
+      node harness.mjs <repo>/supabase/migrations ./planned-push-adversarial.mjs
+
+`20261009000000_import_v1_tracks.sql` fails on the stub (pre-existing, unrelated).

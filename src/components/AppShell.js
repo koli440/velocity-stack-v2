@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { supabase } from '../lib/supabase'
+import { fetchTracks } from '../lib/lookups'
 import Sidebar from './Sidebar'
 import TopNav from './TopNav'
 import Footer from './Footer'
-import ProfileSettingsModal from './ProfileSettingsModal'
 import AppBackground from './AppBackground'
+import OnboardingProvider from './OnboardingProvider'
+import { PROFILE_UPDATED_EVENT } from '../lib/navigation'
+import { parseCoachPath } from '../lib/coachContext'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
 
 export default function AppShell({ children }) {
@@ -21,7 +24,6 @@ export default function AppShell({ children }) {
   const [tracks, setTracks] = useState([])
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [glassEnabled, setGlassEnabled] = useState(true)
 
   // Paths that don't need the Shell (Login and Register)
@@ -89,9 +91,17 @@ export default function AppShell({ children }) {
     return () => subscription.unsubscribe()
   }, [router, isAuthPage, isPublicPage, setTheme])
 
+  // The settings page announces saves so the banner/theme pick up the new profile.
   useEffect(() => {
     if (!user?.id) return
-    supabase.from('tracks').select('*').order('name').then(({ data }) => setTracks(data || []))
+    const refresh = () => fetchProfile(user.id)
+    window.addEventListener(PROFILE_UPDATED_EVENT, refresh)
+    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, refresh)
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    fetchTracks(supabase).then(({ data }) => setTracks(data || []))
   }, [user?.id])
 
   const handleSignOut = async () => {
@@ -112,7 +122,11 @@ export default function AppShell({ children }) {
     )
   }
 
+  // Onboarding/news are the signed-in user's own state: never active inside an athlete context.
+  const ownContext = !parseCoachPath(pathname).riderId
+
   return (
+    <OnboardingProvider userId={user?.id} enabled={!!user && ownContext}>
     <div className="app-shell-root flex min-h-screen bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
       <AppBackground />
 
@@ -120,7 +134,7 @@ export default function AppShell({ children }) {
       <Sidebar
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        isAdmin={!!profile?.is_admin}
       />
 
       {/* 2. Main application body */}
@@ -129,7 +143,6 @@ export default function AppShell({ children }) {
           user={user}
           profile={profile}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
           onSignOut={handleSignOut}
           tracks={tracks}
         />
@@ -142,17 +155,7 @@ export default function AppShell({ children }) {
         {/* 3. Global footer */}
         <Footer />
       </div>
-
-      {/* Global rider profile modal */}
-      <ProfileSettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => {
-          setIsSettingsOpen(false)
-          if (user?.id) fetchProfile(user.id)
-        }}
-        user={user}
-        tracks={tracks}
-      />
     </div>
+    </OnboardingProvider>
   )
 }

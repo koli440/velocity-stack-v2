@@ -1,6 +1,45 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../../lib/supabaseServer'
+import { visibleTemplatesFilter } from '../../../../../lib/ownerScope'
 import { evaluateTemplate } from '../../../../../lib/templateEngine'
+import { weightFromActivity } from '../../../../../lib/weightHistory'
+import { ZONE_SNAPSHOT_COLUMN, zonesFromActivity } from '../../../../../lib/powerZones'
+import { LT_SNAPSHOT_COLUMNS, ltFromActivity } from '../../../../../lib/lactateThresholds'
+import { coachRunnableTemplates, withTemplateSnapshot } from '../../../../../lib/coachRuns'
+
+const NOT_FOUND = { error: 'Activity not found' }
+
+// Coach path of POST. Evaluation inputs come from coach_template_run_inputs (active coach only, no GPS);
+// the result is written by coach_save_template_run, which re-checks is_coach_of and that the template is
+// the coach's own or a system template, and stamps the run. The template definition is never returned.
+async function runAsCoach(supabase, user, activityId, { templateId, templateSlug }) {
+  const { data: inputs, error: inErr } = await supabase.rpc('coach_template_run_inputs', { p_activity: activityId })
+  if (inErr || !inputs) return NextResponse.json(NOT_FOUND, { status: 404 })
+
+  let templateQuery = supabase.from('analysis_templates').select('*').or(visibleTemplatesFilter(user.id))
+  templateQuery = templateId ? templateQuery.eq('id', templateId) : templateQuery.eq('slug', templateSlug)
+  const { data: found } = await templateQuery.limit(2)
+  const [template] = coachRunnableTemplates(found, user.id)
+  if (!template) {
+    return NextResponse.json({ error: 'Template not available for coach runs' }, { status: 404 })
+  }
+
+  const activity = { ...inputs, id: activityId }
+  const result = evaluateTemplate(template, activity.time_series || {}, activity.ftp_at_activity_w ?? null, activity.max_hr ?? null, ltFromActivity(activity), weightFromActivity(activity), zonesFromActivity(activity))
+
+  const { data: execution, error } = await supabase.rpc('coach_save_template_run', {
+    p_activity: activityId,
+    p_template: template.id,
+    p_efforts: result.efforts || [],
+    p_summary: result.summary || {},
+  })
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  return NextResponse.json({
+    success: true,
+    execution: withTemplateSnapshot(execution),
+    template: { id: template.id, slug: template.slug, name: template.name, category: template.category },
+  })
+}
 
 // POST /api/activities/:id/apply-template  { templateId | templateSlug }
 // Runs the template evaluation engine against the activity's stored time_series,
@@ -24,19 +63,20 @@ export async function POST(req, { params }) {
 
     const { data: activity, error: actError } = await supabase
       .from('activities')
-      .select('id, user_id, time_series, ftp_at_activity_w')
+      .select(`id, user_id, time_series, ftp_at_activity_w, max_hr, weight_at_activity_kg, ${ZONE_SNAPSHOT_COLUMN}, ${LT_SNAPSHOT_COLUMNS.join(', ')}`)
       .eq('id', activityId)
       .single()
 
     if (actError || !activity) {
-      return NextResponse.json({ error: 'Activity not found' }, { status: 404 })
+      // Not the owner: an active coach of the rider may run his own / system templates (stored on the rider's account).
+      return runAsCoach(supabase, user, activityId, { templateId, templateSlug })
     }
 
     if (activity.user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    let templateQuery = supabase.from('analysis_templates').select('*')
+    let templateQuery = supabase.from('analysis_templates').select('*').or(visibleTemplatesFilter(user.id))
     templateQuery = templateId
       ? templateQuery.eq('id', templateId)
       : templateQuery.eq('slug', templateSlug)
@@ -47,7 +87,7 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
-    const result = evaluateTemplate(template, activity.time_series || {}, activity.ftp_at_activity_w ?? null)
+    const result = evaluateTemplate(template, activity.time_series || {}, activity.ftp_at_activity_w ?? null, activity.max_hr ?? null, ltFromActivity(activity), weightFromActivity(activity), zonesFromActivity(activity))
 
     // A given template can only be run once per activity (unique constraint on
     // activity_id + template_id) — re-running replaces the prior result
@@ -60,11 +100,12 @@ export async function POST(req, { params }) {
           activity_id: activity.id,
           template_id: template.id,
           user_id: user.id,
+          by_coach: false,
           efforts: result.efforts || [],
           summary: result.summary || {},
           updated_at: new Date().toISOString(),
         },
-        { onConflict: 'activity_id,template_id' }
+        { onConflict: 'activity_id,template_id,coach_key' }
       )
       .select()
       .single()
@@ -85,7 +126,8 @@ export async function POST(req, { params }) {
 }
 
 // DELETE /api/activities/:id/apply-template?templateId=... (or ?executionId=...)
-// Deletes a single template_executions row owned by the requesting user, e.g.
+// Deletes a single template_executions row on the requesting user's account (the rider may delete
+// any run, including coach runs), or a coach's own run on his athlete's activity. E.g.
 // to clear a mis-matched run and re-run the template, or to remove a result
 // the user no longer wants surfaced on the activity.
 export async function DELETE(req, { params }) {
@@ -119,6 +161,12 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    if ((!data || data.length === 0) && executionId) {
+      // Coach deleting his own run on an athlete's activity (checked in the database).
+      const { error: coachErr } = await supabase.rpc('coach_delete_template_run', { p_execution: executionId })
+      if (!coachErr) return NextResponse.json({ success: true })
+    }
+
     if (!data || data.length === 0) {
       return NextResponse.json({ error: 'Execution not found' }, { status: 404 })
     }
@@ -137,7 +185,7 @@ export async function GET(req, { params }) {
 
     const { data, error } = await supabase
       .from('template_executions')
-      .select('*, analysis_templates(slug, name, category)')
+      .select('*, activities(activity_date)')
       .eq('activity_id', activityId)
       .order('updated_at', { ascending: false })
 
@@ -145,8 +193,11 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ success: true, executions: data })
+    // Name/slug/category come from the run's own snapshot, so coach-private templates stay unreadable.
+    return NextResponse.json({ success: true, executions: (data || []).map(withTemplateSnapshot) })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+export const dynamic = 'force-dynamic'

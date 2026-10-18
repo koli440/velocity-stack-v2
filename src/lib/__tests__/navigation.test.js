@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { NAV_ITEMS, isNavItemActive } from '../navigation.js'
 
 const read = (p) => readFileSync(new URL(`../../components/${p}`, import.meta.url), 'utf8')
@@ -8,7 +8,7 @@ const read = (p) => readFileSync(new URL(`../../components/${p}`, import.meta.ur
 test('menu order matches the cleaned-up design', () => {
   assert.deepEqual(
     NAV_ITEMS.map((i) => i.label),
-    ['Rider Telemetry', 'Personal Best Vault', 'Gear Architect', 'Pursuit Strategist', 'Aero Lab', 'Velodromes', 'About', 'Feedback', 'Settings']
+    ['Rider Telemetry', 'Calendar', 'Personal Best Vault', 'Riders', 'Gear Architect', 'Pursuit Strategist', 'Aero Lab', 'Templates', 'Velodromes', 'About', 'Feedback', 'Settings']
   )
   assert.equal(NAV_ITEMS[0].href, '/')
 })
@@ -19,20 +19,46 @@ test('placeholder menu entries are gone', () => {
   assert.ok(!/Gym|Analytics|Team|Rides/.test(read('Sidebar.js')))
 })
 
+test('settings is a normal link to /settings, the modal is gone', () => {
+  const s = NAV_ITEMS.find((i) => i.key === 'settings')
+  assert.equal(s.href, '/settings')
+  assert.equal(isNavItemActive(s, '/settings'), true)
+  assert.equal(isNavItemActive(s, '/about'), false)
+  assert.ok(!existsSync(new URL('../../components/ProfileSettingsModal.js', import.meta.url)))
+  assert.doesNotMatch(read('AppShell.js') + read('TopNav.js') + read('Sidebar.js'), /onOpenSettings|ProfileSettingsModal/)
+})
+
 test('home is only active on exactly /', () => {
   assert.equal(isNavItemActive(NAV_ITEMS[0], '/'), true)
   assert.equal(isNavItemActive(NAV_ITEMS[0], '/gears'), false)
-  assert.equal(isNavItemActive(NAV_ITEMS[2], '/gears/x'), true)
+  assert.equal(isNavItemActive(NAV_ITEMS.find((i) => i.key === 'gears'), '/gears/x'), true)
 })
 
 test('privacy zone lives in settings, not on the dashboard', () => {
-  assert.match(read('ProfileSettingsModal.js'), /<PrivacyZonePanel/)
+  const page = readFileSync(new URL('../../app/settings/page.js', import.meta.url), 'utf8')
+  assert.match(page, /<PrivacyZonePanel/)
   assert.doesNotMatch(read('Dashboard.js'), /PrivacyZonePanel/)
 })
 
 test('dashboard no longer has the removed widgets', () => {
-  const d = read('Dashboard.js') + read('RosterPanel.js')
+  const d = read('Dashboard.js')
   for (const gone of ['TelemetryCards', 'Quick Stats', 'Hydration', 'Gym', 'Add Workout']) assert.ok(!d.includes(gone), gone)
+})
+
+test('dashboard only has My sessions + Following; riders/discover moved to /riders', () => {
+  const d = read('Dashboard.js')
+  assert.match(d, /\['mine', 'My sessions'\]/)
+  assert.match(d, /\['following', 'Following'\]/)
+  assert.doesNotMatch(d, /FollowPanel|RosterPanel|RidersExplorer|fetchDiscoverFeedPage|'discover'/)
+  assert.match(d, /href="\/riders"/)
+  assert.ok(!existsSync(new URL('../../components/RosterPanel.js', import.meta.url)))
+})
+
+test('riders page hosts find / following / discover tabs', () => {
+  const p = readFileSync(new URL('../../app/riders/page.js', import.meta.url), 'utf8')
+  for (const t of ['Find riders', 'Following', 'Discover sessions', '<RidersExplorer', '<FollowPanel', '<DiscoverFeed']) assert.ok(p.includes(t), t)
+  assert.match(read('DiscoverFeed.js'), /fetchDiscoverFeedPage/)
+  assert.equal(NAV_ITEMS.find((i) => i.key === 'riders').href, '/riders')
 })
 
 test('top banner has bell next to nickname and the add/sync chooser', () => {

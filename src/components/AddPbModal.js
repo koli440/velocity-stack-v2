@@ -1,22 +1,38 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { getAuthHeader } from '../lib/supabase'
+import { useEffect, useMemo, useState } from 'react'
+import Portal from './Portal'
+import { supabase, getAuthHeader } from '../lib/supabase'
+import { fetchDisciplines, findDisciplineDistance } from '../lib/lookups'
 import { parseJsonResponse } from '../lib/httpJson'
 import {
-  DISCIPLINES,
-  getDisciplineDistance,
   minutesSecondsToTotalSeconds,
   calculateAvgSpeedKmh,
   countSplits,
 } from '../lib/pbVault'
 import VelodromePicker from './VelodromePicker'
+import Icon from './Icon'
+import DisciplineSuggest from './DisciplineSuggest'
 
 // "Add New Personal Best" form - migrated from v1's expander in pages/30_PB_vault.py. Collects
 // discipline + track + time (as separate Min/Sec inputs, like v1) plus optional gear and lap/
 // split times, then posts to /api/personal-bests.
-export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
-  const [discipline, setDiscipline] = useState(DISCIPLINES[0].name)
+function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved, prefill = null }) {
+  const [disciplines, setDisciplines] = useState([])
+  const [discipline, setDiscipline] = useState('')
+
+  useEffect(() => {
+    let active = true
+    fetchDisciplines(supabase).then((list) => {
+      if (!active) return
+      setDisciplines(list)
+      setDiscipline((current) => (list.some((d) => d.name === current) ? current : list[0]?.name || ''))
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
   const [trackId, setTrackId] = useState('')
   const [eventName, setEventName] = useState('')
   const [achievedDate, setAchievedDate] = useState(new Date().toISOString().slice(0, 10))
@@ -31,8 +47,23 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
 
+  // Apply suggested values (e.g. from a template run effort); the user still reviews and saves.
+  useEffect(() => {
+    if (!isOpen || !prefill) return
+    if (prefill.discipline && disciplines.some((d) => d.name === prefill.discipline)) {
+      setDiscipline(prefill.discipline)
+    }
+    if (prefill.trackId) setTrackId(prefill.trackId)
+    if (prefill.achievedDate) setAchievedDate(prefill.achievedDate)
+    if (prefill.minutes != null) setMinutes(prefill.minutes)
+    if (prefill.seconds != null) setSeconds(prefill.seconds)
+    if (prefill.chainring) setChainring(prefill.chainring)
+    if (prefill.cog) setCog(prefill.cog)
+    if (prefill.notes) setNotes(prefill.notes)
+  }, [isOpen, prefill, disciplines])
+
   const selectedTrack = tracks.find((t) => t.id === trackId)
-  const distanceM = getDisciplineDistance(discipline)
+  const distanceM = findDisciplineDistance(disciplines, discipline)
   const totalSeconds = minutesSecondsToTotalSeconds(minutes, seconds)
   const avgSpeedKmh = calculateAvgSpeedKmh(distanceM, totalSeconds)
 
@@ -43,7 +74,7 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
   )
 
   const resetForm = () => {
-    setDiscipline(DISCIPLINES[0].name)
+    setDiscipline(disciplines[0]?.name || '')
     setTrackId('')
     setEventName('')
     setAchievedDate(new Date().toISOString().slice(0, 10))
@@ -127,13 +158,13 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
       <div className="glass-modal bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black text-slate-900 dark:text-white">
-            🏆 Add New Personal Best
+            <Icon name="trophy" /> Add New Personal Best
           </h2>
           <button
             onClick={handleClose}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-1"
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
         </div>
 
@@ -144,6 +175,7 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
           <label className="block space-y-1.5">
             <span className="text-xs uppercase font-bold text-slate-400">Discipline</span>
             <select
@@ -151,13 +183,15 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
               onChange={(e) => setDiscipline(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
             >
-              {DISCIPLINES.map((d) => (
+              {disciplines.map((d) => (
                 <option key={d.name} value={d.name}>
                   {d.name} ({d.distanceM}m)
                 </option>
               ))}
             </select>
           </label>
+          <DisciplineSuggest categories={[...new Set(disciplines.map((d) => d.category))]} />
+          </div>
 
           <label className="block space-y-1.5">
             <span className="text-xs uppercase font-bold text-slate-400">Track</span>
@@ -245,7 +279,7 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
 
         <details className="rounded-xl border border-slate-200 dark:border-slate-800 p-3.5">
           <summary className="text-xs uppercase font-bold text-slate-400 cursor-pointer">
-            ⏱️ Add Lap/Split Times (Optional)
+            <Icon name="stopwatch" /> Add Lap/Split Times (Optional)
           </summary>
           <div className="mt-3 space-y-3">
             <div className="flex gap-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -327,5 +361,13 @@ export default function AddPbModal({ isOpen, onClose, tracks = [], onSaved }) {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function AddPbModal(props) {
+  return (
+    <Portal>
+      <AddPbModalInner {...props} />
+    </Portal>
   )
 }

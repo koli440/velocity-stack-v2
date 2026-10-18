@@ -1,19 +1,23 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Portal from './Portal'
 import { supabase } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import { loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import { expandToFitFiles, importFitFilesBatch } from '../lib/bulkImport'
+import { fetchWeightHistory } from '../lib/weightHistory'
+import { fetchFtpHistory } from '../lib/ftpHistory'
 import VelodromePicker from './VelodromePicker'
+import Icon from './Icon'
 
 const STATUS_META = {
-  success: { icon: '✅', label: 'Imported' },
-  skipped: { icon: '⏭️', label: 'Skipped (duplicate)' },
-  error: { icon: '❌', label: 'Failed' },
+  success: { icon: 'check', label: 'Imported' },
+  skipped: { icon: 'skip', label: 'Skipped (duplicate)' },
+  error: { icon: 'cross', label: 'Failed' },
 }
 
-export default function BulkImportModal({
+function BulkImportModalInner({
   isOpen,
   onClose,
   currentUser,
@@ -104,6 +108,8 @@ export default function BulkImportModal({
         .select('ftp_w')
         .eq('id', currentUser.id)
         .maybeSingle()
+      const { history: ftpHistory } = await fetchFtpHistory(supabase, currentUser.id)
+      const { history: weightHistory } = await fetchWeightHistory(supabase, currentUser.id)
 
       // Preload fingerprints of already-imported activities so duplicates (including ones
       // synced earlier from Intervals.icu, or re-running the same archive) are skipped
@@ -124,6 +130,8 @@ export default function BulkImportModal({
           isFixedGear,
           processingStatus: 'baseline_completed',
           ftpWatts: profile?.ftp_w ?? null,
+          ftpHistory,
+          weightHistory,
         },
         onProgress: (result) => setResults((prev) => [...prev, result]),
       })
@@ -148,11 +156,11 @@ export default function BulkImportModal({
             onClick={onClose}
             className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
 
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-base">📦</span>
+            <span className="text-base"><Icon name="package" size={18} /></span>
             <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white">
               Import Activity History
             </h2>
@@ -219,13 +227,13 @@ export default function BulkImportModal({
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3">
           {pickError && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold">
-              ⚠️ {pickError}
+              <Icon name="alert" /> {pickError}
             </div>
           )}
 
           {files.length === 0 && (
             <label className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 dark:hover:border-emerald-500 transition bg-slate-50 dark:bg-slate-900/40">
-              <span className="text-2xl mb-1">📁</span>
+              <span className="mb-1 text-slate-400"><Icon name="folder" size={28} /></span>
               <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                 Choose a .zip archive, multiple .fit files, or Garmin .fit.gz files
               </span>
@@ -275,7 +283,7 @@ export default function BulkImportModal({
                       {r.fileName}
                     </span>
                     <span className="shrink-0 font-bold text-slate-500 dark:text-slate-400">
-                      {meta.icon} {r.status === 'error' && r.error ? r.error : meta.label}
+                      <Icon name={meta.icon} /> {r.status === 'error' && r.error ? r.error : meta.label}
                     </span>
                   </div>
                 )
@@ -320,5 +328,13 @@ export default function BulkImportModal({
         </div>
       </div>
     </div>
+  )
+}
+
+export default function BulkImportModal(props) {
+  return (
+    <Portal>
+      <BulkImportModalInner {...props} />
+    </Portal>
   )
 }

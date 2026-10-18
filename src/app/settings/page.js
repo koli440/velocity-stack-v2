@@ -1,46 +1,57 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import VelodromePicker from './VelodromePicker'
-import PrivacyZonePanel from './PrivacyZonePanel'
-import Avatar from './Avatar'
-import { readGlassPref, writeGlassPref } from '../lib/glass'
-import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../lib/avatars'
+import { useRouter } from 'next/navigation'
+import { supabase } from '../../lib/supabase'
+import VelodromePicker from '../../components/VelodromePicker'
+import { fetchTracks } from '../../lib/lookups'
+import PrivacyZonePanel from '../../components/PrivacyZonePanel'
+import LactateThresholdPanel from '../../components/LactateThresholdPanel'
+import PowerZonesPanel from '../../components/PowerZonesPanel'
+import FtpHistoryPanel from '../../components/FtpHistoryPanel'
+import WeightHistoryPanel from '../../components/WeightHistoryPanel'
+import ConnectionsPanel from '../../components/ConnectionsPanel'
+import CoachingPanel from '../../components/CoachingPanel'
+import CoachBadge, { useCoachNames } from '../../components/CoachBadge'
+import CoachEditsList from '../../components/CoachEditsList'
+import { PROFILE_UPDATED_EVENT } from '../../lib/navigation'
+import Icon from '../../components/Icon'
+import Avatar from '../../components/Avatar'
+import { readGlassPref, writeGlassPref } from '../../lib/glass'
+import { fetchRequireFollowApproval, setRequireFollowApproval } from '../../lib/social'
+import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../../lib/avatars'
 
-export default function ProfileSettingsModal({
-  isOpen,
-  onClose,
-  user,
-  tracks = [],
-}) {
+
+export default function SettingsPage() {
+  const router = useRouter()
+  const [user, setUser] = useState(null)
+  const [tracks, setTracks] = useState([])
   const [loading, setLoading] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [nickname, setNickname] = useState('')
   const [homeTrackId, setHomeTrackId] = useState('')
+  const [trainingStamp, setTrainingStamp] = useState(null)
+  const coachNames = useCoachNames(trainingStamp ? [trainingStamp] : [])
   const [defaultChainring, setDefaultChainring] = useState('58')
   const [defaultCog, setDefaultCog] = useState('14')
   const [crankLength, setCrankLength] = useState('165.0')
-  const [ftpWatts, setFtpWatts] = useState('')
   const [themePref, setThemePref] = useState('dark')
 
-  // Intervals.icu data
-  const [intervalsAthleteId, setIntervalsAthleteId] = useState('')
-  const [intervalsApiKey, setIntervalsApiKey] = useState('')
   const [discoverableByEmail, setDiscoverableByEmail] = useState(true)
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarBusy, setAvatarBusy] = useState(false)
   const [avatarError, setAvatarError] = useState('')
+  const [requireApproval, setRequireApproval] = useState(false)
   const [glassEnabled, setGlassEnabled] = useState(true)
 
   useEffect(() => {
-    if (!isOpen) return
     setGlassEnabled(readGlassPref())
-  }, [isOpen])
+  }, [])
 
   useEffect(() => {
-    if (!user?.id || !isOpen) return
+    if (!user?.id) return
 
     const loadProfile = async () => {
       setLoading(true)
@@ -55,26 +66,21 @@ export default function ProfileSettingsModal({
         setLastName(data.last_name || '')
         setNickname(data.nickname || '')
         setHomeTrackId(data.home_track_id || '')
+        setTrainingStamp(data)
         setDefaultChainring(data.default_chainring ? String(data.default_chainring) : '58')
         setDefaultCog(data.default_cog ? String(data.default_cog) : '14')
         setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
-        setFtpWatts(data.ftp_w ? String(data.ftp_w) : '')
         setThemePref(data.theme_preference || 'dark')
         setDiscoverableByEmail(data.discoverable_by_email !== false)
         setAvatarUrl(data.avatar_url || null)
       }
-      const { data: secrets } = await supabase
-        .from('profile_secrets')
-        .select('intervals_athlete_id, intervals_api_key')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      setIntervalsAthleteId(secrets?.intervals_athlete_id || '')
-      setIntervalsApiKey(secrets?.intervals_api_key || '')
+      const approval = await fetchRequireFollowApproval(supabase, user.id)
+      setRequireApproval(!!approval.value)
       setLoading(false)
     }
 
     loadProfile()
-  }, [user, isOpen])
+  }, [user?.id])
 
   // Image changes are saved immediately (independent of the Save button).
   const handleAvatarChange = async (e) => {
@@ -103,11 +109,23 @@ export default function ProfileSettingsModal({
     else setAvatarUrl(null)
   }
 
+  // Saved immediately (independent of the Save button), as in the former follow panel.
+  const handleRequireApprovalChange = async (checked) => {
+    const previous = requireApproval
+    setRequireApproval(checked)
+    const { error } = await setRequireFollowApproval(supabase, { userId: user.id, value: checked })
+    if (error) {
+      setRequireApproval(previous)
+      alert('Error while saving follow setting: ' + error.message)
+    }
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
     if (!user?.id) return
 
     setLoading(true)
+    setSaved(false)
     const updates = {
       id: user.id,
       first_name: firstName.trim() || null,
@@ -117,47 +135,44 @@ export default function ProfileSettingsModal({
       default_chainring: defaultChainring ? parseInt(defaultChainring) : null,
       default_cog: defaultCog ? parseInt(defaultCog) : null,
       crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
-      ftp_w: ftpWatts ? parseInt(ftpWatts) : null,
       theme_preference: themePref,
       discoverable_by_email: discoverableByEmail,
       updated_at: new Date().toISOString(),
     }
 
-    let { error } = await supabase.from('profiles').upsert(updates)
-    if (!error) {
-      ;({ error } = await supabase.from('profile_secrets').upsert({
-        user_id: user.id,
-        intervals_athlete_id: intervalsAthleteId.trim() || null,
-        intervals_api_key: intervalsApiKey.trim() || null,
-        updated_at: new Date().toISOString(),
-      }))
-    }
+    const { error } = await supabase.from('profiles').upsert(updates)
     setLoading(false)
 
     if (error) {
       alert('Error while saving profile: ' + error.message)
     } else {
-      onClose()
+      window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT))
+      setSaved(true)
     }
   }
 
-  if (!isOpen) return null
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUser(session.user)
+      else router.push('/login')
+    })
+    fetchTracks(supabase).then(({ data }) => setTracks(data || []))
+  }, [router])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="glass-modal relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl">
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg transition"
-        >
-          ✕
-        </button>
+    <section className="max-w-3xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <Icon name="settings" /> Settings
+        </h1>
+        <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
+          Athlete profile, gear defaults, privacy and connections.
+        </p>
+      </div>
 
-        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-4">
-          Athlete Profile & Gear
-        </h2>
-
-        <form onSubmit={handleSave} className="space-y-4">
+      <form onSubmit={handleSave} className="space-y-6">
+        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Profile</h2>
           <div className="flex items-center gap-4">
             <Avatar
               url={avatarUrl}
@@ -193,7 +208,7 @@ export default function ProfileSettingsModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
                 First Name
@@ -230,6 +245,9 @@ export default function ProfileSettingsModal({
             />
           </div>
 
+        </section>
+        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Preferences</h2>
           <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
             <input
               type="checkbox"
@@ -251,6 +269,18 @@ export default function ProfileSettingsModal({
             <span>Let riders find me by typing my exact e-mail address (your e-mail is never shown)</span>
           </label>
 
+          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={requireApproval}
+              onChange={(e) => handleRequireApprovalChange(e.target.checked)}
+            />
+            <span>Require my approval for new followers (existing followers are kept)</span>
+          </label>
+
+        </section>
+        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Gear defaults <CoachBadge row={trainingStamp} names={coachNames} /></h2>
           <div>
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
               Home Velodrome
@@ -258,7 +288,7 @@ export default function ProfileSettingsModal({
             <VelodromePicker tracks={tracks} value={homeTrackId} onChange={setHomeTrackId} favoriteId={null} emptyLabel="-- No Home Track --" compact />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
                 Default Chainring
@@ -297,74 +327,36 @@ export default function ProfileSettingsModal({
             </div>
           </div>
 
-          <div>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              FTP / Threshold Power (W)
-            </label>
-            <input
-              type="number"
-              value={ftpWatts}
-              onChange={(e) => setFtpWatts(e.target.value)}
-              placeholder="e.g. 280"
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
-            />
-            <p className="text-[10px] text-slate-400 mt-1">
-              Used to calculate Intensity Factor and Training Load for uploaded activities.
-            </p>
-          </div>
+        </section>
+        <div id="physiology" className="space-y-6">
+          <FtpHistoryPanel userId={user?.id} />
+          <WeightHistoryPanel userId={user?.id} />
+          <LactateThresholdPanel userId={user?.id} />
+          <PowerZonesPanel userId={user?.id} />
+          <CoachEditsList riderId={user?.id} />
+        </div>
 
-          {/* Section for Intervals.icu */}
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🔄</span>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                Intervals.icu API Credentials
-              </h3>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              Credentials for manually importing workouts from Garmin & Wahoo devices.
-            </p>
+        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6">
+          <ConnectionsPanel userId={user?.id} />
+        </section>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                  Athlete ID (e.g. i228280)
-                </label>
-                <input
-                  type="text"
-                  value={intervalsAthleteId}
-                  onChange={(e) => setIntervalsAthleteId(e.target.value)}
-                  placeholder="iXXXXX"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
+        <PrivacyZonePanel userId={user?.id} />
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                  API Key
-                </label>
-                <input
-                  type="password"
-                  value={intervalsApiKey}
-                  onChange={(e) => setIntervalsApiKey(e.target.value)}
-                  placeholder="From intervals.icu settings"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono"
-                />
-              </div>
-            </div>
-          </div>
-
-          <PrivacyZonePanel userId={user?.id} />
-
+        <div className="sticky bottom-4 flex items-center gap-3">
           <button
             type="submit"
-            disabled={loading}
-            className="w-full mt-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50"
+            disabled={loading || !user}
+            className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50"
           >
             {loading ? 'Saving profile...' : 'Save Changes'}
           </button>
-        </form>
+          {saved && <span className="text-xs font-bold text-emerald-500">Saved</span>}
+        </div>
+      </form>
+
+      <div className="mt-6">
+        <CoachingPanel userId={user?.id} />
       </div>
-    </div>
+    </section>
   )
 }

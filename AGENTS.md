@@ -11,3 +11,5 @@
   PR comments); fix SQL errors until Supabase Preview is green, then merge and
   confirm it on `main`.
 - Never edit already-applied migrations; add new, idempotent ones.
+- User-visible features (and notable fixes) add a "What's new" entry: a markdown file in
+  `content/news/` (see `docs/news.md`) in the same PR.

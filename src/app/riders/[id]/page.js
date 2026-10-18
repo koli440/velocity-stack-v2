@@ -10,6 +10,7 @@ import BotBadge from '../../../components/BotBadge'
 import Avatar from '../../../components/Avatar'
 import RiderFollowButton from '../../../components/RiderFollowButton'
 import ActivityFeed from '../../../components/ActivityFeed'
+import CoachingButtons from '../../../components/CoachingButtons'
 
 export default function RiderProfilePage() {
   const { id } = useParams()
@@ -84,6 +85,7 @@ export default function RiderProfilePage() {
             </div>
             <RiderFollowButton userId={userId} rider={rider} status={rider.follow_status} onStatusChange={changeStatus} />
           </div>
+          <CoachingButtons userId={userId} rider={rider} />
           <ActivityFeed
             title="Recent sessions"
             isOwnFeed={false}

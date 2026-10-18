@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getAuthHeader } from '../../lib/supabase'
+import Icon from '../../components/Icon'
 
 const MODULE_LABELS = {
   aero_lab: 'Aero Lab',
@@ -14,15 +15,15 @@ const MODULE_LABELS = {
 }
 
 const CATEGORY_LABELS = {
-  bug: 'Report a Bug 🐛',
-  feature_request: 'Feature Request ✨',
-  general: 'General Feedback 💬',
+  bug: 'Report a Bug',
+  feature_request: 'Feature Request',
+  general: 'General Feedback',
 }
 
 const STATUS_COLUMNS = [
-  { key: 'new', label: '📥 New' },
-  { key: 'in_progress', label: '⚙️ In-Progress' },
-  { key: 'done', label: '✅ Done' },
+  { key: 'new', label: 'New', icon: 'upload' },
+  { key: 'in_progress', label: 'In-Progress', icon: 'settings' },
+  { key: 'done', label: 'Done', icon: 'check' },
 ]
 
 export default function FeedbackPage() {
@@ -78,7 +79,7 @@ export default function FeedbackPage() {
       }
 
       setFormData({ category: 'general', module: 'other', description: '' })
-      setStatus({ type: 'success', message: "Thank you! Your feedback has been recorded. We'll review it soon! 🚲" })
+      setStatus({ type: 'success', message: "Thank you! Your feedback has been recorded. We'll review it soon!" })
       loadRoadmap()
     } catch (error) {
       setStatus({ type: 'error', message: error.message })
@@ -94,11 +95,11 @@ export default function FeedbackPage() {
           ← Back to cockpit
         </Link>
         <h1 className="mt-4 text-2xl font-black text-slate-900 dark:text-white">
-          💡 Feedback & Feature Requests
+          <Icon name="bulb" /> Feedback & Feature Requests
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Help us build the ultimate track cycling tool! Whether you found a bug 🐛 or have a
-          brilliant idea for a new feature ✨, we want to hear from you. Looking to report a bug
+          Help us build the ultimate track cycling tool! Whether you found a bug or have a
+          brilliant idea for a new feature, we want to hear from you. Looking to report a bug
           specifically?{' '}
           <Link href="/report-bug" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">
             Use the dedicated bug form
@@ -181,7 +182,7 @@ export default function FeedbackPage() {
       </form>
 
       <div className="border-t border-slate-200 dark:border-surface-darkBorder pt-6">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">🚀 Community Roadmap</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white"><Icon name="rocket" /> Community Roadmap</h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           See what others have suggested and what&apos;s currently in development.
         </p>
@@ -190,11 +191,11 @@ export default function FeedbackPage() {
           <p className="mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Loading roadmap...</p>
         ) : (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {STATUS_COLUMNS.map(({ key, label }) => {
+            {STATUS_COLUMNS.map(({ key, label, icon }) => {
               const items = roadmap.filter((item) => item.status === key)
               return (
                 <div key={key} className="space-y-2">
-                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">{label}</h3>
+                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200"><Icon name={icon} /> {label}</h3>
                   {items.length === 0 && (
                     <p className="text-xs text-slate-400 dark:text-slate-500">Nothing here yet.</p>
                   )}

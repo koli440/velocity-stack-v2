@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
 import { buildFeedPreview } from '../../../../lib/routePreview'
+import { buildPowerPreview } from '../../../../lib/powerPreview.js'
 
 export async function POST(req) {
   try {
@@ -45,10 +46,12 @@ export async function POST(req) {
         curves_data: curves ?? {},
         time_series: time_series ?? {},
         route_preview: buildFeedPreview(time_series ?? {}),
+        power_preview: buildPowerPreview(time_series?.watts),
         raw_file_url: raw_file_url ?? null,
         file_sha256: file_sha256 ?? null,
         processing_status: 'baseline_completed',
-        activity_date: new Date().toISOString(),
+        activity_date: summary?.start_time || new Date().toISOString(),
+        start_time: summary?.start_time ?? null,
       })
       .select()
       .single()
@@ -79,3 +82,5 @@ export async function POST(req) {
   }
 }
 
+
+export const dynamic = 'force-dynamic'
