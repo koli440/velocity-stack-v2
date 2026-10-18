@@ -212,6 +212,16 @@ Client grants are column-level (INSERT: rider_id, note_date, title, body; UPDATE
 coach account (FK `SET NULL`). See *Calendar notes* in coaching.md.
 
 
+
+## Calendar races (`20261210000000_calendar_races.sql`)
+
+`calendar_races(id, rider_id -> profiles ON DELETE CASCADE, race_date DATE, race_time TIME NULL, name TEXT 1-80, discipline TEXT ride|track|other, priority TEXT A|B|C,
+location TEXT <= 120, format_note TEXT <= 200, notes TEXT <= 1000, activity_id -> activities ON DELETE SET NULL, created_by / updated_by -> profiles ON DELETE SET NULL,
+set_by_coach BOOLEAN, created_at, updated_at)`, index `(rider_id, race_date)`, unique partial index on `activity_id`. RLS for `rider_id = auth.uid()` or `is_coach_of(rider_id)`
+(SELECT/INSERT/UPDATE/DELETE). Client grants are column-level (INSERT: rider_id, race_date, race_time, name, discipline, priority, location, format_note, notes, activity_id;
+UPDATE: the same without rider_id). SECURITY DEFINER trigger `calendar_races_stamp` trims text, verifies the activity belongs to the race's rider, stamps authors / timestamps
+from `auth.uid()`, pins `rider_id` and caps 10 races per rider and day. See *Calendar races* in coaching.md.
+
 ## Planned workouts (`20261206000000_planned_workouts.sql`)
 
 `planned_workouts(id, rider_id -> profiles ON DELETE CASCADE, workout_date DATE, discipline ride|track|gym|other, title 1-80, description <= 2000,

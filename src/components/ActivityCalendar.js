@@ -8,6 +8,7 @@ import Icon from './ActivityIcons'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
 import CalendarNoteDialog from './CalendarNoteDialog'
+import CalendarRaceDialog from './CalendarRaceDialog'
 import PlannedWorkoutDialog, { STATUS_STYLES } from './PlannedWorkoutDialog'
 import { fetchPushRows } from '../lib/plannedPushClient'
 import { pushState, PUSH_STATE_LABELS } from '../lib/intervalsWorkout'
@@ -30,6 +31,18 @@ import {
   linkPlannedActivity,
   unlinkPlannedActivity,
 } from '../lib/plannedWorkouts'
+import {
+  fetchRacesInRange,
+  createRace,
+  updateRace,
+  deleteRace,
+  raceProfileIds,
+  raceTimeLabel,
+  racesByActivity,
+  RACE_PRIORITY_STYLES,
+  RACE_PRIORITY_LABELS,
+  RACE_DISCIPLINE_LABELS,
+} from '../lib/calendarRaces'
 import { fetchFtpHistory } from '../lib/ftpHistory'
 import { fetchProfilesByIds } from '../lib/social'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
@@ -49,24 +62,31 @@ import {
 const defaultFetchEvents = (args) => fetchActivitiesInRange(supabase, args)
 const defaultFetchNotes = (args) => fetchNotesInRange(supabase, args)
 const defaultFetchPlanned = (args) => fetchPlannedInRange(supabase, args)
+const defaultFetchRaces = (args) => fetchRacesInRange(supabase, args)
 
 const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike' }
 
-function EventChip({ event }) {
+function EventChip({ event, race }) {
   const { riderId } = parseCoachPath(usePathname())
   const planned = event.kind === 'planned'
   return (
     <Link
       href={contextualHref(event.href, riderId)}
+      data-testid={race ? 'calendar-race-activity' : undefined}
+      title={race ? `${race.name} · ${RACE_PRIORITY_LABELS[race.priority]}` : undefined}
       className={`block rounded-lg px-1.5 py-1 text-[11px] leading-tight border transition hover:border-emerald-500 ${
-        planned
-          ? 'border-dashed border-sky-400/60 bg-sky-500/5'
-          : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60'
+        race
+          ? RACE_PRIORITY_STYLES[race.priority]
+          : planned
+            ? 'border-dashed border-sky-400/60 bg-sky-500/5'
+            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60'
       }`}
     >
       <span className="flex items-center gap-1 font-bold text-slate-900 dark:text-white min-w-0">
-        <Icon name={DISCIPLINE_ICON[event.discipline] || 'bike'} size={12} className="shrink-0 text-emerald-600 dark:text-brand-neon" />
-        <span className="truncate">{event.title}</span>
+        {race
+          ? <span aria-hidden className="shrink-0">🏁</span>
+          : <Icon name={DISCIPLINE_ICON[event.discipline] || 'bike'} size={12} className="shrink-0 text-emerald-600 dark:text-brand-neon" />}
+        <span className="truncate">{race ? `${race.name} (${race.priority})` : event.title}</span>
         {event.pushState && event.pushState !== 'not_pushed' && (
           <span aria-label={PUSH_STATE_LABELS[event.pushState]} data-testid="calendar-planned-push" data-state={event.pushState} className="ml-auto shrink-0">
             {{ pushed: '⇪', out_of_date: '⇪!', error: '⚠' }[event.pushState]}
@@ -127,6 +147,30 @@ function NoteChip({ note, onOpen }) {
   )
 }
 
+// Races are priority-coloured flag chips (A red, B orange, C grey); click opens the dialog.
+function RaceChip({ race, onOpen }) {
+  const time = raceTimeLabel(race)
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(race)}
+      data-testid="calendar-race"
+      data-priority={race.priority}
+      title={[`${race.name} · ${RACE_PRIORITY_LABELS[race.priority]} · ${RACE_DISCIPLINE_LABELS[race.discipline]}`, time, race.location, race.format_note].filter(Boolean).join('\n')}
+      className={`block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight font-bold border hover:brightness-110 transition ${RACE_PRIORITY_STYLES[race.priority]}`}
+    >
+      <span className="flex items-center gap-1 min-w-0">
+        <span aria-hidden>🏁</span>
+        <span className="truncate">{race.name}</span>
+        <span className="ml-auto shrink-0">{race.priority}</span>
+      </span>
+      {(time || race.activity_id) && (
+        <span className="block font-semibold opacity-80 truncate">{[time, race.activity_id ? 'ridden' : null].filter(Boolean).join(' · ')}</span>
+      )}
+    </button>
+  )
+}
+
 function WeekSummary({ summary }) {
   const stat = (value, label) => (
     <div className="text-center md:text-left">
@@ -142,6 +186,11 @@ function WeekSummary({ summary }) {
       {stat(`${formatDuration(summary.durationS)} h`, 'Time')}
       {stat(formatKm(summary.distanceM), 'Distance')}
       {stat(summary.count, summary.count === 1 ? 'Activity' : 'Activities')}
+      {summary.races?.length > 0 && (
+        <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-rose-600 dark:text-rose-300 text-center md:text-left" data-testid="week-races">
+          {summary.races.map((r) => `🏁 ${r.name} (${r.priority})`).join(' · ')}
+        </span>
+      )}
       {summary.plannedCount > 0 && (
         <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-sky-600 dark:text-sky-300 text-center md:text-left">
           {summary.plannedCount} planned
@@ -158,9 +207,10 @@ function WeekSummary({ summary }) {
  *   returns day-cell events (see lib/calendar.js); only the visible range is requested.
  *   Defaults to the rider's activities from Supabase.
  * @param {Function} [fetchNotes]  same for calendar notes (RLS: only the rider and the rider's active coach get rows)
+ * @param {Function} [fetchRaces]  same for races (RLS: only the rider and the rider's active coach get rows)
  * @param {Function} [fetchPlanned]  same for planned workouts (RLS: only the rider and the rider's active coach get rows)
  */
-export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = defaultFetchEvents, fetchNotes = defaultFetchNotes, fetchPlanned = defaultFetchPlanned }) {
+export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = defaultFetchEvents, fetchNotes = defaultFetchNotes, fetchPlanned = defaultFetchPlanned, fetchRaces = defaultFetchRaces }) {
   const [sessionUserId, setSessionUserId] = useState(null)
   const riderId = riderIdProp || sessionUserId
 
@@ -175,6 +225,8 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   const [notes, setNotes] = useState([])
   const [names, setNames] = useState({})
   const [dialog, setDialog] = useState(null) // { day: Date, note: object|null }
+  const [races, setRaces] = useState([])
+  const [rdialog, setRdialog] = useState(null) // { day: Date, race: object|null }
   const [planned, setPlanned] = useState([])
   const [runs, setRuns] = useState([])
   const [pdialog, setPdialog] = useState(null) // { day: Date, id: string|null }
@@ -188,17 +240,20 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     setLoading(true)
     setError(null)
     const range = { riderId, startDay: dayKey(start), endDay: dayKey(addDays(end, -1)) }
-    const [{ data, error: err }, { data: noteRows, error: noteErr }, { data: plannedRows, error: plannedErr }] = await Promise.all([
+    const [{ data, error: err }, { data: noteRows, error: noteErr }, { data: plannedRows, error: plannedErr }, { data: raceRows, error: raceErr }] = await Promise.all([
       fetchEvents({ riderId, startISO, endISO }),
       fetchNotes(range),
       fetchPlanned(range),
+      fetchRaces(range),
     ])
     if (err) setError(err.message || 'Failed to load activities.')
     else if (noteErr) setError(noteErr.message || 'Failed to load notes.')
     else if (plannedErr) setError(plannedErr.message || 'Failed to load planned workouts.')
+    else if (raceErr) setError(raceErr.message || 'Failed to load races.')
     setEvents(data || [])
     setNotes(noteRows || [])
     setPlanned(plannedRows || [])
+    setRaces(raceRows || [])
     // Run results of linked activities (RLS: rider and the rider's active coach).
     const linkedIds = (plannedRows || []).map((w) => w.activity_id).filter(Boolean)
     if (linkedIds.length) {
@@ -211,7 +266,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
       setRuns(runRows || [])
     } else setRuns([])
     setLoading(false)
-  }, [riderId, fetchEvents, fetchNotes, fetchPlanned, start, end, startISO, endISO])
+  }, [riderId, fetchEvents, fetchNotes, fetchPlanned, fetchRaces, start, end, startISO, endISO])
 
   useEffect(() => {
     let cancelled = false
@@ -223,8 +278,9 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
 
   const rows = useMemo(() => {
     const today = new Date()
-    return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => ({ ...plannedToEvent(w, today), pushState: pushState(w, pushRows.get(w.id)) }))], { anchor, notes })
-  }, [anchor, events, notes, planned, pushRows])
+    return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => ({ ...plannedToEvent(w, today), pushState: pushState(w, pushRows.get(w.id)) }))], { anchor, notes, races })
+  }, [anchor, events, notes, races, planned, pushRows])
+  const raceByActivity = useMemo(() => racesByActivity(races), [races])
 
   // Intervals.icu push status of the visible workouts (RLS: rider + active coach; empty for everyone else).
   useEffect(() => {
@@ -239,7 +295,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   const countByDay = useMemo(() => countPlannedByDay(planned), [planned])
   const suggestions = useMemo(() => suggestMatches(planned, events), [planned, events])
 
-  const nameKey = [...new Set([...noteProfileIds(notes), ...plannedProfileIds(planned)])].sort().join(',')
+  const nameKey = [...new Set([...noteProfileIds(notes), ...plannedProfileIds(planned), ...raceProfileIds(races)])].sort().join(',')
   useEffect(() => {
     if (!nameKey) return
     let cancelled = false
@@ -269,6 +325,26 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     const { error: err } = await deleteNote(supabase, dialog.note.id)
     if (err) return err
     setDialog(null)
+    await load()
+    return null
+  }
+
+  const saveRace = async (draft) => {
+    const { day, race } = rdialog
+    const { day: chosen, ...fields } = draft
+    const { error: err } = race
+      ? await updateRace(supabase, race.id, { day: chosen, ...fields })
+      : await createRace(supabase, { riderId, day: chosen, ...fields })
+    if (err) return err
+    setRdialog(null)
+    await load()
+    return null
+  }
+
+  const removeRace = async () => {
+    const { error: err } = await deleteRace(supabase, rdialog.race.id)
+    if (err) return err
+    setRdialog(null)
     await load()
     return null
   }
@@ -346,7 +422,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
         {rows.map((row, ri) => (
           <div key={ri} className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5">
             {row.cells.map((cell) => {
-              const hideOnMobile = cell.events.length === 0 && cell.notes.length === 0 && !cell.isToday
+              const hideOnMobile = cell.events.length === 0 && cell.notes.length === 0 && cell.races.length === 0 && !cell.isToday
               return (
                 <div
                   key={cell.key}
@@ -382,12 +458,22 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                     >
                       📝
                     </button>
+                    <button
+                      type="button"
+                      aria-label={`Add race on ${formatDate(cell.date, { day: 'numeric', month: 'long' })}`}
+                      title="Add race"
+                      onClick={() => setRdialog({ day: cell.date, race: null })}
+                      className="px-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-rose-600"
+                    >
+                      🏁
+                    </button>
                     </span>
                   </div>
                   {cell.notes.map((n) => <NoteChip key={n.id} note={n} onOpen={(note) => setDialog({ day: cell.date, note })} />)}
+                  {cell.races.map((r) => <RaceChip key={r.id} race={r} onOpen={(race) => setRdialog({ day: cell.date, race })} />)}
                   {cell.events.map((e) => (e.kind === 'planned'
                     ? <PlannedChip key={`planned-${e.id}`} event={e} onOpen={(id) => openPlanned(cell.date, id)} />
-                    : <EventChip key={`${e.kind}-${e.id}`} event={e} />))}
+                    : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} />))}
                 </div>
               )
             })}
@@ -405,6 +491,21 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
           onSave={saveNote}
           onDelete={removeNote}
           onClose={() => setDialog(null)}
+        />
+      )}
+      {rdialog && (
+        <CalendarRaceDialog
+          key={rdialog.race?.id || `new-${dayKey(rdialog.day)}`}
+          race={rdialog.race}
+          day={rdialog.race?.race_date || dayKey(rdialog.day)}
+          dayLabel={formatDate(rdialog.day, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          names={names}
+          viewerId={sessionUserId}
+          activities={events}
+          races={races}
+          onSave={saveRace}
+          onDelete={removeRace}
+          onClose={() => setRdialog(null)}
         />
       )}
       {pdialog && (() => {

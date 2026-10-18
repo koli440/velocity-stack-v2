@@ -142,6 +142,25 @@ Short day notes on a rider's calendar - e.g. "can train Tue/Thu evenings", "ill"
 - Pure logic and the data helpers: `src/lib/calendarNotes.js` (tests in `src/lib/__tests__/calendarNotes.test.js`).
 
 
+## Calendar races (step 4c, `20261210000000_calendar_races.sql`)
+
+A race / event on ONE day of a rider's calendar ("A race in 6 weeks": taper, peak). Single-day only in v1.
+- **Shape**: name (1-80), date, optional start time, discipline `ride|track|other`, priority `A|B|C` (A = main goal), optional location (<= 120),
+  distance / format note (<= 200), notes (<= 1000); max 10 races per rider and day.
+- **Who**: same as notes - the rider and the rider's ACTIVE, non-blocked coach (`is_coach_of`, checked per statement) read, add, edit and delete ANY race on
+  that calendar; everyone else (pending / ended / blocked coach, other riders, followers, strangers) gets nothing. Not in the feed or public profile.
+- **Stamps**: `created_by` / `updated_by` / `set_by_coach` from `auth.uid()` in a trigger (clients cannot name them); `ON DELETE SET NULL` on both, so a deleted
+  coach shows as "former coach". `rider_id` is immutable. Races survive the end of coaching. No notification.
+- **Activity link** (`activity_id`, `ON DELETE SET NULL`): "this ride was the race". The trigger requires the activity to belong to the race's rider (a coach cannot
+  link anything else; a foreign or unknown id fails with "Activity not found"), and an activity can be the race of at most one race (unique index). The
+  **same-day** rule is a UI rule (no server timezone, like planned workouts): the dialog only offers activities of the chosen day and drops the link when the date moves.
+- **UI**: 🏁 button in the day header next to "+" (plan workout) and 📝 (note) opens `CalendarRaceDialog`; races are priority-coloured chips (A red, B orange, C grey)
+  at the top of the day cell and listed in the week summary column; click a chip to edit / delete. A linked activity's chip is shown as the race (flag, race name,
+  priority colour). Same component on `/calendar` and `/coach/<riderId>/calendar`; own-account queries filter `rider_id` explicitly.
+- Out of scope: Intervals push, results tracking, multi-day events, "days to next A race" hint.
+- Pure logic and data helpers: `src/lib/calendarRaces.js` (tests in `src/lib/__tests__/calendarRaces.test.js`).
+
+
 ## Planned workouts (step 4b, `20261206000000_planned_workouts.sql`)
 
 Single workouts planned on a rider's calendar (no recurrence, no multi-week plans yet).
