@@ -251,3 +251,9 @@ created_by / updated_by -> profiles ON DELETE SET NULL, set_by_coach, created_at
 `user_onboarding_state(user_id PK -> profiles ON DELETE CASCADE, welcome_seen_at, onboarding_dismissed_at, news_seen_through TEXT, created_at, updated_at)`. Own-row SELECT/UPDATE
 RLS only (no coach/admin read, no client INSERT/DELETE); column-level UPDATE grant; trigger keeps `news_seen_through` monotonic. Created by a trigger on `profiles` or
 `ensure_my_onboarding_state()`; existing accounts are backfilled as onboarding done and news seen up to the migration date. See docs/news.md.
+
+## Activity comments (`20261204000000`, `20261212000000`, `20261214000000`, `20261215000000`)
+`activities.comments_enabled` (default true), `activity_comments` (flat stream, nullable `reply_to`, 1..2000 chars, `edited_at`),
+`activity_comment_mentions`, `activity_comment_log` (rate limit), `comment_reports`, `activity_comment_reads`. Readable by everyone
+who can see the activity (owner, active coach incl. private activities, others per `visibility`, blocks win); written **only** via
+SECURITY DEFINER RPCs. Notifications `activity_comment` / `comment_mention` (one unread per user + activity). Details: docs/comments.md.

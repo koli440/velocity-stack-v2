@@ -1,0 +1,15 @@
+create role anon; create role authenticated;
+create schema auth;
+create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('app.uid',true),'')::uuid $$;
+create table profiles(id uuid primary key, nickname text, first_name text, last_name text, avatar_url text, is_bot boolean default false);
+create table activities(id uuid primary key default gen_random_uuid(), user_id uuid references profiles(id), visibility text not null default 'public');
+create table follows(follower_id uuid, followee_id uuid);
+create table blocks(blocker_id uuid, blocked_id uuid);
+create table coaching_relationships(id uuid default gen_random_uuid(), coach_id uuid, rider_id uuid, status text);
+create table notifications(id uuid primary key default gen_random_uuid(), user_id uuid references profiles(id), actor_id uuid, type text, created_at timestamptz default now(), read_at timestamptz);
+create function is_blocked_between(a uuid,b uuid) returns boolean language sql stable security definer as $$ select exists(select 1 from blocks where (blocker_id=a and blocked_id=b) or (blocker_id=b and blocked_id=a)) $$;
+grant usage on schema public to authenticated, anon;
+create function profile_display_name(n text,f text,l text) returns text language sql as $$ select coalesce(n,f) $$;
+create function is_coach_of(p uuid) returns boolean language sql stable security definer as $$ select exists(select 1 from coaching_relationships c where c.coach_id=auth.uid() and c.rider_id=p and c.status='active' and not is_blocked_between(c.coach_id,c.rider_id)) $$;
+alter table profiles add column is_admin boolean default false;
+create function is_admin() returns boolean language sql stable security definer as $$ select coalesce((select is_admin from profiles where id=auth.uid()),false) $$;
