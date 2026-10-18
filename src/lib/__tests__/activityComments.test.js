@@ -5,6 +5,8 @@ import {
   activeMentionQuery,
   shouldFetchMentions,
   mentionHandle,
+  foldHandle,
+  profileMentionHandle,
   popoverPlacement,
   mentionStatusText,
   activityCommentsHref,
@@ -216,7 +218,7 @@ test('mentionHandle turns free-text nicknames into typeable handles', () => {
 
 test('activeMentionQuery and splitCommentBody handle accented handles', () => {
   assert.deepEqual(activeMentionQuery('hi @Jos', 7), { start: 3, query: 'Jos' })
-  const parts = splitCommentBody('hi @JoséR!', new Map([['joséR'.toLowerCase(), 'u1']]))
+  const parts = splitCommentBody('hi @JoséR!', new Map([[foldHandle('JoséR'), 'u1']]))
   assert.deepEqual(parts.filter((p) => p.type === 'mention'), [{ type: 'mention', text: '@JoséR', userId: 'u1' }])
 })
 
@@ -258,4 +260,18 @@ test('popoverPlacement opens below, flips above when cramped and stays on screen
   assert.equal(above.bottom, 104)
   const edge = popoverPlacement({ left: 380, top: 100, bottom: 160, width: 300 }, vp)
   assert.ok(edge.left + edge.width <= 392)
+})
+
+test('profileMentionHandle falls back to first+last name when the nickname is empty', () => {
+  assert.equal(profileMentionHandle({ nickname: null, first_name: 'Jana', last_name: 'Kolarova' }), 'JanaKolarova')
+  assert.equal(profileMentionHandle({ nickname: '  ', first_name: 'Jana', last_name: 'Kolářová' }), 'JanaKolářová')
+  assert.equal(profileMentionHandle({ nickname: 'jk', first_name: 'Jana', last_name: 'Kolarova' }), 'jk')
+  assert.equal(profileMentionHandle({ nickname: null, first_name: 'Jana', last_name: null }), 'Jana')
+  assert.equal(profileMentionHandle({ nickname: null, first_name: null, last_name: null }), null)
+})
+
+test('mention links resolve accent- and case-insensitively', () => {
+  assert.equal(foldHandle('JanaKolářová'), foldHandle('janakolarova'))
+  const parts = splitCommentBody('hey @janakolarova!', new Map([[foldHandle('JanaKolářová'), 'u9']]))
+  assert.deepEqual(parts.filter((p) => p.type === 'mention'), [{ type: 'mention', text: '@janakolarova', userId: 'u9' }])
 })

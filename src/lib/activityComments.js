@@ -77,6 +77,22 @@ export function activeMentionQuery(text, caret) {
   return { start, query }
 }
 
+// Lower-case + accent folding, the client twin of mention_fold() in SQL.
+export function foldHandle(text) {
+  return String(text ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l')
+}
+
+// Twin of profile_mention_handle(): nickname, else first+last collapsed, else first name.
+// Null only when the profile has nothing usable (the server then uses rider + short id).
+export function profileMentionHandle(profile) {
+  return (
+    mentionHandle(profile?.nickname) ||
+    mentionHandle(`${profile?.first_name ?? ''}${profile?.last_name ?? ''}`) ||
+    mentionHandle(profile?.first_name) ||
+    null
+  )
+}
+
 // Text shown in the suggestion popover while there is nothing to pick.
 export function mentionStatusText(status) {
   if (status === 'loading') return 'Searching…'
@@ -129,7 +145,7 @@ export function splitCommentBody(body, mentions) {
   while ((m = re.exec(text))) {
     const raw = m[2]
     const handle = raw.replace(/[.-]+$/, '')
-    const userId = mentions?.get?.(handle.toLowerCase())
+    const userId = mentions?.get?.(foldHandle(handle))
     if (!userId) continue
     const start = m.index + m[1].length
     if (start > last) parts.push({ type: 'text', text: text.slice(last, start) })
@@ -187,10 +203,10 @@ export async function fetchActivityComments(client, activityId) {
   // comment id -> (lower-case nickname -> user id), used to render mention links
   const mentions = new Map()
   for (const row of mentionRows || []) {
-    const handle = mentionHandle(profiles.get(row.user_id)?.nickname)
+    const handle = profileMentionHandle(profiles.get(row.user_id))
     if (!handle) continue
     if (!mentions.has(row.comment_id)) mentions.set(row.comment_id, new Map())
-    mentions.get(row.comment_id).set(handle.toLowerCase(), row.user_id)
+    mentions.get(row.comment_id).set(foldHandle(handle), row.user_id)
   }
   return { comments, profiles, mentions, error: null }
 }
