@@ -164,6 +164,7 @@ test('moderation helpers call the right endpoints', async () => {
   assert.equal((await setCommentsEnabled(client, { activityId: 'a1', enabled: false })).error, null)
   assert.ok(calls.some((c) => c[0] === 'activities' && c[1] === 'update' && c[2].comments_enabled === false))
   assert.match(commentErrorMessage({ message: 'Report limit reached' }), /too many/)
+})
 
 test('unread helpers map rpc rows and skip empty input', async () => {
   const { fetchUnreadCounts, fetchCoachUnreadComments, markCommentsRead } = await import('../activityComments.js')

@@ -218,6 +218,7 @@ export async function resolveCommentReport(client, { reportId, remove }) {
     p_remove: !!remove,
   })
   return { error: error || null }
+}
 
 // ---- Realtime + unread --------------------------------------------------------------------
 
