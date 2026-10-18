@@ -531,7 +531,7 @@ A coach may run his own (or a system) template on an athlete's activity. The ath
 never the DSL/manifest. See docs/coaching.md.
 
 ## Planned workouts
-A planned workout (see coaching.md) stores a **snapshot** of a template's DSL source and compiled manifest; the DSL itself is unchanged (no new syntax).
+A planned workout (see coaching.md) stores a **snapshot** of DSL text (typed or pre-filled from a template; validated client-side with `parseIntervalDsl`, size/shape-checked server-side) and its compiled manifest; the DSL itself is unchanged (no new syntax).
 `summarizeStructure` in `src/lib/plannedWorkouts.js` turns the stored manifest into a readable summary using only fields the engine already stores:
 step lines with their targets, a duration estimate (warm-up + cool-down + repeats x duration-keyed steps; distance-keyed steps are left out and flagged
 as partial) and a rough load estimate (TSS-like, `100 x hours x (mid-band %FTP / 100)^2`) from `%FTP` bands only. Legacy fixed patterns show just their pattern name.

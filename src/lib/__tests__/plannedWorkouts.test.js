@@ -9,6 +9,9 @@ import {
   summarizeStructure,
   suggestMatches,
   linkableActivities,
+  parseStructure,
+  workoutSummary,
+  setPlannedStructure,
   runForPlanned,
   groupPlannedByDay,
   shiftDayKey,
@@ -122,11 +125,51 @@ test('suggestMatches: ignores linked/skipped workouts, linked activities, other 
   assert.equal(suggestMatches(null, null).size, 0)
 })
 
-test('linkableActivities excludes activities linked elsewhere, nearest first', () => {
+test('linkableActivities lists the planned day only, free activities, same discipline first', () => {
   const ws = [W({ id: 'w1' }), W({ id: 'w2', activity_id: 'a2' })]
-  const acts = [act('a1', 8), act('a2', 9), { ...act('a3', 8), date: new Date(2026, 9, 25, 8) }]
-  assert.deepEqual(linkableActivities(ws[0], ws, acts).map((a) => a.id), ['a1', 'a3'])
-  assert.deepEqual(linkableActivities(ws[1], ws, acts).map((a) => a.id), ['a1', 'a2', 'a3'])
+  const trk = { ...act('a4', 10), discipline: 'track' }
+  const acts = [act('a1', 8), act('a2', 9), { ...act('a3', 8), date: new Date(2026, 9, 25, 8) }, trk, { ...act('a5', 23), date: new Date(2026, 9, 20, 23, 59) }, { ...act('a6', 0), date: new Date(2026, 9, 21, 0, 1) }]
+  assert.deepEqual(linkableActivities(ws[0], ws, acts).map((a) => a.id), ['a1', 'a5', 'a4'])
+  assert.deepEqual(linkableActivities(ws[1], ws, acts).map((a) => a.id), ['a1', 'a2', 'a5', 'a4'])
+  assert.deepEqual(linkableActivities(W({ discipline: 'gym' }), ws, acts).map((a) => a.id), ['a1', 'a4', 'a5'])
+})
+
+test('parseStructure validates with the template parser and builds the manifest', () => {
+  assert.equal(parseStructure('  \n ').empty, true)
+  const ok = parseStructure('4x\nwork 5min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP')
+  assert.deepEqual(ok.errors, [])
+  assert.equal(ok.manifest.repeat_count, 4)
+  assert.ok(parseStructure('nonsense').errors.length)
+  assert.equal(parseStructure('nonsense').manifest, null)
+  assert.ok(parseStructure('1x\nwork 1min ±30% @ best\n' + '#'.repeat(4000)).errors.length)
+  assert.equal(workoutSummary({ structure_dsl: '2x\nwork 5min ±30% @ 90-110%FTP' }).durationS, 600)
+  assert.equal(workoutSummary({ structure_dsl: null, structure_manifest: null }), null)
+})
+
+test('createPlanned sends the DSL snapshot, no stamps, and blocks invalid DSL', async () => {
+  const c = fakeClient({ rpc: { data: W(), error: null } })
+  const r = await createPlanned(c, { riderId: 'r', day: '2026-10-20', title: ' Easy ', dsl: '2x\nwork 5min ±30% @ 90-110%FTP', templateName: 'Tpl', created_by: 'evil' })
+  assert.ok(!r.error)
+  const [, name, args] = c.calls.find((x) => x[0] === 'rpc')
+  assert.equal(name, 'planned_workout_create')
+  assert.deepEqual(Object.keys(args).sort(), ['p_date', 'p_description', 'p_discipline', 'p_dsl', 'p_manifest', 'p_rider', 'p_template_name', 'p_title'])
+  assert.equal(args.p_dsl, '2x\nwork 5min ±30% @ 90-110%FTP')
+  assert.equal(args.p_manifest.repeat_count, 2)
+  const blank = fakeClient({ rpc: { data: W(), error: null } })
+  await createPlanned(blank, { riderId: 'r', day: '2026-10-20', title: 'Free', dsl: '  ', templateName: 'Ghost' })
+  const b = blank.calls.find((x) => x[0] === 'rpc')[2]
+  assert.deepEqual([b.p_dsl, b.p_manifest, b.p_template_name], [null, null, null])
+  const bad = fakeClient({ rpc: { data: W(), error: null } })
+  assert.ok((await createPlanned(bad, { riderId: 'r', day: '2026-10-20', title: 'x', dsl: 'garbage' })).error)
+  assert.equal(bad.calls.some((x) => x[0] === 'rpc'), false)
+  assert.ok((await createPlanned(c, { riderId: 'r', day: '2026-10-20', title: '' })).error)
+})
+
+test('setPlannedStructure parses client side and clears on blank', async () => {
+  const c = fakeClient({ rpc: { data: W(), error: null } })
+  await setPlannedStructure(c, 'w1', { dsl: '' })
+  assert.deepEqual(c.calls.find((x) => x[0] === 'rpc')[2], { p_id: 'w1', p_dsl: null, p_manifest: null, p_template_name: null })
+  assert.ok((await setPlannedStructure(c, 'w1', { dsl: 'nope' })).error)
 })
 
 test('runForPlanned finds the run of the planned structure on the linked activity', () => {
@@ -186,18 +229,6 @@ test('fetchPlannedInRange queries only the range and the rider', async () => {
   assert.deepEqual(await fetchPlannedInRange(c, { riderId: null, startDay: '2026-09-28', endDay: '2026-11-08' }), { data: [], error: null })
 })
 
-test('createPlanned sends no stamps and takes the template by id only', async () => {
-  const c = fakeClient({ rpc: { data: W(), error: null } })
-  const r = await createPlanned(c, { riderId: 'r', day: '2026-10-20', discipline: 'ride', title: ' Easy ', description: '', templateId: 't1', created_by: 'evil', set_by_coach: true })
-  assert.ok(!r.error)
-  const [, name, args] = c.calls.find((x) => x[0] === 'rpc')
-  assert.equal(name, 'planned_workout_create')
-  assert.deepEqual(Object.keys(args).sort(), ['p_date', 'p_description', 'p_discipline', 'p_rider', 'p_template', 'p_title'])
-  assert.equal(args.p_title, 'Easy')
-  assert.ok((await createPlanned(c, { riderId: 'r', day: '2026-10-20', title: '' })).error)
-  const bad = fakeClient({ rpc: { data: null, error: { message: 'Template not available' } } })
-  assert.equal((await createPlanned(bad, { riderId: 'r', day: '2026-10-20', title: 'x', templateId: 't' })).error.message, 'Template not available')
-})
 
 test('updatePlanned only patches client-writable columns; deletePlanned; link', async () => {
   const c = fakeClient({ select: { data: W({ title: 'New' }), error: null } })

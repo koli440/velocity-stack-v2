@@ -15,7 +15,8 @@ function badgeFor(t, userId) {
 
 function Row({ t, userId, selected, ran, starred, canFavorite, menuOpen, onSelect, onToggleStar, onToggleMenu, onEdit, onDelete }) {
   const [label, cls] = badgeFor(t, userId)
-  const perms = templatePermissions(t, userId)
+  const base = templatePermissions(t, userId)
+  const perms = { ...base, canEdit: base.canEdit && !!onEdit, canDelete: base.canDelete && !!onDelete }
   return (
     <div
       data-template-id={t.id}
@@ -69,7 +70,7 @@ function Row({ t, userId, selected, ran, starred, canFavorite, menuOpen, onSelec
   )
 }
 
-function Preview({ t, userId, ran }) {
+function Preview({ t, userId, ran, showDefinition }) {
   if (!t) return <p className="text-[11px] text-slate-400">Select a template to preview it.</p>
   const [label] = badgeFor(t, userId)
   const owner = isSystemTemplate(t) ? 'System' : userId && t.user_id === userId ? 'You' : 'Community'
@@ -98,6 +99,12 @@ function Preview({ t, userId, ran }) {
           </div>
         )}
       </div>
+      {showDefinition && t.dsl_source && (
+        <div>
+          <div className="text-[9px] uppercase font-bold text-slate-400 mb-1">Definition</div>
+          <pre className="whitespace-pre-wrap break-words rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-2 text-[10px] text-slate-700 dark:text-slate-200">{t.dsl_source}</pre>
+        </div>
+      )}
       {ran && (
         <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5">
           Already run on this activity — re-running replaces the existing run.
@@ -110,13 +117,17 @@ function Preview({ t, userId, ran }) {
 export default function TemplatePickerModal({
   templates,
   userId,
-  runTemplateIds,
+  runTemplateIds = new Set(),
+  title = 'Add template run',
+  showDefinition = false,
+  confirmLabel = 'Run',
+  busyLabel = 'Running…',
   favoriteIds,
   recentIds,
   selectedId,
   onSelect,
-  showOnChart,
-  onShowOnChartChange,
+  showOnChart = false,
+  onShowOnChartChange = null,
   running,
   onToggleFavorite,
   onRun,
@@ -199,8 +210,8 @@ export default function TemplatePickerModal({
     onSelect: (id) => { setMenuId(null); onSelect(id) },
     onToggleStar: onToggleFavorite,
     onToggleMenu: (id) => setMenuId((m) => (m === id ? null : id)),
-    onEdit: (tpl) => { setMenuId(null); onEdit(tpl) },
-    onDelete: (tpl) => { setMenuId(null); onDelete(tpl) },
+    onEdit: (tpl) => { setMenuId(null); onEdit?.(tpl) },
+    onDelete: (tpl) => { setMenuId(null); onDelete?.(tpl) },
   })
   const heading = 'text-[10px] font-black uppercase tracking-wider text-slate-400'
 
@@ -209,12 +220,12 @@ export default function TemplatePickerModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose} onKeyDown={onKeyDown}>
         <div
           role="dialog"
-          aria-label="Add template run"
+          aria-label={title}
           className="w-full max-w-4xl h-[80vh] flex flex-col bg-white dark:bg-surface-darkCard rounded-3xl border border-slate-200 dark:border-surface-darkBorder"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-5 pb-3 space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Add template run</h3>
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">{title}</h3>
             <input
               ref={searchRef}
               type="search"
@@ -262,21 +273,25 @@ export default function TemplatePickerModal({
               )}
             </div>
             <div className="hidden md:block overflow-y-auto p-4 border-l border-slate-100 dark:border-slate-800">
-              <Preview t={selected} userId={userId} ran={!!selected && runTemplateIds.has(selected.id)} />
+              <Preview t={selected} userId={userId} ran={!!selected && runTemplateIds.has(selected.id)} showDefinition={showDefinition} />
             </div>
           </div>
 
           <div className="p-4 flex items-center justify-between gap-3 flex-wrap">
-            <label className="flex items-center gap-2 text-[11px] text-slate-500">
-              <input type="checkbox" checked={showOnChart} onChange={(e) => onShowOnChartChange(e.target.checked)} /> Show on chart after run
-            </label>
+            {onShowOnChartChange ? (
+              <label className="flex items-center gap-2 text-[11px] text-slate-500">
+                <input type="checkbox" checked={showOnChart} onChange={(e) => onShowOnChartChange(e.target.checked)} /> Show on chart after run
+              </label>
+            ) : <span />}
             <div className="flex items-center gap-3">
-              <button type="button" className="text-[10px] font-black uppercase tracking-wider text-slate-400" onClick={onCreate}>
-                + Create new template
-              </button>
+              {onCreate && (
+                <button type="button" className="text-[10px] font-black uppercase tracking-wider text-slate-400" onClick={onCreate}>
+                  + Create new template
+                </button>
+              )}
               <button type="button" onClick={onClose} className={`${btn} bg-slate-100 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200`}>Cancel</button>
               <button type="button" disabled={running || !selectedId} onClick={() => onRun(selectedId)} className={`${btn} bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50`}>
-                {running ? 'Running…' : 'Run'}
+                {running ? busyLabel : confirmLabel}
               </button>
             </div>
           </div>

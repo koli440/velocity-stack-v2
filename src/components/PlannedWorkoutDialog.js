@@ -1,9 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import PlannedTemplatePicker from './PlannedTemplatePicker'
+import { DSL_GUIDE_PATH } from '../lib/dslGuide'
 import {
   PLANNED_DESCRIPTION_MAX,
   PLANNED_DISCIPLINES,
+  PLANNED_DSL_MAX,
   PLANNED_DISCIPLINE_LABELS,
   PLANNED_STATUS_LABELS,
   PLANNED_TITLE_MAX,
@@ -14,6 +17,7 @@ import {
   plannedByLabel,
   plannedEditedLabel,
   plannedStatus,
+  parseStructure,
   summarizeStructure,
   validatePlanned,
 } from '../lib/plannedWorkouts'
@@ -51,13 +55,16 @@ function RunResult({ run }) {
  * The rider and the rider's active coach may do everything here (the database decides).
  */
 export default function PlannedWorkoutDialog({
-  workout, day, names, viewerId, templates, activities, workouts, countByDay, suggestedActivityId, run, actions, onClose,
+  workout, day, names, viewerId, activities, workouts, countByDay, suggestedActivityId, run, actions, onClose,
 }) {
   const creating = !workout
   const [title, setTitle] = useState(workout?.title || '')
   const [description, setDescription] = useState(workout?.description || '')
   const [discipline, setDiscipline] = useState(workout?.discipline || 'ride')
-  const [templateId, setTemplateId] = useState('')
+  const [dsl, setDsl] = useState(workout?.structure_dsl || '')
+  const [templateName, setTemplateName] = useState(workout?.source_template_name || null)
+  const [step, setStep] = useState(workout ? 'form' : 'choose') // choose -> (picker) -> form
+  const [picking, setPicking] = useState(false)
   const [targetDay, setTargetDay] = useState(workout ? workout.workout_date : dayKey(day))
   const [copyDay, setCopyDay] = useState(workout ? defaultDuplicateDay(workout) : '')
   const [linkId, setLinkId] = useState(suggestedActivityId || '')
@@ -65,7 +72,8 @@ export default function PlannedWorkoutDialog({
   const [error, setError] = useState(null)
 
   const status = workout ? plannedStatus(workout) : 'planned'
-  const summary = useMemo(() => summarizeStructure(workout?.structure_manifest), [workout])
+  const parsed = useMemo(() => parseStructure(dsl), [dsl])
+  const summary = useMemo(() => (parsed.manifest ? summarizeStructure(parsed.manifest) : null), [parsed])
   const linkable = useMemo(() => (workout ? linkableActivities(workout, workouts, activities) : []), [workout, workouts, activities])
   const linked = workout?.activity_id ? (activities || []).find((a) => a.id === workout.activity_id) : null
   const edited = workout ? plannedEditedLabel(workout, names, viewerId) : null
@@ -83,20 +91,60 @@ export default function PlannedWorkoutDialog({
 
   const save = (e) => {
     e.preventDefault()
-    const v = validatePlanned({ title, description, discipline, day: targetDay, hasTemplate: creating && !!templateId })
+    if (parsed.errors.length) return setError('Fix the workout definition errors first.')
+    const v = validatePlanned({ title, description, discipline, day: targetDay, hasTemplate: !parsed.empty && !!templateName })
     if (v.error) return setError(v.error)
+    const structure = { dsl, templateName: parsed.empty ? null : templateName }
+    const changed = !creating && (parsed.dsl || '') !== (workout.structure_dsl || '')
     return run_(
-      () => (creating
-        ? actions.create({ day: targetDay, discipline, title, description, templateId: templateId || null })
-        : actions.update({ title, description, discipline })),
+      async () => {
+        if (creating) return actions.create({ day: targetDay, discipline, title, description, ...structure })
+        const err = await actions.update({ title, description, discipline })
+        return err || (changed ? actions.setStructure(structure) : null)
+      },
       { close: true }
     )
   }
 
   const moveCheck = workout ? canMoveTo(workout, targetDay, countByDay) : { ok: true }
+  const pick = ({ name, dsl: text }) => {
+    setDsl(text)
+    setTemplateName(name)
+    setPicking(false)
+    setStep('form')
+    if (!title.trim()) setTitle(name.slice(0, PLANNED_TITLE_MAX))
+  }
+
   const copyOk = isDayKey(copyDay) && (countByDay?.[copyDay] || 0) < 20
 
+  if (creating && step === 'choose') {
+    const choice = 'rounded-xl border border-slate-200 dark:border-slate-700 p-3 text-left hover:border-emerald-500 transition'
+    return (
+      <>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3" role="dialog" aria-modal="true" aria-label="Plan workout" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm space-y-3 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 shadow-xl">
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Plan workout</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{dayLabel}</p>
+            </div>
+            <button type="button" className={choice} onClick={() => setStep('form')} data-testid="planned-blank">
+              <b className="block text-sm text-slate-900 dark:text-white">Blank workout</b>
+              <span className="text-xs text-slate-500">Start with an empty definition.</span>
+            </button>
+            <button type="button" className={choice} onClick={() => setPicking(true)} data-testid="planned-from-template">
+              <b className="block text-sm text-slate-900 dark:text-white">From template</b>
+              <span className="text-xs text-slate-500">Search your templates and pre-fill the definition.</span>
+            </button>
+            <button type="button" onClick={onClose} className={btn}>Cancel</button>
+          </div>
+        </div>
+        {picking && <PlannedTemplatePicker userId={viewerId} onPick={pick} onClose={() => setPicking(false)} />}
+      </>
+    )
+  }
+
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 overflow-y-auto" role="dialog" aria-modal="true" aria-label={creating ? 'Plan workout' : 'Planned workout'} onClick={onClose}>
       <form onSubmit={save} onClick={(e) => e.stopPropagation()} className="w-full max-w-lg space-y-3 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 shadow-xl max-h-[90vh] overflow-y-auto">
         <div>
@@ -128,19 +176,33 @@ export default function PlannedWorkoutDialog({
             <input type="date" className={field} value={targetDay} onChange={(e) => setTargetDay(e.target.value)} />
           </label>
         )}
-        <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
-          {creating ? 'Structure from template (optional)' : 'Replace structure from template (optional)'}
-          <select className={field} value={templateId} onChange={(e) => setTemplateId(e.target.value)} data-testid="planned-template">
-            <option value="">{creating ? 'No structure' : 'Keep current structure'}</option>
-            {!creating && workout.structure_manifest && <option value="__none__">Remove structure</option>}
-            {(templates || []).map((t) => <option key={t.id} value={t.id}>{t.name}{t.user_id ? '' : ' (system)'}</option>)}
-          </select>
-        </label>
-        {!creating && templateId && (
-          <button type="button" className={btn} disabled={busy} onClick={() => run_(() => actions.setTemplate(templateId === '__none__' ? null : templateId)).then((ok) => ok && setTemplateId(''))}>
-            Apply structure
-          </button>
-        )}
+        <div className="space-y-1" data-testid="planned-dsl">
+          <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
+            <label htmlFor="planned-dsl-text">
+              Workout definition (DSL){templateName ? <span className="font-normal text-slate-400"> · based on {templateName}</span> : ''}
+            </label>
+            <span className="flex items-center gap-2">
+              <button type="button" className="text-emerald-600 hover:underline" onClick={() => setPicking(true)}>From template…</button>
+              <a href={DSL_GUIDE_PATH} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline">DSL guide</a>
+            </span>
+          </div>
+          <textarea
+            id="planned-dsl-text"
+            className={`${field} mt-0 min-h-[7rem] font-mono text-xs ${parsed.errors.length ? 'border-rose-500' : ''}`}
+            value={dsl}
+            maxLength={PLANNED_DSL_MAX}
+            spellCheck={false}
+            aria-invalid={parsed.errors.length > 0}
+            placeholder={'Optional, e.g.\n4x\nwork 5min ±30% @ 90-110%FTP\nrecovery 2min ±50% @ <55%FTP'}
+            onChange={(e) => setDsl(e.target.value)}
+          />
+          {parsed.errors.length > 0 && (
+            <ul className="text-[11px] font-semibold text-rose-500 space-y-0.5" role="alert" data-testid="planned-dsl-errors">
+              {parsed.errors.slice(0, 5).map((er, i) => <li key={i}>{er.line ? `Line ${er.line}: ` : ''}{er.message}</li>)}
+            </ul>
+          )}
+          <p className="text-[11px] text-slate-400">A template only pre-fills this box. The workout keeps its own copy that you can edit freely.</p>
+        </div>
         <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
           Notes
           <textarea className={`${field} min-h-[5rem]`} value={description} maxLength={PLANNED_DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} />
@@ -148,21 +210,13 @@ export default function PlannedWorkoutDialog({
 
         {summary && (
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-xs space-y-1" data-testid="planned-structure">
-            <div className="font-bold text-slate-900 dark:text-white">
-              Structure{workout.source_template_name ? ` · ${workout.source_template_name}` : ''}
-            </div>
+            <div className="font-bold text-slate-900 dark:text-white">Structure</div>
             <pre className="whitespace-pre-wrap font-sans text-slate-600 dark:text-slate-300">{summary.lines.join('\n')}</pre>
             <div className="text-slate-500 dark:text-slate-400">
               {summary.durationS ? `~${formatDuration(summary.durationS)} h${summary.partial ? '+' : ''}` : ''}
               {summary.load ? `${summary.durationS ? ' · ' : ''}load ~${summary.load}` : ''}
               {summary.partial ? ' (distance-based steps not counted)' : ''}
             </div>
-            {workout.structure_dsl && (
-              <details>
-                <summary className="cursor-pointer text-slate-400">Definition</summary>
-                <code className="block whitespace-pre-wrap break-words">{workout.structure_dsl}</code>
-              </details>
-            )}
           </div>
         )}
 
@@ -183,13 +237,14 @@ export default function PlannedWorkoutDialog({
               </div>
             ) : (
               <div className="space-y-1">
+                {linkable.length === 0 && <p className="text-slate-500">No activities on this day.</p>}
                 {suggestedActivityId && <p className="text-emerald-600 dark:text-emerald-400 font-semibold">Suggested match found (same day and discipline). Confirm or choose another.</p>}
                 <div className="flex gap-2">
                   <select className={field.replace('mt-1 ', '')} value={linkId} onChange={(e) => setLinkId(e.target.value)} aria-label="Activity to link">
                     <option value="">Choose an activity…</option>
                     {linkable.map((a) => (
                       <option key={a.id} value={a.id}>
-                        {formatDate(a.date, { day: 'numeric', month: 'short' })} · {a.title}{a.id === suggestedActivityId ? ' (suggested)' : ''}
+                        {formatDate(a.date, { hour: '2-digit', minute: '2-digit' })} · {a.title}{a.id === suggestedActivityId ? ' (suggested)' : ''}
                       </option>
                     ))}
                   </select>
@@ -245,5 +300,7 @@ export default function PlannedWorkoutDialog({
         </div>
       </form>
     </div>
+    {picking && <PlannedTemplatePicker userId={viewerId} onPick={pick} onClose={() => setPicking(false)} />}
+    </>
   )
 }
