@@ -49,7 +49,18 @@ export function relativeTime(iso, now = Date.now()) {
 
 // ---- @mentions ----------------------------------------------------------------------------
 
-const HANDLE_CHAR = /[A-Za-z0-9_.-]/
+const HANDLE_CHAR = /[\p{L}\p{N}_.-]/u
+const HANDLE_WORD_CHAR = /[\p{L}\p{N}_]/u
+
+// Same rule as mention_handle() in SQL: a nickname minus everything that cannot be typed in
+// an @handle ("Koen O." -> "KoenO"). Null when nothing is left.
+export function mentionHandle(nickname) {
+  const h = String(nickname ?? '')
+    .replace(/[^\p{L}\p{N}_.-]+/gu, '')
+    .replace(/[.-]+$/, '')
+    .slice(0, 40)
+  return h || null
+}
 
 // The @handle being typed at the caret ("hi @jo|"), or null. The "@" must start a word,
 // mirroring the server-side parser.
@@ -60,10 +71,17 @@ export function activeMentionQuery(text, caret) {
   while (i > 0 && HANDLE_CHAR.test(value[i - 1])) i -= 1
   if (i === 0 || value[i - 1] !== '@') return null
   const start = i - 1
-  if (start > 0 && /[A-Za-z0-9_]/.test(value[start - 1])) return null
+  if (start > 0 && HANDLE_WORD_CHAR.test(value[start - 1])) return null
   const query = value.slice(i, pos)
   if (query.length > MENTION_QUERY_MAX) return null
   return { start, query }
+}
+
+// Text shown in the suggestion popover while there is nothing to pick.
+export function mentionStatusText(status) {
+  if (status === 'loading') return 'Searching…'
+  if (status === 'error') return "Couldn't load suggestions"
+  return 'No matches'
 }
 
 // A bare "@" (empty query) must already open the suggestions; only "no mention" does not.
@@ -89,7 +107,7 @@ export function applyMention(text, mention, caret, nickname) {
 export function splitCommentBody(body, mentions) {
   const text = String(body ?? '')
   const parts = []
-  const re = /(^|[^A-Za-z0-9_])@([A-Za-z0-9_.-]{1,40})/g
+  const re = /(^|[^\p{L}\p{N}_])@([\p{L}\p{N}_.-]{1,40})/gu
   let last = 0
   let m
   while ((m = re.exec(text))) {
@@ -153,10 +171,10 @@ export async function fetchActivityComments(client, activityId) {
   // comment id -> (lower-case nickname -> user id), used to render mention links
   const mentions = new Map()
   for (const row of mentionRows || []) {
-    const nick = profiles.get(row.user_id)?.nickname
-    if (!nick) continue
+    const handle = mentionHandle(profiles.get(row.user_id)?.nickname)
+    if (!handle) continue
     if (!mentions.has(row.comment_id)) mentions.set(row.comment_id, new Map())
-    mentions.get(row.comment_id).set(nick.toLowerCase(), row.user_id)
+    mentions.get(row.comment_id).set(handle.toLowerCase(), row.user_id)
   }
   return { comments, profiles, mentions, error: null }
 }
@@ -188,7 +206,10 @@ export async function searchMentionCandidates(client, { activityId, query }) {
     p_activity: activityId,
     p_query: query,
   })
-  if (error) return { candidates: [], error }
+  if (error) {
+    console.error('activity_mention_candidates failed', error)
+    return { candidates: [], error }
+  }
   return { candidates: data || [], error: null }
 }
 
