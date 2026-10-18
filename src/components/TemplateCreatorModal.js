@@ -30,6 +30,7 @@ function formatBandLabel(step) {
 }
 
 function formatDurationLabel(sec) {
+  if (sec % 3600 === 0 && sec >= 3600) return `${sec / 3600}h`
   if (sec % 60 === 0 && sec >= 60) return `${sec / 60}:00`
   const m = Math.floor(sec / 60)
   const s = sec % 60

@@ -29,6 +29,9 @@
 //   1x
 //   work 200m ±10% @ best speed
 //
+// Hours are a duration unit too (`h`, also `hr`/`hrs`/`hour`/`hours`): `work 2h @ Z2`.
+// The `±N%` tolerance is optional and defaults to `±0%`: `work 15min @ Z3`.
+//
 // Bands can also target heart rate (`bpm`, `%HRmax`) or cadence (`rpm`):
 //
 //   3x
@@ -130,8 +133,8 @@ import {
 const METRICS_LINE_RE = /^metrics\b\s*:?\s*(.*)$/i
 const METRIC_TOKEN_RE = /^([a-z0-9_]+)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*(min|sec|s)\s*\))?$/i
 const REPEAT_LINE_RE = /^(?:(\d+)\s*sets?\s*of\s*)?(\d+)\s*x$/i
-const STEP_LINE_RE = /^(then\s+|set\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(minutes?|mins?|seconds?|secs?|km|m|s)\s*±\s*(\d+(?:\.\d+)?)\s*%\s*@\s*(.+)$/i
-const EXCLUDE_LINE_RE = /^(warm-?up|cool-?down)\s+(\d+(?:\.\d+)?)\s*(min|sec)$/i
+const STEP_LINE_RE = /^(then\s+|set\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|minutes?|mins?|seconds?|secs?|km|m|s)(?:\s*±\s*(\d+(?:\.\d+)?)\s*%)?\s*@\s*(.+)$/i
+const EXCLUDE_LINE_RE = /^(warm-?up|cool-?down)\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|min|sec)$/i
 const RANGE_BAND_RE = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W\/kg|W|km\/h)$/i
 const MAX_BAND_RE = /^<\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W\/kg|W|km\/h)$/i
 const MIN_BAND_RE = /^>\s*(\d+(?:\.\d+)?)\s*(%LT1HR|%LT2HR|%LT1|%LT2|%FTP|%HRmax|bpm|rpm|W\/kg|W|km\/h)$/i
@@ -354,7 +357,8 @@ export function parseIntervalDsl(text) {
     }
     if (ex) {
       const isWarmup = ex[1].toLowerCase().startsWith('warm')
-      const sec = parseFloat(ex[2]) * (ex[3].toLowerCase() === 'min' ? 60 : 1)
+      const exUnit = ex[3].toLowerCase()
+      const sec = parseFloat(ex[2]) * (exUnit.startsWith('h') ? 3600 : exUnit === 'min' ? 60 : 1)
       if (!(sec > 0)) {
         errors.push({ line: lineNo, message: `${isWarmup ? 'Warm-up' : 'Cool-down'} duration must be greater than 0.` })
       } else if ((isWarmup ? warmupSec : cooldownSec) != null) {
@@ -416,7 +420,7 @@ export function parseIntervalDsl(text) {
         line: lineNo,
         message:
           `Could not parse step line "${line}". Expected format: ` +
-          '"[then] work|recovery <value><min|sec|km|m> ±<tolerance>% @ <band>" (or "warmup <n>min|sec" / "cooldown <n>min|sec", a group line like "6x", or "end").',
+          '"[then] work|recovery <value><h|min|sec|km|m> [±<tolerance>%] @ <band>" (or "warmup <n>h|min|sec" / "cooldown <n>h|min|sec", a group line like "6x", or "end").',
       })
       return
     }
@@ -427,7 +431,7 @@ export function parseIntervalDsl(text) {
     const contiguous = Boolean(prefixRaw) && !isSetRecovery
     if (isSetRecovery) {
       if (role !== 'recovery') {
-        errors.push({ line: lineNo, message: '"set" can only prefix a recovery line: "set recovery <value> ±<tol>% @ <band>".' })
+        errors.push({ line: lineNo, message: '"set" can only prefix a recovery line: "set recovery <value> [±<tol>%] @ <band>".' })
       } else if (setCount == null) {
         errors.push({ line: lineNo, message: '"set recovery" needs a first line like "3 sets of 5x".' })
       } else if (setRecovery) {
@@ -442,10 +446,11 @@ export function parseIntervalDsl(text) {
     }
     const value = parseFloat(valueRaw)
     const unitText = unitRaw.toLowerCase()
-    const unit = unitText.startsWith('min') ? 'min' : unitText.startsWith('s') ? 'sec' : unitText
-    const tolerance = parseFloat(toleranceRaw)
+    const unit = unitText.startsWith('h') ? 'h' : unitText.startsWith('min') ? 'min' : unitText.startsWith('s') ? 'sec' : unitText
+    // An omitted tolerance is exactly "±0%" (the band's own rules, e.g. a bare 50W = ±5%, are separate).
+    const tolerance = toleranceRaw == null ? 0 : parseFloat(toleranceRaw)
     const keyBy = unit === 'km' || unit === 'm' ? 'distance' : 'duration'
-    const targetDurationSec = keyBy === 'duration' ? (unit === 'min' ? value * 60 : value) : null
+    const targetDurationSec = keyBy === 'duration' ? (unit === 'h' ? value * 3600 : unit === 'min' ? value * 60 : value) : null
     const targetDistanceM = keyBy === 'distance' ? (unit === 'km' ? value * 1000 : value) : null
 
     if (keyBy === 'duration' && !(targetDurationSec > 0)) {
