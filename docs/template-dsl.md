@@ -535,3 +535,7 @@ A planned workout (see coaching.md) stores a **snapshot** of DSL text (typed or 
 `summarizeStructure` in `src/lib/plannedWorkouts.js` turns the stored manifest into a readable summary using only fields the engine already stores:
 step lines with their targets, a duration estimate (warm-up + cool-down + repeats x duration-keyed steps; distance-keyed steps are left out and flagged
 as partial) and a rough load estimate (TSS-like, `100 x hours x (mid-band %FTP / 100)^2`) from `%FTP` bands only. Legacy fixed patterns show just their pattern name.
+
+### Preview chart
+`buildPreview` (`src/lib/workoutPreview.js`) lays out a parsed manifest on a time axis: warm-up, sets x repeats x steps, set recovery, cool-down. Warm-up / cool-down ramps and
+steps without a power target are drawn at default levels (display only, no new DSL). Zones use fixed %FTP bounds for drawing.
