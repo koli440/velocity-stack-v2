@@ -10,12 +10,18 @@ const RIDER = 'r1'
 const conn = (over = {}) => ({ id: 'c1', user_id: RIDER, provider: 'intervals', external_athlete_id: 'i9', api_key: 'KEY', status: 'active', backfill_days: 30, push_planned_workouts: true, planned_push_attempt_at: null, ...over })
 const wk = (id, date, over = {}) => ({ id, rider_id: RIDER, workout_date: date, discipline: 'ride', title: `T${id}`, description: '', structure_dsl: null, structure_manifest: null, status: 'planned', activity_id: null, ...over })
 const mk = (client) => () => client
+// Same contract as loadIntervalsConnection (server/connections.js, which needs @supabase/supabase-js).
+const loadConnection = async ({ supabase, userId }) => {
+  const { data } = await supabase.from('connections').select('x').eq('user_id', userId).eq('provider', 'intervals').maybeSingle()
+  if (!data || data.status === 'disconnected' || !data.api_key) return { athleteId: null, apiKey: null, status: data?.status ?? null, source: 'none' }
+  return { athleteId: data.external_athlete_id, apiKey: data.api_key, status: data.status, source: 'connections' }
+}
 const quiet = { deadline: Date.now() + 60000 }
 
 test('push creates an event and stores the mapping', async () => {
   const sb = fakeSupabase({ connections: [conn()], planned_workout_pushes: [], planned_workouts: [] })
   const client = fakeEventsClient()
-  const r = await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client) })
+  const r = await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client), loadConnection })
   assert.equal(r.state, 'pushed')
   assert.equal(client.calls.find((c) => c[0] === 'create')[1].external_id, externalIdFor('w1'))
   const row = sb.db.planned_workout_pushes[0]
@@ -27,8 +33,8 @@ test('push creates an event and stores the mapping', async () => {
 test('second push updates the same event', async () => {
   const sb = fakeSupabase({ connections: [conn()], planned_workout_pushes: [], planned_workouts: [] })
   const client = fakeEventsClient()
-  await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client) })
-  await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-06', { title: 'new' }), now: NOW, makeClient: mk(client) })
+  await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client), loadConnection })
+  await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-06', { title: 'new' }), now: NOW, makeClient: mk(client), loadConnection })
   assert.equal(client.calls.filter((c) => c[0] === 'create').length, 1)
   const upd = client.calls.find((c) => c[0] === 'update')
   assert.equal(upd[2].start_date_local, '2026-12-06T00:00:00')
@@ -37,7 +43,7 @@ test('second push updates the same event', async () => {
 test('remote event deleted in Intervals (404 on update) is recreated', async () => {
   const sb = fakeSupabase({ connections: [conn()], planned_workout_pushes: [{ workout_id: 'w1', rider_id: RIDER, intervals_event_id: '5', push_status: 'pushed', pushed_hash: 'old' }], planned_workouts: [] })
   const client = fakeEventsClient({ update: () => { throw new PushError('not_found', 'x', { status: 404 }) } })
-  const r = await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client) })
+  const r = await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client), loadConnection })
   assert.equal(r.recreated, true)
   assert.notEqual(sb.db.planned_workout_pushes[0].intervals_event_id, '5')
 })
@@ -45,7 +51,7 @@ test('remote event deleted in Intervals (404 on update) is recreated', async () 
 test('lost response: adopts the event with our external id instead of duplicating', async () => {
   const sb = fakeSupabase({ connections: [conn()], planned_workout_pushes: [], planned_workouts: [] })
   const client = fakeEventsClient({ find: () => '321' })
-  await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client) })
+  await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client), loadConnection })
   assert.ok(!client.calls.some((c) => c[0] === 'create'))
   assert.equal(sb.db.planned_workout_pushes[0].intervals_event_id, '321')
 })
@@ -54,7 +60,7 @@ test('not connected / disconnected / error connection is refused with an actiona
   for (const connections of [[], [conn({ status: 'disconnected', api_key: null })], [conn({ status: 'error' })]]) {
     const sb = fakeSupabase({ connections, planned_workout_pushes: [], planned_workouts: [], profile_secrets: [] })
     const client = fakeEventsClient()
-    const e = await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client) }).catch((x) => x)
+    const e = await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client), loadConnection }).catch((x) => x)
     assert.equal(e.code, 'not_connected')
     assert.match(e.message, /Settings/)
     assert.equal(client.calls.length, 0)
@@ -64,7 +70,7 @@ test('not connected / disconnected / error connection is refused with an actiona
 test('API failure stores a readable last_error, keeps the mapping, never the key', async () => {
   const sb = fakeSupabase({ connections: [conn()], planned_workout_pushes: [{ workout_id: 'w1', rider_id: RIDER, intervals_event_id: '5', push_status: 'pushed', pushed_hash: 'old' }], planned_workouts: [] })
   const client = fakeEventsClient({ update: () => { throw new PushError('forbidden', 'read-only key', { fatal: true }) } })
-  await assert.rejects(pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client) }))
+  await assert.rejects(pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(client), loadConnection }))
   const row = sb.db.planned_workout_pushes[0]
   assert.equal(row.push_status, 'error')
   assert.equal(row.last_error, 'read-only key')
@@ -74,7 +80,7 @@ test('API failure stores a readable last_error, keeps the mapping, never the key
 
 test('concurrent push is refused while a claim is active', async () => {
   const sb = fakeSupabase({ connections: [conn()], planned_workout_pushes: [{ workout_id: 'w1', rider_id: RIDER, push_status: 'pending', claimed_until: new Date(NOW + 60000).toISOString() }], planned_workouts: [] })
-  const e = await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(fakeEventsClient()) }).catch((x) => x)
+  const e = await pushPlannedWorkout({ service: sb, workout: wk('w1', '2026-12-05'), now: NOW, makeClient: mk(fakeEventsClient()), loadConnection }).catch((x) => x)
   assert.equal(e.code, 'busy')
 })
 
@@ -82,13 +88,13 @@ test('remove deletes our event, leaves foreign events alone, drops the mapping',
   const mkdb = () => fakeSupabase({ connections: [conn()], planned_workout_pushes: [{ workout_id: 'w1', rider_id: RIDER, intervals_event_id: '5', push_status: 'pushed' }], planned_workouts: [] })
   let sb = mkdb()
   let client = fakeEventsClient({ extId: () => externalIdFor('w1') })
-  await removePlannedWorkoutPush({ service: sb, riderId: RIDER, workoutId: 'w1', now: NOW, makeClient: mk(client) })
+  await removePlannedWorkoutPush({ service: sb, riderId: RIDER, workoutId: 'w1', now: NOW, makeClient: mk(client), loadConnection })
   assert.ok(client.calls.some((c) => c[0] === 'remove'))
   assert.equal(sb.db.planned_workout_pushes.length, 0)
 
   sb = mkdb()
   client = fakeEventsClient({ extId: () => 'someone-else' })
-  await removePlannedWorkoutPush({ service: sb, riderId: RIDER, workoutId: 'w1', now: NOW, makeClient: mk(client) })
+  await removePlannedWorkoutPush({ service: sb, riderId: RIDER, workoutId: 'w1', now: NOW, makeClient: mk(client), loadConnection })
   assert.ok(!client.calls.some((c) => c[0] === 'remove'))
   assert.equal(sb.db.planned_workout_pushes.length, 0)
 })
@@ -96,7 +102,7 @@ test('remove deletes our event, leaves foreign events alone, drops the mapping',
 test('another rider cannot remove a mapping they do not own', async () => {
   const sb = fakeSupabase({ connections: [conn()], planned_workout_pushes: [{ workout_id: 'w1', rider_id: RIDER, intervals_event_id: '5', push_status: 'pushed' }], planned_workouts: [] })
   const client = fakeEventsClient()
-  const r = await removePlannedWorkoutPush({ service: sb, riderId: 'other', workoutId: 'w1', now: NOW, makeClient: mk(client) })
+  const r = await removePlannedWorkoutPush({ service: sb, riderId: 'other', workoutId: 'w1', now: NOW, makeClient: mk(client), loadConnection })
   assert.equal(r.removed, false)
   assert.equal(client.calls.length, 0)
   assert.equal(sb.db.planned_workout_pushes.length, 1)
@@ -123,7 +129,7 @@ test('cycle: pushes new/changed in window only, propagates tombstones, skips unc
     ],
   })
   const client = fakeEventsClient({ extId: (id) => (id === '9' ? externalIdFor('gone') : id === '6' ? externalIdFor('w6') : undefined) })
-  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient: mk(client) })
+  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient: mk(client), loadConnection })
   assert.deepEqual([t.pushed, t.removed, t.failed], [2, 2, 0])
   const kinds = client.calls.map((c) => c[0] + (c[1]?.name || c[1] || ''))
   assert.ok(client.calls.some((c) => c[0] === 'remove' && c[1] === '9'))
@@ -141,7 +147,7 @@ test('cycle: disabled riders are not pushed but still get tombstones deleted', a
     planned_workout_pushes: [{ workout_id: 'gone', rider_id: RIDER, intervals_event_id: '9', push_status: 'pending_delete' }],
   })
   const client = fakeEventsClient({ extId: () => externalIdFor('gone') })
-  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient: mk(client) })
+  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient: mk(client), loadConnection })
   assert.deepEqual([t.pushed, t.removed], [0, 1])
   assert.ok(!client.calls.some((c) => c[0] === 'create'))
 })
@@ -155,7 +161,7 @@ test('cycle: a fatal error stops that rider, records it and does not block other
   let creates = 0
   const makeClient = ({ athleteId }) =>
     fakeEventsClient({ create: () => { creates++; if (athleteId === 'ib') throw new PushError('forbidden', 'read-only key', { fatal: true }); return `e${creates}` } })
-  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient })
+  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient, loadConnection })
   assert.equal(t.pushed, 1)
   assert.equal(creates, 2, 'bad rider stopped after the first fatal error')
   assert.equal(sb.db.connections.find((c) => c.user_id === 'bad').planned_push_error, 'read-only key')
@@ -170,13 +176,13 @@ test('cycle: a failed workout with unchanged content is not retried right away',
     planned_workout_pushes: [{ workout_id: 'w1', rider_id: RIDER, push_status: 'error', attempted_hash: plannedPushHash(w), last_error: 'x', last_attempt_at: new Date(NOW - 60000).toISOString() }],
   })
   const client = fakeEventsClient()
-  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient: mk(client) })
+  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient: mk(client), loadConnection })
   assert.equal(t.pushed, 0)
   assert.equal(client.calls.length, 0)
 })
 
 test('cycle: rider claimed by an overlapping run is skipped', async () => {
   const sb = fakeSupabase({ connections: [conn({ planned_push_attempt_at: new Date(NOW - 1000).toISOString() })], planned_workouts: [wk('w1', '2026-12-03')], planned_workout_pushes: [] })
-  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient: mk(fakeEventsClient()) })
+  const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient: mk(fakeEventsClient()), loadConnection })
   assert.equal(t.riders, 0)
 })

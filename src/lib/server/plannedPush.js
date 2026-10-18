@@ -7,7 +7,6 @@
 //
 // We only ever touch events whose id we stored in planned_workout_pushes (or that carry our external_id).
 
-import { loadIntervalsConnection } from './connections.js'
 import { createIntervalsEventsClient, PushError } from './intervalsEvents.js'
 import { buildIntervalsEvent, externalIdFor, plannedPushHash } from '../intervalsWorkout.js'
 
@@ -30,9 +29,15 @@ const WORKOUT_COLUMNS =
 const iso = (d) => new Date(d).toISOString()
 const day = (d) => iso(d).slice(0, 10)
 
+// Lazy so the pure parts of this module (and its unit tests) don't need @supabase/supabase-js at import time.
+export async function defaultLoadConnection(args) {
+  const { loadIntervalsConnection } = await import('./connections.js')
+  return loadIntervalsConnection(args)
+}
+
 /** Loads the rider's active Intervals connection or throws PushError('not_connected'). */
-async function requireConnection(service, riderId) {
-  const conn = await loadIntervalsConnection({ supabase: service, userId: riderId, serviceClient: service })
+async function requireConnection(service, riderId, loadConnection = defaultLoadConnection) {
+  const conn = await loadConnection({ supabase: service, userId: riderId, serviceClient: service })
   if (!conn.apiKey || !conn.athleteId || conn.status !== 'active') {
     const message =
       conn.status === 'error'
@@ -81,8 +86,8 @@ const safeMessage = (e) => (e instanceof PushError ? e.message : 'Unexpected err
  * @returns {{ state: 'pushed', eventId: string, warnings: string[], recreated: boolean, structured: boolean }}
  * @throws PushError
  */
-export async function pushPlannedWorkout({ service, workout, now = Date.now(), makeClient = createIntervalsEventsClient, conn = null }) {
-  const connection = conn || (await requireConnection(service, workout.rider_id))
+export async function pushPlannedWorkout({ service, workout, now = Date.now(), makeClient = createIntervalsEventsClient, conn = null, loadConnection }) {
+  const connection = conn || (await requireConnection(service, workout.rider_id, loadConnection))
   const client = makeClient({ athleteId: connection.athleteId, apiKey: connection.apiKey })
   const row = await getPushRow(service, workout.id)
   await claim(service, workout, row, now)
@@ -137,14 +142,14 @@ export async function pushPlannedWorkout({ service, workout, now = Date.now(), m
  * Removes the Intervals.icu event of a workout (workout row may already be gone: tombstone) and forgets the
  * mapping. Events that carry a different external_id (not ours) are left alone.
  */
-export async function removePlannedWorkoutPush({ service, riderId, workoutId, now = Date.now(), makeClient = createIntervalsEventsClient }) {
+export async function removePlannedWorkoutPush({ service, riderId, workoutId, now = Date.now(), makeClient = createIntervalsEventsClient, loadConnection }) {
   const row = await getPushRow(service, workoutId)
   if (!row || row.rider_id !== riderId) return { removed: false }
   if (!row.intervals_event_id) {
     await service.from('planned_workout_pushes').delete().eq('workout_id', workoutId)
     return { removed: false }
   }
-  const conn = await requireConnection(service, riderId)
+  const conn = await requireConnection(service, riderId, loadConnection)
   const client = makeClient({ athleteId: conn.athleteId, apiKey: conn.apiKey })
   await claim(service, { id: workoutId, rider_id: riderId }, row, now)
   try {
@@ -162,7 +167,7 @@ export async function removePlannedWorkoutPush({ service, riderId, workoutId, no
 const addDays = (ms, n) => ms + n * 86400000
 
 /** One rider's share of the scheduled push. Returns counters; never throws. */
-export async function pushRider({ service, riderId, conn, now, deadline, makeClient, limit = PUSHES_PER_RIDER, autoPush = true }) {
+export async function pushRider({ service, riderId, conn, now, deadline, makeClient, loadConnection, limit = PUSHES_PER_RIDER, autoPush = true }) {
   const out = { pushed: 0, removed: 0, failed: 0, stopped: null }
   let budget = limit
   const timeLeft = () => Date.now() < deadline
@@ -183,7 +188,7 @@ export async function pushRider({ service, riderId, conn, now, deadline, makeCli
     if (!timeLeft() || budget <= 0 || out.stopped) break
     budget -= 1
     try {
-      await removePlannedWorkoutPush({ service, riderId, workoutId: t.workout_id, now, makeClient })
+      await removePlannedWorkoutPush({ service, riderId, workoutId: t.workout_id, now, makeClient, loadConnection })
       out.removed += 1
     } catch (e) {
       handle(e)
@@ -211,7 +216,7 @@ export async function pushRider({ service, riderId, conn, now, deadline, makeCli
       if (!timeLeft() || budget <= 0 || out.stopped) break
       budget -= 1
       try {
-        await removePlannedWorkoutPush({ service, riderId, workoutId: s.id, now, makeClient })
+        await removePlannedWorkoutPush({ service, riderId, workoutId: s.id, now, makeClient, loadConnection })
         pushedById.delete(s.id)
         out.removed += 1
       } catch (e) {
@@ -246,7 +251,7 @@ export async function pushRider({ service, riderId, conn, now, deadline, makeCli
     if (row?.push_status === 'error' && row.attempted_hash === hash && row.last_attempt_at && now - Date.parse(row.last_attempt_at) < RETRY_SAME_ERROR_MS) continue
     budget -= 1
     try {
-      await pushPlannedWorkout({ service, workout: w, now, makeClient, conn })
+      await pushPlannedWorkout({ service, workout: w, now, makeClient, conn, loadConnection })
       out.pushed += 1
     } catch (e) {
       handle(e)
@@ -258,7 +263,7 @@ export async function pushRider({ service, riderId, conn, now, deadline, makeCli
 const WORKOUT_TABLE = 'planned_workouts'
 
 /** Cron entry: a bounded batch of riders. Per-rider failures are recorded on the connection, never thrown. */
-export async function runPlannedPushCycle({ service, now = Date.now(), timeBudgetMs = TIME_BUDGET_MS, makeClient = createIntervalsEventsClient }) {
+export async function runPlannedPushCycle({ service, now = Date.now(), timeBudgetMs = TIME_BUDGET_MS, makeClient = createIntervalsEventsClient, loadConnection }) {
   const deadline = Date.now() + timeBudgetMs
   const staleBefore = iso(now - RIDER_CLAIM_MS)
   const picked = new Map()
@@ -305,8 +310,8 @@ export async function runPlannedPushCycle({ service, now = Date.now(), timeBudge
     if (!claimed?.length) continue
     totals.riders += 1
     try {
-      const conn = await requireConnection(service, riderId)
-      const r = await pushRider({ service, riderId, conn, now, deadline, makeClient, autoPush })
+      const conn = await requireConnection(service, riderId, loadConnection)
+      const r = await pushRider({ service, riderId, conn, now, deadline, makeClient, loadConnection, autoPush })
       totals.pushed += r.pushed
       totals.removed += r.removed
       totals.failed += r.failed
