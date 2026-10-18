@@ -18,7 +18,9 @@ import {
   fetchCommentInfo,
   isValidCommentBody,
   relativeTime,
+  reportActivityComment,
   searchMentionCandidates,
+  setCommentsEnabled,
   splitCommentBody,
 } from '../lib/activityComments'
 import Avatar from './Avatar'
@@ -228,6 +230,7 @@ export default function ActivityComments({ activityId }) {
   const [editError, setEditError] = useState('')
   const [rowError, setRowError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [notice, setNotice] = useState('')
 
   const load = useCallback(async () => {
     if (!activityId) return
@@ -287,6 +290,29 @@ export default function ActivityComments({ activityId }) {
     return true
   }
 
+  const report = async (comment) => {
+    const reason = window.prompt('Why are you reporting this comment? (optional)')
+    if (reason === null) return
+    setRowError('')
+    const { error } = await reportActivityComment(supabase, { commentId: comment.id, reason })
+    if (error) {
+      setRowError(commentErrorMessage(error))
+      return
+    }
+    setNotice('Thanks, the comment was reported to the moderators.')
+  }
+
+  const toggleComments = async () => {
+    setRowError('')
+    setNotice('')
+    const { error } = await setCommentsEnabled(supabase, { activityId, enabled: !info.comments_enabled })
+    if (error) {
+      setRowError(commentErrorMessage(error))
+      return
+    }
+    await load()
+  }
+
   const remove = async (comment) => {
     if (!window.confirm('Delete this comment?')) return
     setDeletingId(comment.id)
@@ -332,9 +358,21 @@ export default function ActivityComments({ activityId }) {
       data-testid="activity-comments"
       className="glass-card rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder p-4 space-y-4 scroll-mt-20"
     >
-      <h2 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">
-        Comments <span className="text-slate-400 font-bold normal-case text-xs">{commentCountLabel(comments.length)}</span>
-      </h2>
+      <div className="flex items-center gap-2">
+        <h2 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">
+          Comments <span className="text-slate-400 font-bold normal-case text-xs">{commentCountLabel(comments.length)}</span>
+        </h2>
+        {isOwner && (
+          <button
+            type="button"
+            onClick={toggleComments}
+            data-testid="comments-toggle"
+            className="ml-auto text-[11px] font-bold text-slate-500 hover:text-orange-500"
+          >
+            {info.comments_enabled ? 'Turn comments off' : 'Turn comments on'}
+          </button>
+        )}
+      </div>
 
       {comments.length === 0 && (
         <p className="text-xs text-slate-400" data-testid="comments-empty">
@@ -391,6 +429,15 @@ export default function ActivityComments({ activityId }) {
                     <CommentBody body={c.body} mentions={mentions.get(c.id)} href={href} />
                   )}
 
+                  {editingId !== c.id && (
+                    <div className="flex gap-3 text-[11px] font-bold text-slate-400">
+                      {!mine && (
+                        <button type="button" onClick={() => report(c)} className="hover:text-rose-500">
+                          Report
+                        </button>
+                      )}
+                    </div>
+                  )}
                   {editingId !== c.id && (mine || isOwner) && (
                     <div className="flex gap-3 text-[11px] font-bold text-slate-400">
                       {mine && (
@@ -416,6 +463,7 @@ export default function ActivityComments({ activityId }) {
       )}
 
       {rowError && <p role="alert" className="text-[11px] text-rose-500">{rowError}</p>}
+      {notice && <p role="status" className="text-[11px] text-emerald-600">{notice}</p>}
 
       {canWrite ? (
         <Composer
@@ -427,7 +475,7 @@ export default function ActivityComments({ activityId }) {
         />
       ) : (
         <p className="text-xs text-slate-500 rounded-xl bg-slate-50 dark:bg-slate-900/60 px-3 py-2" data-testid="comments-readonly">
-          Comments are turned off for this activity.
+          {isOwner ? 'Comments are turned off. Existing comments stay visible to riders who can see this activity.' : 'Comments are turned off for this activity.'}
         </p>
       )}
     </section>
