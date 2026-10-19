@@ -8,6 +8,12 @@
 - Access has no expiry. The rider revokes, or the coach leaves (`end_coaching`); a block ends it.
 - Declines are silent (declined rows look "pending" to the requester, 30-day re-request cooldown, max 25 pending per user).
 
+**Notification links** (`notificationHref` in `src/lib/notifications.js`, computed client-side, so old rows work too):
+`follow_request` → `/riders?tab=following#follow-requests`; `new_follower`/`follow_approved` → the rider's profile;
+`coach_invite`/`coach_request`/`coach_accepted`/`coach_ended`/`coach_replaced` → `/settings#coaching`; `coach_edited` →
+`/settings#physiology`. Both target pages scroll to the section and say so when the request is no longer pending.
+Follow notifications are deduplicated (one unread per recipient + actor + type, none across a block) by a trigger.
+
 ## Privacy rules
 - Coaches read everything of the athlete, including private activities, curves, templates, PBs and histories.
 - Activities are read only via `shared_activities`: privacy-zone coordinates stay masked exactly as for other riders;

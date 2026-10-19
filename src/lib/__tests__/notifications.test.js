@@ -80,3 +80,21 @@ test('markAllNotificationsRead only touches unread rows', async () => {
   const ops = c.log[0].ops
   assert.ok(ops.some((o) => o[0] === 'is' && o[1] === 'read_at' && o[2] === null))
 })
+
+test('every notification type resolves to a sensible link (or none)', () => {
+  const href = (n) => notificationHref(n)
+  assert.equal(href({ type: 'follow_request', actor_id: 'a1' }), '/riders?tab=following#follow-requests')
+  assert.equal(href({ type: 'new_follower', actor_id: 'a1' }), '/riders/a1')
+  assert.equal(href({ type: 'follow_approved', actor_id: 'a1' }), '/riders/a1')
+  assert.equal(href({ type: 'new_follower', actor_id: null }), null)
+  for (const type of ['coach_invite', 'coach_request', 'coach_accepted', 'coach_ended', 'coach_replaced']) {
+    assert.equal(href({ type }), '/settings#coaching', type)
+  }
+  assert.equal(href({ type: 'coach_edited' }), '/settings#physiology')
+  assert.equal(href({ type: 'suggestion_submitted', suggestion_id: 's1' }), '/admin/suggestions/s1')
+  assert.equal(href({ type: 'suggestion_submitted' }), null)
+  assert.equal(href({ type: 'suggestion_approved', suggestion_id: 's1' }), null)
+  assert.equal(href({ type: 'suggestion_rejected' }), null)
+  assert.equal(href({ type: 'unknown' }), null)
+  assert.equal(href(null), null)
+})

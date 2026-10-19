@@ -2,7 +2,7 @@
 
 import BotBadge from './BotBadge'
 import Avatar from './Avatar'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import {
   searchRiders,
@@ -71,6 +71,10 @@ export default function FollowPanel({ userId, onChanged }) {
   const [outgoingIds, setOutgoingIds] = useState([])
   const [counts, setCounts] = useState({ followers: 0, following: 0 })
   const [error, setError] = useState(null)
+  const [loaded, setLoaded] = useState(false)
+  // Set when arriving from a follow-request notification (#follow-requests).
+  const [targeted, setTargeted] = useState(false)
+  const requestsRef = useRef(null)
 
   const load = async () => {
     const [f, fr, b, inc, out, c] = await Promise.all([
@@ -89,11 +93,19 @@ export default function FollowPanel({ userId, onChanged }) {
     setIncoming(toProfiles(inc.ids))
     setOutgoingIds(out.ids)
     setCounts({ followers: c.followers, following: c.following })
+    setLoaded(true)
   }
 
   useEffect(() => {
     if (userId) load()
   }, [userId])
+
+  useEffect(() => {
+    if (!loaded || typeof window === 'undefined' || window.location.hash !== '#follow-requests') return
+    setTargeted(true)
+    requestsRef.current?.scrollIntoView?.({ block: 'center' })
+    requestsRef.current?.focus?.({ preventScroll: true })
+  }, [loaded])
 
   useEffect(() => {
     if (!userId) return
@@ -171,20 +183,32 @@ export default function FollowPanel({ userId, onChanged }) {
         </ul>
       )}
 
-      {incoming.length > 0 && (
-        <Section title={`Follow requests (${incoming.length})`}>
-          {incoming.map((r) => (
-            <Row key={r.id} rider={r}>
-              <SmallButton tone="primary" onClick={() => run(() => approveFollowRequest(supabase, { requesterId: r.id }))}>
-                Approve
-              </SmallButton>
-              <SmallButton onClick={() => run(() => removeFollowRequest(supabase, { requesterId: r.id, targetId: userId }))}>
-                Decline
-              </SmallButton>
-            </Row>
-          ))}
-        </Section>
-      )}
+      <div
+        id="follow-requests"
+        ref={requestsRef}
+        tabIndex={-1}
+        className={`scroll-mt-20 outline-none ${targeted && incoming.length > 0 ? 'rounded-xl ring-2 ring-orange-500/50 p-2' : ''}`}
+      >
+        {incoming.length > 0 && (
+          <Section title={`Follow requests (${incoming.length})`}>
+            {incoming.map((r) => (
+              <Row key={r.id} rider={r}>
+                <SmallButton tone="primary" onClick={() => run(() => approveFollowRequest(supabase, { requesterId: r.id }))}>
+                  Approve
+                </SmallButton>
+                <SmallButton onClick={() => run(() => removeFollowRequest(supabase, { requesterId: r.id, targetId: userId }))}>
+                  Decline
+                </SmallButton>
+              </Row>
+            ))}
+          </Section>
+        )}
+        {targeted && incoming.length === 0 && (
+          <p className="text-[11px] text-slate-500" role="status">
+            No pending follow requests. It may already have been handled or withdrawn.
+          </p>
+        )}
+      </div>
 
       <Section title={`Following (${following.length})`}>
         {following.map((r) => (
