@@ -49,5 +49,5 @@ export const RECENT_COLOR = '#a855f7'
 
 // All-time must stand out against the purple series in both themes.
 export function allTimeStyle(isDark) {
-  return { stroke: isDark ? '#fbbf24' : '#334155', strokeWidth: 2, strokeDasharray: '5 3' }
+  return { stroke: isDark ? '#fbbf24' : '#334155', strokeWidth: 1 }
 }

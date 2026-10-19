@@ -31,10 +31,7 @@ function LegendSwatch({ dashed, style, fill }) {
   return (
     <svg width="22" height="10" aria-hidden="true">
       {dashed ? (
-        <>
-          <line x1="1" y1="5" x2="21" y2="5" stroke={style.stroke} strokeWidth="2" strokeDasharray={style.strokeDasharray} />
-          <circle cx="11" cy="5" r="2.5" fill={style.stroke} />
-        </>
+        <line x1="1" y1="5" x2="21" y2="5" stroke={style.stroke} strokeWidth={style.strokeWidth} />
       ) : (
         <rect x="1" y="1" width="20" height="8" rx="2" fill={fill} fillOpacity="0.3" stroke={fill} strokeWidth="1.5" />
       )}
@@ -111,10 +108,9 @@ export default function PowerProfileCard({ userId }) {
                   dataKey="allTime"
                   stroke={atStyle.stroke}
                   strokeWidth={atStyle.strokeWidth}
-                  strokeDasharray={atStyle.strokeDasharray}
                   fill="none"
                   fillOpacity={0}
-                  dot={{ r: 3, fill: atStyle.stroke, stroke: atStyle.stroke }}
+                  dot={false}
                 />
                 <Tooltip formatter={(v) => (v == null ? '—' : `${fmt(v)} ${unitLabel}`)} />
                 <Legend
