@@ -13,7 +13,7 @@ export default function HeroCardVisual({ activity, className = '' }) {
     return (
       <div className={className} role="img" aria-label="Power over time chart">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={content.data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <AreaChart data={content.data} margin={{ top: 28, right: 8, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="heroPowerFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#a855f7" stopOpacity={0.6} />
@@ -26,6 +26,7 @@ export default function HeroCardVisual({ activity, className = '' }) {
               type="number"
               domain={[0, last.t || 1]}
               tickCount={4}
+              padding={{ left: 40 }}
               tickFormatter={(t) => (t >= 3600 ? `${(t / 3600).toFixed(1)}h` : `${Math.round(t / 60)}m`)}
               tick={{ fontSize: 9, fill: '#cbd5e1' }}
               tickLine={false}

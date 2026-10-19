@@ -40,7 +40,7 @@ export default function TemplateRunsBadge({ runs, className = '' }) {
           role="dialog"
           aria-label="Template runs"
           data-testid="template-runs-popover"
-          className="absolute right-0 top-full mt-1 w-64 rounded-xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard shadow-lg p-2 text-xs text-slate-700 dark:text-slate-200"
+          className="glass-popover absolute right-0 bottom-full mb-1 z-50 w-64 max-h-40 overflow-y-auto rounded-xl border border-slate-300 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard shadow-xl p-2 text-xs text-slate-700 dark:text-slate-200"
         >
           <ul className="space-y-2">
             {runs.map((r, i) => (
