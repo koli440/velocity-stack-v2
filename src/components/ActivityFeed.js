@@ -245,13 +245,14 @@ export default function ActivityFeed({
                     <BadgeRow badges={badges} />
                   </div>
                 )}
+                {rider && (
+                  <div className="absolute left-4 bottom-0 translate-y-1/2 z-10">
+                    <AuthorLink author={rider} className="block rounded-full">
+                      <Avatar url={rider.avatar_url} name={riderName} size="w-14 h-14" textSize="text-lg" className="ring-2 ring-orange-500 ring-offset-2 ring-offset-white dark:ring-offset-surface-darkCard" />
+                    </AuthorLink>
+                  </div>
+                )}
               </div>
-
-              {rider && (
-                <AuthorLink author={rider} className="absolute left-4 top-[calc(9rem-28px)] sm:top-[calc(10rem-28px)] z-10 rounded-full">
-                  <Avatar url={rider.avatar_url} name={riderName} size="w-14 h-14" textSize="text-lg" className="ring-2 ring-orange-500 ring-offset-2 ring-offset-white dark:ring-offset-surface-darkCard" />
-                </AuthorLink>
-              )}
 
               <div className={`p-4 pb-3.5 ${rider ? 'pt-9' : ''}`}>
                 <div className="flex items-center gap-2 min-w-0">
