@@ -93,12 +93,12 @@ export default function PowerProfileCard({ userId }) {
       ) : (
         <>
           <div
-            className="h-56"
+            className="h-72 -mx-2"
             role="img"
             aria-label={`Power profile radar chart in ${unitLabel} across 15 seconds to 1 hour, last 90 days versus all-time. A table with the values follows.`}
           >
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={data} outerRadius="70%">
+              <RadarChart data={data} outerRadius="78%" margin={{ top: 8, right: 4, bottom: 0, left: 4 }}>
                 <PolarGrid stroke="#94a3b8" strokeOpacity={0.4} />
                 <PolarAngleAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} />
                 <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 'auto']} />
