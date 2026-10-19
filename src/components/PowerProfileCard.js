@@ -5,7 +5,8 @@ import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, Responsi
 import { supabase } from '../lib/supabase'
 import { BASELINE_PERIODS } from '../lib/baselineCurves'
 import { fetchWeightHistory, weightAt } from '../lib/weightHistory'
-import { buildRadarData, hasProfileData, mapCurvesToProfile } from '../lib/powerProfile'
+import SegmentedTabs from './SegmentedTabs'
+import { allTimeStyle, buildRadarData, hasProfileData, mapCurvesToProfile, RECENT_COLOR } from '../lib/powerProfile'
 
 async function fetchPeriodCurves(userId, period) {
   const { data, error } = await supabase.rpc('get_athlete_baseline_curves', { p_user_id: userId, p_period: period })
@@ -13,9 +14,39 @@ async function fetchPeriodCurves(userId, period) {
   return data?.curves || {}
 }
 
+function useIsDark() {
+  const [dark, setDark] = useState(false)
+  useEffect(() => {
+    const el = document.documentElement
+    const read = () => setDark(el.classList.contains('dark'))
+    read()
+    const mo = new MutationObserver(read)
+    mo.observe(el, { attributes: true, attributeFilter: ['class'] })
+    return () => mo.disconnect()
+  }, [])
+  return dark
+}
+
+function LegendSwatch({ dashed, style, fill }) {
+  return (
+    <svg width="22" height="10" aria-hidden="true">
+      {dashed ? (
+        <>
+          <line x1="1" y1="5" x2="21" y2="5" stroke={style.stroke} strokeWidth="2" strokeDasharray={style.strokeDasharray} />
+          <circle cx="11" cy="5" r="2.5" fill={style.stroke} />
+        </>
+      ) : (
+        <rect x="1" y="1" width="20" height="8" rx="2" fill={fill} fillOpacity="0.3" stroke={fill} strokeWidth="1.5" />
+      )}
+    </svg>
+  )
+}
+
 export default function PowerProfileCard({ userId }) {
   const [state, setState] = useState({ loading: true, recent: null, allTime: null, weightKg: null })
   const [unit, setUnit] = useState('W')
+  const isDark = useIsDark()
+  const atStyle = allTimeStyle(isDark)
 
   useEffect(() => {
     if (!userId) return undefined
@@ -51,19 +82,7 @@ export default function PowerProfileCard({ userId }) {
     >
       <div className="flex items-center justify-between gap-2 mb-2">
         <h2 id="power-profile-title" className="text-sm font-bold text-slate-800 dark:text-slate-100">Power profile</h2>
-        <div role="group" aria-label="Power unit" className="flex rounded-lg border border-slate-200 dark:border-surface-darkBorder overflow-hidden text-xs font-semibold">
-          {['W', 'W/kg'].map((u) => (
-            <button
-              key={u}
-              type="button"
-              aria-pressed={unit === u}
-              onClick={() => setUnit(u)}
-              className={`px-2 py-1 ${unit === u ? 'bg-purple-500 text-white' : 'text-slate-500 dark:text-slate-300'}`}
-            >
-              {u}
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs label="Power unit" tabs={[['W', 'W'], ['W/kg', 'W/kg']]} value={unit} onChange={setUnit} />
       </div>
 
       {loading ? (
@@ -86,10 +105,27 @@ export default function PowerProfileCard({ userId }) {
                 <PolarGrid stroke="#94a3b8" strokeOpacity={0.4} />
                 <PolarAngleAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} />
                 <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 'auto']} />
-                <Radar name="All-time" dataKey="allTime" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.15} />
-                <Radar name="Last 90 days" dataKey="last90" stroke="#a855f7" fill="#a855f7" fillOpacity={0.35} />
+                <Radar name="Last 90 days" dataKey="last90" stroke={RECENT_COLOR} fill={RECENT_COLOR} fillOpacity={0.2} />
+                <Radar
+                  name="All-time"
+                  dataKey="allTime"
+                  stroke={atStyle.stroke}
+                  strokeWidth={atStyle.strokeWidth}
+                  strokeDasharray={atStyle.strokeDasharray}
+                  fill="none"
+                  fillOpacity={0}
+                  dot={{ r: 3, fill: atStyle.stroke, stroke: atStyle.stroke }}
+                />
                 <Tooltip formatter={(v) => (v == null ? '—' : `${fmt(v)} ${unitLabel}`)} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Legend
+                  wrapperStyle={{ fontSize: 11 }}
+                  content={() => (
+                    <ul className="flex justify-center gap-4 text-[11px] text-slate-600 dark:text-slate-300">
+                      <li className="flex items-center gap-1.5"><LegendSwatch fill={RECENT_COLOR} /> Last 90 days</li>
+                      <li className="flex items-center gap-1.5"><LegendSwatch dashed style={atStyle} /> All-time</li>
+                    </ul>
+                  )}
+                />
               </RadarChart>
             </ResponsiveContainer>
           </div>

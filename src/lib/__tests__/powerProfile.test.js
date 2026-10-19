@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mapCurvesToProfile, buildRadarData, hasProfileData, POWER_PROFILE_AXES } from '../powerProfile.js'
+import { mapCurvesToProfile, buildRadarData, hasProfileData, POWER_PROFILE_AXES, allTimeStyle } from '../powerProfile.js'
 
 test('maps plain power curve to 7 axes, missing -> null', () => {
   const pts = mapCurvesToProfile({ '15s': 900, '1m': 600, '5m': 350, '1h': 250, '30s': 700 })
@@ -28,4 +28,12 @@ test('buildRadarData merges series', () => {
   const d = buildRadarData({ a: mapCurvesToProfile({ '15s': 10 }), b: mapCurvesToProfile({ '15s': 20 }) })
   assert.equal(d.length, POWER_PROFILE_AXES.length)
   assert.deepEqual([d[0].a, d[0].b, d[1].a], [10, 20, null])
+})
+
+test('allTimeStyle is dashed and theme-dependent', () => {
+  const light = allTimeStyle(false)
+  const dark = allTimeStyle(true)
+  assert.equal(light.strokeWidth, 2)
+  assert.ok(light.strokeDasharray)
+  assert.notEqual(light.stroke, dark.stroke)
 })
