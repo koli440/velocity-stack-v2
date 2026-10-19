@@ -1,7 +1,8 @@
 'use client'
 
 import BotBadge from './BotBadge'
-import { formatDate } from '../lib/dateFormat'
+import { relativeDateTime, fullDateTime } from '../lib/dateFormat'
+import CalendarTile from './CalendarTile'
 import Avatar from './Avatar'
 import Link from 'next/link'
 import Icon from './ActivityIcons'
@@ -58,20 +59,12 @@ function CoverPhoto({ cover }) {
   )
 }
 
-function AuthorLine({ author }) {
-  const name = authorName(author)
+function AuthorLink({ author, children, className = '' }) {
+  if (!author?.id) return <span className={className}>{children}</span>
   return (
-    <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 min-w-0">
-      <Avatar url={author.avatar_url} name={name} size="w-5 h-5" textSize="text-[10px]" />
-      {author.id ? (
-        <Link href={`/riders/${author.id}`} className="relative z-10 hover:text-orange-500 transition">
-          {name}
-        </Link>
-      ) : (
-        name
-      )}
-      {author.is_bot && <BotBadge />}
-    </div>
+    <Link href={`/riders/${author.id}`} className={`relative z-10 ${className}`}>
+      {children}
+    </Link>
   )
 }
 
@@ -97,7 +90,7 @@ function BadgeRow({ badges }) {
 
 export default function ActivityFeed({
   activities = [],
-  isOwnFeed = true,
+  author: defaultAuthor = null,
   coverPhotos = null,
   title = 'Recent Sessions',
   emptyMessage = null,
@@ -224,6 +217,9 @@ export default function ActivityFeed({
           const cover = coverPhotos?.get(act.id)
           const dist = formatDistance(act.distance_m)
           const time = formatMovingTime(act.moving_time_s)
+          const rider = act.author || defaultAuthor
+          const riderName = authorName(rider)
+          const when = act.activity_date || act.created_at
           const stats = [
             dist && { value: dist, unit: 'km' },
             time && { value: time, unit: 'time' },
@@ -243,40 +239,52 @@ export default function ActivityFeed({
                   <HeroCardVisual activity={act} className="absolute inset-0 w-full h-full p-3" />
                 )}
                 <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-slate-950/75 to-transparent pointer-events-none" />
+                <CalendarTile date={when} className="absolute top-2.5 right-2.5 z-[2]" />
                 {badges.length > 0 && (
-                  <div className="absolute top-2.5 left-2.5 right-2.5 z-[2]">
+                  <div className="absolute top-2.5 left-2.5 right-16 z-[2]">
                     <BadgeRow badges={badges} />
                   </div>
                 )}
               </div>
 
-              <div className="p-4 pb-3.5">
-                {(
-                  <div className="flex items-center gap-2">
-                    {!isOwnFeed && act.author && <AuthorLine author={act.author} />}
-                    {commentCounts.get(act.id) > 0 && (
-                      <Link
-                        href={`${activityHref(act)}#comments`}
-                        data-testid="comment-count-chip"
-                        aria-label={commentCountLabel(commentCounts.get(act.id))}
-                        className="relative z-10 shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-orange-500"
-                      >
-                        💬 {commentCounts.get(act.id)}
-                        {unread.get(act.id) > 0 && (
-                          <span
-                            data-testid="comment-unread-dot"
-                            title="New comments"
-                            aria-label="New comments"
-                            className="ml-1 inline-block w-2 h-2 rounded-full bg-orange-500 align-middle"
-                          />
-                        )}
-                      </Link>
+              {rider && (
+                <AuthorLink author={rider} className="absolute left-4 top-[calc(9rem-28px)] sm:top-[calc(10rem-28px)] z-10 rounded-full">
+                  <Avatar url={rider.avatar_url} name={riderName} size="w-14 h-14" textSize="text-lg" className="ring-2 ring-orange-500 ring-offset-2 ring-offset-white dark:ring-offset-surface-darkCard" />
+                </AuthorLink>
+              )}
+
+              <div className={`p-4 pb-3.5 ${rider ? 'pt-9' : ''}`}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    {rider && (
+                      <div className="flex items-center gap-1.5 text-sm font-black text-slate-900 dark:text-white min-w-0">
+                        <AuthorLink author={rider} className="truncate hover:text-orange-500 transition">{riderName}</AuthorLink>
+                        {rider.is_bot && <BotBadge />}
+                      </div>
                     )}
-                    <span className="ml-auto shrink-0 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                      {formatDate(act.activity_date || act.created_at)}
-                    </span>
+                    <div title={fullDateTime(when)} className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                      {relativeDateTime(when)}
+                    </div>
                   </div>
-                )}
+                  {commentCounts.get(act.id) > 0 && (
+                    <Link
+                      href={`${activityHref(act)}#comments`}
+                      data-testid="comment-count-chip"
+                      aria-label={commentCountLabel(commentCounts.get(act.id))}
+                      className="relative z-10 shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-orange-500"
+                    >
+                      💬 {commentCounts.get(act.id)}
+                      {unread.get(act.id) > 0 && (
+                        <span
+                          data-testid="comment-unread-dot"
+                          title="New comments"
+                          aria-label="New comments"
+                          className="ml-1 inline-block w-2 h-2 rounded-full bg-orange-500 align-middle"
+                        />
+                      )}
+                    </Link>
+                  )}
+                </div>
                 <Link
                   href={activityHref(act)}
                   className="mt-2 block text-base font-black text-slate-900 dark:text-white group-hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"

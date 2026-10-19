@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
 import Link from 'next/link'
-import { fetchFollowingFeedPage } from '../lib/social'
+import { fetchFollowingFeedPage, fetchProfilesByIds } from '../lib/social'
 import { syncFeedData, syncFeedDataIfNeeded } from '../lib/feedSync'
 import { fetchCoverPhotos } from '../lib/activityPhotos'
 import { OPEN_ADD_SESSION_EVENT, ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
@@ -32,6 +32,7 @@ export default function Dashboard({ initialActivities = [] }) {
   const [coverPhotos, setCoverPhotos] = useState(new Map())
   const [activitiesLoaded, setActivitiesLoaded] = useState(initialActivities.length > 0)
   const [stravaNotice, setStravaNotice] = useState(null)
+  const [ownProfile, setOwnProfile] = useState(null)
 
   // Result of the Strava OAuth round trip when it started from the welcome card (?strava=...).
   useEffect(() => {
@@ -55,6 +56,12 @@ export default function Dashboard({ initialActivities = [] }) {
       cancelled = true
     }
   }, [activities, followingActivities])
+
+  // Own profile so the rider avatar/name also show on the own feed.
+  useEffect(() => {
+    if (!user?.id) return
+    fetchProfilesByIds(supabase, [user.id]).then(({ profiles }) => setOwnProfile(profiles.get(user.id) || null))
+  }, [user?.id])
 
   const reloadFollowingFeed = async (userId) => {
     const targetId = userId || user?.id
@@ -214,6 +221,7 @@ export default function Dashboard({ initialActivities = [] }) {
           )}
           <ActivityFeed
             key="mine"
+            author={ownProfile}
             activities={activities}
             onAddWorkout={() => window.dispatchEvent(new Event(OPEN_ADD_SESSION_EVENT))}
             coverPhotos={coverPhotos}
@@ -226,7 +234,6 @@ export default function Dashboard({ initialActivities = [] }) {
           <ActivityFeed
             key="following"
             title="Following"
-            isOwnFeed={false}
             coverPhotos={coverPhotos}
             activities={followingActivities}
             hasMore={hasMoreFollowing}

@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Portal from '../../../components/Portal'
-import { formatDateTime } from '../../../lib/dateFormat'
+import { fullDateTime } from '../../../lib/dateFormat'
+import { fetchProfilesByIds, authorName } from '../../../lib/social'
+import Avatar from '../../../components/Avatar'
+import BotBadge from '../../../components/BotBadge'
+import CalendarTile from '../../../components/CalendarTile'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useParams, usePathname, useRouter } from 'next/navigation'
@@ -62,6 +66,7 @@ export default function ActivityDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   // true when another rider's activity is opened through the restricted shared_activities view
   const [sharedView, setSharedView] = useState(false)
+  const [rider, setRider] = useState(null)
 
   useEffect(() => {
     if (!activityId) return
@@ -94,6 +99,9 @@ export default function ActivityDetailPage() {
       if (actData) {
         const act = actData
         setActivity(act)
+        if (act.user_id) {
+          fetchProfilesByIds(supabase, [act.user_id]).then(({ profiles }) => setRider(profiles.get(act.user_id) || null))
+        }
         setChainring(act.chainring ? String(act.chainring) : '58')
         setCog(act.cog ? String(act.cog) : '14')
         setTrackId(act.track_id || '')
@@ -250,31 +258,50 @@ export default function ActivityDetailPage() {
     )
   }
 
-  const actDate = formatDateTime(activity.activity_date || activity.created_at, {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const actWhen = activity.activity_date || activity.created_at
+  const riderName = authorName(rider)
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* 1. Top navigation bar */}
+      <Link
+        href={backHref}
+        className="inline-flex text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-white transition items-center gap-1.5"
+      >
+        {inAthleteContext ? '← Activities' : '← Cockpit Telemetry'}
+      </Link>
+
+      {/* 1. Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <Link
-            href={backHref}
-            className="text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-white transition flex items-center gap-1.5"
-          >
-            {inAthleteContext ? '← Activities' : '← Cockpit Telemetry'}
-          </Link>
-          <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-            {activity.title || 'Velodrome Session'}
-          </h1>
-          <p className="text-xs font-semibold text-slate-400">{actDate}</p>
+        <div className="flex items-center gap-4 min-w-0">
+          {rider?.id ? (
+            <Link href={`/riders/${rider.id}`} className="shrink-0 rounded-full" aria-label={`${riderName}'s profile`}>
+              <Avatar url={rider.avatar_url} name={riderName} size="w-[72px] h-[72px]" textSize="text-2xl" className="ring-2 ring-orange-500 ring-offset-2 ring-offset-white" />
+            </Link>
+          ) : null}
+          <div className="space-y-1 min-w-0">
+            <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+              {activity.title || 'Velodrome Session'}
+            </h1>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-1.5">
+              {rider?.id && (
+                <>
+                  <Link href={`/riders/${rider.id}`} className="font-black text-slate-700 dark:text-slate-200 hover:text-orange-500 transition">{riderName}</Link>
+                  {rider.is_bot && <BotBadge />}
+                  <span aria-hidden="true">·</span>
+                </>
+              )}
+              <span>{fullDateTime(actWhen)}</span>
+            </p>
+            {activity.tracks?.name && (
+              <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                {activity.tracks.name}
+              </span>
+            )}
+          </div>
         </div>
 
+        <div className="flex items-center gap-3 sm:self-center">
+          <CalendarTile date={actWhen} large className="!bg-slate-900 dark:!bg-white/10" />
         {!sharedView && (
           <div className="flex items-center gap-2">
             <button
@@ -294,6 +321,7 @@ export default function ActivityDetailPage() {
             </button>
           </div>
         )}
+        </div>
       </div>
 
       {activity.description && (
