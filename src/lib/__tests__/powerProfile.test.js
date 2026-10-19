@@ -30,10 +30,10 @@ test('buildRadarData merges series', () => {
   assert.deepEqual([d[0].a, d[0].b, d[1].a], [10, 20, null])
 })
 
-test('allTimeStyle is dashed and theme-dependent', () => {
+test('allTimeStyle is solid 1px and theme-dependent', () => {
   const light = allTimeStyle(false)
   const dark = allTimeStyle(true)
-  assert.equal(light.strokeWidth, 2)
-  assert.ok(light.strokeDasharray)
+  assert.equal(light.strokeWidth, 1)
+  assert.equal(light.strokeDasharray, undefined)
   assert.notEqual(light.stroke, dark.stroke)
 })
