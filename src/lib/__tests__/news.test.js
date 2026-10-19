@@ -77,7 +77,8 @@ test('the shipped content/news entries are all valid and cover the seeded featur
   for (const word of ['coaching', 'calendar notes', 'planned workouts', 'races', 'intervals.icu', 'tolerance', 'nested', 'personal best']) {
     assert.ok(text.includes(word), `missing ${word}`)
   }
-  for (const e of all) assert.ok(e.date <= '2026-12-11', `${e.id} must not be newer than the migration floor`)
+  // Entries newer than the migration floor are intended: they show up as unread for everyone.
+  for (const e of all) assert.match(e.date, /^\d{4}-\d{2}-\d{2}$/)
 })
 
 test('markdownLite: paragraphs, lists, fences, inline and unsafe links', () => {

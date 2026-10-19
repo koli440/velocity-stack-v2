@@ -6,6 +6,8 @@ import CalendarTile from './CalendarTile'
 import Avatar from './Avatar'
 import Link from 'next/link'
 import Icon from './ActivityIcons'
+import TemplateRunsBadge from './TemplateRunsBadge'
+import { fetchActivityRuns } from '../lib/activityTemplateRuns'
 import BadgePill from './BadgePill'
 import HeroCardVisual from './HeroCardVisual'
 import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
@@ -108,6 +110,7 @@ export default function ActivityFeed({
   const count = activities.length
   const [commentCounts, setCommentCounts] = useState(new Map())
   const [unread, setUnread] = useState(new Map())
+  const [runsByActivity, setRunsByActivity] = useState(new Map())
   const idsKey = activities.map((a) => a.id).join(',')
 
   // Comment counts come from one RPC per page of cards; a failure just hides the chip.
@@ -121,6 +124,10 @@ export default function ActivityFeed({
         for (const [id, row] of info) next.set(id, row.comment_count)
         return next
       })
+    })
+    fetchActivityRuns(supabase, idsKey.split(',')).then((runs) => {
+      if (cancelled) return
+      setRunsByActivity((prev) => new Map([...prev, ...runs]))
     })
     fetchUnreadCounts(supabase, idsKey.split(',')).then(({ counts }) => {
       if (cancelled) return
@@ -267,6 +274,7 @@ export default function ActivityFeed({
                       {relativeDateTime(when)}
                     </div>
                   </div>
+                  <TemplateRunsBadge runs={runsByActivity.get(act.id)} />
                   {commentCounts.get(act.id) > 0 && (
                     <Link
                       href={`${activityHref(act)}#comments`}
