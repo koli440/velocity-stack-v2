@@ -1,6 +1,6 @@
 ---
-id: 2026-12-12-activity-graph-zoom
-date: 2026-12-12
+id: 2026-12-11-activity-graph-zoom
+date: 2026-12-11
 title: Zoom into the activity graph
 ---
 Drag across the Activity graph to zoom into that part of the ride; click to return to the full view.
