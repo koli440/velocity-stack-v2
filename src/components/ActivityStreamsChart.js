@@ -8,7 +8,7 @@
 // work/recovery intervals matched by the latest template execution directly on these
 // charts, tinted by role and kept in sync across lanes via the shared `syncId`.
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -21,6 +21,7 @@ import {
 } from 'recharts'
 import { ltFromActivity } from '../lib/lactateThresholds'
 import { zoneRanges, zonesFromActivity } from '../lib/powerZones'
+import { resolveSelection, sliceRange } from '../lib/chartZoom'
 import { STREAM_METRICS, buildStreamSeries, formatAxisTick, formatElapsed } from '../lib/activityStreams'
 
 // Lactate threshold lines (issue #121) drawn on the power and heart-rate lanes.
@@ -41,7 +42,7 @@ function zoneBands(metric, zones, data) {
   return zoneRanges(zones).map((r) => ({ label: r.label, y1: r.minW ?? 0, y2: r.maxW ?? top, color: ZONE_COLORS[r.zone - 1] }))
 }
 
-function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones }) {
+function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones, zoom }) {
   const hasData = data.some((d) => d[metric.key] != null)
   if (!hasData) return null
   const lines = thresholdLines(metric, lt)
@@ -71,7 +72,7 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones })
                   fill={w.color || (w.role === 'recovery' ? '#3b82f6' : '#f97316')}
                   fillOpacity={0.18}
                   stroke="none"
-                  ifOverflow="visible"
+                  ifOverflow={zoom ? 'hidden' : 'visible'}
                 />
               ))}
             {bands.map((b) => (
@@ -88,7 +89,7 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones })
                 falls back to a category axis and the time/distance switch has no visual effect:
                 stationary stretches (repeated distance values) still take up as much horizontal
                 space as they do in time mode. */}
-            <XAxis dataKey="x" type="number" domain={['dataMin', 'dataMax']} hide />
+            <XAxis dataKey="x" type="number" domain={zoom || ['dataMin', 'dataMax']} allowDataOverflow hide />
             <YAxis hide domain={yDomain} />
             {lines.map(([name, value]) => (
               <ReferenceLine
@@ -138,9 +139,57 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
   const lt = useMemo(() => ltFromActivity(activity), [activity])
   const zones = useMemo(() => zonesFromActivity(activity, lt), [activity, lt])
   const [mode, setMode] = useState('time')
+  // Drag-to-zoom: zoom = [x1, x2] in the current axis unit (null = full view).
+  const [zoom, setZoom] = useState(null)
+  const [drag, setDrag] = useState(null) // { startPx, endPx } relative to the plot area
+  const plotRef = useRef(null)
+  const dragRef = useRef(null)
+
+  const switchMode = (next) => {
+    setMode(next)
+    setZoom(null)
+    setDrag(null)
+    dragRef.current = null
+  }
 
   const data = useMemo(() => buildStreamSeries(timeSeries, mode), [timeSeries, mode])
   const hasAnyData = data.length > 0
+  const fullDomain = hasAnyData ? [data[0].x, data[data.length - 1].x] : null
+  const viewDomain = zoom || fullDomain
+  const viewData = useMemo(() => sliceRange(data, zoom), [data, zoom])
+
+  const plotMetrics = (e) => {
+    const rect = plotRef.current?.getBoundingClientRect()
+    if (!rect) return null
+    return { rect, px: e.clientX - rect.left, width: rect.width }
+  }
+  const onPointerDown = (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    const m = plotMetrics(e)
+    if (!m || m.px < -4 || m.px > m.width + 4) return
+    dragRef.current = { startPx: m.px, endPx: m.px, id: e.pointerId }
+    setDrag({ startPx: m.px, endPx: m.px })
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch {}
+  }
+  const onPointerMove = (e) => {
+    const d = dragRef.current
+    if (!d || d.id !== e.pointerId) return
+    const m = plotMetrics(e)
+    if (!m) return
+    d.endPx = m.px
+    setDrag({ startPx: d.startPx, endPx: m.px })
+  }
+  const endDrag = (e, cancelled) => {
+    const d = dragRef.current
+    if (!d || d.id !== e.pointerId) return
+    dragRef.current = null
+    setDrag(null)
+    if (cancelled) return
+    const m = plotMetrics(e)
+    const res = resolveSelection({ startPx: d.startPx, endPx: m ? m.px : d.endPx, width: m ? m.width : 0, domain: viewDomain, zoomed: !!zoom })
+    if (res.type === 'zoom') setZoom(res.range)
+    else if (res.type === 'reset') setZoom(null)
+  }
 
   if (!hasAnyData) return null
 
@@ -155,6 +204,11 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
           </h2>
           <p className="text-[10px] text-slate-400">
             {mode === 'time' ? `Elapsed ${formatElapsed(lastPoint.x)}` : `Distance ${(lastPoint.x / 1000).toFixed(2)} km`}
+            {zoom && (
+              <span className="ml-2 font-bold text-orange-500">
+                Zoomed {formatAxisTick(zoom[0], mode)} – {formatAxisTick(zoom[1], mode)}
+              </span>
+            )}
           </p>
         </div>
 
@@ -166,7 +220,7 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
             <button
               key={opt.key}
               type="button"
-              onClick={() => setMode(opt.key)}
+              onClick={() => switchMode(opt.key)}
               className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
                 mode === opt.key
                   ? 'bg-orange-500 text-white shadow-xs'
@@ -179,15 +233,33 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
         </div>
       </div>
 
-      <div className="space-y-1.5">
+      <div
+        className="relative space-y-1.5 select-none cursor-crosshair"
+        style={{ touchAction: 'pan-y' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={(e) => endDrag(e, false)}
+        onPointerCancel={(e) => endDrag(e, true)}
+      >
+        <div ref={plotRef} className="absolute inset-y-0 pointer-events-none" style={{ left: 'calc(4.75rem + 4px)', right: 4 }}>
+          {drag && Math.abs(drag.endPx - drag.startPx) >= 1 && (
+            <div
+              className="absolute inset-y-0 bg-orange-500/20 border-x border-orange-500/60 z-10"
+              style={{ left: Math.min(drag.startPx, drag.endPx), width: Math.abs(drag.endPx - drag.startPx) }}
+            />
+          )}
+        </div>
         {STREAM_METRICS.map((metric) => (
-          <MetricLane key={metric.key} metric={metric} data={data} mode={mode} syncId="activity-streams" highlightWindows={highlightWindows} lt={lt} zones={zones} />
+          <MetricLane key={metric.key} metric={metric} data={viewData} zoom={zoom} mode={mode} syncId="activity-streams" highlightWindows={highlightWindows} lt={lt} zones={zones} />
         ))}
       </div>
 
       <div className="mt-2 pl-[4.75rem] flex justify-between text-[9px] font-semibold text-slate-400">
-        <span>{mode === 'time' ? '0:00' : '0 km'}</span>
-        <span>{mode === 'time' ? formatElapsed(lastPoint.x) : `${(lastPoint.x / 1000).toFixed(1)} km`}</span>
+        <span>{formatAxisTick(viewDomain[0], mode)}</span>
+        <span className="text-slate-400/80 font-medium">
+          Drag to zoom · click to reset
+        </span>
+        <span>{formatAxisTick(viewDomain[1], mode)}</span>
       </div>
     </div>
   )
