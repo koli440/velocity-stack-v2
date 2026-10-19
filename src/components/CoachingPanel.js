@@ -76,6 +76,11 @@ export default function CoachingPanel({ userId }) {
     setBusy(null)
   }
 
+  // Arriving from a coaching notification (#coaching): scroll once data is in, since the page renders async.
+  useEffect(() => {
+    if (loaded && window.location.hash === '#coaching') document.getElementById('coaching')?.scrollIntoView?.({ block: 'start' })
+  }, [loaded])
+
   const g = groupRelationships(rows, userId)
   const nameOf = (id) => authorName(profiles.get(id))
   const currentCoachName = g.coach ? nameOf(g.coach.coach_id) : null
@@ -105,7 +110,11 @@ export default function CoachingPanel({ userId }) {
 
       {error && <p className="text-xs text-rose-500">{error}</p>}
       {!loaded && <p className="text-xs text-slate-400">Loading…</p>}
-      {loaded && empty && <p className="text-xs text-slate-400">No coach and no athletes yet.</p>}
+      {loaded && empty && (
+        <p className="text-xs text-slate-400" role="status">
+          No coach and no athletes yet. A coaching request you were notified about may already have been handled or withdrawn.
+        </p>
+      )}
 
       {loaded && (
         <section className="space-y-2">

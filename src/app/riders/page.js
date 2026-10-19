@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import RidersExplorer from '../../components/RidersExplorer'
 import FollowPanel from '../../components/FollowPanel'
@@ -13,9 +14,14 @@ const RIDER_TABS = [
   ['discover', 'Discover sessions'],
 ]
 
-export default function RidersPage() {
+function RidersContent() {
   const [userId, setUserId] = useState(null)
-  const [tab, setTab] = useState('find')
+  const requested = useSearchParams().get('tab')
+  const [tab, setTab] = useState(RIDER_TABS.some(([key]) => key === requested) ? requested : 'find')
+
+  useEffect(() => {
+    if (RIDER_TABS.some(([key]) => key === requested)) setTab(requested)
+  }, [requested])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUserId(session?.user?.id ?? null))
@@ -38,5 +44,13 @@ export default function RidersPage() {
         <DiscoverFeed userId={userId} />
       )}
     </div>
+  )
+}
+
+export default function RidersPage() {
+  return (
+    <Suspense fallback={null}>
+      <RidersContent />
+    </Suspense>
   )
 }
