@@ -1,5 +1,6 @@
 'use client'
 
+import SegmentedTabs from './SegmentedTabs'
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
@@ -183,30 +184,18 @@ export default function Dashboard({ initialActivities = [] }) {
         <OnboardingChecklist />
 
         {/* Feed scope */}
-        <div className="flex gap-2" role="tablist" aria-label="Feed scope">
-          {[
+        <SegmentedTabs
+          label="Feed scope"
+          tabs={[
             ['mine', 'My sessions'],
             ['following', 'Following'],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={scope === value}
-              onClick={() => {
-                setScope(value)
-                if (value === 'following') reloadFollowingFeed()
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-                scope === value
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-500'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+          ]}
+          value={scope}
+          onChange={(value) => {
+            setScope(value)
+            if (value === 'following') reloadFollowingFeed()
+          }}
+        />
 
         {scope === 'mine' ? (
           <>
