@@ -49,7 +49,6 @@ export default function DiscoverFeed({ userId }) {
     <ActivityFeed
       key="discover"
       title="Discover"
-      isOwnFeed={false}
       coverPhotos={coverPhotos}
       activities={activities}
       hasMore={hasMore}

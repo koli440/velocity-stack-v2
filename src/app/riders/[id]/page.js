@@ -88,7 +88,6 @@ export default function RiderProfilePage() {
           <CoachingButtons userId={userId} rider={rider} />
           <ActivityFeed
             title="Recent sessions"
-            isOwnFeed={false}
             activities={activities}
             emptyMessage="No sessions shared with you yet."
           />
