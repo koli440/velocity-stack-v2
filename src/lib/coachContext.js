@@ -198,3 +198,13 @@ export function describeCoachEdit(edit, coachName) {
   const date = edit?.created_at ? new Date(edit.created_at).toISOString().slice(0, 10) : null
   return `${coachName || 'Your coach'} ${verb} ${what}${date ? ` · ${date}` : ''}`
 }
+
+// Athlete pages whose data queries only need the rider id (access is enforced by RLS), so they can
+// start loading while the layout still verifies the coaching relationship. Pages that need the
+// athlete profile itself (overview, physiology) wait for it.
+const EAGER_SUBPATHS = Object.freeze(['/activities', '/calendar', '/pb-vault', '/templates'])
+
+export function rendersBeforeAthleteLoaded(subPath) {
+  const p = String(subPath || '').replace(/\/+$/, '')
+  return EAGER_SUBPATHS.some((s) => p === s || p.startsWith(`${s}/`))
+}

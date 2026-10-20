@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { supabase, getAuthHeader } from '../../../../lib/supabase'
+import { supabase } from '../../../../lib/supabase'
 import { parseJsonResponse } from '../../../../lib/httpJson'
 import { useAthlete } from '../../../../components/AthleteContext'
 import TemplateRunsModal from '../../../../components/TemplateRunsModal'
@@ -23,17 +23,13 @@ export default function AthleteTemplatesPage() {
     if (!riderId) return
     setError(null)
     try {
-      const authHeader = await getAuthHeader()
       const { data: { session } } = await supabase.auth.getSession()
-      const [statsRes, tplRes] = await Promise.all([
-        fetch(`/api/templates/stats?rider=${riderId}`, { headers: authHeader, cache: 'no-store' }),
-        fetch('/api/templates', { headers: authHeader }),
-      ])
+      const authHeader = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}
+      const statsRes = await fetch(`/api/templates/stats?rider=${riderId}`, { headers: authHeader, cache: 'no-store' })
       const stats = await parseJsonResponse(statsRes)
       if (!statsRes.ok || stats.error) throw new Error(stats.error || 'Failed to load runs.')
-      const tpl = await parseJsonResponse(tplRes).catch(() => ({}))
       setState({
-        groups: athleteTemplateGroups(stats.stats, stats.names, tpl.templates || [], session?.user?.id),
+        groups: athleteTemplateGroups(stats.stats, stats.names, stats.templates || [], session?.user?.id),
       })
     } catch (err) {
       setError(err.message)
@@ -45,7 +41,18 @@ export default function AthleteTemplatesPage() {
     load()
   }, [load])
 
-  if (!state) return <p className="text-xs text-slate-400">Loading…</p>
+  if (!state) {
+    return (
+      <section className="space-y-3" data-testid="athlete-templates-loading" aria-busy="true">
+        <div className="h-6 w-56 rounded-lg bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[0, 1].map((i) => (
+            <div key={i} className="h-36 rounded-2xl bg-slate-100 dark:bg-slate-800/60 animate-pulse" />
+          ))}
+        </div>
+      </section>
+    )
+  }
   return (
     <section className="space-y-3" data-testid="athlete-templates">
       <div>

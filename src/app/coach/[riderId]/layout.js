@@ -6,7 +6,7 @@ import { useParams, usePathname, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { fetchAthleteProfile } from '../../../lib/coaching'
 import { AthleteContext } from '../../../components/AthleteContext'
-import { ATHLETE_PAGES, athletePath, bannerText, parseCoachPath } from '../../../lib/coachContext'
+import { ATHLETE_PAGES, athletePath, bannerText, parseCoachPath, rendersBeforeAthleteLoaded } from '../../../lib/coachContext'
 
 // Wraps every athlete page: verifies (via the database) that the viewer actively coaches the
 // rider, shows the persistent "Coaching: <Name> - Exit" banner and the athlete tab bar.
@@ -15,6 +15,7 @@ export default function AthleteLayout({ children }) {
   const pathname = usePathname()
   const params = useParams()
   const { riderId } = parseCoachPath(`/coach/${params?.riderId}`)
+  const { subPath } = parseCoachPath(pathname)
   const [athlete, setAthlete] = useState(null)
   const [state, setState] = useState('loading') // loading | ok | denied
 
@@ -84,7 +85,7 @@ export default function AthleteLayout({ children }) {
           )
         })}
       </nav>
-      {state === 'ok' ? children : <p className="text-xs text-slate-400">Loading…</p>}
+      {state === 'ok' || (state === 'loading' && rendersBeforeAthleteLoaded(subPath)) ? children : <p className="text-xs text-slate-400">Loading…</p>}
     </AthleteContext.Provider>
   )
 }
