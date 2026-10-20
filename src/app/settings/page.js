@@ -43,6 +43,7 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarBusy, setAvatarBusy] = useState(false)
   const [avatarError, setAvatarError] = useState('')
+  const [emailNotifications, setEmailNotifications] = useState(true)
   const [requireApproval, setRequireApproval] = useState(false)
   const [glassEnabled, setGlassEnabled] = useState(true)
 
@@ -72,6 +73,7 @@ export default function SettingsPage() {
         setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
         setThemePref(data.theme_preference || 'dark')
         setDiscoverableByEmail(data.discoverable_by_email !== false)
+        setEmailNotifications(data.email_notifications !== false)
         setAvatarUrl(data.avatar_url || null)
       }
       const approval = await fetchRequireFollowApproval(supabase, user.id)
@@ -137,6 +139,7 @@ export default function SettingsPage() {
       crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
       theme_preference: themePref,
       discoverable_by_email: discoverableByEmail,
+      email_notifications: emailNotifications,
       updated_at: new Date().toISOString(),
     }
 
@@ -276,6 +279,15 @@ export default function SettingsPage() {
               onChange={(e) => handleRequireApprovalChange(e.target.checked)}
             />
             <span>Require my approval for new followers (existing followers are kept)</span>
+          </label>
+
+          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={emailNotifications}
+              onChange={(e) => setEmailNotifications(e.target.checked)}
+            />
+            <span>Email me about new notifications (followers, comments, mentions)</span>
           </label>
 
         </section>
