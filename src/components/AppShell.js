@@ -26,8 +26,8 @@ export default function AppShell({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [glassEnabled, setGlassEnabled] = useState(true)
 
-  // Paths that don't need the Shell (Login and Register)
-  const isAuthPage = pathname === '/login' || pathname === '/register'
+  // Paths that don't need the Shell (Login, Register and password recovery)
+  const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname)
   // Public tools that match v1 behavior: usable without an account (Gear Architect, Velodromes map)
   const isPublicPage = pathname.startsWith('/gears')
 
