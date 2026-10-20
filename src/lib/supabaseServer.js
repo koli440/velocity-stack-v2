@@ -13,6 +13,9 @@
 // validate the token via supabase.auth.getUser(token).
 import { createClient } from '@supabase/supabase-js'
 import { noStoreFetch } from './noStoreFetch'
+import { bearerToken } from './jwtSubject.js'
+
+export { jwtSubject, bearerToken } from './jwtSubject.js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -40,4 +43,14 @@ export async function getRequestUser(req) {
   } = await supabase.auth.getUser(token)
 
   return { supabase, user: error ? null : user }
+}
+
+/** Request-scoped client without the verification round-trip; pair with supabase.auth.getUser(token). */
+export function getRequestClient(req) {
+  const token = bearerToken(req)
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { fetch: noStoreFetch, headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    auth: { persistSession: false },
+  })
+  return { supabase, token }
 }
