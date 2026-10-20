@@ -64,6 +64,11 @@ export default function AppShell({ children }) {
   }
 
   useEffect(() => {
+    // A reset link that lands on any other page still opens the new-password form.
+    if (window.location.hash.includes('type=recovery') && pathname !== '/reset-password') {
+      router.replace(`/reset-password${window.location.hash}`)
+      return
+    }
     supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null
       setUser(currentUser)
@@ -78,7 +83,11 @@ export default function AppShell({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' && pathname !== '/reset-password') {
+        router.replace('/reset-password')
+        return
+      }
       const currentUser = session?.user ?? null
       setUser(currentUser)
       if (!currentUser && !isAuthPage && !isPublicPage) {
@@ -89,7 +98,7 @@ export default function AppShell({ children }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [router, isAuthPage, isPublicPage, setTheme])
+  }, [router, pathname, isAuthPage, isPublicPage, setTheme])
 
   // The settings page announces saves so the banner/theme pick up the new profile.
   useEffect(() => {
