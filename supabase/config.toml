@@ -1,2 +1,5 @@
 # A string used to distinguish different Supabase projects on the same host.
 project_id = "ccrjgikyysagdmfgehmd"
+
+[auth.email]
+enable_confirmations = true

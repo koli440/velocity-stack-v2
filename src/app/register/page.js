@@ -16,6 +16,7 @@ export default function RegisterPage() {
   })
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
+  const [sentTo, setSentTo] = useState(null)
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -28,6 +29,8 @@ export default function RegisterPage() {
         password: formData.password,
         // The database creates the profile from this metadata (trigger on auth.users).
         options: {
+          // The confirmation link in the email returns here, signed in.
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             first_name: formData.firstName.trim(),
             last_name: formData.lastName.trim(),
@@ -37,7 +40,10 @@ export default function RegisterPage() {
 
       if (error) throw error
 
-      if (data?.user) {
+      // With "Confirm email" on, no session exists until the link is clicked.
+      if (data?.user && !data.session) {
+        setSentTo(formData.email)
+      } else if (data?.user) {
         router.push('/')
         router.refresh()
       }
@@ -65,6 +71,19 @@ export default function RegisterPage() {
           </p>
         </div>
 
+        {sentTo ? (
+          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-400/40 text-emerald-100 text-xs space-y-2 text-center">
+            <p className="font-bold uppercase tracking-wider">Check your email</p>
+            <p>
+              We sent a confirmation link to <strong>{sentTo}</strong>. Open it to activate your account, then{' '}
+              <Link href="/login" className="font-bold text-emerald-300 hover:underline">
+                sign in
+              </Link>
+              .
+            </p>
+          </div>
+        ) : (
+        <>
         {errorMsg && (
           <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs font-semibold">
             {errorMsg}
@@ -135,6 +154,8 @@ export default function RegisterPage() {
             {loading ? 'Creating Account...' : 'Complete Registration'}
           </button>
         </form>
+        </>
+        )}
 
         <div className="text-center pt-2 border-t border-white/20">
           <p className="text-xs text-white/80">
