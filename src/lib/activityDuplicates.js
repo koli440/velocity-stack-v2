@@ -63,13 +63,27 @@ export function findDuplicate(candidate, existingFingerprints = []) {
  * @returns {Promise<Array<{ id: string, source: string|null, external_source: string|null, external_id: string|null, file_sha256: string|null, start_time: string|null, elapsed_time_s: number|null }>>}
  */
 export async function loadExistingActivityFingerprints(supabase, userId) {
-  const { data, error } = await supabase
-    .from('activities')
-    .select('id, file_sha256, start_time, elapsed_time_s, source, external_source, external_id')
-    .eq('user_id', userId)
-
-  if (error) throw error
-  return data || []
+  const base = () =>
+    supabase
+      .from('activities')
+      .select('id, file_sha256, start_time, elapsed_time_s, source, external_source, external_id')
+      .eq('user_id', userId)
+  const first = base()
+  // PostgREST caps a response at 1000 rows by default, so page through everything.
+  if (typeof first?.order !== 'function') {
+    const { data, error } = await first
+    if (error) throw error
+    return data || []
+  }
+  const PAGE = 1000
+  const all = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await (from === 0 ? first : base()).order('id').range(from, from + PAGE - 1)
+    if (error) throw error
+    all.push(...(data || []))
+    if (!data || data.length < PAGE) break
+  }
+  return all
 }
 
 const SOURCE_PRIORITY = { intervals: 3, strava: 2 }
