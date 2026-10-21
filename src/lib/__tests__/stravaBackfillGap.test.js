@@ -114,8 +114,8 @@ test('a re-opened (previously gapped) backfill imports only the missing rides', 
   const expected = rideIds(all, '2025-10-21T00:00:00Z')
   const conn = { provider: 'strava', user_id: 'u', external_athlete_id: '1', last_synced_at: NOW.toISOString(), backfill_cursor: null, backfill_complete: false, backfill_days: 365 }
   const h = harness(all, conn, fakeStrava(all))
-  // old behaviour: newest 30 days and oldest ~100 rides present
-  expected.slice(0, 20).concat(expected.slice(-100)).forEach((id) => h.imported.set(id, true))
+  // reported shape: oldest ~100 listed activities (77 rides) + 3 forward-synced rides, backfill marked complete
+  expected.slice(0, 3).concat(expected.slice(-77)).forEach((id) => h.imported.set(id, true))
   const before = h.imported.size
   await runToCompletion(h, conn, 200)
   assert.deepEqual([...h.imported.keys()].sort(), expected.slice().sort())
