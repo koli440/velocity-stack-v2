@@ -1,21 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabase'
+import GearPicker, { useGearState } from '../../components/GearPicker'
+import { CALCULATOR_GEAR_START, parseGear } from '../../lib/gear'
 import { gearInches, speedAtCadence, similarGears } from '../../lib/trackGearing'
 
 // "Gear Architect" - migrated from v1's pages/20_gears.py. A simple, account-free calculator:
 // given chainring/cog tooth counts, a target cadence and wheel size, derive gear inches, gear
 // ratio and the resulting speed at that cadence.
 export default function GearsPage() {
-  const [chainring, setChainring] = useState(52)
-  const [cog, setCog] = useState(14)
+  const [userId, setUserId] = useState(null)
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data?.user?.id || null)).catch(() => {})
+  }, [])
+  // Saved default when set, else a calculator-only starting gear (never saved).
+  const { gear, setGear } = useGearState(userId, CALCULATOR_GEAR_START)
+  const parsed = parseGear(gear.chainring, gear.cog)
+  const chainring = parsed.valid && !parsed.empty ? parsed.chainring : 0
+  const cog = parsed.valid && !parsed.empty ? parsed.cog : 0
   const [cadence, setCadence] = useState(105)
   const [wheelSize, setWheelSize] = useState(27.0)
   const [tolerancePct, setTolerancePct] = useState(3)
 
-  const safeCog = Number(cog) || 1
+  const safeCog = cog || 1
   const inches = gearInches(chainring, safeCog, wheelSize)
-  const ratio = Number(chainring) / safeCog
+  const ratio = chainring / safeCog
   const speedKmh = speedAtCadence(inches, cadence)
 
   const similar = similarGears(chainring, safeCog, wheelSize, { tolerance: tolerancePct / 100 })
@@ -54,8 +64,7 @@ export default function GearsPage() {
 
       <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {field('Chainring (teeth)', chainring, setChainring, 1)}
-          {field('Cog (teeth)', cog, setCog, 1)}
+          <GearPicker label="Gear" chainring={gear.chainring} cog={gear.cog} onChange={setGear} className="sm:col-span-2" />
           {field('Cadence (RPM)', cadence, setCadence, 1)}
           {field('Wheel Size (in)', wheelSize, setWheelSize, 0.5)}
         </div>

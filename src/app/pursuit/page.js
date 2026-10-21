@@ -22,6 +22,8 @@ import {
 } from '../../lib/pursuit'
 import VelodromePicker from '../../components/VelodromePicker'
 import Icon from '../../components/Icon'
+import GearPicker, { useGearState } from '../../components/GearPicker'
+import { parseGear, PURSUIT_GEAR_START } from '../../lib/gear'
 
 const STRATEGY_BANNER = {
   negative: {
@@ -59,8 +61,11 @@ export default function PursuitPage() {
   const [distanceInput, setDistanceInput] = useState('')
   const [startPenalty, setStartPenalty] = useState(5)
   const [pacingDrift, setPacingDrift] = useState(0)
-  const [chainring, setChainring] = useState(58)
-  const [cog, setCog] = useState(15)
+  const [userId, setUserId] = useState(null)
+  // Saved default when set, else a calculator-only starting gear (never saved).
+  const { gear, setGear } = useGearState(userId, PURSUIT_GEAR_START)
+  const parsedGear = parseGear(gear.chainring, gear.cog)
+  const gearReady = parsedGear.valid && !parsedGear.empty
 
   useEffect(() => {
     let active = true
@@ -70,6 +75,7 @@ export default function PursuitPage() {
         try {
           const { data: auth } = await supabase.auth.getUser()
           if (auth?.user) {
+            setUserId(auth.user.id)
             const { data: profile } = await supabase
               .from('profiles')
               .select('home_track_id')
@@ -141,7 +147,7 @@ export default function PursuitPage() {
       : { laps: 0, valid: false }
 
   const strategy =
-    lapsInfo.valid && lapsInfo.laps > 1 && selectedTrack && selectedDiscipline && targetSeconds > 0
+    gearReady && lapsInfo.valid && lapsInfo.laps > 1 && selectedTrack && selectedDiscipline && targetSeconds > 0
       ? calculatePursuitStrategy({
           trackLengthM,
           laps: lapsInfo.laps,
@@ -149,8 +155,8 @@ export default function PursuitPage() {
           targetSeconds,
           startPenaltyS: Number(startPenalty) || 0,
           pacingDriftS: Number(pacingDrift) || 0,
-          chainring: Number(chainring) || 1,
-          cog: Number(cog) || 1,
+          chainring: parsedGear.chainring,
+          cog: parsedGear.cog,
         })
       : null
 
@@ -357,11 +363,7 @@ export default function PursuitPage() {
         </div>
 
         <div>
-          <h2 className="text-xs uppercase font-bold text-slate-400 mb-3">Gear</h2>
-          <div className="grid grid-cols-2 gap-4 max-w-xs">
-            {field('Chainring', chainring, setChainring, { min: 32, max: 70, step: 1 })}
-            {field('Cog', cog, setCog, { min: 10, max: 19, step: 1 })}
-          </div>
+          <GearPicker label="Gear" chainring={gear.chainring} cog={gear.cog} onChange={setGear} className="max-w-xs" />
         </div>
       </div>
 
@@ -369,6 +371,8 @@ export default function PursuitPage() {
         <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm text-sm text-slate-500 dark:text-slate-400">
           {tracks.length === 0
             ? 'Add a track to the database to use the strategist.'
+            : !gearReady
+            ? 'Enter a valid chainring and cog to compute a strategy.'
             : 'Distance must be longer than 1 lap and must cleanly divide the selected track to compute a strategy.'}
         </div>
       ) : (
@@ -380,7 +384,7 @@ export default function PursuitPage() {
             {metric('Target', formatTime(targetSeconds))}
             {metric('Avg Speed', strategy.avgSpeedKmh.toFixed(2), 'km/h')}
             {metric('Laps', `${lapsInfo.laps}x`)}
-            {metric('Gear', `${chainring}x${cog}`)}
+            {metric('Gear', `${parsedGear.chainring}x${parsedGear.cog}`)}
             {metric('Avg Cadence', strategy.avgCadenceRpm.toFixed(0), 'RPM')}
             {metric('Avg Lap Time', strategy.avgLapTimeS.toFixed(3), 's')}
           </div>

@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import Portal from './Portal'
 import VelodromePicker from './VelodromePicker'
+import GearPicker from './GearPicker'
+import { toGearField } from '../lib/gear'
 import { VISIBILITY_OPTIONS } from '../lib/social'
 import {
   MAX_TITLE_LENGTH,
   MAX_DESCRIPTION_LENGTH,
-  gearOptions,
-  gearValue,
   updateActivity,
 } from '../lib/activityEdit'
 
@@ -19,7 +19,8 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
   const [title, setTitle] = useState('')
   const [trackId, setTrackId] = useState('')
   const [visibility, setVisibility] = useState('private')
-  const [gear, setGear] = useState('')
+  const [chainring, setChainring] = useState('')
+  const [cog, setCog] = useState('')
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -29,7 +30,8 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     setTitle(activity.title || '')
     setTrackId(activity.track_id || '')
     setVisibility(activity.visibility || 'private')
-    setGear(gearValue(activity.chainring, activity.cog))
+    setChainring(toGearField(activity.chainring))
+    setCog(toGearField(activity.cog))
     setDescription(activity.description || '')
     setError('')
   }, [isOpen, activity])
@@ -44,7 +46,8 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
       title,
       trackId,
       visibility,
-      gear,
+      chainring,
+      cog,
       description,
     })
     setSaving(false)
@@ -95,15 +98,13 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
           </p>
         </div>
 
-        <div>
-          <label className={label} htmlFor="edit-activity-gear">Gear (optional)</label>
-          <select id="edit-activity-gear" value={gear} onChange={(e) => setGear(e.target.value)} className={inputClass}>
-            <option value="">-- No gear selected --</option>
-            {gearOptions(gear).map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
+        <GearPicker
+          label="Gear (optional)"
+          chainring={chainring}
+          cog={cog}
+          onChange={(g) => { setChainring(g.chainring); setCog(g.cog) }}
+          showStats
+        />
 
         <div>
           <label className={label} htmlFor="edit-activity-description">Description (optional)</label>

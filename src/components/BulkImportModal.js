@@ -9,6 +9,8 @@ import { expandToFitFiles, importFitFilesBatch } from '../lib/bulkImport'
 import { fetchWeightHistory } from '../lib/weightHistory'
 import { fetchFtpHistory } from '../lib/ftpHistory'
 import VelodromePicker from './VelodromePicker'
+import GearPicker, { useGearState } from './GearPicker'
+import { parseGear } from '../lib/gear'
 import Icon from './Icon'
 
 const STATUS_META = {
@@ -33,8 +35,9 @@ function BulkImportModalInner({
   // Global options shared across every file in the batch - same defaults/conventions as
   // FitUploader / IntervalsSyncModal.
   const [selectedTrack, setSelectedTrack] = useState('')
-  const [chainring, setChainring] = useState('58')
-  const [cog, setCog] = useState('14')
+  const { gear, setGear } = useGearState(currentUser?.id)
+  const { chainring, cog } = gear
+  const parsedGear = parseGear(chainring, cog)
   const [isFixedGear, setIsFixedGear] = useState(false)
 
   const handleSelectTrack = (trackId) => {
@@ -85,8 +88,10 @@ function BulkImportModalInner({
   const analyzeFile = async (blob, meta) => {
     const formData = new FormData()
     formData.append('file', blob)
-    formData.append('chainring', meta.chainring)
-    formData.append('cog', meta.cog)
+    if (meta.chainring && meta.cog) {
+      formData.append('chainring', meta.chainring)
+      formData.append('cog', meta.cog)
+    }
     formData.append('is_fixed_gear', meta.isFixedGear ? 'true' : 'false')
 
     const res = await fetch('/api/analyze', { method: 'POST', body: formData })
@@ -98,7 +103,7 @@ function BulkImportModalInner({
   }
 
   const handleStartImport = async () => {
-    if (!currentUser?.id || files.length === 0 || importing) return
+    if (!currentUser?.id || files.length === 0 || importing || !parsedGear.valid) return
     setImporting(true)
     setResults([])
 
@@ -124,8 +129,8 @@ function BulkImportModalInner({
         existingFingerprints,
         meta: {
           trackId: selectedTrack,
-          chainring,
-          cog,
+          chainring: parsedGear.chainring,
+          cog: parsedGear.cog,
           crankLengthMm: 165.0,
           isFixedGear,
           processingStatus: 'baseline_completed',
@@ -190,36 +195,15 @@ function BulkImportModalInner({
               Fixed gear (fixed-gear, no freewheel)
             </label>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Chainring (T)
-                </label>
-                <input
-                  type="number"
-                  value={chainring}
-                  onChange={(e) => setChainring(e.target.value)}
-                  disabled={importing}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Cog (T)
-                </label>
-                <input
-                  type="number"
-                  value={cog}
-                  onChange={(e) => setCog(e.target.value)}
-                  disabled={importing}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
-                />
-              </div>
-            </div>
-            <p className="text-[10px] text-slate-400 leading-snug">
-              Only used when a file has no speed sensor or GPS route - speed is then derived
-              from cadence and this gear ratio (fixed-gear bikes only).
-            </p>
+            <GearPicker
+              label="Gear (optional)"
+              chainring={chainring}
+              cog={cog}
+              onChange={setGear}
+              disabled={importing}
+              showStats
+              hint="Only used when a file has no speed sensor or GPS route - speed is then derived from cadence and this gear ratio (fixed-gear bikes only)."
+            />
           </div>
         </div>
 
@@ -319,7 +303,7 @@ function BulkImportModalInner({
             <button
               type="button"
               onClick={handleStartImport}
-              disabled={importing || files.length === 0}
+              disabled={importing || files.length === 0 || !parsedGear.valid}
               className="py-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-black text-xs uppercase tracking-wider shadow-md transition disabled:opacity-50"
             >
               {importing ? 'Importing...' : `Start Import (${files.length})`}

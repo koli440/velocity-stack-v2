@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { fetchTracks } from '../lib/lookups'
 import { fetchAthleteProfile, updateAthleteProfile } from '../lib/coaching'
 import VelodromePicker from './VelodromePicker'
+import GearPicker from './GearPicker'
+import { parseGear, toGearField } from '../lib/gear'
 import CoachBadge, { useCoachNames } from './CoachBadge'
 
 const input =
@@ -23,8 +25,8 @@ export default function AthleteTrainingDefaults({ riderId, athlete }) {
   const hydrate = (p) =>
     setForm({
       home_track_id: p?.home_track_id || '',
-      default_chainring: p?.default_chainring ?? '',
-      default_cog: p?.default_cog ?? '',
+      default_chainring: toGearField(p?.default_chainring),
+      default_cog: toGearField(p?.default_cog),
       crank_length_mm: p?.crank_length_mm ?? '',
     })
 
@@ -40,12 +42,14 @@ export default function AthleteTrainingDefaults({ riderId, athlete }) {
   const num = (v) => (v === '' || v == null ? null : Number(v))
 
   const save = async () => {
+    const gear = parseGear(form.default_chainring, form.default_cog)
+    if (!gear.valid) return setStatus({ error: gear.error })
     setBusy(true)
     setStatus(null)
     const { error } = await updateAthleteProfile(supabase, riderId, {
       home_track_id: form.home_track_id || null,
-      default_chainring: num(form.default_chainring),
-      default_cog: num(form.default_cog),
+      default_chainring: gear.chainring,
+      default_cog: gear.cog,
       crank_length_mm: num(form.crank_length_mm),
     })
     if (error) {
@@ -76,22 +80,24 @@ export default function AthleteTrainingDefaults({ riderId, athlete }) {
         compact
       />
       <div className="grid grid-cols-3 gap-2">
-        {[
-          ['default_chainring', 'Chainring', '1'],
-          ['default_cog', 'Cog', '1'],
-          ['crank_length_mm', 'Crank (mm)', '0.5'],
-        ].map(([key, label, step]) => (
-          <div key={key}>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">{label}</label>
-            <input
-              type="number"
-              step={step}
-              value={form[key]}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-              className={input}
-            />
-          </div>
-        ))}
+        <GearPicker
+          label="Default gear (optional)"
+          chainring={form.default_chainring}
+          cog={form.default_cog}
+          onChange={(g) => setForm({ ...form, default_chainring: g.chainring, default_cog: g.cog })}
+          showStats
+          className="col-span-2"
+        />
+        <div>
+          <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Crank (mm)</label>
+          <input
+            type="number"
+            step="0.5"
+            value={form.crank_length_mm}
+            onChange={(e) => setForm({ ...form, crank_length_mm: e.target.value })}
+            className={input}
+          />
+        </div>
       </div>
       <button
         type="button"

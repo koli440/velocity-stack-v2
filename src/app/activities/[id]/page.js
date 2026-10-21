@@ -27,6 +27,8 @@ import { weightFromActivity } from '../../../lib/weightHistory'
 // Leaflet requires window/document -> dynamic import without SSR
 import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
 import Icon from '../../../components/Icon'
+import GearPicker from '../../../components/GearPicker'
+import { gearLabel, parseGear, toGearField } from '../../../lib/gear'
 import ActivityComments from '../../../components/ActivityComments'
 
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
@@ -57,8 +59,8 @@ export default function ActivityDetailPage() {
   const [highlightWindows, setHighlightWindows] = useState([])
 
   // Quick edit state for gear ratio and track in the bottom panel
-  const [chainring, setChainring] = useState('58')
-  const [cog, setCog] = useState('14')
+  const [chainring, setChainring] = useState('')
+  const [cog, setCog] = useState('')
   const [trackId, setTrackId] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -102,8 +104,8 @@ export default function ActivityDetailPage() {
         if (act.user_id) {
           fetchProfilesByIds(supabase, [act.user_id]).then(({ profiles }) => setRider(profiles.get(act.user_id) || null))
         }
-        setChainring(act.chainring ? String(act.chainring) : '58')
-        setCog(act.cog ? String(act.cog) : '14')
+        setChainring(toGearField(act.chainring))
+        setCog(toGearField(act.cog))
         setTrackId(act.track_id || '')
 
         // 2. Fetch the rider's historical maxima for comparison (Master Curves)
@@ -177,12 +179,17 @@ export default function ActivityDetailPage() {
   // Quick save of the gear ratio from the bottom bar
   const handleUpdateGear = async (e) => {
     e.preventDefault()
+    const gear = parseGear(chainring, cog)
+    if (!gear.valid) {
+      alert(gear.error)
+      return
+    }
     setSavingGear(true)
     setSaveSuccess(false)
 
     const updates = {
-      chainring: parseInt(chainring) || null,
-      cog: parseInt(cog) || null,
+      chainring: gear.chainring,
+      cog: gear.cog,
       track_id: trackId || null,
     }
 
@@ -203,14 +210,6 @@ export default function ActivityDetailPage() {
     } else {
       alert('Error while saving: ' + error.message)
     }
-  }
-
-  // Calculation of gear development (Gear Inches)
-  const calcGearInches = () => {
-    const ring = parseFloat(chainring)
-    const sprocket = parseFloat(cog)
-    if (!ring || !sprocket) return 0
-    return Math.round((ring / sprocket) * 26.8 * 10) / 10
   }
 
   // Permanent deletion of the activity (issue #18): deletes the DB record (cascading curves/analysis)
@@ -365,8 +364,8 @@ export default function ActivityDetailPage() {
         client={supabase}
         onSaved={(updates) => {
           setActivity((prev) => ({ ...prev, ...updates }))
-          setChainring(updates.chainring ? String(updates.chainring) : '58')
-          setCog(updates.cog ? String(updates.cog) : '14')
+          setChainring(toGearField(updates.chainring))
+          setCog(toGearField(updates.cog))
           setTrackId(updates.track_id || '')
         }}
       />
@@ -472,29 +471,14 @@ export default function ActivityDetailPage() {
             <VelodromePicker tracks={tracks} value={trackId} onChange={setTrackId} emptyLabel="-- No Track Selected --" compact />
           </div>
 
-          <div>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Chainring
-            </label>
-            <input
-              type="number"
-              value={chainring}
-              onChange={(e) => setChainring(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500 font-mono font-bold"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Cog
-            </label>
-            <input
-              type="number"
-              value={cog}
-              onChange={(e) => setCog(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500 font-mono font-bold"
-            />
-          </div>
+          <GearPicker
+            label="Gear (optional)"
+            chainring={chainring}
+            cog={cog}
+            onChange={(g) => { setChainring(g.chainring); setCog(g.cog) }}
+            showStats
+            className="sm:col-span-2"
+          />
 
           <div className="flex items-center gap-2">
             <button
@@ -509,11 +493,7 @@ export default function ActivityDetailPage() {
 
         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs">
           <div className="text-slate-400">
-            Calculated Gear:{' '}
-            <span className="font-extrabold text-slate-800 dark:text-slate-200">
-              {calcGearInches()}"
-            </span>{' '}
-            ({chainring} × {cog})
+            {gearLabel(chainring, cog) ? `Gear ${gearLabel(chainring, cog)}` : 'No gear set'}
           </div>
 
           {saveSuccess && (

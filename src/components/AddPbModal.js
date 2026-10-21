@@ -13,6 +13,8 @@ import {
 import VelodromePicker from './VelodromePicker'
 import Icon from './Icon'
 import DisciplineSuggest from './DisciplineSuggest'
+import GearPicker, { useGearState } from './GearPicker'
+import { parseGear, toGearField } from '../lib/gear'
 
 // "Add New Personal Best" form - migrated from v1's expander in pages/30_PB_vault.py. Collects
 // discipline + track + time (as separate Min/Sec inputs, like v1) plus optional gear and lap/
@@ -38,8 +40,12 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved, prefill = null
   const [achievedDate, setAchievedDate] = useState(new Date().toISOString().slice(0, 10))
   const [minutes, setMinutes] = useState(4)
   const [seconds, setSeconds] = useState(20)
-  const [chainring, setChainring] = useState(52)
-  const [cog, setCog] = useState(14)
+  const [userId, setUserId] = useState(null)
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data?.user?.id || null)).catch(() => {})
+  }, [])
+  const { gear, setGear, reset: resetGear } = useGearState(userId)
+  const parsedGear = parseGear(gear.chainring, gear.cog)
   const [splitMode, setSplitMode] = useState('laps')
   const [customSplitDistance, setCustomSplitDistance] = useState(500)
   const [lapInputs, setLapInputs] = useState([])
@@ -57,10 +63,9 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved, prefill = null
     if (prefill.achievedDate) setAchievedDate(prefill.achievedDate)
     if (prefill.minutes != null) setMinutes(prefill.minutes)
     if (prefill.seconds != null) setSeconds(prefill.seconds)
-    if (prefill.chainring) setChainring(prefill.chainring)
-    if (prefill.cog) setCog(prefill.cog)
+    if (prefill.chainring && prefill.cog) setGear({ chainring: toGearField(prefill.chainring), cog: toGearField(prefill.cog) })
     if (prefill.notes) setNotes(prefill.notes)
-  }, [isOpen, prefill, disciplines])
+  }, [isOpen, prefill, disciplines, setGear])
 
   const selectedTrack = tracks.find((t) => t.id === trackId)
   const distanceM = findDisciplineDistance(disciplines, discipline)
@@ -80,8 +85,7 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved, prefill = null
     setAchievedDate(new Date().toISOString().slice(0, 10))
     setMinutes(4)
     setSeconds(20)
-    setChainring(52)
-    setCog(14)
+    resetGear()
     setSplitMode('laps')
     setCustomSplitDistance(500)
     setLapInputs([])
@@ -108,6 +112,11 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved, prefill = null
       return
     }
 
+    if (!parsedGear.valid) {
+      setErrorMsg(parsedGear.error)
+      return
+    }
+
     setSaving(true)
     setErrorMsg(null)
 
@@ -127,8 +136,8 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved, prefill = null
           eventName,
           achievedDate,
           timeSeconds: totalSeconds,
-          chainring,
-          cog,
+          chainring: parsedGear.chainring,
+          cog: parsedGear.cog,
           splitMode: lapTimes.length ? splitMode : 'laps',
           splitDistanceM: lapTimes.length ? segmentDistance : selectedTrack?.length_m || null,
           lapTimes,
@@ -252,30 +261,7 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved, prefill = null
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <label className="block space-y-1.5">
-            <span className="text-xs uppercase font-bold text-slate-400">Chainring</span>
-            <input
-              type="number"
-              min={30}
-              max={75}
-              value={chainring}
-              onChange={(e) => setChainring(Number(e.target.value))}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            />
-          </label>
-          <label className="block space-y-1.5">
-            <span className="text-xs uppercase font-bold text-slate-400">Cog</span>
-            <input
-              type="number"
-              min={10}
-              max={25}
-              value={cog}
-              onChange={(e) => setCog(Number(e.target.value))}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            />
-          </label>
-        </div>
+        <GearPicker label="Gear (optional)" chainring={gear.chainring} cog={gear.cog} onChange={setGear} showStats />
 
         <details className="rounded-xl border border-slate-200 dark:border-slate-800 p-3.5">
           <summary className="text-xs uppercase font-bold text-slate-400 cursor-pointer">

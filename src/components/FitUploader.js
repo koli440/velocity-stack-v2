@@ -7,6 +7,8 @@ import { fetchWeightHistory } from '../lib/weightHistory'
 import { fetchFtpHistory } from '../lib/ftpHistory'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import VelodromePicker from './VelodromePicker'
+import GearPicker, { useGearState } from './GearPicker'
+import { parseGear } from '../lib/gear'
 import Icon from './Icon'
 
 export default function FitUploader({
@@ -24,8 +26,8 @@ export default function FitUploader({
   // Workout parameters
   const [title, setTitle] = useState('Velodrome Flying Laps')
   const [selectedTrack, setSelectedTrack] = useState('')
-  const [chainring, setChainring] = useState('58')
-  const [cog, setCog] = useState('14')
+  const { gear, setGear } = useGearState(currentUser?.id)
+  const { chainring, cog } = gear
   // Default assumption: a ride on the selected velodrome is on a fixed-gear (track) bike
   // without freewheel; elsewhere (road) a freewheel is likely. Can be overridden with the checkbox below.
   const [isFixedGear, setIsFixedGear] = useState(false)
@@ -53,8 +55,12 @@ export default function FitUploader({
     setLoading(true)
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('chainring', chainringVal)
-    formData.append('cog', cogVal)
+    // Gear is optional; an empty or invalid gear is simply not sent (no speed derivation then).
+    const g = parseGear(chainringVal, cogVal)
+    if (g.valid && !g.empty) {
+      formData.append('chainring', g.chainring)
+      formData.append('cog', g.cog)
+    }
     formData.append('is_fixed_gear', isFixedGearVal ? 'true' : 'false')
 
     try {
@@ -77,7 +83,7 @@ export default function FitUploader({
   }
 
   // If speed was derived from cadence (no speed sensor or GPS in the file),
-  // we recompute it after the gear ratio is edited - otherwise it would stay computed with the default 58/14 ratio.
+  // we recompute it after the gear ratio is edited - otherwise it would stay computed with the previous gear ratio.
   const handleGearBlur = () => {
     if (rawFile && analysis?.summary?.speed_source === 'derived_from_cadence') {
       runAnalyze(rawFile, chainring, cog, isFixedGear)
@@ -93,6 +99,10 @@ export default function FitUploader({
     e.preventDefault()
     if (!analysis || !currentUser) {
       alert('You must be signed in to save the workout.')
+      return
+    }
+    if (!parseGear(chainring, cog).valid) {
+      alert(parseGear(chainring, cog).error)
       return
     }
     setSaving(true)
@@ -152,8 +162,8 @@ export default function FitUploader({
         title,
         userId: currentUser.id,
         trackId: selectedTrack,
-        chainring,
-        cog,
+        chainring: parseGear(chainring, cog).chainring,
+        cog: parseGear(chainring, cog).cog,
         crankLengthMm: 165.0,
         timeSeries: analysis.time_series,
         curvesData: analysis.curves,
@@ -272,33 +282,14 @@ export default function FitUploader({
               Fixed gear (fixed-gear, no freewheel)
             </label>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Chainring (T)
-                </label>
-                <input
-                  type="number"
-                  value={chainring}
-                  onChange={(e) => setChainring(e.target.value)}
-                  onBlur={handleGearBlur}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Cog (T)
-                </label>
-                <input
-                  type="number"
-                  value={cog}
-                  onChange={(e) => setCog(e.target.value)}
-                  onBlur={handleGearBlur}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-            </div>
+            <GearPicker
+              label="Gear (optional)"
+              chainring={chainring}
+              cog={cog}
+              onChange={setGear}
+              onBlur={handleGearBlur}
+              showStats
+            />
 
             {analysis?.summary?.speed_source === 'gps' && (
               <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-[11px] font-semibold">

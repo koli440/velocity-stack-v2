@@ -50,8 +50,9 @@ export async function importActivity({
   if (externalId == null || externalId === '') throw new ImportError('Missing activityId', 400)
 
   const prof = profile || (await loadImportProfile(supabase, userId))
-  const chainring = prof.default_chainring || 58
-  const cog = prof.default_cog || 14
+  // Gear is optional: only the rider's own saved default is used, never a hardcoded fallback.
+  const chainring = prof.default_chainring || null
+  const cog = prof.default_cog || null
   const isFixedGear = !!options.isFixedGear
 
   const fetched = await provider.fetchActivity(externalId, {

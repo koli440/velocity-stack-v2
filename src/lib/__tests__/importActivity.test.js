@@ -156,3 +156,15 @@ test('analyzeStreams: emits heartrate in time_series and a HeartRate curve (same
   const none = analyzeStreams([{ type: 'watts', data: [100, 100] }])
   assert.deepEqual(none.time_series.heartrate, [])
 })
+
+test('importActivity applies no gear when the rider has no saved default', async () => {
+  const supabase = fakeSupabase()
+  let seen
+  const spy = { ...provider, fetchActivity: async (id, opts) => { seen = opts.gearing; return provider.fetchActivity() } }
+  await importActivity({ supabase, userId: 'u1', provider: spy, externalId: '50', profile: {} })
+  assert.equal(seen.chainring, null)
+  assert.equal(seen.cog, null)
+  const row = supabase.calls.inserts[0].rows[0]
+  assert.equal(row.chainring, null)
+  assert.equal(row.cog, null)
+})
