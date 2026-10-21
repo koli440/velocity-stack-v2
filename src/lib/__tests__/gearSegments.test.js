@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   resolveGears, primaryGear, validateGearConfig, removeGear, moveGear, assignSegment, gearAt,
-  deriveSpeedWithSegments, summarizeSegments, expandSegments, gearForRange, nextGearId, toGearPayload,
+  deriveSpeedWithSegments, summarizeSegments, expandSegments, gearForRange, withSegmentSpeed, nextGearId, toGearPayload,
 } from '../gearSegments.js'
 import { deriveSpeedFromCadence } from '../trackGearing.js'
 import { effectiveRideType, rideTypeHasGear, rideTypeLabel } from '../rideType.js'
@@ -109,4 +109,19 @@ test('gearForRange prefills from the dominant segment gear, primary otherwise', 
 
 test('toGearPayload normalises form strings and drops empty rows', () => {
   assert.deepEqual(toGearPayload([{ id: 'g1', chainring: '58', cog: '14', note: ' x ' }, { id: 'g2', chainring: '', cog: '' }]), [{ id: 'g1', chainring: 58, cog: 14, note: 'x' }])
+})
+
+test('withSegmentSpeed: single gear or road is untouched; segments recompute speed-dependent stats', () => {
+  const cadence = Array(10).fill(90)
+  const base = { ride_type: 'track', speed_source: 'derived_from_cadence', time_series: { cadence, speed: deriveSpeedFromCadence(cadence, 58, 14) }, avg_speed_kmh: 47.8, gears: [G1] }
+  assert.equal(withSegmentSpeed(base).activity, base)
+  assert.equal(withSegmentSpeed({ ...base, gears: [G1, G2], gear_segments: [] }).changed, false)
+  assert.equal(withSegmentSpeed({ ...base, ride_type: 'road', gears: [G1, G2], gear_segments: [{ start_s: 0, end_s: 5, gear_id: 'g2' }] }).changed, false)
+  assert.equal(withSegmentSpeed({ ...base, speed_source: 'sensor', gears: [G1, G2], gear_segments: [{ start_s: 0, end_s: 5, gear_id: 'g2' }] }).changed, false)
+  const r = withSegmentSpeed({ ...base, gears: [G1, G2], gear_segments: [{ start_s: 0, end_s: 5, gear_id: 'g2' }] })
+  assert.equal(r.changed, true)
+  assert.ok(r.activity.avg_speed_kmh < 47.8)
+  assert.equal(r.activity.time_series.speed[9], base.time_series.speed[9])
+  assert.ok(r.activity.time_series.speed[0] < base.time_series.speed[0])
+  assert.equal(r.activity.moving_time_s, 10)
 })

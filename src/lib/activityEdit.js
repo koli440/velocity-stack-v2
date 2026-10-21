@@ -13,10 +13,11 @@ export const MAX_DESCRIPTION_LENGTH = 2000
  *
  * Ride type (issue #279): `rideType` is optional. For a ride type without gear (road) the stored
  * gear is left untouched (hidden, not deleted). For track, either `gears` (+ `gearSegments`) is
- * given as a list, or the legacy single `chainring`/`cog` pair is used.
+ * given as a list, or the legacy single `chainring`/`cog` pair is used. `keepGear` leaves every gear
+ * column out of the payload (an unset ride type is road, whose stored gear stays hidden).
  * @returns {{ updates: object|null, error: string|null }}
  */
-export function buildActivityUpdates({ title, trackId, visibility, chainring, cog, description, rideType, gears, gearSegments }) {
+export function buildActivityUpdates({ title, trackId, visibility, chainring, cog, description, rideType, gears, gearSegments, keepGear = false }) {
   const cleanTitle = String(title ?? '').trim()
   if (!cleanTitle) return { updates: null, error: 'Activity name is required' }
   if (cleanTitle.length > MAX_TITLE_LENGTH) {
@@ -35,7 +36,7 @@ export function buildActivityUpdates({ title, trackId, visibility, chainring, co
     description: cleanDescription || null,
   }
   if (rideType != null) updates.ride_type = rideType
-  if (rideType != null && !rideTypeHasGear(rideType)) return { updates, error: null }
+  if (keepGear || (rideType != null && !rideTypeHasGear(rideType))) return { updates, error: null }
 
   if (Array.isArray(gears)) {
     const error = validateGearConfig(gears, gearSegments)

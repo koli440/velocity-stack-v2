@@ -81,3 +81,8 @@ test('track: invalid gear list or segment is rejected; empty list clears gear', 
   const { updates } = buildActivityUpdates({ ...base, rideType: 'track', gears: [] })
   assert.deepEqual([updates.gears, updates.gear_segments, updates.chainring, updates.cog], [[], [], null, null])
 })
+
+test('keepGear leaves gear columns out without changing the ride type', () => {
+  const { updates } = buildActivityUpdates({ ...base, keepGear: true })
+  for (const k of ['ride_type', 'gears', 'gear_segments', 'chainring', 'cog']) assert.equal(k in updates, false)
+})

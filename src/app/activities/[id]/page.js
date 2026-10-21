@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Portal from '../../../components/Portal'
 import { fullDateTime } from '../../../lib/dateFormat'
 import { fetchProfilesByIds, authorName } from '../../../lib/social'
@@ -27,8 +27,14 @@ import { weightFromActivity } from '../../../lib/weightHistory'
 // Leaflet requires window/document -> dynamic import without SSR
 import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
 import Icon from '../../../components/Icon'
-import GearPicker from '../../../components/GearPicker'
-import { gearLabel, parseGear, toGearField } from '../../../lib/gear'
+import RideGearEditor from '../../../components/RideGearEditor'
+import CoachBadge, { useCoachNames } from '../../../components/CoachBadge'
+import { gearLabel } from '../../../lib/gear'
+import { effectiveRideType, rideTypeHasGear, rideTypeLabel } from '../../../lib/rideType'
+import { gearsToForm, resolveGears, resolveSegments, withSegmentSpeed } from '../../../lib/gearSegments'
+import { buildActivityUpdates } from '../../../lib/activityEdit'
+import { updateActivityGear } from '../../../lib/coaching'
+import { computeDurationalCurve } from '../../../lib/streamAnalysis'
 import ActivityComments from '../../../components/ActivityComments'
 
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
@@ -59,8 +65,9 @@ export default function ActivityDetailPage() {
   const [highlightWindows, setHighlightWindows] = useState([])
 
   // Quick edit state for gear ratio and track in the bottom panel
-  const [chainring, setChainring] = useState('')
-  const [cog, setCog] = useState('')
+  const [rideType, setRideType] = useState('road')
+  const [gears, setGears] = useState([])
+  const [segments, setSegments] = useState([])
   const [trackId, setTrackId] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -104,8 +111,9 @@ export default function ActivityDetailPage() {
         if (act.user_id) {
           fetchProfilesByIds(supabase, [act.user_id]).then(({ profiles }) => setRider(profiles.get(act.user_id) || null))
         }
-        setChainring(toGearField(act.chainring))
-        setCog(toGearField(act.cog))
+        setRideType(effectiveRideType(act.ride_type))
+        setGears(gearsToForm(act))
+        setSegments(resolveSegments(act))
         setTrackId(act.track_id || '')
 
         // 2. Fetch the rider's historical maxima for comparison (Master Curves)
@@ -176,27 +184,35 @@ export default function ActivityDetailPage() {
     fetchBaselineCurves(activity.user_id, period, customRange)
   }
 
-  // Quick save of the gear ratio from the bottom bar
+  // Quick save of velodrome, ride type, gears and segments from the bottom panel (own activity).
   const handleUpdateGear = async (e) => {
     e.preventDefault()
-    const gear = parseGear(chainring, cog)
-    if (!gear.valid) {
-      alert(gear.error)
+    const hasGear = rideTypeHasGear(rideType)
+    const untouchedRoad = !hasGear && activity.ride_type == null
+    const { updates: gearUpdates, error: validationError } = buildActivityUpdates({
+      title: activity.title,
+      trackId,
+      visibility: activity.visibility,
+      description: activity.description,
+      rideType: untouchedRoad ? undefined : rideType,
+      keepGear: untouchedRoad,
+      gears: hasGear ? gears : undefined,
+      gearSegments: hasGear ? segments : undefined,
+    })
+    if (validationError) {
+      alert(validationError)
       return
     }
+    // Only the setup columns are written here; title/visibility/description are never touched.
+    const { title: _t, visibility: _v, description: _d, ...updates } = gearUpdates
     setSavingGear(true)
     setSaveSuccess(false)
-
-    const updates = {
-      chainring: gear.chainring,
-      cog: gear.cog,
-      track_id: trackId || null,
-    }
 
     const { error } = await supabase
       .from('activities')
       .update(updates)
       .eq('id', activityId)
+      .eq('user_id', activity.user_id)
 
     setSavingGear(false)
     if (!error) {
@@ -204,12 +220,55 @@ export default function ActivityDetailPage() {
       setActivity((prev) => ({
         ...prev,
         ...updates,
+        // A rider edit clears the coach label (the trigger does the same in the database).
+        gear_set_by_coach: false,
         tracks: tracks.find((t) => t.id === trackId) || null,
       }))
       setTimeout(() => setSaveSuccess(false), 2500)
     } else {
       alert('Error while saving: ' + error.message)
     }
+  }
+
+  // Coach edit of ride type / gears / segments in athlete context, through the audited RPC.
+  const handleCoachSaveGear = async (e) => {
+    e.preventDefault()
+    const hasGear = rideTypeHasGear(rideType)
+    const { updates, error: validationError } = buildActivityUpdates({
+      title: 'x',
+      visibility: 'private',
+      rideType,
+      gears: hasGear ? gears : undefined,
+      gearSegments: hasGear ? segments : undefined,
+      keepGear: !hasGear,
+    })
+    if (validationError) {
+      alert(validationError)
+      return
+    }
+    const changes = { ride_type: updates.ride_type }
+    if (hasGear) {
+      changes.gears = updates.gears
+      changes.gear_segments = updates.gear_segments
+    }
+    setSavingGear(true)
+    setSaveSuccess(false)
+    const { data, error } = await updateActivityGear(supabase, activityId, changes)
+    setSavingGear(false)
+    if (error) {
+      alert('Error while saving: ' + error.message)
+      return
+    }
+    setSaveSuccess(true)
+    setActivity((prev) => ({ ...prev, ...(data || changes) }))
+    // Refresh the stamp columns (set_by_coach badge) from the database.
+    const { data: fresh } = await supabase
+      .from('shared_activities')
+      .select('chainring, cog, gear_set_by, gear_set_at, gear_set_by_coach')
+      .eq('id', activityId)
+      .maybeSingle()
+    if (fresh) setActivity((prev) => ({ ...prev, ...fresh }))
+    setTimeout(() => setSaveSuccess(false), 2500)
   }
 
   // Permanent deletion of the activity (issue #18): deletes the DB record (cascading curves/analysis)
@@ -230,6 +289,14 @@ export default function ActivityDetailPage() {
     if (activity.user_id) await syncFeedData(supabase, activity.user_id).catch(() => {})
     router.push(backHref)
   }
+
+  const segmentView = useMemo(() => withSegmentSpeed(activity), [activity])
+  const effectiveCurves = useMemo(() => {
+    const speed = segmentView.activity?.time_series?.speed
+    return segmentView.changed && Array.isArray(speed) ? { ...curvesMap, Speed: computeDurationalCurve(speed) } : curvesMap
+  }, [segmentView, curvesMap])
+  const rideGears = activity ? resolveGears(activity) : []
+  const coachNames = useCoachNames(useMemo(() => (activity ? [activity] : []), [activity]))
 
   if (loading) {
     return (
@@ -363,15 +430,16 @@ export default function ActivityDetailPage() {
         tracks={tracks}
         client={supabase}
         onSaved={(updates) => {
-          setActivity((prev) => ({ ...prev, ...updates }))
-          setChainring(toGearField(updates.chainring))
-          setCog(toGearField(updates.cog))
+          setActivity((prev) => ({ ...prev, ...updates, ...('ride_type' in updates || 'gears' in updates ? { gear_set_by_coach: false } : {}) }))
+          setRideType(effectiveRideType(updates.ride_type ?? activity?.ride_type))
+          setGears(gearsToForm({ ...activity, ...updates }))
+          setSegments(resolveSegments({ ...activity, ...updates }))
           setTrackId(updates.track_id || '')
         }}
       />
 
       {/* 2. Contextual badges for gear and setup */}
-      {(activity.bike_model || activity.handlebar_setup || activity.helmet || activity.tracks || activity.perceived_exertion) && (
+      {(activity.ride_type || rideGears.length > 0 || activity.bike_model || activity.handlebar_setup || activity.helmet || activity.tracks || activity.perceived_exertion) && (
         <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
           {activity.tracks && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -379,6 +447,17 @@ export default function ActivityDetailPage() {
               <span className="font-bold text-slate-800 dark:text-slate-200">
                 {activity.tracks.name} ({activity.tracks.length_m} m)
               </span>
+            </div>
+          )}
+          {(activity.ride_type || rideGears.length > 0) && (
+            <div className="flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span className="font-bold text-slate-800 dark:text-slate-200">{rideTypeLabel(activity.ride_type)}</span>
+              {rideTypeHasGear(activity.ride_type) && rideGears.length > 0 && (
+                <span className="font-mono font-bold text-slate-600 dark:text-slate-300">
+                  {rideGears.map((g, i) => `${gearLabel(g.chainring, g.cog)}${i === 0 && rideGears.length > 1 ? ' (primary)' : ''}`).join(' · ')}
+                </span>
+              )}
+              <CoachBadge row={activity} names={coachNames} />
             </div>
           )}
           {activity.bike_model && (
@@ -427,16 +506,16 @@ export default function ActivityDetailPage() {
       {/* 3. Complete set of activity metrics (incl. comparison with the historical maximum - previously
            a separate BenchmarkCards section, now merged here so the metrics don't appear
            in two similarly looking blocks in a row - issue #20) */}
-      <ActivityMetricsGrid activity={activity} curvesMap={curvesMap} masterCurves={masterCurves || {}} />
+      <ActivityMetricsGrid activity={segmentView.activity} curvesMap={effectiveCurves} masterCurves={masterCurves || {}} />
 
       {/* 3c. Telemetry chart over time/distance: speed, HR, power, cadence, torque (issue #12) */}
-      <ActivityStreamsChart timeSeries={activity.time_series} activity={activity} highlightWindows={highlightWindows} />
+      <ActivityStreamsChart timeSeries={segmentView.activity.time_series} activity={segmentView.activity} highlightWindows={highlightWindows} />
 
       {/* 4. Durational Curves Chart: current ride vs. a selectable baseline/"history
            curve" (all-time, last 30/90 days, this calendar year, last floating year,
            or a custom day-picker range) - issue #28 */}
       <DurationalCurvesChart
-        curves={curvesMap}
+        curves={effectiveCurves}
         masterCurves={masterCurves}
         baselineCurves={baselineCurves}
         baselineLoading={baselineLoading}
@@ -456,52 +535,81 @@ export default function ActivityDetailPage() {
       {/* 4c. Comments: owner, coach and every rider who can see the activity (issues #222-#224) */}
       <ActivityComments activityId={activityId} />
 
-      {/* 5. Bottom panel: Quick track and gearing setup (own activities only) */}
+      {/* 5. Bottom panel: velodrome, ride type, gears and gear segments (own activities only) */}
       {!sharedView && (
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Icon name="settings" /> Track & Gearing Setup for this Ride
         </h3>
 
-        <form onSubmit={handleUpdateGear} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-          <div>
+        <form onSubmit={handleUpdateGear} className="space-y-4">
+          <div className="max-w-sm">
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
               Velodrome
             </label>
             <VelodromePicker tracks={tracks} value={trackId} onChange={setTrackId} emptyLabel="-- No Track Selected --" compact />
           </div>
 
-          <GearPicker
-            label="Gear (optional)"
-            chainring={chainring}
-            cog={cog}
-            onChange={(g) => { setChainring(g.chainring); setCog(g.cog) }}
-            showStats
-            className="sm:col-span-2"
+          <RideGearEditor
+            rideType={rideType}
+            onRideTypeChange={setRideType}
+            gears={gears}
+            onGearsChange={setGears}
+            segments={segments}
+            onSegmentsChange={setSegments}
+            timeSeries={activity.time_series}
           />
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               type="submit"
               disabled={savingGear}
-              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
+              className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
             >
               {savingGear ? 'Saving...' : 'Update Setup'}
             </button>
+            {saveSuccess && (
+              <span className="font-bold text-xs text-emerald-500 animate-fade-in">
+                <Icon name="check" /> Setup saved
+              </span>
+            )}
           </div>
         </form>
+      </div>
+      )}
 
-        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs">
-          <div className="text-slate-400">
-            {gearLabel(chainring, cog) ? `Gear ${gearLabel(chainring, cog)}` : 'No gear set'}
+      {/* 5b. Coach editor (athlete context): ride type, gears and segments via the audited RPC */}
+      {sharedView && coachRiderId && coachRiderId === activity?.user_id && (
+      <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+          <Icon name="settings" /> Ride type &amp; gears (coach)
+        </h3>
+        <p className="text-[11px] text-slate-400 mb-4">Edits are labelled as set by you and recorded in the athlete&apos;s audit trail.</p>
+        <form onSubmit={handleCoachSaveGear} className="space-y-4">
+          <RideGearEditor
+            rideType={rideType}
+            onRideTypeChange={setRideType}
+            gears={gears}
+            onGearsChange={setGears}
+            segments={segments}
+            onSegmentsChange={setSegments}
+            timeSeries={activity.time_series}
+          />
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={savingGear}
+              className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
+            >
+              {savingGear ? 'Saving...' : 'Save as coach'}
+            </button>
+            {saveSuccess && (
+              <span className="font-bold text-xs text-emerald-500 animate-fade-in">
+                <Icon name="check" /> Saved
+              </span>
+            )}
           </div>
-
-          {saveSuccess && (
-            <span className="font-bold text-emerald-500 animate-fade-in">
-              <Icon name="check" /> Setup saved
-            </span>
-          )}
-        </div>
+        </form>
       </div>
       )}
     </div>

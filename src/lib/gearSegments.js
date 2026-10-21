@@ -8,6 +8,7 @@
 
 import { parseGear, gearLabel } from './gear.js'
 import { gearDevelopmentM } from './trackGearing.js'
+import { rideTypeHasGear } from './rideType.js'
 
 export const MAX_GEARS = 8
 export const MAX_SEGMENTS = 64
@@ -52,6 +53,11 @@ export function resolveGears(activity) {
 /** The primary gear ({id, chainring, cog, note}) or null. */
 export function primaryGear(activity) {
   return resolveGears(activity)[0] ?? null
+}
+
+/** Gear entries of an activity as form state (teeth as strings). */
+export function gearsToForm(activity) {
+  return resolveGears(activity).map((g) => ({ id: g.id, chainring: String(g.chainring), cog: String(g.cog), note: g.note || '' }))
 }
 
 /** Stored segments filtered to well-formed ones, sorted by start. */
@@ -266,4 +272,36 @@ export function gearForRange(activity, startS, endS) {
 
 function pick(g) {
   return { chainring: g.chainring, cog: g.cog }
+}
+
+const round1 = (v) => Math.round(v * 10) / 10
+
+/**
+ * Display-time speed for a fixed-gear ride whose speed was derived from cadence: recomputed with the
+ * gear active at each second so gear-dependent stats follow the segments. Returns the same
+ * `activity` object unchanged unless the ride is a track ride with several gears AND segments, so a
+ * single gear behaves exactly as before.
+ * @returns {{ activity: object, changed: boolean }}
+ */
+export function withSegmentSpeed(activity) {
+  const unchanged = { activity, changed: false }
+  if (!activity || activity.speed_source !== 'derived_from_cadence') return unchanged
+  if (!rideTypeHasGear(activity.ride_type)) return unchanged
+  const gears = resolveGears(activity)
+  const segments = resolveSegments(activity)
+  const cadence = activity.time_series?.cadence
+  if (gears.length < 2 || segments.length === 0 || !Array.isArray(cadence) || cadence.length === 0) return unchanged
+  const speed = deriveSpeedWithSegments(cadence, gears, segments)
+  const sum = speed.reduce((a, v) => a + (v || 0), 0)
+  return {
+    changed: true,
+    activity: {
+      ...activity,
+      time_series: { ...activity.time_series, speed },
+      avg_speed_kmh: speed.length ? round1(sum / speed.length) : null,
+      max_speed_kmh: speed.length ? Math.max(...speed) : null,
+      distance_m: round1(speed.reduce((a, v) => a + (v || 0) / 3.6, 0)),
+      moving_time_s: speed.filter((v) => (v || 0) > 1.0).length || null,
+    },
+  }
 }

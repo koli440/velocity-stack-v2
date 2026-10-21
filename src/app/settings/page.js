@@ -18,6 +18,7 @@ import { PROFILE_UPDATED_EVENT } from '../../lib/navigation'
 import Icon from '../../components/Icon'
 import Avatar from '../../components/Avatar'
 import GearPicker from '../../components/GearPicker'
+import { RIDE_TYPES, DEFAULT_RIDE_TYPE, effectiveRideType } from '../../lib/rideType'
 import { parseGear, toGearField } from '../../lib/gear'
 import { readGlassPref, writeGlassPref } from '../../lib/glass'
 import { fetchRequireFollowApproval, setRequireFollowApproval } from '../../lib/social'
@@ -39,6 +40,7 @@ export default function SettingsPage() {
   const [defaultChainring, setDefaultChainring] = useState('')
   const [defaultCog, setDefaultCog] = useState('')
   const [crankLength, setCrankLength] = useState('165.0')
+  const [defaultRideType, setDefaultRideType] = useState(DEFAULT_RIDE_TYPE)
   const [themePref, setThemePref] = useState('dark')
 
   const [discoverableByEmail, setDiscoverableByEmail] = useState(true)
@@ -73,6 +75,7 @@ export default function SettingsPage() {
         setDefaultChainring(toGearField(data.default_chainring))
         setDefaultCog(toGearField(data.default_cog))
         setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
+        setDefaultRideType(effectiveRideType(data.default_ride_type))
         setThemePref(data.theme_preference || 'dark')
         setDiscoverableByEmail(data.discoverable_by_email !== false)
         setEmailNotifications(data.email_notifications !== false)
@@ -144,6 +147,7 @@ export default function SettingsPage() {
       default_chainring: gear.chainring,
       default_cog: gear.cog,
       crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
+      default_ride_type: defaultRideType,
       theme_preference: themePref,
       discoverable_by_email: discoverableByEmail,
       email_notifications: emailNotifications,
@@ -305,6 +309,23 @@ export default function SettingsPage() {
               Home Velodrome
             </label>
             <VelodromePicker tracks={tracks} value={homeTrackId} onChange={setHomeTrackId} favoriteId={null} emptyLabel="-- No Home Track --" compact />
+          </div>
+
+          <div className="max-w-xs">
+            <label htmlFor="default-ride-type" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+              Default ride type
+            </label>
+            <select
+              id="default-ride-type"
+              value={defaultRideType}
+              onChange={(e) => setDefaultRideType(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            >
+              {RIDE_TYPES.map((t) => (
+                <option key={t.key} value={t.key}>{t.label}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-[10px] text-slate-400">Applied to new imports and uploads. You can change a ride&apos;s type later.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
