@@ -117,6 +117,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
   const [compareTemplateId, setCompareTemplateId] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [pickedTemplateId, setPickedTemplateId] = useState('')
+  const [checkedIds, setCheckedIds] = useState(() => new Set())
   const [showOnChart, setShowOnChart] = useState(true)
   const [running, setRunning] = useState(false)
   const [pbPrefill, setPbPrefill] = useState(null)
@@ -255,6 +256,50 @@ export default function TemplateRunsSection({ activityId, activity = null, track
     }
   }
 
+  const toggleChecked = (id) =>
+    setCheckedIds((prev) => {
+      const n = new Set(prev)
+      n.has(id) ? n.delete(id) : n.add(id)
+      return n
+    })
+
+  // Runs the ticked templates one after another (one request each); failures are reported together.
+  const runTemplates = async (ids, { hide = false } = {}) => {
+    setRunning(true)
+    setError(null)
+    const failures = []
+    const failedIds = []
+    try {
+      const authHeader = await getAuthHeader()
+      for (const id of ids) {
+        try {
+          const res = await fetch(`/api/activities/${activityId}/apply-template`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeader },
+            body: JSON.stringify({ templateId: id }),
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.error || 'Template evaluation failed')
+          setHiddenIds((prev) => {
+            const n = new Set(prev)
+            hide ? n.add(data.execution.id) : n.delete(data.execution.id)
+            return n
+          })
+        } catch (err) {
+          failedIds.push(id)
+          failures.push(`${templates.find((t) => t.id === id)?.name || 'Template'}: ${err.message}`)
+        }
+      }
+      await loadRuns()
+      loadPickerExtras()
+      if (failures.length) setError(failures.join(' · '))
+      else setAddOpen(false)
+      setCheckedIds(new Set(failedIds))
+    } finally {
+      setRunning(false)
+    }
+  }
+
   const deleteRun = async (run) => {
     if (!window.confirm(`Delete this "${runTemplateName(run)}" run? This cannot be undone.`)) return
     try {
@@ -296,6 +341,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
 
   const openAdd = () => {
     setPickedTemplateId((prev) => prev || (athleteMode ? coachRunnableTemplates(templates, currentUserId) : templates)[0]?.id || '')
+    setCheckedIds(new Set())
     setAddOpen(true)
     loadPickerExtras()
   }
@@ -525,6 +571,9 @@ export default function TemplateRunsSection({ activityId, activity = null, track
           running={running}
           onToggleFavorite={toggleFavorite}
           onRun={(id) => runTemplate(id, { hide: !showOnChart })}
+          checkedIds={checkedIds}
+          onToggleChecked={toggleChecked}
+          onRunMany={(ids) => runTemplates(ids, { hide: !showOnChart })}
           onClose={() => setAddOpen(false)}
           onCreate={() => { setEditingTemplate(null); setCreatorOpen(true) }}
           onEdit={(t) => { setEditingTemplate(t); setCreatorOpen(true) }}

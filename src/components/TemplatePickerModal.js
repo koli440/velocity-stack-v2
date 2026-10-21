@@ -13,7 +13,7 @@ function badgeFor(t, userId) {
   return ['Public', 'bg-sky-500/15 text-sky-500']
 }
 
-function Row({ t, userId, selected, ran, starred, canFavorite, menuOpen, onSelect, onToggleStar, onToggleMenu, onEdit, onDelete }) {
+function Row({ t, userId, selected, checked, onToggleChecked, ran, starred, canFavorite, menuOpen, onSelect, onToggleStar, onToggleMenu, onEdit, onDelete }) {
   const [label, cls] = badgeFor(t, userId)
   const base = templatePermissions(t, userId)
   const perms = { ...base, canEdit: base.canEdit && !!onEdit, canDelete: base.canDelete && !!onDelete }
@@ -25,6 +25,15 @@ function Row({ t, userId, selected, ran, starred, canFavorite, menuOpen, onSelec
       onClick={() => onSelect(t.id)}
       className={`relative flex items-center gap-2 px-2 py-1.5 rounded-xl border cursor-pointer ${selected ? 'border-orange-500 bg-orange-500/5' : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-900/60'}`}
     >
+      {onToggleChecked && (
+        <input
+          type="checkbox"
+          aria-label={`Run ${t.name}`}
+          checked={checked}
+          onClick={(e) => e.stopPropagation()}
+          onChange={() => onToggleChecked(t.id)}
+        />
+      )}
       {canFavorite && (
         <button
           type="button"
@@ -131,6 +140,9 @@ export default function TemplatePickerModal({
   running,
   onToggleFavorite,
   onRun,
+  checkedIds = null,
+  onToggleChecked = null,
+  onRunMany = null,
   onClose,
   onCreate,
   onEdit,
@@ -142,6 +154,9 @@ export default function TemplatePickerModal({
   const searchRef = useRef(null)
   const listRef = useRef(null)
   const searching = query.trim() !== ''
+  const multi = !!(onToggleChecked && onRunMany)
+  const checkedCount = multi ? checkedIds.size : 0
+  const runSelected = () => (checkedCount > 0 ? onRunMany([...checkedIds]) : selectedId && onRun(selectedId))
 
   useEffect(() => { searchRef.current?.focus() }, [])
 
@@ -194,7 +209,7 @@ export default function TemplatePickerModal({
       move(-1)
     } else if (e.key === 'Enter' && !e.target.closest?.('button, input[type="checkbox"]')) {
       e.preventDefault()
-      if (selectedId && !running) onRun(selectedId)
+      if (!running) runSelected()
     }
   }
 
@@ -203,6 +218,8 @@ export default function TemplatePickerModal({
     t,
     userId,
     selected: t.id === selectedId,
+    checked: multi && checkedIds.has(t.id),
+    onToggleChecked: multi ? onToggleChecked : null,
     ran: runTemplateIds.has(t.id),
     starred: favoriteIds.has(t.id),
     canFavorite: templatePermissions(t, userId).canFavorite,
@@ -290,8 +307,8 @@ export default function TemplatePickerModal({
                 </button>
               )}
               <button type="button" onClick={onClose} className={`${btn} bg-slate-100 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200`}>Cancel</button>
-              <button type="button" disabled={running || !selectedId} onClick={() => onRun(selectedId)} className={`${btn} bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50`}>
-                {running ? busyLabel : confirmLabel}
+              <button type="button" disabled={running || (!selectedId && checkedCount === 0)} onClick={runSelected} className={`${btn} bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50`}>
+                {running ? busyLabel : checkedCount > 1 ? `${confirmLabel} ${checkedCount} templates` : confirmLabel}
               </button>
             </div>
           </div>
