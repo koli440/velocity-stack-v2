@@ -125,3 +125,17 @@ test('withSegmentSpeed: single gear or road is untouched; segments recompute spe
   assert.ok(r.activity.time_series.speed[0] < base.time_series.speed[0])
   assert.equal(r.activity.moving_time_s, 10)
 })
+
+test('PB Vault prefill uses the segment gear for the effort window', async () => {
+  const { buildPbPrefillFromEffort } = await import('../pbVault.js')
+  const activity = {
+    ride_type: 'track',
+    gears: [{ id: 'a', chainring: 50, cog: 15 }, { id: 'b', chainring: 54, cog: 14 }],
+    gear_segments: [{ start_s: 100, end_s: 200, gear_id: 'b' }],
+  }
+  const e = { keyed_by: 'time', start_sec: 110, end_sec: 190, duration_sec: 80 }
+  assert.equal(buildPbPrefillFromEffort(e, activity, []).chainring, 54)
+  assert.equal(buildPbPrefillFromEffort({ ...e, start_sec: 0, end_sec: 50 }, activity, []).chainring, 50)
+  assert.equal(buildPbPrefillFromEffort(e, { chainring: 48, cog: 16 }, []).cog, 16)
+  assert.equal(buildPbPrefillFromEffort(e, { ...activity, ride_type: 'road' }, []).chainring, null)
+})

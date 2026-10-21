@@ -10,6 +10,8 @@ import { fetchWeightHistory } from '../lib/weightHistory'
 import { fetchFtpHistory } from '../lib/ftpHistory'
 import VelodromePicker from './VelodromePicker'
 import GearPicker, { useGearState } from './GearPicker'
+import RideTypeSelect, { useRideTypeState } from './RideTypeSelect'
+import { rideTypeHasGear } from '../lib/rideType'
 import { parseGear } from '../lib/gear'
 import Icon from './Icon'
 
@@ -39,6 +41,11 @@ function BulkImportModalInner({
   const { chainring, cog } = gear
   const parsedGear = parseGear(chainring, cog)
   const [isFixedGear, setIsFixedGear] = useState(false)
+  const [rideType, setRideType] = useRideTypeState(currentUser?.id)
+  const handleRideType = (value) => {
+    setRideType(value)
+    if (rideTypeHasGear(value)) setIsFixedGear(true)
+  }
 
   const handleSelectTrack = (trackId) => {
     setSelectedTrack(trackId)
@@ -129,6 +136,7 @@ function BulkImportModalInner({
         existingFingerprints,
         meta: {
           trackId: selectedTrack,
+          rideType,
           chainring: parsedGear.chainring,
           cog: parsedGear.cog,
           crankLengthMm: 165.0,
@@ -184,6 +192,8 @@ function BulkImportModalInner({
               <VelodromePicker tracks={tracks} value={selectedTrack} onChange={handleSelectTrack} disabled={importing} defaultToFavorite emptyLabel="-- No velodrome specified --" compact />
             </div>
 
+            <RideTypeSelect value={rideType} onChange={handleRideType} disabled={importing} />
+
             <label className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-semibold cursor-pointer">
               <input
                 type="checkbox"
@@ -195,7 +205,7 @@ function BulkImportModalInner({
               Fixed gear (fixed-gear, no freewheel)
             </label>
 
-            <GearPicker
+            {(rideTypeHasGear(rideType) || isFixedGear) && <GearPicker
               label="Gear (optional)"
               chainring={chainring}
               cog={cog}
@@ -203,7 +213,7 @@ function BulkImportModalInner({
               disabled={importing}
               showStats
               hint="Only used when a file has no speed sensor or GPS route - speed is then derived from cadence and this gear ratio (fixed-gear bikes only)."
-            />
+            />}
           </div>
         </div>
 

@@ -8,6 +8,7 @@
 // (src/lib/lookups.js); users suggest new ones and an admin approves them.
 
 import { formatTime, mpsToKmh } from './format.js'
+import { gearForRange } from './gearSegments.js'
 
 export const SPLIT_MODES = {
   LAPS: 'laps',
@@ -133,7 +134,8 @@ export function matchDisciplineByDistance(disciplines, distanceM, trackLengthM =
  * Builds the values to prefill the "Add Personal Best" form from a template run effort and its
  * activity. Everything is only a suggestion; the user reviews and saves.
  * @param {object} effort - template run effort (distance_m, target_distance_m, duration_sec, ...)
- * @param {object} activity - activity row (activity_date, track_id, tracks, chainring, cog, name)
+ * @param {object} activity - activity row (activity_date, track_id, tracks, ride_type, gears, gear_segments,
+ *   chainring, cog, name)
  * @param {Array<object>} disciplines
  */
 export function buildPbPrefillFromEffort(effort, activity, disciplines) {
@@ -141,13 +143,15 @@ export function buildPbPrefillFromEffort(effort, activity, disciplines) {
   // Time-keyed efforts report the distance covered, which is not a discipline distance.
   const distance = effort?.keyed_by === 'time' ? null : effort?.target_distance_m ?? effort?.distance_m
   const discipline = matchDisciplineByDistance(disciplines, distance, track?.length_m ?? null)
+  // Gear active during the effort's time window (segment gear), else the primary gear.
+  const gear = gearForRange(activity, effort?.start_sec, effort?.end_sec)
   const date = String(activity?.activity_date || activity?.created_at || '').slice(0, 10)
   const prefill = {
     discipline: discipline ? discipline.name : null,
     trackId: activity?.track_id || null,
     achievedDate: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null,
-    chainring: activity?.chainring ? Number(activity.chainring) : null,
-    cog: activity?.cog ? Number(activity.cog) : null,
+    chainring: gear ? gear.chainring : null,
+    cog: gear ? gear.cog : null,
   }
   const seconds = Number(effort?.elapsed_time_sec) > 0 ? effort.elapsed_time_sec : effort?.duration_sec
   if (Number(seconds) > 0) {
