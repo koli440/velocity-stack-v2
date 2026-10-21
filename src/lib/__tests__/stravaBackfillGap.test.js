@@ -35,7 +35,7 @@ function fakeStrava(all, { ascendingAlways = false, log = [] } = {}) {
 function harness(all, conn, fetchImpl, { quotaFor } = {}) {
   const imported = new Map()
   const service = {
-    from: () => ({ select: () => ({ eq: () => Object.assign(Promise.resolve({ data: [...imported.keys()].map((id) => ({ external_source: 'strava', external_id: id })), error: null }), {}) }) }),
+    from: () => ({ select: () => ({ eq: () => Object.assign(Promise.resolve({ data: [...imported.keys()].map((id) => ({ external_source: 'strava', external_id: id })), error: null }), { maybeSingle: async () => ({ data: {} }) }) }) }),
     rpc: async (name, a) => {
       if (name === 'record_connection_result_for' && a.p_synced_at && !a.p_fatal) conn.last_synced_at = a.p_synced_at
       if (name === 'record_backfill_progress') {
