@@ -9,3 +9,5 @@ and runs adversarial SQL tests. Not part of CI; dependencies are not in package.
       node harness.mjs <repo>/supabase/migrations ./planned-push-adversarial.mjs
 
 `20261009000000_import_v1_tracks.sql` fails on the stub (pre-existing, unrelated).
+
+Ride type / gears (issue #279): `MIG=<repo>/supabase/migrations/20261225000000_ride_type_and_gears.sql node harness.mjs <repo>/supabase/migrations ./ride-gear-adversarial.mjs`
