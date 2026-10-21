@@ -7,6 +7,7 @@
 import { buildActivityInsert } from '../activityRecord.js'
 import { findDuplicate, loadExistingActivityFingerprints, resolveDuplicate } from '../activityDuplicates.js'
 import { ImportError, DUPLICATE_MESSAGE } from './importErrors.js'
+import { effectiveRideType, rideTypeHasGear, isKnownRideType } from '../rideType.js'
 
 /**
  * Pure: decides what to do given the candidate and the user's existing activities.
@@ -32,7 +33,7 @@ const UNIQUE_VIOLATION = '23505'
  * @param {string} args.userId - verified user id (never client-supplied)
  * @param {{ source: string, fetchActivity: Function }} args.provider - provider adapter
  * @param {string|number} args.externalId
- * @param {{ trackId?: string|null, isFixedGear?: boolean, title?: string|null }} [args.options]
+ * @param {{ trackId?: string|null, isFixedGear?: boolean, title?: string|null, rideType?: string|null }} [args.options]
  * @param {Function} [args.analyzeFit] - (blob, filename, gearing) => Promise<analyze.py JSON|null>
  * @param {object} [args.profile] - { default_chainring, default_cog, crank_length_mm, ftp_w }; loaded when omitted
  * @returns {Promise<{ status: 'imported'|'upgraded'|'skipped', activity: object|null, replacedId?: string }>}
@@ -53,7 +54,11 @@ export async function importActivity({
   // Gear is optional: only the rider's own saved default is used, never a hardcoded fallback.
   const chainring = prof.default_chainring || null
   const cog = prof.default_cog || null
-  const isFixedGear = !!options.isFixedGear
+  // Ride type: explicit option, else the rider's Settings default (road when unset). Never detected.
+  const rideType = effectiveRideType(
+    isKnownRideType(options.rideType) ? options.rideType : prof.default_ride_type
+  )
+  const isFixedGear = !!options.isFixedGear || rideTypeHasGear(rideType)
 
   const fetched = await provider.fetchActivity(externalId, {
     gearing: { chainring, cog, isFixedGear },
@@ -77,6 +82,7 @@ export async function importActivity({
     title: options.title || fetched.title || `${providerLabel(provider.source)} Sync`,
     userId,
     trackId: options.trackId || null,
+    rideType,
     chainring,
     cog,
     crankLengthMm: prof.crank_length_mm || 165.0,
@@ -138,7 +144,7 @@ function providerLabel(source) {
 export async function loadImportProfile(supabase, userId) {
   const { data } = await supabase
     .from('profiles')
-    .select('default_chainring, default_cog, crank_length_mm, ftp_w')
+    .select('default_chainring, default_cog, crank_length_mm, ftp_w, default_ride_type')
     .eq('id', userId)
     .maybeSingle()
   const { data: ftpRows } = await supabase

@@ -17,6 +17,7 @@ import { weightAt } from './weightHistory.js'
  * @param {string} meta.title
  * @param {string} meta.userId
  * @param {string|null} [meta.trackId]
+ * @param {string|null} [meta.rideType] - ride type key (road/track/...); null leaves it unset (= road)
  * @param {number|null} [meta.chainring]
  * @param {number|null} [meta.cog]
  * @param {number} [meta.crankLengthMm]
@@ -42,6 +43,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     title,
     userId,
     trackId = null,
+    rideType = null,
     chainring = null,
     cog = null,
     crankLengthMm = 165.0,
@@ -82,6 +84,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     title: title?.trim() || 'Track Session',
     user_id: userId,
     track_id: trackId || null,
+    ride_type: rideType || null,
     chainring: chainring ? parseInt(chainring) : null,
     cog: cog ? parseInt(cog) : null,
     crank_length_mm: crankLengthMm,

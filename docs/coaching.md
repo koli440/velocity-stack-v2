@@ -215,3 +215,6 @@ The active coach may **read and write comments** on the rider's activities, incl
 owner + coach only), and gets `activity_comment` notifications. Comments are not athlete data: the coach can delete only own comments
 (the rider can delete any on their activity), and an ex-coach loses access immediately. The "never writable by a coach" list above is
 unchanged. See docs/comments.md.
+
+## Ride type and gears (#279, `20261225000000_ride_type_and_gears.sql`)
+The active coach can see and **edit** the athlete's activity `ride_type`, `gears` and `gear_segments` (and `profiles.default_ride_type` with the other training defaults). Coaches still have no UPDATE policy on `activities`: the only write path is the `set_activity_gear` SECURITY DEFINER RPC, which whitelists those three fields, requires an active coaching relationship (a missing or foreign activity id returns the same "Activity not found"), audits via `record_coach_edit` and notifies the rider. The trigger stamps `gear_set_by` / `gear_set_at` / `gear_set_by_coach` from `auth.uid()`; a later rider edit clears `set_by_coach`. UI: "set by coach" badge on the activity page and a coach panel in athlete context. Pending, ended and blocked coaches and strangers are rejected (see `scripts/db-harness/ride-gear-adversarial.mjs`).

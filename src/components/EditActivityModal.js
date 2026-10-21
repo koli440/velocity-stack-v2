@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import Portal from './Portal'
 import VelodromePicker from './VelodromePicker'
-import GearPicker from './GearPicker'
-import { toGearField } from '../lib/gear'
+import RideGearEditor from './RideGearEditor'
+import { gearsToForm, resolveSegments } from '../lib/gearSegments'
+import { effectiveRideType, rideTypeHasGear } from '../lib/rideType'
 import { VISIBILITY_OPTIONS } from '../lib/social'
 import {
   MAX_TITLE_LENGTH,
@@ -19,8 +20,9 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
   const [title, setTitle] = useState('')
   const [trackId, setTrackId] = useState('')
   const [visibility, setVisibility] = useState('private')
-  const [chainring, setChainring] = useState('')
-  const [cog, setCog] = useState('')
+  const [rideType, setRideType] = useState('road')
+  const [gears, setGears] = useState([])
+  const [segments, setSegments] = useState([])
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -30,8 +32,9 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     setTitle(activity.title || '')
     setTrackId(activity.track_id || '')
     setVisibility(activity.visibility || 'private')
-    setChainring(toGearField(activity.chainring))
-    setCog(toGearField(activity.cog))
+    setRideType(effectiveRideType(activity.ride_type))
+    setGears(gearsToForm(activity))
+    setSegments(resolveSegments(activity))
     setDescription(activity.description || '')
     setError('')
   }, [isOpen, activity])
@@ -42,13 +45,18 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     e.preventDefault()
     setSaving(true)
     setError('')
+    const hasGear = rideTypeHasGear(rideType)
+    // An unset ride type is road: leave it (and the hidden gear) alone unless the user picks a type.
+    const untouchedRoad = !hasGear && activity.ride_type == null
     const { updates, error: err } = await updateActivity(client, activity.id, {
       title,
       trackId,
       visibility,
-      chainring,
-      cog,
       description,
+      rideType: untouchedRoad ? undefined : rideType,
+      keepGear: untouchedRoad,
+      gears: hasGear ? gears : undefined,
+      gearSegments: hasGear ? segments : undefined,
     })
     setSaving(false)
     if (err) {
@@ -98,12 +106,14 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
           </p>
         </div>
 
-        <GearPicker
-          label="Gear (optional)"
-          chainring={chainring}
-          cog={cog}
-          onChange={(g) => { setChainring(g.chainring); setCog(g.cog) }}
-          showStats
+        <RideGearEditor
+          rideType={rideType}
+          onRideTypeChange={setRideType}
+          gears={gears}
+          onGearsChange={setGears}
+          segments={segments}
+          onSegmentsChange={setSegments}
+          timeSeries={activity.time_series}
         />
 
         <div>

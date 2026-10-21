@@ -16,6 +16,7 @@ import { PREFETCH_ROOT_MARGIN, canAutoLoad, didLoadFail } from '../lib/infiniteS
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchCommentInfo, fetchUnreadCounts, commentCountLabel } from '../lib/activityComments'
+import { rideTypeHasGear } from '../lib/rideType'
 
 // Intensity bar fill width (0-100%) driven by intensity_factor (IF ~1.0+ = full).
 function intensityPct(intensityFactor) {
@@ -301,10 +302,10 @@ export default function ActivityFeed({
                   {act.title || 'Velodrome Session'}
                 </Link>
 
-                {(act.tracks?.name || (act.chainring && act.cog)) && (
+                {(act.tracks?.name || (rideTypeHasGear(act.ride_type) && act.chainring && act.cog)) && (
                   <div className="text-xs text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-3">
                     {act.tracks?.name && <span>{act.tracks.name}</span>}
-                    {act.chainring && act.cog && (
+                    {rideTypeHasGear(act.ride_type) && act.chainring && act.cog && (
                       <span className="inline-flex items-center gap-1"><Icon name="gear" size={11} />{act.chainring}×{act.cog}</span>
                     )}
                   </div>

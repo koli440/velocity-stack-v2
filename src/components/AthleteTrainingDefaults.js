@@ -8,6 +8,7 @@ import VelodromePicker from './VelodromePicker'
 import GearPicker from './GearPicker'
 import { parseGear, toGearField } from '../lib/gear'
 import CoachBadge, { useCoachNames } from './CoachBadge'
+import { RIDE_TYPES, effectiveRideType } from '../lib/rideType'
 
 const input =
   'w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono'
@@ -28,6 +29,7 @@ export default function AthleteTrainingDefaults({ riderId, athlete }) {
       default_chainring: toGearField(p?.default_chainring),
       default_cog: toGearField(p?.default_cog),
       crank_length_mm: p?.crank_length_mm ?? '',
+      default_ride_type: effectiveRideType(p?.default_ride_type),
     })
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export default function AthleteTrainingDefaults({ riderId, athlete }) {
       default_chainring: gear.chainring,
       default_cog: gear.cog,
       crank_length_mm: num(form.crank_length_mm),
+      default_ride_type: form.default_ride_type,
     })
     if (error) {
       setBusy(false)
@@ -79,6 +82,19 @@ export default function AthleteTrainingDefaults({ riderId, athlete }) {
         emptyLabel="-- No Home Track --"
         compact
       />
+      <div>
+        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1" htmlFor="athlete-default-ride-type">Default ride type</label>
+        <select
+          id="athlete-default-ride-type"
+          value={form.default_ride_type}
+          onChange={(e) => setForm({ ...form, default_ride_type: e.target.value })}
+          className={input}
+        >
+          {RIDE_TYPES.map((t) => (
+            <option key={t.key} value={t.key}>{t.label}</option>
+          ))}
+        </select>
+      </div>
       <div className="grid grid-cols-3 gap-2">
         <GearPicker
           label="Default gear (optional)"

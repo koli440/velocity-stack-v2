@@ -7,6 +7,8 @@ import { supabase, getAuthHeader } from '../lib/supabase'
 import { parseJsonResponse } from '../lib/httpJson'
 import VelodromePicker from './VelodromePicker'
 import Icon from './Icon'
+import RideTypeSelect, { useRideTypeState } from './RideTypeSelect'
+import { rideTypeHasGear } from '../lib/rideType'
 
 function IntervalsSyncModalInner({
   isOpen,
@@ -25,10 +27,15 @@ function IntervalsSyncModalInner({
   // velodrome selection below, but can be overridden (see handleSelectTrack).
   const [isFixedGear, setIsFixedGear] = useState(false)
   const [hasCredentials, setHasCredentials] = useState(true)
+  const [rideType, setRideType] = useRideTypeState(currentUser?.id)
 
   const handleSelectTrack = (trackId) => {
     setSelectedTrackId(trackId)
     setIsFixedGear(!!trackId)
+  }
+  const handleRideType = (value) => {
+    setRideType(value)
+    if (rideTypeHasGear(value)) setIsFixedGear(true)
   }
 
   // Load rides from Intervals.icu when the modal opens
@@ -114,6 +121,7 @@ function IntervalsSyncModalInner({
           // Used server-side to derive speed from cadence only when the ride has no speed
           // sensor or GPS route and the user confirmed the bike is fixed-gear.
           isFixedGear,
+          rideType,
         }),
       })
 
@@ -167,6 +175,7 @@ function IntervalsSyncModalInner({
               Assign to velodrome (default):
             </label>
             <VelodromePicker tracks={tracks} value={selectedTrackId} onChange={handleSelectTrack} emptyLabel="-- No velodrome specified --" compact />
+            <RideTypeSelect className="mt-2" value={rideType} onChange={handleRideType} />
             <label className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-semibold cursor-pointer">
               <input
                 type="checkbox"

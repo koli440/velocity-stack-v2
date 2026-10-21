@@ -12,6 +12,8 @@ import {
   acceptCoaching,
   fetchAthleteProfile,
   pickCoachProfileChanges,
+  pickCoachActivityChanges,
+  updateActivityGear,
   coachEditLabel,
   coachEditAuthorIds,
   updateAthleteProfile,
@@ -254,4 +256,32 @@ test('bot migration: bots_coach_edit is service_role only and requires a bot', (
 test('bot migration: bots auto-accept only, never initiate', () => {
   assert.match(botSql, /id = p_initiator AND is_bot/)
   assert.match(botSql, /coaching_accept_as\(v_id, v_other\)/)
+})
+
+test('pickCoachProfileChanges allows the default ride type', () => {
+  assert.deepEqual(pickCoachProfileChanges({ default_ride_type: 'track', is_admin: true }), { default_ride_type: 'track' })
+})
+
+test('pickCoachActivityChanges keeps only ride type, gears and segments', () => {
+  assert.deepEqual(
+    pickCoachActivityChanges({ ride_type: 'track', gears: [], gear_segments: [], title: 'x', user_id: 'y', gear_set_by_coach: false }),
+    { ride_type: 'track', gears: [], gear_segments: [] }
+  )
+})
+
+test('updateActivityGear calls the audited RPC with the filtered payload', async () => {
+  let call
+  const client = { rpc: async (n, a) => ((call = [n, a]), { data: { ride_type: 'track' }, error: null }) }
+  const r = await updateActivityGear(client, 'a1', { ride_type: 'track', title: 'nope' })
+  assert.deepEqual(call, ['set_activity_gear', { p_activity: 'a1', p_changes: { ride_type: 'track' } }])
+  assert.equal(r.error, null)
+  const bad = await updateActivityGear({ rpc: async () => ({ data: null, error: new Error('Activity not found') }) }, 'a1', { ride_type: 'track' })
+  assert.equal(bad.data, null)
+  assert.ok(bad.error)
+})
+
+test('coachEditLabel labels coach-set activity gear from the gear_set_* stamps', () => {
+  const names = new Map([['c1', 'Coach Cathy']])
+  assert.equal(coachEditLabel({ gear_set_by_coach: true, gear_set_by: 'c1', gear_set_at: '2026-12-01T10:00:00Z' }, names), 'Set by coach Coach Cathy · 2026-12-01')
+  assert.equal(coachEditLabel({ gear_set_by_coach: false, gear_set_by: 'me' }, names), null)
 })

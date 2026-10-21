@@ -8,6 +8,8 @@ import { fetchFtpHistory } from '../lib/ftpHistory'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import VelodromePicker from './VelodromePicker'
 import GearPicker, { useGearState } from './GearPicker'
+import RideTypeSelect, { useRideTypeState } from './RideTypeSelect'
+import { rideTypeHasGear } from '../lib/rideType'
 import { parseGear } from '../lib/gear'
 import Icon from './Icon'
 
@@ -31,6 +33,7 @@ export default function FitUploader({
   // Default assumption: a ride on the selected velodrome is on a fixed-gear (track) bike
   // without freewheel; elsewhere (road) a freewheel is likely. Can be overridden with the checkbox below.
   const [isFixedGear, setIsFixedGear] = useState(false)
+  const [rideType, setRideType] = useRideTypeState(currentUser?.id)
 
   const handleTrackChange = (trackId) => {
     setSelectedTrack(trackId)
@@ -88,6 +91,11 @@ export default function FitUploader({
     if (rawFile && analysis?.summary?.speed_source === 'derived_from_cadence') {
       runAnalyze(rawFile, chainring, cog, isFixedGear)
     }
+  }
+
+  const handleRideType = (value) => {
+    setRideType(value)
+    if (rideTypeHasGear(value) && !isFixedGear) handleFixedGearChange(true)
   }
 
   const handleFixedGearChange = (checked) => {
@@ -162,6 +170,7 @@ export default function FitUploader({
         title,
         userId: currentUser.id,
         trackId: selectedTrack,
+        rideType,
         chainring: parseGear(chainring, cog).chainring,
         cog: parseGear(chainring, cog).cog,
         crankLengthMm: 165.0,
@@ -272,6 +281,8 @@ export default function FitUploader({
               <VelodromePicker tracks={tracks} value={selectedTrack} onChange={handleTrackChange} defaultToFavorite emptyLabel="-- Select Velodrome --" compact />
             </div>
 
+            <RideTypeSelect value={rideType} onChange={handleRideType} />
+
             <label className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-semibold cursor-pointer">
               <input
                 type="checkbox"
@@ -282,14 +293,16 @@ export default function FitUploader({
               Fixed gear (fixed-gear, no freewheel)
             </label>
 
-            <GearPicker
-              label="Gear (optional)"
-              chainring={chainring}
-              cog={cog}
-              onChange={setGear}
-              onBlur={handleGearBlur}
-              showStats
-            />
+            {(rideTypeHasGear(rideType) || isFixedGear) && (
+              <GearPicker
+                label="Gear (optional)"
+                chainring={chainring}
+                cog={cog}
+                onChange={setGear}
+                onBlur={handleGearBlur}
+                showStats
+              />
+            )}
 
             {analysis?.summary?.speed_source === 'gps' && (
               <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-[11px] font-semibold">

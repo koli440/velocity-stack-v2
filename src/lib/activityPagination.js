@@ -20,6 +20,7 @@ const FEED_COLUMN_LIST = [
   'activity_date',
   'created_at',
   'track_id',
+  'ride_type',
   'chainring',
   'cog',
   'distance_m',

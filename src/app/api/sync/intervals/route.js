@@ -34,7 +34,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { action, activityId, trackId, isFixedGear } = await req.json()
+    const { action, activityId, trackId, isFixedGear, rideType } = await req.json()
 
     // Credentials always come from the caller's own connection (never the request body).
     const conn = await loadIntervalsConnection({ supabase, userId: user.id })
@@ -68,7 +68,7 @@ export async function POST(req) {
         userId: user.id,
         provider,
         externalId: activityId,
-        options: { trackId: trackId || null, isFixedGear: !!isFixedGear },
+        options: { trackId: trackId || null, isFixedGear: !!isFixedGear, rideType: rideType || null },
         analyzeFit: makeAnalyzeFit(req),
       })
 
