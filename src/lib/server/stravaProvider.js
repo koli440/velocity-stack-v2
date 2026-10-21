@@ -184,31 +184,39 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
     /**
      * One newest-first page of rides in [oldest, before]; `exhausted` when no older rides remain in the window
      * and `nextBefore` (ISO) is where the next page continues (also past non-ride activities).
+     *
+     * Only `before` is sent (Strava returns newest-first for it; with `after` it returns oldest-first, which
+     * made the first page the oldest rides of the window and skipped everything in between). The lower bound
+     * is applied client-side, and ordering is never assumed: the cursor is the minimum start date of the page.
      * @param {{ oldest?: string, before?: string, maxPages?: number }} opts
      */
     async listWindow({ oldest, before, maxPages = 1 } = {}) {
-      const after = afterEpoch(oldest)
+      const afterSec = afterEpoch(oldest)
       const beforeEpoch = before ? Math.floor(new Date(before).getTime() / 1000) + 1 : undefined
       const rides = []
       let exhausted = false
-      let nextBefore = null
+      let minStartMs = Infinity
       for (let page = 1; page <= maxPages; page++) {
         const qs = new URLSearchParams({ per_page: String(PAGE_SIZE), page: String(page) })
-        if (after) qs.set('after', String(after))
         if (Number.isFinite(beforeEpoch)) qs.set('before', String(beforeEpoch))
         const res = await get(`/athlete/activities?${qs}`)
         if (!res.ok) throw new ImportError(`Strava API error (${res.status})`, res.status)
         const items = await res.json()
         const arr = Array.isArray(items) ? items : []
-        rides.push(...filterStravaRides(arr))
-        const oldestRaw = arr.length ? arr[arr.length - 1]?.start_date : null
-        if (oldestRaw) nextBefore = oldestRaw
-        if (arr.length < PAGE_SIZE) {
+        for (const it of arr) {
+          const t = Date.parse(it?.start_date)
+          if (!Number.isNaN(t) && t < minStartMs) minStartMs = t
+        }
+        const inWindow = afterSec ? arr.filter((it) => Date.parse(it?.start_date) / 1000 >= afterSec) : arr
+        rides.push(...filterStravaRides(inWindow))
+        // Short page, or the page reached back past the lower bound: nothing older remains in the window.
+        if (arr.length < PAGE_SIZE || (afterSec && minStartMs / 1000 < afterSec)) {
           exhausted = true
           break
         }
       }
       remember(rides)
+      const nextBefore = Number.isFinite(minStartMs) ? new Date(minStartMs).toISOString() : null
       return { rides, exhausted, nextBefore }
     },
 

@@ -49,6 +49,10 @@ Each card shows a health line (Syncing normally / Sync looks delayed after 60 mi
 Per connection: last 30 days (default), 90 days, 1 year or full history (`backfill_days` NULL). History is imported
 **newest to oldest** so recent rides appear first; the card shows "Importing history, newest first: X of Y rides".
 Changing the window restarts the backfill (rides already imported are skipped). New rides keep syncing during a backfill.
+Strava lists rides with `before` only (never `after`, which Strava answers oldest-first) and applies the window's
+lower bound client-side; the backfill cursor is the oldest start date on the page, so no order is assumed and the
+backfill is only complete once a listing reaches the window start. Connections that finished a backfill with the old
+(gapped) listing were re-opened once by migration `20261224000000_reopen_strava_backfill.sql`.
 Strava costs about one read per ride (list item data is reused; only the streams endpoint is called per ride).
 
 ## Configuration (hosting env settings, never committed)
