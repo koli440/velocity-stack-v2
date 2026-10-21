@@ -143,6 +143,7 @@ export const COACH_PROFILE_FIELDS = Object.freeze([
   'default_chainring',
   'default_cog',
   'crank_length_mm',
+  'default_ride_type',
 ])
 
 /** Keeps only the whitelisted profile fields (the database rejects everything else anyway). */
@@ -156,14 +157,15 @@ export function pickCoachProfileChanges(changes) {
 
 /**
  * "Set by coach" label for a history row or profile defaults. `row` carries the stamp columns
- * (`set_by_coach` + `changed_by` + `changed_at`, or the profile's `training_set_*` equivalents);
+ * (`set_by_coach` + `changed_by` + `changed_at`, or the profile's `training_set_*` / the activity's
+ * `gear_set_*` equivalents);
  * `names` maps user ids to display names. Returns null for the rider's own values.
  */
 export function coachEditLabel(row, names) {
-  const byCoach = row?.set_by_coach ?? row?.training_set_by_coach
+  const byCoach = row?.set_by_coach ?? row?.training_set_by_coach ?? row?.gear_set_by_coach
   if (!byCoach) return null
-  const who = row.changed_by ?? row.training_set_by
-  const at = row.changed_at ?? row.training_set_at
+  const who = row.changed_by ?? row.training_set_by ?? row.gear_set_by
+  const at = row.changed_at ?? row.training_set_at ?? row.gear_set_at
   const name = (names instanceof Map ? names.get(who) : names?.[who]) || null
   const date = at ? new Date(at).toISOString().slice(0, 10) : null
   const parts = ['Set by coach']
@@ -176,8 +178,8 @@ export function coachEditLabel(row, names) {
 export function coachEditAuthorIds(rows) {
   const ids = new Set()
   for (const row of rows || []) {
-    const byCoach = row?.set_by_coach ?? row?.training_set_by_coach
-    const who = row?.changed_by ?? row?.training_set_by
+    const byCoach = row?.set_by_coach ?? row?.training_set_by_coach ?? row?.gear_set_by_coach
+    const who = row?.changed_by ?? row?.training_set_by ?? row?.gear_set_by
     if (byCoach && who) ids.add(who)
   }
   return [...ids]
@@ -194,6 +196,26 @@ export async function updateAthleteProfile(client, riderId, changes) {
     p_changes: pickCoachProfileChanges(changes),
   })
   return { error: error || null }
+}
+
+// Activity fields a coach may change (mirrors set_activity_gear's whitelist).
+export const COACH_ACTIVITY_GEAR_FIELDS = Object.freeze(['ride_type', 'gears', 'gear_segments'])
+
+export function pickCoachActivityChanges(changes) {
+  const out = {}
+  for (const key of COACH_ACTIVITY_GEAR_FIELDS) {
+    if (changes && Object.prototype.hasOwnProperty.call(changes, key)) out[key] = changes[key]
+  }
+  return out
+}
+
+/** Sets ride type / gears / segments through the single audited path (owner or active coach). */
+export async function updateActivityGear(client, activityId, changes) {
+  const { data, error } = await client.rpc('set_activity_gear', {
+    p_activity: activityId,
+    p_changes: pickCoachActivityChanges(changes),
+  })
+  return { data: error ? null : data, error: error || null }
 }
 
 // Audit trail rows visible to the signed-in user (the rider sees all, a coach their own).
