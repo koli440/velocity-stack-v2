@@ -257,3 +257,9 @@ RLS only (no coach/admin read, no client INSERT/DELETE); column-level UPDATE gra
 `activity_comment_mentions`, `activity_comment_log` (rate limit), `comment_reports`, `activity_comment_reads`. Readable by everyone
 who can see the activity (owner, active coach incl. private activities, others per `visibility`, blocks win); written **only** via
 SECURITY DEFINER RPCs. Notifications `activity_comment` / `comment_mention` (one unread per user + activity). Details: docs/comments.md.
+
+## Gear inputs (chainring x cog)
+Every gear input uses one component, `src/components/GearPicker.js`, and the helpers in `src/lib/gear.js` (one shared range of 8-100 teeth, parse/validate/ratio/gear inches/development). There are no presets.
+- Gear is optional wherever it is stored (`activities`, `personal_bests`, `profiles.default_*`): empty is valid and means "no gear"; one field without the other is a validation error. Nothing falls back to 58/14 for stored data, including server-side imports.
+- New uploads / bulk imports / PBs prefill from the signed-in rider's saved default only when one is set (`useGearState`, `fetchGearDefault` filter by the explicit owner id; coach context must pass the athlete's id, never their own).
+- Calculators (Pursuit, Gear Architect) use the saved default, else a calculator-only start gear (`CALCULATOR_GEAR_START`, `PURSUIT_GEAR_START`) that is never saved.

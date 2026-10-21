@@ -17,6 +17,8 @@ import CoachEditsList from '../../components/CoachEditsList'
 import { PROFILE_UPDATED_EVENT } from '../../lib/navigation'
 import Icon from '../../components/Icon'
 import Avatar from '../../components/Avatar'
+import GearPicker from '../../components/GearPicker'
+import { parseGear, toGearField } from '../../lib/gear'
 import { readGlassPref, writeGlassPref } from '../../lib/glass'
 import { fetchRequireFollowApproval, setRequireFollowApproval } from '../../lib/social'
 import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../../lib/avatars'
@@ -34,8 +36,8 @@ export default function SettingsPage() {
   const [homeTrackId, setHomeTrackId] = useState('')
   const [trainingStamp, setTrainingStamp] = useState(null)
   const coachNames = useCoachNames(trainingStamp ? [trainingStamp] : [])
-  const [defaultChainring, setDefaultChainring] = useState('58')
-  const [defaultCog, setDefaultCog] = useState('14')
+  const [defaultChainring, setDefaultChainring] = useState('')
+  const [defaultCog, setDefaultCog] = useState('')
   const [crankLength, setCrankLength] = useState('165.0')
   const [themePref, setThemePref] = useState('dark')
 
@@ -68,8 +70,8 @@ export default function SettingsPage() {
         setNickname(data.nickname || '')
         setHomeTrackId(data.home_track_id || '')
         setTrainingStamp(data)
-        setDefaultChainring(data.default_chainring ? String(data.default_chainring) : '58')
-        setDefaultCog(data.default_cog ? String(data.default_cog) : '14')
+        setDefaultChainring(toGearField(data.default_chainring))
+        setDefaultCog(toGearField(data.default_cog))
         setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
         setThemePref(data.theme_preference || 'dark')
         setDiscoverableByEmail(data.discoverable_by_email !== false)
@@ -125,6 +127,11 @@ export default function SettingsPage() {
   const handleSave = async (e) => {
     e.preventDefault()
     if (!user?.id) return
+    const gear = parseGear(defaultChainring, defaultCog)
+    if (!gear.valid) {
+      alert(gear.error)
+      return
+    }
 
     setLoading(true)
     setSaved(false)
@@ -134,8 +141,8 @@ export default function SettingsPage() {
       last_name: lastName.trim() || null,
       nickname: nickname.trim() || null,
       home_track_id: homeTrackId || null,
-      default_chainring: defaultChainring ? parseInt(defaultChainring) : null,
-      default_cog: defaultCog ? parseInt(defaultCog) : null,
+      default_chainring: gear.chainring,
+      default_cog: gear.cog,
       crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
       theme_preference: themePref,
       discoverable_by_email: discoverableByEmail,
@@ -301,29 +308,14 @@ export default function SettingsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                Default Chainring
-              </label>
-              <input
-                type="number"
-                value={defaultChainring}
-                onChange={(e) => setDefaultChainring(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                Default Cog
-              </label>
-              <input
-                type="number"
-                value={defaultCog}
-                onChange={(e) => setDefaultCog(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
+            <GearPicker
+              label="Default gear (optional)"
+              chainring={defaultChainring}
+              cog={defaultCog}
+              onChange={(g) => { setDefaultChainring(g.chainring); setDefaultCog(g.cog) }}
+              showStats
+              className="sm:col-span-2"
+            />
 
             <div>
               <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
