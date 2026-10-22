@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import useContextHref from './useContextHref'
 import { useEffect, useState } from 'react'
 import { fetchGearRecords, selectedGear } from '../lib/gearRecords'
 import { formatTime, formatElapsed } from '../lib/format'
@@ -16,6 +17,7 @@ const td = 'py-1.5 pr-3 text-slate-900 dark:text-white'
  * per-segment gears. Own account only: queries filter by the signed-in owner explicitly.
  */
 export default function GearRecords({ client, userId, chainring, cog }) {
+  const contextHref = useContextHref()
   const gear = selectedGear(chainring, cog)
   const key = gear ? `${gear.chainring}x${gear.cog}` : ''
   const [state, setState] = useState({ loading: false, pbRecords: [], raceRecords: [], truncated: false, error: null })
@@ -96,7 +98,7 @@ export default function GearRecords({ client, userId, chainring, cog }) {
                       <tr key={r.id} className="border-t border-slate-100 dark:border-surface-darkBorder">
                         <td className={td}>{formatDate(r.date)}</td>
                         <td className={`${td} font-bold`}>{r.gearLabel}{r.gearRole === 'segment' && <span className="ml-1 text-[10px] font-semibold text-slate-400">segment</span>}</td>
-                        <td className={td}><Link href={`/activities/${r.id}`} className="hover:text-emerald-500">{eventLabel(r)}</Link></td>
+                        <td className={td}><Link href={contextHref(`/activities/${r.id}`)} className="hover:text-emerald-500">{eventLabel(r)}</Link></td>
                         <td className={td}>{r.avgPowerW != null ? `${Math.round(r.avgPowerW)} W` : '-'}</td>
                         <td className={`${td} font-bold`}>{r.maxPowerW != null ? `${Math.round(r.maxPowerW)} W` : '-'}</td>
                         <td className={td}>{r.timeSeconds != null ? formatElapsed(r.timeSeconds) : '-'}</td>

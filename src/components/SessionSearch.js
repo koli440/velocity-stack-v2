@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import useContextHref from './useContextHref'
 import Icon from './Icon'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
@@ -14,6 +15,7 @@ import {
 
 export default function SessionSearch({ userId, tracks = [] }) {
   const router = useRouter()
+  const contextHref = useContextHref()
   const listId = useId()
   const rootRef = useRef(null)
   const requestRef = useRef(0)
@@ -71,7 +73,7 @@ export default function SessionSearch({ userId, tracks = [] }) {
     setQuery('')
     setResults([])
     setLoading(false)
-    router.push(`/activities/${item.id}`)
+    router.push(contextHref(`/activities/${item.id}`))
   }
 
   const onKeyDown = (e) => {

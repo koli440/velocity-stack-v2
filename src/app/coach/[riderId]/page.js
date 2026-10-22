@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { currentReturnTo, withReturnTo } from '../../../lib/returnTo'
 import { supabase } from '../../../lib/supabase'
 import { fetchAthleteActivitiesPage } from '../../../lib/coaching'
 import { fetchFtpHistory, ftpAt } from '../../../lib/ftpHistory'
@@ -24,6 +26,7 @@ function Stat({ label, value, badgeRow, names }) {
 
 // Per-athlete overview: current FTP / weight / lactate thresholds, recent activities and links.
 export default function AthleteOverviewPage() {
+  const returnTo = currentReturnTo(usePathname())
   const { riderId, athlete } = useAthlete()
   const [data, setData] = useState(null)
 
@@ -78,7 +81,7 @@ export default function AthleteOverviewPage() {
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {data.activities.map((a) => (
             <li key={a.id} className="py-2 text-xs flex justify-between gap-3">
-              <Link href={athletePath(riderId, `/activities/${a.id}`)} className="font-semibold hover:underline truncate">
+              <Link href={withReturnTo(athletePath(riderId, `/activities/${a.id}`), returnTo)} className="font-semibold hover:underline truncate">
                 {a.title || 'Untitled'}
               </Link>
               <span className="font-mono text-slate-500 shrink-0">

@@ -80,6 +80,17 @@ export function shiftMonth(anchor, direction) {
   return new Date(anchor.getFullYear(), anchor.getMonth() + direction, 1)
 }
 
+/** "YYYY-MM" key of the month shown (used in the URL so a view can be restored). */
+export function monthParam(anchor) {
+  return `${anchor.getFullYear()}-${String(anchor.getMonth() + 1).padStart(2, '0')}`
+}
+
+/** Parses a "YYYY-MM" value into the first day of that month, or null. */
+export function parseMonthParam(value) {
+  const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(value || '')
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, 1) : null
+}
+
 export function activityToEvent(row) {
   const date = new Date(row.activity_date)
   if (Number.isNaN(date.getTime())) return null

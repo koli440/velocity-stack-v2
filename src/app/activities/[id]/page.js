@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import Portal from '../../../components/Portal'
 import { fullDateTime } from '../../../lib/dateFormat'
 import { fetchProfilesByIds, authorName } from '../../../lib/social'
@@ -9,8 +9,9 @@ import BotBadge from '../../../components/BotBadge'
 import CalendarTile from '../../../components/CalendarTile'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { useParams, usePathname, useRouter } from 'next/navigation'
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { parseCoachPath, activityBackHref } from '../../../lib/coachContext'
+import { resolveBack } from '../../../lib/returnTo'
 import { supabase } from '../../../lib/supabase'
 import { deleteActivity } from '../../../lib/activityActions'
 import { syncFeedData } from '../../../lib/feedSync'
@@ -45,12 +46,29 @@ const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
   ),
 })
 
+// useSearchParams needs a Suspense boundary for static rendering.
 export default function ActivityDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <ActivityDetail />
+    </Suspense>
+  )
+}
+
+function ActivityDetail() {
   const router = useRouter()
   const params = useParams()
   const coachRiderId = parseCoachPath(usePathname()).riderId
-  const backHref = activityBackHref(coachRiderId)
-  const inAthleteContext = backHref !== '/'
+  const search = useSearchParams().toString()
+  const inAthleteContext = Boolean(coachRiderId)
+  const back = resolveBack({
+    search,
+    riderId: coachRiderId,
+    fallbackHref: activityBackHref(coachRiderId),
+    fallbackLabel: inAthleteContext ? '← Activities' : '← Cockpit Telemetry',
+  })
+  const backHref = back.href
+  const backLabel = back.fromOrigin ? `← ${back.label}` : back.label
   const activityId = params?.id
 
   const [loading, setLoading] = useState(true)
@@ -319,7 +337,7 @@ export default function ActivityDetailPage() {
           href={backHref}
           className="inline-block py-2 px-4 rounded-xl bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 font-bold text-xs uppercase"
         >
-          {inAthleteContext ? '← Back to activities' : '← Back to Cockpit'}
+          {backLabel}
         </Link>
       </div>
     )
@@ -334,7 +352,7 @@ export default function ActivityDetailPage() {
         href={backHref}
         className="inline-flex text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-white transition items-center gap-1.5"
       >
-        {inAthleteContext ? '← Activities' : '← Cockpit Telemetry'}
+        {backLabel}
       </Link>
 
       {/* 1. Header */}
