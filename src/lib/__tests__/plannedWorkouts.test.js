@@ -245,3 +245,78 @@ test('updatePlanned only patches client-writable columns; deletePlanned; link', 
   const l = fakeClient({ rpc: { data: W({ activity_id: 'a1' }), error: null } })
   assert.equal((await linkPlannedActivity(l, 'w1', 'a1')).data.activity_id, 'a1')
 })
+
+// --- #284 / #285: one status source through move / link / unlink sequences ---------------------
+// Mirrors what the server returns: move changes workout_date, link sets activity_id (and clears skipped),
+// unlink clears activity_id. The rider and a coach see the same rows, so both contexts use the same helper.
+const move = (w, day) => ({ ...w, workout_date: day })
+const link = (w, id) => ({ ...w, activity_id: id, status: 'planned' })
+const unlink = (w) => ({ ...w, activity_id: null })
+const statusOf = (w) => plannedStatus(w, TODAY)
+const eventStatus = (w) => plannedToEvent(w, TODAY).status
+
+test('#284 owner repro: planned Tue, moved to Wed (today) and linked is completed, never missed', () => {
+  let w = W({ workout_date: '2026-10-19' }) // yesterday, not done
+  assert.equal(statusOf(w), 'missed')
+  w = move(w, '2026-10-20') // moved to today
+  assert.equal(statusOf(w), 'planned')
+  w = link(w, 'a1')
+  assert.equal(statusOf(w), 'completed')
+  assert.equal(eventStatus(w), 'completed')
+})
+
+test('#284 link then move keeps completed on any day; unlink falls back to the day rules; relink completes again', () => {
+  let w = link(W({ workout_date: '2026-10-19' }), 'a1')
+  assert.equal(statusOf(w), 'completed')
+  w = move(w, '2026-10-18')
+  assert.equal(statusOf(w), 'completed')
+  w = unlink(w)
+  assert.equal(statusOf(w), 'missed')
+  w = move(w, '2026-10-20')
+  assert.equal(statusOf(w), 'planned')
+  w = move(w, '2026-10-25')
+  assert.equal(statusOf(w), 'planned')
+  w = link(w, 'a2')
+  assert.equal(statusOf(w), 'completed')
+  assert.equal(statusOf(unlink(w)), 'planned')
+})
+
+test('#285 unlink does not touch skipped; link clears it; every status display agrees (chip, dialog helper, week summary)', () => {
+  const skipped = W({ status: 'skipped', workout_date: '2026-10-19' })
+  assert.equal(statusOf(skipped), 'skipped')
+  assert.equal(statusOf(unlink(skipped)), 'skipped')
+  const linked = link(skipped, 'a1')
+  assert.equal(linked.status, 'planned')
+  assert.equal(statusOf(linked), 'completed')
+  const rows = buildCalendarRows(buildMonthGrid(new Date(2026, 9, 1)), [plannedToEvent(linked, TODAY)], { anchor: new Date(2026, 9, 1), today: TODAY })
+  const ev = rows.flatMap((r) => r.cells).flatMap((c) => c.events)
+  assert.deepEqual(ev.map((e) => e.status), ['completed'])
+})
+
+test('#286 week summary: planned time from the structure; skipped excluded, linked and missed counted', () => {
+  const dsl = '4x\nwork 5min @ 90-110%FTP\nrecovery 2min @ <55%FTP'
+  const W2 = (o) => W({ structure_dsl: dsl, ...o })
+  const ws = [
+    W2({ id: 'a', workout_date: '2026-10-19' }), // missed, 28 min
+    link(W2({ id: 'b', workout_date: '2026-10-20' }), 'act'), // completed, 28 min
+    W2({ id: 'c', workout_date: '2026-10-21', status: 'skipped' }), // excluded
+  ]
+  const rows = buildCalendarRows(buildMonthGrid(new Date(2026, 9, 1)), ws.map((w) => plannedToEvent(w, TODAY)), { anchor: new Date(2026, 9, 1), today: TODAY })
+  const wk = rows.find((r) => r.cells.some((c) => c.key === '2026-10-20'))
+  assert.equal(wk.summary.plannedCount, 2)
+  assert.equal(wk.summary.plannedDurationS, 2 * 28 * 60)
+  assert.equal(wk.summary.plannedPartial, false)
+})
+
+test('#286 week summary flags partial when a workout has no computable duration', () => {
+  const noStructure = W({ id: 'n' })
+  const distance = W({ id: 'd', structure_dsl: 'work 10km @ 90-110%FTP' })
+  const timed = W({ id: 't', structure_dsl: 'work 20min @ 90-110%FTP' })
+  const sum = (ws) => buildCalendarRows(buildMonthGrid(new Date(2026, 9, 1)), ws.map((w) => plannedToEvent(w, TODAY)), { anchor: new Date(2026, 9, 1), today: TODAY })
+    .find((r) => r.cells.some((c) => c.key === '2026-10-20')).summary
+  assert.equal(sum([timed]).plannedPartial, false)
+  assert.equal(sum([timed]).plannedDurationS, 1200)
+  assert.equal(sum([timed, noStructure]).plannedPartial, true)
+  assert.equal(sum([timed, noStructure]).plannedDurationS, 1200)
+  assert.equal(sum([timed, distance]).plannedPartial, true)
+})

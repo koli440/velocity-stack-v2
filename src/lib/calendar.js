@@ -111,13 +111,20 @@ export function groupEventsByDay(events) {
   return map
 }
 
-/** Week totals cover completed activities only; planned workouts are counted separately. */
+/**
+ * Week totals: `count` / `durationS` / `distanceM` cover completed activities only. Planned workouts are summed
+ * separately: `plannedCount` / `plannedDurationS` skip skipped workouts (linked and missed ones count, so the gap
+ * to the done time stays visible); `plannedPartial` is true when a counted workout has no computable duration
+ * (no structure, or distance-based steps that were left out).
+ */
 export function summarizeEvents(events) {
   return events.reduce(
     (acc, e) => {
       if (e.kind === 'planned') {
+        if (e.status === 'skipped') return acc
         acc.plannedCount += 1
         acc.plannedDurationS += e.durationS || 0
+        if (!e.durationS || e.durationPartial) acc.plannedPartial = true
         return acc
       }
       acc.count += 1
@@ -125,7 +132,7 @@ export function summarizeEvents(events) {
       acc.distanceM += e.distanceM || 0
       return acc
     },
-    { count: 0, durationS: 0, distanceM: 0, plannedCount: 0, plannedDurationS: 0 }
+    { count: 0, durationS: 0, distanceM: 0, plannedCount: 0, plannedDurationS: 0, plannedPartial: false }
   )
 }
 

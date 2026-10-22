@@ -172,6 +172,26 @@ function RaceChip({ race, onOpen }) {
   )
 }
 
+// Planned vs done time of the week: "planned 8:00 h" (with "+" when some durations are unknown) and a thin progress bar.
+function PlannedTime({ summary }) {
+  const pct = summary.plannedDurationS > 0 ? Math.min(100, Math.round((summary.durationS / summary.plannedDurationS) * 100)) : 0
+  return (
+    <div className="col-span-3 md:col-span-1 space-y-1" data-testid="week-planned-time" data-partial={summary.plannedPartial ? 'true' : 'false'}>
+      <div className="text-[10px] font-bold text-sky-700 dark:text-sky-300 text-center md:text-left">
+        {summary.plannedDurationS > 0
+          ? `planned ${formatDuration(summary.plannedDurationS)} h${summary.plannedPartial ? '+' : ''}`
+          : 'planned time unknown'}
+        {summary.plannedPartial && summary.plannedDurationS > 0 ? ' (some durations unknown)' : ''}
+      </div>
+      {summary.plannedDurationS > 0 && (
+        <div className="h-1.5 rounded-full bg-sky-500/20 overflow-hidden" role="progressbar" aria-label="Done vs planned time" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+          <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 function WeekSummary({ summary }) {
   const stat = (value, label) => (
     <div className="text-center md:text-left">
@@ -187,6 +207,7 @@ function WeekSummary({ summary }) {
       {stat(`${formatDuration(summary.durationS)} h`, 'Time')}
       {stat(formatKm(summary.distanceM), 'Distance')}
       {stat(summary.count, summary.count === 1 ? 'Activity' : 'Activities')}
+      {summary.plannedCount > 0 && <PlannedTime summary={summary} />}
       {summary.races?.length > 0 && (
         <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-rose-600 dark:text-rose-300 text-center md:text-left" data-testid="week-races">
           {summary.races.map((r) => `🏁 ${r.name} (${r.priority})`).join(' · ')}
@@ -277,10 +298,17 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     }
   }, [load])
 
+  // Status is derived from "today", so recompute when a page that stays open passes midnight.
+  const [todayKey, setTodayKey] = useState(() => dayKey(new Date()))
+  useEffect(() => {
+    const id = setInterval(() => setTodayKey((k) => { const n = dayKey(new Date()); return n === k ? k : n }), 60000)
+    return () => clearInterval(id)
+  }, [])
   const rows = useMemo(() => {
     const today = new Date()
     return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => ({ ...plannedToEvent(w, today), pushState: pushState(w, pushRows.get(w.id)) }))], { anchor, notes, races })
-  }, [anchor, events, notes, races, planned, pushRows])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchor, events, notes, races, planned, pushRows, todayKey])
   const raceByActivity = useMemo(() => racesByActivity(races), [races])
 
   // Intervals.icu push status of the visible workouts (RLS: rider + active coach; empty for everyone else).
