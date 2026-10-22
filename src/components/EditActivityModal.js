@@ -6,6 +6,7 @@ import VelodromePicker from './VelodromePicker'
 import RideGearEditor from './RideGearEditor'
 import { gearsToForm, resolveSegments } from '../lib/gearSegments'
 import { effectiveRideType, rideTypeHasGear } from '../lib/rideType'
+import { saveActivityRace } from '../lib/raceTag'
 import { VISIBILITY_OPTIONS } from '../lib/social'
 import {
   MAX_TITLE_LENGTH,
@@ -24,6 +25,7 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
   const [gears, setGears] = useState([])
   const [segments, setSegments] = useState([])
   const [description, setDescription] = useState('')
+  const [isRace, setIsRace] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -36,6 +38,7 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     setGears(gearsToForm(activity))
     setSegments(resolveSegments(activity))
     setDescription(activity.description || '')
+    setIsRace(Boolean(activity.is_race))
     setError('')
   }, [isOpen, activity])
 
@@ -58,12 +61,23 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
       gears: hasGear ? gears : undefined,
       gearSegments: hasGear ? segments : undefined,
     })
+    let raceFresh = {}
+    if (!err && isRace !== Boolean(activity.is_race)) {
+      const { fresh, error: raceErr } = await saveActivityRace(client, activity.id, isRace)
+      if (raceErr) {
+        setSaving(false)
+        setError(`Saved, but the race tag failed: ${raceErr.message}`)
+        onSaved?.({ ...updates, tracks: tracks.find((t) => t.id === updates.track_id) || null })
+        return
+      }
+      raceFresh = fresh
+    }
     setSaving(false)
     if (err) {
       setError(err.message)
       return
     }
-    onSaved?.({ ...updates, tracks: tracks.find((t) => t.id === updates.track_id) || null })
+    onSaved?.({ ...updates, ...raceFresh, tracks: tracks.find((t) => t.id === updates.track_id) || null })
     onClose()
   }
 
@@ -105,6 +119,11 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
             {VISIBILITY_OPTIONS.find((o) => o.value === visibility)?.hint}
           </p>
         </div>
+
+        <label className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+          <input type="checkbox" checked={isRace} onChange={(e) => setIsRace(e.target.checked)} className="accent-emerald-500 w-4 h-4" />
+          Race
+        </label>
 
         <RideGearEditor
           rideType={rideType}

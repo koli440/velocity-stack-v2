@@ -359,6 +359,12 @@ export default function ActivityDetailPage() {
               )}
               <span>{fullDateTime(actWhen)}</span>
             </p>
+            <RaceTagToggle
+              client={supabase}
+              activity={activity}
+              readOnly={sharedView && !(coachRiderId && coachRiderId === activity?.user_id)}
+              onChanged={(fresh) => setActivity((prev) => ({ ...prev, ...fresh }))}
+            />
             {activity.tracks?.name && (
               <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
                 {activity.tracks.name}
@@ -543,8 +549,6 @@ export default function ActivityDetailPage() {
           <Icon name="settings" /> Track & Gearing Setup for this Ride
         </h3>
 
-        <RaceTagToggle client={supabase} activity={activity} onChanged={(fresh) => setActivity((prev) => ({ ...prev, ...fresh }))} />
-
         <form onSubmit={handleUpdateGear} className="space-y-4">
           <div className="max-w-sm">
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
@@ -588,7 +592,6 @@ export default function ActivityDetailPage() {
           <Icon name="settings" /> Ride type &amp; gears (coach)
         </h3>
         <p className="text-[11px] text-slate-400 mb-4">Edits are labelled as set by you and recorded in the athlete&apos;s audit trail.</p>
-        <RaceTagToggle client={supabase} activity={activity} onChanged={(fresh) => setActivity((prev) => ({ ...prev, ...fresh }))} />
         <form onSubmit={handleCoachSaveGear} className="space-y-4">
           <RideGearEditor
             rideType={rideType}

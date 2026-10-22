@@ -19,3 +19,15 @@ export function raceTagOrigin(activity) {
   if (activity.race_set_by_coach) return 'Tagged by your coach. It stays when a calendar race is unlinked.'
   return 'Tagged manually. It stays when a calendar race is unlinked.'
 }
+
+/** Sets the tag, then reloads the tag columns (flags and stamp) for the UI. */
+export async function saveActivityRace(client, activityId, isRace) {
+  const { isRace: saved, error } = await setActivityRace(client, activityId, isRace)
+  if (error) return { fresh: null, error }
+  const { data } = await client
+    .from('shared_activities')
+    .select('is_race, race_tag_auto, race_set_by, race_set_at, race_set_by_coach')
+    .eq('id', activityId)
+    .maybeSingle()
+  return { fresh: data || { is_race: saved, race_tag_auto: false }, error: null }
+}
