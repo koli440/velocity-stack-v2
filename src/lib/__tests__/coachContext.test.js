@@ -97,7 +97,7 @@ test('sidebarItems hides the coach\'s own pages in athlete context', async () =>
   const items = c.sidebarItems(NAV_ITEMS, RID)
   const hrefs = items.map((i) => i.href)
   assert.deepEqual(hrefs, [
-    `/coach/${RID}`, `/coach/${RID}/activities`, `/coach/${RID}/calendar`, `/coach/${RID}/pb-vault`,
+    `/coach/${RID}`, `/coach/${RID}/activities`, `/coach/${RID}/calendar`, `/coach/${RID}/fitness`, `/coach/${RID}/pb-vault`,
     `/coach/${RID}/templates`, `/coach/${RID}/physiology`, '/coach',
   ])
   assert.ok(hrefs.every((h) => h.startsWith('/coach')))
