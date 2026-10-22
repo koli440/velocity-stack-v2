@@ -52,6 +52,15 @@ export function coachRunnableTemplates(templates, coachId) {
   return (templates || []).filter((t) => !t.user_id || (!!coachId && t.user_id === coachId))
 }
 
+/**
+ * Templates offered by the searchable picker. Coach in athlete context: own + system only (as on the server);
+ * otherwise every template visible to the user. Templates without a DSL cannot be run.
+ */
+export function pickerTemplates(templates, userId, { athleteContext = false } = {}) {
+  const list = athleteContext ? coachRunnableTemplates(templates, userId) : templates || []
+  return list.filter((t) => t.dsl_source)
+}
+
 /** Coach runs can never be sent to the PB Vault. */
 export function canSendRunToPbVault(run) {
   return !isCoachRun(run)

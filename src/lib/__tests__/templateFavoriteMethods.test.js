@@ -37,7 +37,7 @@ test('favorite callers only use methods the route supports', () => {
 })
 
 test('add-favorite callers use PUT, not POST', () => {
-  for (const f of ['components/TemplateRunsSection.js', 'components/PlannedTemplatePicker.js']) {
+  for (const f of ['components/TemplateRunsSection.js', 'components/TemplateSearchPicker.js']) {
     assert.match(read(f), /\? 'DELETE' : 'PUT'/, f)
   }
 })

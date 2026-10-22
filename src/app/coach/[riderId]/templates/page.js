@@ -6,8 +6,9 @@ import { parseJsonResponse } from '../../../../lib/httpJson'
 import { useAthlete } from '../../../../components/AthleteContext'
 import TemplateRunsModal from '../../../../components/TemplateRunsModal'
 import TemplateBatchRunner from '../../../../components/TemplateBatchRunner'
+import TemplateSearchPicker from '../../../../components/TemplateSearchPicker'
 import { metricLabel, orderMetricKeys, formatStatValue } from '../../../../lib/templateStats'
-import { athleteTemplateGroups, coachRunnableTemplates } from '../../../../lib/coachRuns'
+import { athleteTemplateGroups } from '../../../../lib/coachRuns'
 
 // Coach in athlete context: the template runs THE COACH made on THIS athlete's activities, grouped by
 // template (own + system). Read through /api/templates/stats?rider=, which only returns runs stamped
@@ -18,8 +19,8 @@ export default function AthleteTemplatesPage() {
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
   const [runsFor, setRunsFor] = useState(null)
-  const [runnable, setRunnable] = useState([])
-  const [pick, setPick] = useState('')
+  const [userId, setUserId] = useState(null)
+  const [picking, setPicking] = useState(false)
   const [batchFor, setBatchFor] = useState(null)
   const athleteName = athlete?.display_name || 'this athlete'
 
@@ -35,10 +36,7 @@ export default function AthleteTemplatesPage() {
       setState({
         groups: athleteTemplateGroups(stats.stats, stats.names, stats.templates || [], session?.user?.id),
       })
-      // Own + system templates only: the coach cannot run the athlete's or other people's templates.
-      const tplRes = await fetch('/api/templates', { headers: authHeader, cache: 'no-store' })
-      const tpl = await parseJsonResponse(tplRes)
-      if (tplRes.ok && !tpl.error) setRunnable(coachRunnableTemplates(tpl.templates, session?.user?.id))
+      setUserId(session?.user?.id || null)
     } catch (err) {
       setError(err.message)
       setState({ groups: [] })
@@ -69,18 +67,12 @@ export default function AthleteTemplatesPage() {
           Template runs you made on {athleteName}&apos;s activities. Only your own runs are listed; they are not part of your own template statistics.
         </p>
       </div>
-      {runnable.length > 0 && (
-        <div className="flex flex-wrap items-end gap-2" data-testid="athlete-batch-run">
-          <div className="flex-1 min-w-[12rem]">
-            <label htmlFor="batch-template" className="text-xs font-bold text-slate-500">Run a template on several activities</label>
-            <select id="batch-template" value={pick} onChange={(e) => setPick(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
-              <option value="">Choose a template…</option>
-              {runnable.map((t) => <option key={t.id} value={t.id}>{t.name}{t.user_id ? '' : ' (system)'}</option>)}
-            </select>
-          </div>
-          <button onClick={() => setBatchFor(runnable.find((t) => t.id === pick) || null)} disabled={!pick} aria-haspopup="dialog" className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider disabled:opacity-40">
-            Run on activities…
+      {userId && (
+        <div className="flex flex-wrap items-center gap-2" data-testid="athlete-batch-run">
+          <button onClick={() => setPicking(true)} aria-haspopup="dialog" className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider">
+            Run a template on several activities…
           </button>
+          <span className="text-[11px] text-slate-400">Search your own and system templates.</span>
         </div>
       )}
       {error && (
@@ -125,6 +117,15 @@ export default function AthleteTemplatesPage() {
           )
         })}
       </div>
+      {picking && (
+        <TemplateSearchPicker
+          userId={userId}
+          title={`Run a template on ${athleteName}'s activities`}
+          confirmLabel="Choose activities"
+          onClose={() => setPicking(false)}
+          onPick={(t) => { setPicking(false); setBatchFor(t) }}
+        />
+      )}
       {batchFor && <TemplateBatchRunner template={batchFor} rider={riderId} athleteName={athleteName} onClose={() => setBatchFor(null)} onDone={load} />}
       {runsFor && (
         <TemplateRunsModal

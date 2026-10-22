@@ -6,6 +6,7 @@ import { parseJsonResponse } from '../../lib/httpJson'
 import TemplateCreatorModal from '../../components/TemplateCreatorModal'
 import TemplateRunsModal from '../../components/TemplateRunsModal'
 import TemplateBatchRunner from '../../components/TemplateBatchRunner'
+import TemplateSearchPicker from '../../components/TemplateSearchPicker'
 import Icon from '../../components/Icon'
 import {
   filterByTab,
@@ -39,6 +40,7 @@ export default function TemplatesPage() {
   const [statsError, setStatsError] = useState(null)
   const [runsFor, setRunsFor] = useState(null)
   const [batchFor, setBatchFor] = useState(null)
+  const [picking, setPicking] = useState(false)
   const [modal, setModal] = useState({ open: false, template: null })
 
   const load = useCallback(async () => {
@@ -220,12 +222,21 @@ export default function TemplatesPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Browse, favorite and manage interval analysis templates.</p>
         </div>
         {userId && (
-          <button
-            onClick={() => setModal({ open: true, template: null })}
-            className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider"
-          >
-            + New template
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setPicking(true)}
+              aria-haspopup="dialog"
+              className="py-2 px-4 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-black text-[11px] uppercase tracking-wider"
+            >
+              Run on activities…
+            </button>
+            <button
+              onClick={() => setModal({ open: true, template: null })}
+              className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider"
+            >
+              + New template
+            </button>
+          </div>
         )}
       </div>
 
@@ -366,6 +377,16 @@ export default function TemplatesPage() {
         />
       )}
 
+      {picking && (
+        <TemplateSearchPicker
+          userId={userId}
+          athleteContext={false}
+          title="Run a template on several activities"
+          confirmLabel="Choose activities"
+          onClose={() => setPicking(false)}
+          onPick={(t) => { setPicking(false); setBatchFor(t) }}
+        />
+      )}
       {batchFor && <TemplateBatchRunner template={batchFor} onClose={() => setBatchFor(null)} onDone={loadStats} />}
 
       {modal.open && (

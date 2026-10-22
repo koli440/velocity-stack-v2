@@ -135,8 +135,9 @@ Shows the template runs the **coach** made on **this athlete's** activities, gro
 - Choice: an all-athletes-per-template view is not provided.
 
 ### Run a template on many activities (#293)
+The template is chosen with the shared searchable picker (`TemplateSearchPicker`: search by name/description/category, favorites, recents, preview, arrow keys + Enter) on both pages; in athlete context it lists only the coach's own and system templates (`pickerTemplates`), on the athlete's own page every template visible to them.
 `POST /api/templates/run-batch { templateId, activityIds (<=10), rider? }` (UI: `TemplateBatchRunner`, "Run on activities…" on the Templates
-page and, for a coach, a template picker on `/coach/<id>/templates`). No migration: it reuses the existing paths.
+page and, for a coach, a button on `/coach/<id>/templates`). No migration: it reuses the existing paths.
 - The user searches activities **by name**, adds up to **50** to an "activities to analyse" list; the client sends them in chunks of 5, the server
   has a 40 s budget per request (unprocessed ids come back `deferred` and are resent) so request limits are respected.
 - Own account: activities and existing runs are queried with an explicit `user_id` filter; runs are upserted on `(activity_id, template_id, coach_key)`.
