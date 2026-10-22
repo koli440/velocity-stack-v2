@@ -5,6 +5,7 @@ import { supabase, getAuthHeader } from '../../lib/supabase'
 import { parseJsonResponse } from '../../lib/httpJson'
 import TemplateCreatorModal from '../../components/TemplateCreatorModal'
 import TemplateRunsModal from '../../components/TemplateRunsModal'
+import TemplateBatchRunner from '../../components/TemplateBatchRunner'
 import Icon from '../../components/Icon'
 import {
   filterByTab,
@@ -37,6 +38,7 @@ export default function TemplatesPage() {
   const [statsLoading, setStatsLoading] = useState(true)
   const [statsError, setStatsError] = useState(null)
   const [runsFor, setRunsFor] = useState(null)
+  const [batchFor, setBatchFor] = useState(null)
   const [modal, setModal] = useState({ open: false, template: null })
 
   const load = useCallback(async () => {
@@ -311,6 +313,11 @@ export default function TemplatesPage() {
                 </div>
                 {t.description && <p className="text-xs text-slate-500 dark:text-slate-400">{t.description}</p>}
                 {userId && renderStats(t)}
+                {userId && (
+                  <button onClick={() => setBatchFor(t)} className={`${btn} self-start`} aria-haspopup="dialog" aria-label={`Run ${t.name} on activities`}>
+                    Run on activities…
+                  </button>
+                )}
                 <p className="text-[11px] text-slate-400 mt-auto">
                   By {ownerLabel(t)}
                   {(t.updated_at || t.created_at) && ` · Updated ${new Date(t.updated_at || t.created_at).toLocaleDateString()}`}
@@ -358,6 +365,8 @@ export default function TemplatesPage() {
           onClose={() => setRunsFor(null)}
         />
       )}
+
+      {batchFor && <TemplateBatchRunner template={batchFor} onClose={() => setBatchFor(null)} onDone={loadStats} />}
 
       {modal.open && (
         <TemplateCreatorModal
