@@ -1,6 +1,6 @@
 import test, { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { hasDayContent, isShownOnMobile, isEmptyDay } from '../calendarMobileDays'
+import { hasDayContent, isShownOnMobile, isEmptyDay } from '../calendarMobileDays.js'
 
 const cell = (o = {}) => ({ events: [], notes: [], races: [], inMonth: true, isToday: false, ...o })
 
