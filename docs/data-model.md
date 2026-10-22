@@ -272,3 +272,21 @@ Every gear input uses one component, `src/components/GearPicker.js`, and the hel
 - Stamps `gear_set_by`, `gear_set_at`, `gear_set_by_coach` are written by the trigger from `auth.uid()`; clients cannot forge them. `shared_activities` exposes the new columns.
 - Derived speed (`speed_source = 'derived_from_cadence'`) is stored for the primary gear at import. With 2+ gears and segments the activity page recomputes speed and speed-dependent stats at display time with the gear active each second (`withSegmentSpeed`); one gear is exactly as before.
 - PB Vault prefill (`buildPbPrefillFromEffort`) takes the gear active for most of the effort window (`gearForRange`). Aero Lab has no activity-based prefill, so it is unchanged.
+
+## Template run analysis and the re-run job (#283)
+
+**Stored per-effort fields** (`src/lib/templateComparison.js`, written by `evaluateTemplate`, purely additive; `dropoff_pct` is kept):
+- on work efforts: `rep` (1-based, by start time), `pct_of_best`, `delta_vs_rep1_pct`;
+- `summary.rep_analysis` (object, `v` = format version): `metric`, `lower_is_better`, `reps_detected`, `reps_expected`, `missing_reps`, `low_reps`,
+  `first_half_avg`, `second_half_avg`, `half_fade_pct`, `worst_rep`, `worst_rep_index`, `worst_rep_pct_below_best`, `slope_pct_per_rep`, `cv_pct`.
+Runs without these fields keep working: the UI derives everything from `efforts[]`/`summary` (`analyzeRun`) and only a "lacking per-effort data" count differs.
+
+**`template_reference_prefs`** (`20261228000000`): `(user_id, scope_id, template_slug)` -> `mode` (`previous` | `pb` | `median5` | `custom`) and `custom_execution_id` (plain UUID, no FK).
+`user_id` is always the caller; `scope_id` is the caller or an athlete he actively coaches (`is_coach_of`). SELECT/UPDATE/DELETE only on own rows. The client also keeps a localStorage copy.
+
+**Re-run job** (`20261228010000_template_rerun_job.sql`, `src/lib/server/templateRerun.js`): all tables and functions are service-only (RLS on, no client grants).
+- `template_execution_backups(execution_id, efforts, summary, original_updated_at, verified_at, restored_at)` is written by `template_rerun_apply` in the same transaction as the update and never overwritten.
+- `template_rerun_items(execution_id, dry_run, status done|skipped|failed|restored, reason, warning, attempts, efforts_before/after, ...)` is the report.
+- `template_rerun_control` (single row): `state` idle|running|paused, `mode` apply|dry_run, `cursor`, `lease_until`, and the baseline recorded when the migration ran (`baseline_total`, `baseline_without_per_effort`).
+- `template_rerun_apply` only changes `efforts`/`summary`; it verifies that id, activity link, owner, `created_at`, `updated_at`, `by_coach`, `run_by_coach_id`, `coach_key` and the name/slug/category snapshot are identical afterwards (otherwise rolls back). A run with a backup returns `already_done`; an `updated_at` that changed meanwhile returns `changed`. No rows are inserted, so no duplicates; PB Vault is not touched.
+- `template_rerun_restore(id)` puts the backup back. pg_cron `template-rerun` (every 5 min) POSTs `/api/admin/template-rerun/run` with the shared cron token only while the state is `running`.

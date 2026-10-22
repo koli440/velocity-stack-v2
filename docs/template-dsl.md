@@ -588,6 +588,14 @@ recovery 5min ±40% @ <Z3
 metrics avg_power, time_z2, time_z3, time_z4
 ```
 
+## Rep-level comparison and fade (#283)
+Every run stores `rep` numbers and `pct_of_best` on its work efforts and a `summary.rep_analysis` object (see data-model.md). The run view compares against a reference:
+- **Reference**: previous run (default), personal best run, median of the last 5 earlier runs (no date window) or any past run you pick; remembered per template and user. The 90-day and all-time averages are no longer shown.
+- **Headline metric**, chosen automatically: average power for interval templates; time for time trials, sprints and distance-keyed templates (lower is better). Colours are direction-aware.
+- **Rep matching** is strictly by rep number; only common reps are compared and the view says when the counts differ.
+- **Fade metrics**: first vs second half (odd counts skip the middle rep), worst rep and its index, slope in % of the mean per rep, consistency (100 - CV%), plus flags for reps 5% or more worse than the median, missing reps, and "7 of 8 reps detected". HR recovery between reps appears when the template records `hr_recovery_<N>s`.
+- Runs saved before this change are analysed from their efforts; the admin re-run job (`/admin/template-reruns`) rewrites them with the current detection so the stored fields exist too.
+
 ## Coach runs
 A coach may run his own (or a system) template on an athlete's activity. The athlete sees the result and the template name only,
 never the DSL/manifest. See docs/coaching.md.
