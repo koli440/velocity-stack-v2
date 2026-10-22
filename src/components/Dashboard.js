@@ -14,6 +14,7 @@ import EmptyFeedCard from './EmptyFeedCard'
 import { stravaFlagMessage } from '../lib/emptyFeed'
 import PowerProfileCard from './PowerProfileCard'
 import WeekStatsCard from './WeekStatsCard'
+import FitnessCard from './FitnessCard'
 import OnboardingChecklist from './OnboardingChecklist'
 
 export default function Dashboard({ initialActivities = [] }) {
@@ -248,6 +249,7 @@ export default function Dashboard({ initialActivities = [] }) {
       {/* Right column */}
       <div className="w-full xl:w-80 shrink-0 space-y-3">
         <WeekStatsCard userId={user?.id} />
+        <FitnessCard userId={user?.id} />
         <PowerProfileCard userId={user?.id} />
       </div>
       </div>
