@@ -273,6 +273,12 @@ Every gear input uses one component, `src/components/GearPicker.js`, and the hel
 - Derived speed (`speed_source = 'derived_from_cadence'`) is stored for the primary gear at import. With 2+ gears and segments the activity page recomputes speed and speed-dependent stats at display time with the gear active each second (`withSegmentSpeed`); one gear is exactly as before.
 - PB Vault prefill (`buildPbPrefillFromEffort`) takes the gear active for most of the effort window (`gearForRange`). Aero Lab has no activity-based prefill, so it is unchanged.
 
+## Race tag and Gear Architect records (`20261230000000_activity_race_tag.sql`, #294)
+- `activities.is_race` is the **race tag**. It is set manually (rider, or the active coach through `set_activity_race()`; stamped `race_set_by` / `race_set_at` / `race_set_by_coach` from `auth.uid()`, audited in `coach_edits` and notified like other coach edits) **and** automatically when the activity is linked to a calendar race (`calendar_races.activity_id`, trigger `sync_race_tag`).
+- `race_tag_auto` is TRUE only while the tag exists solely because of a link. **Unlinking (or deleting the race) removes an auto tag and never a manual one**; any manual set or clear makes the tag manual (clients cannot forge the flag or stamps). Linking an already tagged ride changes nothing; relinking after a manual clear tags again. Auto changes stamp `race_set_at` only (no author).
+- No backfill, except activities already linked to a calendar race (tagged auto). `shared_activities` exposes the new columns. Coaches have no UPDATE policy on `activities`; `set_activity_race` is the only coach path.
+- **Gear Architect** (`/gears`, `src/lib/gearRecords.js`, `GearRecords` component) shows, for the selected gear and the signed-in rider only (queries filter by owner explicitly): PB Vault records with that chainring/cog, and race-tagged rides that used it as primary gear **or** in any gear segment (`gearsUsed`). There is no all-rides toggle. Each record shows gear, date, event/venue (a linked calendar race's name and location, else the activity title and velodrome / the PB's event and track) and results (PB: time; race ride: average and max power, time). Road rides (explicit type without gear) count no gear.
+
 ## Template run analysis and the re-run job (#283)
 
 **Stored per-effort fields** (`src/lib/templateComparison.js`, written by `evaluateTemplate`, purely additive; `dropoff_pct` is kept):

@@ -28,6 +28,7 @@ import { weightFromActivity } from '../../../lib/weightHistory'
 import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
 import Icon from '../../../components/Icon'
 import RideGearEditor from '../../../components/RideGearEditor'
+import RaceTagToggle from '../../../components/RaceTagToggle'
 import CoachBadge, { useCoachNames } from '../../../components/CoachBadge'
 import { gearLabel } from '../../../lib/gear'
 import { effectiveRideType, rideTypeHasGear, rideTypeLabel } from '../../../lib/rideType'
@@ -542,6 +543,8 @@ export default function ActivityDetailPage() {
           <Icon name="settings" /> Track & Gearing Setup for this Ride
         </h3>
 
+        <RaceTagToggle client={supabase} activity={activity} onChanged={(fresh) => setActivity((prev) => ({ ...prev, ...fresh }))} />
+
         <form onSubmit={handleUpdateGear} className="space-y-4">
           <div className="max-w-sm">
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
@@ -585,6 +588,7 @@ export default function ActivityDetailPage() {
           <Icon name="settings" /> Ride type &amp; gears (coach)
         </h3>
         <p className="text-[11px] text-slate-400 mb-4">Edits are labelled as set by you and recorded in the athlete&apos;s audit trail.</p>
+        <RaceTagToggle client={supabase} activity={activity} onChanged={(fresh) => setActivity((prev) => ({ ...prev, ...fresh }))} />
         <form onSubmit={handleCoachSaveGear} className="space-y-4">
           <RideGearEditor
             rideType={rideType}
