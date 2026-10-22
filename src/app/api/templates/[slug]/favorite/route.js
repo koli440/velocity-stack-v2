@@ -13,6 +13,9 @@ export async function PUT(req, { params }) {
   }
 }
 
+// POST is an alias of PUT so older cached clients that add favorites via POST keep working.
+export const POST = PUT
+
 // DELETE /api/templates/:slug/favorite - remove from favorites
 export async function DELETE(req, { params }) {
   try {

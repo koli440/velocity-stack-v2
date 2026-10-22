@@ -46,11 +46,11 @@ export default function PlannedTemplatePicker({ userId, onPick, onClose }) {
     })
     apply(!was)
     try {
-      const res = await fetch(`/api/templates/${template.slug}/favorite`, { method: was ? 'DELETE' : 'POST', headers: await getAuthHeader() })
-      if (!res.ok) throw new Error()
-    } catch {
+      const res = await fetch(`/api/templates/${template.slug}/favorite`, { method: was ? 'DELETE' : 'PUT', headers: await getAuthHeader() })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to update favorite.')
+    } catch (err) {
       apply(was)
-      setError('Failed to update favorite.')
+      setError(err.message || 'Failed to update favorite.')
     }
   }, [favoriteIds])
 
