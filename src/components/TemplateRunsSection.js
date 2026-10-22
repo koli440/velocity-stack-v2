@@ -7,7 +7,7 @@ import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import TemplateRunAnalysis from './TemplateRunAnalysis'
-import { analyzeRun, headlineValue, selectReference, ridden } from '../lib/templateComparison'
+import { analyzeRun, formatHeadline, headlineValue, selectReference, ridden, verdict as computeVerdict } from '../lib/templateComparison'
 import { loadReferencePref, normalizePref, saveReferencePref } from '../lib/templateReferencePrefs'
 import TemplateCreatorModal from './TemplateCreatorModal'
 import Icon from './Icon'
@@ -16,6 +16,7 @@ import { fetchDisciplines } from '../lib/lookups'
 import { buildPbPrefillFromEffort } from '../lib/pbVault'
 import { CoachRunBadge, useRunCoachNames } from './CoachBadge'
 import { canSendRunToPbVault, coachRunnableTemplates, compareOptions, filterRuns, runActions, runTemplateName, runTemplateSlug } from '../lib/coachRuns'
+import { collapsedSummary, isRunOpen, readSectionCollapsed, writeSectionCollapsed } from '../lib/templateRunsCollapse'
 import { EFFORT_RESULT_KEYS, formatRaceTime, formatResultValue, isLowerBetterKey } from '../lib/effortMetrics'
 
 const RUN_COLORS = ['#f59e0b', '#38bdf8', '#d946ef', '#34d399', '#f87171', '#a78bfa']
@@ -102,6 +103,8 @@ export default function TemplateRunsSection({ activityId, activity = null, track
   const [historyBySlug, setHistoryBySlug] = useState({})
   const [hiddenIds, setHiddenIds] = useState(() => new Set())
   const [expandedIds, setExpandedIds] = useState(() => new Set())
+  const [sectionCollapsed, setSectionCollapsed] = useState(false)
+  const [runOpenOverrides, setRunOpenOverrides] = useState({})
   const [tab, setTab] = useState('runs')
   const [compareMetric, setCompareMetric] = useState('')
   const [compareTemplateId, setCompareTemplateId] = useState('')
@@ -121,6 +124,16 @@ export default function TemplateRunsSection({ activityId, activity = null, track
   const sendToPbVault = async (effort) => {
     const disciplines = await fetchDisciplines(supabase)
     setPbPrefill(buildPbPrefillFromEffort(effort, activity, disciplines))
+  }
+
+  useEffect(() => {
+    setSectionCollapsed(readSectionCollapsed(typeof window !== 'undefined' ? window.localStorage : null))
+  }, [])
+
+  const toggleSection = () => {
+    const next = !sectionCollapsed
+    setSectionCollapsed(next)
+    writeSectionCollapsed(typeof window !== 'undefined' ? window.localStorage : null, next)
   }
 
   const loadTemplates = useCallback(async () => {
@@ -361,14 +374,24 @@ export default function TemplateRunsSection({ activityId, activity = null, track
   return (
     <div className="glass-dense bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-          <Icon name="flask" /> Template Runs <span className="text-slate-400">({shownRuns.length})</span>
+        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+          <button
+            type="button"
+            onClick={toggleSection}
+            aria-expanded={!sectionCollapsed}
+            aria-controls="template-runs-body"
+            className="flex items-center gap-2 py-1 -my-1 text-left uppercase font-black tracking-wider"
+          >
+            <span aria-hidden="true" className={`inline-block text-slate-400 transition-transform ${sectionCollapsed ? '' : 'rotate-90'}`}>▸</span>
+            <Icon name="flask" /> Template Runs <span className="text-slate-400">({shownRuns.length})</span>
+          </button>
         </h3>
         <button type="button" onClick={openAdd} className={`${btn} bg-orange-500 hover:bg-orange-600 text-white`}>
           + Add Run
         </button>
       </div>
 
+      <div id="template-runs-body" hidden={sectionCollapsed} className={sectionCollapsed ? '' : 'space-y-4'}>
       <div className="flex gap-2 text-[11px] font-black uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 pb-2">
         {[['runs', 'All runs'], ['compare', 'Compare']].map(([key, label]) => (
           <button
@@ -431,18 +454,38 @@ export default function TemplateRunsSection({ activityId, activity = null, track
               ...summaryEntries.slice(4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key) && (metricKeys.includes(key) || DEFAULT_RUN_KEYS.includes(key) || EFFORT_RESULT_KEYS.includes(key))),
             ].filter(scalar)
             const hasEfforts = Array.isArray(run.efforts) && run.efforts.length > 0
+            const open = isRunOpen(shownRuns, run.id, runOpenOverrides)
+            const bodyId = `template-run-${run.id}`
+            const v = reference && analysis.metric ? computeVerdict(analysis.headline, reference.headline, analysis.metric) : null
+            const [firstKey, firstValue] = entries[0] || []
+            const summary = collapsedSummary({
+              headline: analysis.metric && analysis.headline != null
+                ? formatHeadline(analysis.metric, analysis.headline)
+                : firstKey ? `${firstKey.replace(/_/g, ' ')} ${formatMetric(firstValue, '', firstKey)}` : '',
+              verdictLabel: v ? { better: 'Better', similar: 'Similar', worse: 'Worse' }[v.verdict] : '',
+            })
             return (
               <div key={run.id} className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-3 h-3 rounded-full shrink-0" style={{ background: colorById[run.id] }} />
-                    <b className="text-xs text-slate-900 dark:text-white truncate">
-                      {runTemplateName(run)}
-                    </b>
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setRunOpenOverrides((o) => ({ ...o, [run.id]: !open }))}
+                      aria-expanded={open}
+                      aria-controls={bodyId}
+                      className="flex items-center gap-2 min-w-0 py-1 -my-1 text-left"
+                    >
+                      <span aria-hidden="true" className={`inline-block text-slate-400 transition-transform ${open ? 'rotate-90' : ''}`}>▸</span>
+                      <span className="w-3 h-3 rounded-full shrink-0" style={{ background: colorById[run.id] }} />
+                      <b className="text-xs text-slate-900 dark:text-white truncate">
+                        {runTemplateName(run)}
+                      </b>
+                      {!open && summary && <span className="text-[11px] font-bold text-orange-500 whitespace-nowrap" data-testid="run-summary">{summary}</span>}
+                      <span className="text-[10px] text-slate-400">
+                        run {formatDateTime(run.updated_at)}
+                      </span>
+                    </button>
                     <CoachRunBadge run={run} names={coachNames} />
-                    <span className="text-[10px] text-slate-400">
-                      run {formatDateTime(run.updated_at)}
-                    </span>
                   </div>
                   <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-wider">
                     <label className="flex items-center gap-1 text-slate-500 cursor-pointer">
@@ -466,6 +509,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                   </div>
                 </div>
 
+                <div id={bodyId} hidden={!open} className={open ? 'space-y-3' : ''}>
                 <div className="flex flex-wrap gap-2">
                   {entries.length === 0 && <span className="text-[11px] text-slate-400">No matching efforts found.</span>}
                   {entries.map(([key, value]) => (
@@ -498,6 +542,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                   </button>
                 )}
                 {expanded && hasEfforts && <EffortCards efforts={run.efforts} onSendToPbVault={activity && canSendRunToPbVault(run) && !athleteMode ? sendToPbVault : null} />}
+                </div>
               </div>
             )
           })}
@@ -575,6 +620,8 @@ export default function TemplateRunsSection({ activityId, activity = null, track
           })()}
         </div>
       )}
+
+      </div>
 
       {addOpen && (
         <TemplatePickerModal
