@@ -45,6 +45,7 @@ import {
 } from '../lib/calendarRaces'
 import { fetchFtpHistory } from '../lib/ftpHistory'
 import { fetchProfilesByIds } from '../lib/social'
+import { isShownOnMobile, isEmptyDay } from '../lib/calendarMobileDays'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
 import {
   buildMonthGrid,
@@ -422,13 +423,14 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
         {rows.map((row, ri) => (
           <div key={ri} className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5">
             {row.cells.map((cell) => {
-              const hideOnMobile = cell.events.length === 0 && cell.notes.length === 0 && cell.races.length === 0 && !cell.isToday
+              const hideOnMobile = !isShownOnMobile(cell)
+              const slimOnMobile = isEmptyDay(cell)
               return (
                 <div
                   key={cell.key}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => dropOnDay(e, cell.date)}
-                  className={`rounded-xl border p-1.5 min-h-[3rem] md:min-h-[6.5rem] space-y-1 ${hideOnMobile ? 'hidden md:block' : ''} ${
+                  className={`rounded-xl border p-1.5 ${slimOnMobile ? 'min-h-[1.75rem] py-0.5 opacity-80 md:py-1.5 md:opacity-100' : 'min-h-[3rem]'} md:min-h-[6.5rem] space-y-1 ${hideOnMobile ? 'hidden md:block' : ''} ${
                     cell.isToday
                       ? 'border-emerald-500 bg-emerald-500/5'
                       : 'border-slate-200 dark:border-slate-800'
