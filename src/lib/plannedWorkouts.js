@@ -293,6 +293,7 @@ export function plannedToEvent(workout, today = new Date()) {
     discipline: workout.discipline,
     distanceM: 0,
     durationS: summary?.durationS || 0,
+    durationPartial: !!summary?.partial,
     metric: summary?.load ? { label: 'TL', value: `~TL ${summary.load}` } : null,
     status: plannedStatus(workout, today),
     plannedId: workout.id,

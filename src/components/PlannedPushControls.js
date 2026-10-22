@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import { fetchPushContext, fetchPushRows, pushToIntervals, removeFromIntervals } from '../lib/plannedPushClient'
 import { pushState, PUSH_STATE_LABELS } from '../lib/intervalsWorkout'
+import { plannedStatus } from '../lib/plannedWorkouts'
 
 const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-600 hover:border-emerald-500 disabled:opacity-60'
 
@@ -28,8 +29,9 @@ export default function PlannedPushControls({ workout, onChanged }) {
 
   if (ctx === undefined || ctx === null) return null
   const state = pushState(workout, row)
-  const skipped = workout.status === 'skipped'
-  const completed = !!workout.activity_id
+  const status = plannedStatus(workout)
+  const skipped = status === 'skipped'
+  const completed = status === 'completed'
   const act = async (fn, okMessage) => {
     setBusy(true)
     setError(null)

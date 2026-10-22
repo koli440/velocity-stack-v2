@@ -118,7 +118,10 @@ export async function importActivity({
   }
 
   if (plan.action === 'upgrade') {
-    // The higher-priority copy exists now; drop the lower-priority one it replaces.
+    // The higher-priority copy exists now. Move a planned workout's completion link over first (deleting the
+    // old row would clear it and the workout would show as missed), then drop the lower-priority copy.
+    const { error: relinkErr } = (await supabase.rpc?.('planned_workouts_relink_activity', { p_old: plan.existing.id, p_new: activity.id })) || {}
+    if (relinkErr) console.warn(`Failed to keep planned workout links of ${plan.existing.id}:`, relinkErr.message)
     const { error: delErr } = await supabase.from('activities').delete().eq('id', plan.existing.id)
     if (delErr) console.warn(`Failed to remove replaced activity ${plan.existing.id}:`, delErr.message)
     return { status: 'upgraded', activity, replacedId: plan.existing.id }

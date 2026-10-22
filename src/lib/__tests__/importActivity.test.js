@@ -27,9 +27,13 @@ test('planImport: intervals upgrades strava copy, strava skips intervals/manual'
 })
 
 function fakeSupabase({ existing = [], insertError = null, curveError = null } = {}) {
-  const calls = { inserts: [], deletes: [] }
+  const calls = { inserts: [], deletes: [], rpcs: [] }
   const client = {
     calls,
+    rpc(name, args) {
+      calls.rpcs.push({ name, args })
+      return Promise.resolve({ data: 1, error: null })
+    },
     from(table) {
       return {
         select() {
@@ -80,6 +84,12 @@ test('importActivity upgrades: inserts new then deletes lower-priority copy', as
   assert.equal(r.status, 'upgraded')
   assert.equal(r.replacedId, 'old')
   assert.deepEqual(supabase.calls.deletes, [{ table: 'activities', id: 'old' }])
+})
+
+test('importActivity upgrade moves planned workout links to the replacement before deleting (#284)', async () => {
+  const supabase = fakeSupabase({ existing: [{ id: 'old', source: 'strava', start_time: T, elapsed_time_s: 100 }] })
+  await importActivity({ supabase, userId: 'u1', provider, externalId: '42', profile })
+  assert.deepEqual(supabase.calls.rpcs, [{ name: 'planned_workouts_relink_activity', args: { p_old: 'old', p_new: 'new1' } }])
 })
 
 test('importActivity skips duplicates without inserting', async () => {

@@ -189,6 +189,12 @@ Single workouts planned on a rider's calendar (no recurrence, no multi-week plan
 - **Linking**: the app only *suggests* a match (`suggestMatches`: same day + discipline, one-to-one); a rider or coach confirms or links/unlinks manually
   (`planned_workout_link` / `_unlink`). The activity must belong to the same rider; linking is **same day only** (enforced in the UI via `linkableActivities`, any discipline, matching discipline first; the server has no timezone and only checks ownership/uniqueness); an activity completes at most one workout and a workout has at most one activity (unique index).
   Deleting the activity only clears the link. Linking clears "skipped".
+  **Unlink** (dialog, rider and active coach; `planned_workout_unlink` clears `activity_id`, stamps `updated_by` from `auth.uid()`) returns the workout to its derived state:
+  `planned` (today/future) or `missed` (past, not skipped); `skipped` is untouched. Intervals.icu push rows are not modified by link/unlink; an unlinked workout is simply pushable again.
+  **Status has one source**: `plannedStatus()` (linked = `completed` always; then skipped; past day = `missed`; else `planned`). The calendar chip, the dialog, the push controls and the week summary all use it,
+  and the calendar recomputes it when the day rolls over. **Replaced activities keep their link** (#284): when an import replaces a lower-priority copy of a ride
+  (e.g. Strava -> Intervals.icu), `planned_workouts_relink_activity(old, new)` (`20261226000000_planned_workout_relink_on_replace.sql`) moves the link before the old row is deleted
+  (`ON DELETE SET NULL` used to turn the workout into "missed").
 - **Limits**: title 80, notes 2000, DSL 4000 chars, manifest 20 kB, 20 workouts per rider and day.
 - Pure logic and data helpers: `src/lib/plannedWorkouts.js` (tests in `src/lib/__tests__/plannedWorkouts.test.js`).
 
@@ -200,7 +206,9 @@ struck through, missed red) and can be dragged to another day; `PlannedWorkoutDi
 "Blank workout" or "From template", then offers create, edit of the DSL box, move and duplicate via date fields (non-drag fallback),
 skip/unskip, link/unlink an activity (a same-day, same-discipline suggestion is preselected, the user confirms) and
 delete. When linked, the template run of the same template name on that activity is shown. Week totals count
-completed activities only; planned workouts are counted separately. Not included: running the planned structure's
+completed activities only; planned workouts are counted separately. The week summary also shows **planned time**
+("planned 8:00 h") with a progress bar against the done time: summed from each workout's parsed DSL structure (`workoutSummary().durationS`), skipped workouts excluded, linked and missed ones counted;
+a trailing `+` / "some durations unknown" marks a partial total (workouts without a structure or with distance-based steps). Same on the own calendar, in athlete (coach) context, and in the compact mobile layout. Not included: running the planned structure's
 template on the linked activity (would need the template definition; the snapshot is not a template).
 
 ### Workout preview

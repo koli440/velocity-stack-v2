@@ -50,7 +50,7 @@ test('rows hold per-day events and weekly summaries', () => {
   const weeks = buildMonthGrid(new Date(2026, 9, 1))
   const rows = buildCalendarRows(weeks, ev, { anchor: new Date(2026, 9, 1), today: new Date(2026, 9, 14) })
   const wk = rows.find((r) => r.cells.some((c) => c.key === '2026-10-13'))
-  assert.deepEqual(wk.summary, { count: 2, durationS: 5400, distanceM: 30000, plannedCount: 0, plannedDurationS: 0, races: [] })
+  assert.deepEqual(wk.summary, { count: 2, durationS: 5400, distanceM: 30000, plannedCount: 0, plannedDurationS: 0, plannedPartial: false, races: [] })
   const tue = wk.cells.find((c) => c.key === '2026-10-13')
   assert.deepEqual(tue.events.map((e) => e.id), ['2', '1'])
   assert.equal(wk.cells.find((c) => c.key === '2026-10-14').isToday, true)
@@ -85,5 +85,17 @@ test('summarizeEvents keeps planned workouts out of the activity totals', () => 
     { kind: 'activity', durationS: 3600, distanceM: 30000 },
     { kind: 'planned', durationS: 1800, distanceM: 0 },
   ])
-  assert.deepEqual(s, { count: 1, durationS: 3600, distanceM: 30000, plannedCount: 1, plannedDurationS: 1800 })
+  assert.deepEqual(s, { count: 1, durationS: 3600, distanceM: 30000, plannedCount: 1, plannedDurationS: 1800, plannedPartial: false })
+})
+
+test('summarizeEvents: skipped planned excluded, partial when duration unknown or partial', () => {
+  const s = summarizeEvents([
+    { kind: 'planned', status: 'skipped', durationS: 3600 },
+    { kind: 'planned', status: 'missed', durationS: 1800 },
+    { kind: 'planned', status: 'completed', durationS: 600, durationPartial: true },
+  ])
+  assert.equal(s.plannedCount, 2)
+  assert.equal(s.plannedDurationS, 2400)
+  assert.equal(s.plannedPartial, true)
+  assert.equal(summarizeEvents([{ kind: 'planned', status: 'planned', durationS: 0 }]).plannedPartial, true)
 })
