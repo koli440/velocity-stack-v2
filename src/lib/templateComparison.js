@@ -2,6 +2,8 @@
 // headline metric. Pure helpers shared by the evaluation engine (stored `rep_analysis`), the UI and the tests.
 // Everything degrades gracefully for runs stored before these fields existed: values are derived from `efforts[]`.
 
+import { formatRaceTime } from './effortMetrics.js'
+
 export const REFERENCE_MODES = Object.freeze(['previous', 'pb', 'median5', 'custom'])
 export const REFERENCE_LABELS = Object.freeze({
   previous: 'Previous run',
@@ -399,4 +401,29 @@ export function applyRepAnalysis(result, { manifest } = {}) {
 /** True when a stored run already carries the per-effort analysis (used by the re-run job). */
 export function hasRepAnalysis(run) {
   return !!run?.summary && typeof run.summary.rep_analysis === 'object' && run.summary.rep_analysis !== null
+}
+
+/** Display text of a headline value: m:ss.cc for times, rounded numbers with a unit otherwise. */
+export function formatHeadline(metric, value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '—'
+  if (metric?.id === 'time') return formatRaceTime(value, 2)
+  const v = metric?.id === 'speed' ? Math.round(value * 10) / 10 : Math.round(value)
+  return `${v} ${metric?.unit || ''}`.trim()
+}
+
+/** Signed difference text, e.g. "-0.32 s" / "+12 W". */
+export function formatDiff(metric, diff) {
+  if (typeof diff !== 'number' || !Number.isFinite(diff)) return '—'
+  const sign = diff > 0 ? '+' : diff < 0 ? '−' : '±'
+  const abs = Math.abs(diff)
+  const body = metric?.id === 'time' ? abs.toFixed(2) : metric?.id === 'speed' ? abs.toFixed(1) : String(Math.round(abs))
+  return `${sign}${body} ${metric?.unit || ''}`.trim()
+}
+
+/** Value of a summary key in the reference (the run's value, or the median over several runs). */
+export function referenceSummaryValue(reference, key) {
+  if (!reference?.runs?.length) return null
+  const vals = reference.runs.map((r) => num(r.summary?.[key])).filter((v) => v != null)
+  if (!vals.length) return null
+  return vals.length === 1 ? vals[0] : median(vals)
 }
