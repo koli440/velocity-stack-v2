@@ -74,8 +74,9 @@ function EventChip({ event, race }) {
     <Link
       href={contextualHref(event.href, riderId)}
       data-testid={race ? 'calendar-race-activity' : undefined}
-      title={race ? `${race.name} · ${RACE_PRIORITY_LABELS[race.priority]}` : undefined}
-      className={`block rounded-lg px-1.5 py-1 text-[11px] leading-tight border transition hover:border-emerald-500 ${
+      data-race-tag={event.isRace ? 'true' : undefined}
+      title={[race ? `${race.name} · ${RACE_PRIORITY_LABELS[race.priority]}` : null, event.isRace ? 'Race' : null].filter(Boolean).join(' · ') || undefined}
+      className={`block rounded-lg px-1.5 py-1 text-[11px] leading-tight border transition hover:border-emerald-500 ${event.isRace ? 'border-l-4 border-l-amber-500' : ''} ${
         race
           ? RACE_PRIORITY_STYLES[race.priority]
           : planned
@@ -88,6 +89,11 @@ function EventChip({ event, race }) {
           ? <span aria-hidden className="shrink-0">🏁</span>
           : <Icon name={DISCIPLINE_ICON[event.discipline] || 'bike'} size={12} className="shrink-0 text-emerald-600 dark:text-brand-neon" />}
         <span className="truncate">{race ? `${race.name} (${race.priority})` : event.title}</span>
+        {event.isRace && (
+          <span data-testid="calendar-race-tag" className="ml-auto shrink-0 rounded px-1 text-[9px] font-black uppercase tracking-wide bg-amber-400/25 text-amber-800 dark:text-amber-200 border border-amber-500/60">
+            <span aria-hidden>🏆 </span>Race
+          </span>
+        )}
         {event.pushState && event.pushState !== 'not_pushed' && (
           <span aria-label={PUSH_STATE_LABELS[event.pushState]} data-testid="calendar-planned-push" data-state={event.pushState} className="ml-auto shrink-0">
             {{ pushed: '⇪', out_of_date: '⇪!', error: '⚠' }[event.pushState]}
@@ -207,6 +213,11 @@ function WeekSummary({ summary }) {
       {stat(`${formatDuration(summary.durationS)} h`, 'Time')}
       {stat(formatKm(summary.distanceM), 'Distance')}
       {stat(summary.count, summary.count === 1 ? 'Activity' : 'Activities')}
+      {summary.raceActivityCount > 0 && (
+        <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 text-center md:text-left" data-testid="week-race-activities">
+          🏆 {summary.raceActivityCount} {summary.raceActivityCount === 1 ? 'race' : 'races'} ridden
+        </span>
+      )}
       {summary.plannedCount > 0 && <PlannedTime summary={summary} />}
       {summary.races?.length > 0 && (
         <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-rose-600 dark:text-rose-300 text-center md:text-left" data-testid="week-races">

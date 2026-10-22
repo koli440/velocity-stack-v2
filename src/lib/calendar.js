@@ -21,6 +21,7 @@ export const CALENDAR_ACTIVITY_COLUMNS = [
   'avg_power_w',
   'avg_speed_kmh',
   'training_load',
+  'is_race',
 ].join(', ')
 
 export function dayKey(date) {
@@ -95,6 +96,7 @@ export function activityToEvent(row) {
     distanceM: Number(row.distance_m) || 0,
     durationS: Number(row.moving_time_s) || 0,
     metric,
+    isRace: row.is_race === true,
     href: `/activities/${row.id}`,
   }
 }
@@ -115,7 +117,7 @@ export function groupEventsByDay(events) {
  * Week totals: `count` / `durationS` / `distanceM` cover completed activities only. Planned workouts are summed
  * separately: `plannedCount` / `plannedDurationS` skip skipped workouts (linked and missed ones count, so the gap
  * to the done time stays visible); `plannedPartial` is true when a counted workout has no computable duration
- * (no structure, or distance-based steps that were left out).
+ * (no structure, or distance-based steps that were left out). `raceActivityCount` = completed activities tagged as race.
  */
 export function summarizeEvents(events) {
   return events.reduce(
@@ -128,11 +130,12 @@ export function summarizeEvents(events) {
         return acc
       }
       acc.count += 1
+      if (e.isRace) acc.raceActivityCount += 1
       acc.durationS += e.durationS || 0
       acc.distanceM += e.distanceM || 0
       return acc
     },
-    { count: 0, durationS: 0, distanceM: 0, plannedCount: 0, plannedDurationS: 0, plannedPartial: false }
+    { count: 0, durationS: 0, distanceM: 0, plannedCount: 0, plannedDurationS: 0, plannedPartial: false, raceActivityCount: 0 }
   )
 }
 

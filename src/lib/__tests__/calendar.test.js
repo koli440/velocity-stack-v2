@@ -6,6 +6,7 @@ import {
   shiftMonth,
   monthRange,
   activityToEvent,
+  CALENDAR_ACTIVITY_COLUMNS,
   groupEventsByDay,
   summarizeEvents,
   formatDuration,
@@ -50,7 +51,7 @@ test('rows hold per-day events and weekly summaries', () => {
   const weeks = buildMonthGrid(new Date(2026, 9, 1))
   const rows = buildCalendarRows(weeks, ev, { anchor: new Date(2026, 9, 1), today: new Date(2026, 9, 14) })
   const wk = rows.find((r) => r.cells.some((c) => c.key === '2026-10-13'))
-  assert.deepEqual(wk.summary, { count: 2, durationS: 5400, distanceM: 30000, plannedCount: 0, plannedDurationS: 0, plannedPartial: false, races: [] })
+  assert.deepEqual(wk.summary, { count: 2, durationS: 5400, distanceM: 30000, plannedCount: 0, plannedDurationS: 0, plannedPartial: false, raceActivityCount: 0, races: [] })
   const tue = wk.cells.find((c) => c.key === '2026-10-13')
   assert.deepEqual(tue.events.map((e) => e.id), ['2', '1'])
   assert.equal(wk.cells.find((c) => c.key === '2026-10-14').isToday, true)
@@ -85,7 +86,7 @@ test('summarizeEvents keeps planned workouts out of the activity totals', () => 
     { kind: 'activity', durationS: 3600, distanceM: 30000 },
     { kind: 'planned', durationS: 1800, distanceM: 0 },
   ])
-  assert.deepEqual(s, { count: 1, durationS: 3600, distanceM: 30000, plannedCount: 1, plannedDurationS: 1800, plannedPartial: false })
+  assert.deepEqual(s, { count: 1, durationS: 3600, distanceM: 30000, plannedCount: 1, plannedDurationS: 1800, plannedPartial: false, raceActivityCount: 0 })
 })
 
 test('summarizeEvents: skipped planned excluded, partial when duration unknown or partial', () => {
@@ -98,4 +99,14 @@ test('summarizeEvents: skipped planned excluded, partial when duration unknown o
   assert.equal(s.plannedDurationS, 2400)
   assert.equal(s.plannedPartial, true)
   assert.equal(summarizeEvents([{ kind: 'planned', status: 'planned', durationS: 0 }]).plannedPartial, true)
+})
+
+test('activityToEvent flags race-tagged activities and the week summary counts them', () => {
+  const base = { id: 'a', activity_date: '2026-06-01T10:00:00Z' }
+  assert.equal(activityToEvent({ ...base, is_race: true }).isRace, true)
+  assert.equal(activityToEvent({ ...base, is_race: false }).isRace, false)
+  assert.equal(activityToEvent(base).isRace, false)
+  const s = summarizeEvents([activityToEvent({ ...base, is_race: true }), activityToEvent({ ...base, id: 'b' }), { kind: 'planned', status: 'planned', isRace: true }])
+  assert.equal(s.raceActivityCount, 1)
+  assert.match(CALENDAR_ACTIVITY_COLUMNS, /\bis_race\b/)
 })
