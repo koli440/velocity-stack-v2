@@ -35,6 +35,7 @@ const FEED_COLUMN_LIST = [
   'training_load',
   'raw_file_url',
   'visibility',
+  'is_race',
   'route_preview',
   'badges',
   'power_curve:curves_data->Power',

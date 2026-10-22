@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
 import CalendarNoteDialog from './CalendarNoteDialog'
 import CalendarRaceDialog from './CalendarRaceDialog'
+import RaceBadge from './RaceBadge'
 import PlannedWorkoutDialog, { STATUS_STYLES } from './PlannedWorkoutDialog'
 import { fetchPushRows } from '../lib/plannedPushClient'
 import { pushState, PUSH_STATE_LABELS } from '../lib/intervalsWorkout'
@@ -93,9 +94,7 @@ function EventChip({ event, race, returnTo }) {
           : <Icon name={DISCIPLINE_ICON[event.discipline] || 'bike'} size={12} className="shrink-0 text-emerald-600 dark:text-brand-neon" />}
         <span className="truncate">{race ? `${race.name} (${race.priority})` : event.title}</span>
         {event.isRace && (
-          <span data-testid="calendar-race-tag" className="ml-auto shrink-0 rounded px-1 text-[9px] font-black uppercase tracking-wide bg-amber-400/25 text-amber-800 dark:text-amber-200 border border-amber-500/60">
-            <span aria-hidden>🏆 </span>Race
-          </span>
+          <RaceBadge testId="calendar-race-tag" size="xs" className="ml-auto" />
         )}
         {event.pushState && event.pushState !== 'not_pushed' && (
           <span aria-label={PUSH_STATE_LABELS[event.pushState]} data-testid="calendar-planned-push" data-state={event.pushState} className="ml-auto shrink-0">
