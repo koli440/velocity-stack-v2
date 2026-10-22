@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import GearRecords from '../../components/GearRecords'
 import GearPicker, { useGearState } from '../../components/GearPicker'
 import { CALCULATOR_GEAR_START, parseGear } from '../../lib/gear'
 import { gearInches, speedAtCadence, similarGears } from '../../lib/trackGearing'
@@ -118,6 +119,8 @@ export default function GearsPage() {
           </table>
         )}
       </div>
+
+      <GearRecords client={supabase} userId={userId} chainring={gear.chainring} cog={gear.cog} />
     </div>
   )
 }
