@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { contextualHref, parseCoachPath } from '../lib/coachContext'
 import { withReturnTo } from '../lib/returnTo'
 import Icon from './ActivityIcons'
+import { PLANNED_STATUS_ICONS, PUSH_STATE_ICONS, CALENDAR_ICONS } from '../lib/calendarIcons'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
 import CalendarNoteDialog from './CalendarNoteDialog'
@@ -90,7 +91,7 @@ function EventChip({ event, race, returnTo }) {
     >
       <span className="flex items-center gap-1 font-bold text-slate-900 dark:text-white min-w-0">
         {race
-          ? <span aria-hidden className="shrink-0">🏁</span>
+          ? <Icon name={CALENDAR_ICONS.race} size={12} className="shrink-0 text-rose-500" />
           : <Icon name={DISCIPLINE_ICON[event.discipline] || 'bike'} size={12} className="shrink-0 text-emerald-600 dark:text-brand-neon" />}
         <span className="truncate">{race ? `${race.name} (${race.priority})` : event.title}</span>
         {event.isRace && (
@@ -98,7 +99,7 @@ function EventChip({ event, race, returnTo }) {
         )}
         {event.pushState && event.pushState !== 'not_pushed' && (
           <span aria-label={PUSH_STATE_LABELS[event.pushState]} data-testid="calendar-planned-push" data-state={event.pushState} className="ml-auto shrink-0">
-            {{ pushed: '⇪', out_of_date: '⇪!', error: '⚠' }[event.pushState]}
+            <Icon name={PUSH_STATE_ICONS[event.pushState]} size={12} />
           </span>
         )}
       </span>
@@ -128,7 +129,7 @@ function PlannedChip({ event, onOpen }) {
       className={`block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight border cursor-grab hover:border-emerald-500 transition ${STATUS_STYLES[event.status]}`}
     >
       <span className="flex items-center gap-1 font-bold min-w-0">
-        <span aria-hidden>{{ planned: '🗓', completed: '✓', skipped: '⤼', missed: '✗' }[event.status]}</span>
+        <Icon name={PLANNED_STATUS_ICONS[event.status]} size={12} className="shrink-0" />
         <span className="truncate">{event.title}</span>
       </span>
       <span className="block opacity-80 truncate">
@@ -149,7 +150,7 @@ function NoteChip({ note, onOpen }) {
       className="block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight font-bold border border-amber-400/70 bg-amber-400/15 text-amber-900 dark:text-amber-200 hover:border-amber-500 transition"
     >
       <span className="flex items-center gap-1 min-w-0">
-        <span aria-hidden>📝</span>
+        <Icon name={CALENDAR_ICONS.note} size={12} className="shrink-0" />
         <span className="truncate">{note.title}</span>
       </span>
     </button>
@@ -169,7 +170,7 @@ function RaceChip({ race, onOpen }) {
       className={`block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight font-bold border hover:brightness-110 transition ${RACE_PRIORITY_STYLES[race.priority]}`}
     >
       <span className="flex items-center gap-1 min-w-0">
-        <span aria-hidden>🏁</span>
+        <Icon name={CALENDAR_ICONS.race} size={12} className="shrink-0" />
         <span className="truncate">{race.name}</span>
         <span className="ml-auto shrink-0">{race.priority}</span>
       </span>
@@ -217,13 +218,15 @@ function WeekSummary({ summary }) {
       {stat(summary.count, summary.count === 1 ? 'Activity' : 'Activities')}
       {summary.raceActivityCount > 0 && (
         <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 text-center md:text-left" data-testid="week-race-activities">
-          🏆 {summary.raceActivityCount} {summary.raceActivityCount === 1 ? 'race' : 'races'} ridden
+          <Icon name={CALENDAR_ICONS.raceRidden} size={12} /> {summary.raceActivityCount} {summary.raceActivityCount === 1 ? 'race' : 'races'} ridden
         </span>
       )}
       {summary.plannedCount > 0 && <PlannedTime summary={summary} />}
       {summary.races?.length > 0 && (
         <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-rose-600 dark:text-rose-300 text-center md:text-left" data-testid="week-races">
-          {summary.races.map((r) => `🏁 ${r.name} (${r.priority})`).join(' · ')}
+          {summary.races.map((r, i) => (
+            <span key={r.id ?? i}>{i > 0 && ' · '}<Icon name={CALENDAR_ICONS.race} size={12} /> {r.name} ({r.priority})</span>
+          ))}
         </span>
       )}
       {summary.plannedCount > 0 && (
@@ -505,7 +508,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                       onClick={() => openPlanned(cell.date, null)}
                       className="px-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-sky-600"
                     >
-                      +
+                      <Icon name={CALENDAR_ICONS.plan} size={14} />
                     </button>
                     <button
                       type="button"
@@ -514,7 +517,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                       onClick={() => setDialog({ day: cell.date, note: null })}
                       className="px-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600"
                     >
-                      📝
+                      <Icon name={CALENDAR_ICONS.note} size={14} />
                     </button>
                     <button
                       type="button"
@@ -523,7 +526,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                       onClick={() => setRdialog({ day: cell.date, race: null })}
                       className="px-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-rose-600"
                     >
-                      🏁
+                      <Icon name={CALENDAR_ICONS.race} size={14} />
                     </button>
                     </span>
                   </div>

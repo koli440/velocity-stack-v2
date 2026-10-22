@@ -2,6 +2,7 @@
 // Push / update / remove a planned workout in the rider's Intervals.icu calendar (detail dialog section).
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Icon from './Icon'
 import { supabase } from '../lib/supabase'
 import { fetchPushContext, fetchPushRows, pushToIntervals, removeFromIntervals } from '../lib/plannedPushClient'
 import { pushState, PUSH_STATE_LABELS } from '../lib/intervalsWorkout'
@@ -82,7 +83,7 @@ export default function PlannedPushControls({ workout, onChanged }) {
           </div>
           {message && <p className="text-emerald-600" role="status">{message}</p>}
           {error && <p className="text-rose-500 font-semibold" role="alert">{error}</p>}
-          {[...new Set([...(warnings.length ? warnings : row?.warnings || [])])].map((w) => <p key={w} className="text-amber-600">⚠ {w}</p>)}
+          {[...new Set([...(warnings.length ? warnings : row?.warnings || [])])].map((w) => <p key={w} className="text-amber-600"><Icon name="alert" size="1em" /> {w}</p>)}
           <p className="text-slate-400">
             {ctx.auto_enabled ? 'Automatic sending is on.' : 'Automatic sending is off (Settings → Connections).'} Deleting a pushed workout removes it from Intervals.icu within ~15 minutes.
           </p>
