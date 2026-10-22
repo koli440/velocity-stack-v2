@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Portal from './Portal'
 import { useRouter } from 'next/navigation'
+import useContextHref from './useContextHref'
 import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 import FitUploader from './FitUploader'
 import IntervalsSyncModal from './IntervalsSyncModal'
@@ -18,6 +19,7 @@ const CHOICES = [
 // Top-banner "Add / Sync" flow: asks what to do, then shows the chosen existing flow.
 function AddSessionModalInner({ isOpen, onClose, user, tracks = [] }) {
   const router = useRouter()
+  const contextHref = useContextHref()
   const [flow, setFlow] = useState(null)
   const firstChoice = useRef(null)
 
@@ -38,7 +40,7 @@ function AddSessionModalInner({ isOpen, onClose, user, tracks = [] }) {
   const notifyChanged = () => window.dispatchEvent(new Event(ACTIVITIES_CHANGED_EVENT))
   const afterImport = (newId) => {
     onClose()
-    if (newId) router.push(`/activities/${newId}`)
+    if (newId) router.push(contextHref(`/activities/${newId}`))
     else notifyChanged()
   }
 

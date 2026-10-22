@@ -14,6 +14,8 @@ import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
 import { authorName } from '../lib/social'
 import { PREFETCH_ROOT_MARGIN, canAutoLoad, didLoadFail } from '../lib/infiniteScroll'
 import { useEffect, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
+import { currentReturnTo, withReturnTo } from '../lib/returnTo'
 import { supabase } from '../lib/supabase'
 import { fetchCommentInfo, fetchUnreadCounts, commentCountLabel } from '../lib/activityComments'
 import { rideTypeHasGear } from '../lib/rideType'
@@ -103,6 +105,7 @@ export default function ActivityFeed({
   onLoadMore,
   activityHref = (act) => `/activities/${act.id}`,
 }) {
+  const returnTo = currentReturnTo(usePathname())
   const sentinelRef = useRef(null)
   const latest = useRef({})
   const pending = useRef(null)
@@ -278,7 +281,7 @@ export default function ActivityFeed({
                   <TemplateRunsBadge runs={runsByActivity.get(act.id)} />
                   {commentCounts.get(act.id) > 0 && (
                     <Link
-                      href={`${activityHref(act)}#comments`}
+                      href={withReturnTo(`${activityHref(act)}#comments`, returnTo)}
                       data-testid="comment-count-chip"
                       aria-label={commentCountLabel(commentCounts.get(act.id))}
                       className="relative z-10 shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-orange-500"
@@ -296,7 +299,7 @@ export default function ActivityFeed({
                   )}
                 </div>
                 <Link
-                  href={activityHref(act)}
+                  href={withReturnTo(activityHref(act), returnTo)}
                   className="mt-2 block text-base font-black text-slate-900 dark:text-white group-hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"
                 >
                   {act.title || 'Velodrome Session'}

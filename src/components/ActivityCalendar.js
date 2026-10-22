@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { contextualHref, parseCoachPath } from '../lib/coachContext'
+import { withReturnTo } from '../lib/returnTo'
 import Icon from './ActivityIcons'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
@@ -52,6 +53,8 @@ import {
   buildCalendarRows,
   monthRange,
   shiftMonth,
+  monthParam,
+  parseMonthParam,
   addDays,
   formatDuration,
   formatKm,
@@ -67,12 +70,12 @@ const defaultFetchRaces = (args) => fetchRacesInRange(supabase, args)
 
 const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike' }
 
-function EventChip({ event, race }) {
+function EventChip({ event, race, returnTo }) {
   const { riderId } = parseCoachPath(usePathname())
   const planned = event.kind === 'planned'
   return (
     <Link
-      href={contextualHref(event.href, riderId)}
+      href={withReturnTo(contextualHref(event.href, riderId), returnTo)}
       data-testid={race ? 'calendar-race-activity' : undefined}
       data-race-tag={event.isRace ? 'true' : undefined}
       title={[race ? `${race.name} · ${RACE_PRIORITY_LABELS[race.priority]}` : null, event.isRace ? 'Race' : null].filter(Boolean).join(' · ') || undefined}
@@ -251,7 +254,22 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     supabase.auth.getSession().then(({ data: { session } }) => setSessionUserId(session?.user?.id ?? null))
   }, [])
 
+  const pathname = usePathname()
   const [anchor, setAnchor] = useState(() => startOfDay(new Date()))
+  // The shown month lives in the URL (?month=YYYY-MM) so an activity opened from here can link back to it.
+  useEffect(() => {
+    const m = parseMonthParam(new URLSearchParams(window.location.search).get('month'))
+    if (m) setAnchor(m)
+  }, [])
+  const monthKey = monthParam(anchor)
+  const isCurrentMonth = monthKey === monthParam(new Date())
+  const returnTo = `${pathname}${isCurrentMonth ? '' : `?month=${monthKey}`}`
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (isCurrentMonth) url.searchParams.delete('month')
+    else url.searchParams.set('month', monthKey)
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
+  }, [monthKey, isCurrentMonth])
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -514,7 +532,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                   {cell.races.map((r) => <RaceChip key={r.id} race={r} onOpen={(race) => setRdialog({ day: cell.date, race })} />)}
                   {cell.events.map((e) => (e.kind === 'planned'
                     ? <PlannedChip key={`planned-${e.id}`} event={e} onOpen={(id) => openPlanned(cell.date, id)} />
-                    : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} />))}
+                    : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} returnTo={returnTo} />))}
                 </div>
               )
             })}

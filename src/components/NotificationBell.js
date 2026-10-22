@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { currentReturnTo, withReturnTo } from '../lib/returnTo'
 import { formatDateTime } from '../lib/dateFormat'
 import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
@@ -20,6 +22,7 @@ const POLL_MS = 60000
 
 // Bell with unread badge and dropdown of recent social notifications (issue #49).
 export default function NotificationBell({ userId }) {
+  const returnTo = currentReturnTo(usePathname())
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
   const { unreadNews } = useOnboarding()
@@ -93,7 +96,7 @@ export default function NotificationBell({ userId }) {
               <div>
                 {notificationHref(n) ? (
                   <Link
-                    href={notificationHref(n)}
+                    href={withReturnTo(notificationHref(n), returnTo)}
                     onClick={() => setOpen(false)}
                     className="underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500"
                   >
