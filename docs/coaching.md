@@ -235,3 +235,6 @@ unchanged. See docs/comments.md.
 
 ## Ride type and gears (#279, `20261225000000_ride_type_and_gears.sql`)
 The active coach can see and **edit** the athlete's activity `ride_type`, `gears` and `gear_segments` (and `profiles.default_ride_type` with the other training defaults). Coaches still have no UPDATE policy on `activities`: the only write path is the `set_activity_gear` SECURITY DEFINER RPC, which whitelists those three fields, requires an active coaching relationship (a missing or foreign activity id returns the same "Activity not found"), audits via `record_coach_edit` and notifies the rider. The trigger stamps `gear_set_by` / `gear_set_at` / `gear_set_by_coach` from `auth.uid()`; a later rider edit clears `set_by_coach`. UI: "set by coach" badge on the activity page and a coach panel in athlete context. Pending, ended and blocked coaches and strangers are rejected (see `scripts/db-harness/ride-gear-adversarial.mjs`).
+
+## Fitness / Fatigue / Form (#290)
+Phase 1 (own dashboard card and `/fitness`) queries `activities`, `lactate_threshold_history` and `calendar_races` with an explicit owner filter. Phase 2 (athlete page and coach dashboard column: form, ramp, too-fatigued flag) reuses `src/lib/fitnessForm.js` with the rider's id inside athlete context, only for riders who consented to sharing. See `docs/data-model.md`.

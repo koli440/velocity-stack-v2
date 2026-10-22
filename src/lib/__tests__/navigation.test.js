@@ -8,7 +8,7 @@ const read = (p) => readFileSync(new URL(`../../components/${p}`, import.meta.ur
 test('menu order matches the cleaned-up design', () => {
   assert.deepEqual(
     NAV_ITEMS.map((i) => i.label),
-    ['Rider Telemetry', 'Calendar', 'Personal Best Vault', 'Riders', 'Gear Architect', 'Pursuit Strategist', 'Aero Lab', 'Templates', 'Velodromes', 'About', 'Feedback', 'Settings']
+    ['Rider Telemetry', 'Calendar', 'Fitness', 'Personal Best Vault', 'Riders', 'Gear Architect', 'Pursuit Strategist', 'Aero Lab', 'Templates', 'Velodromes', 'About', 'Feedback', 'Settings']
   )
   assert.equal(NAV_ITEMS[0].href, '/')
 })
