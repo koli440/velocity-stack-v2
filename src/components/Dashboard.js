@@ -19,7 +19,6 @@ import OnboardingChecklist from './OnboardingChecklist'
 
 export default function Dashboard({ initialActivities = [] }) {
   const [user, setUser] = useState(null)
-  const [statsOpen, setStatsOpen] = useState(false)
   const [activities, setActivities] = useState(initialActivities)
   // Dynamic loading of activities (issue #46): with thousands of activities per user,
   // we only ever hold one page in memory at a time and fetch more on demand.
@@ -248,22 +247,14 @@ export default function Dashboard({ initialActivities = [] }) {
       </div>
 
       {/* Right column */}
-      {/* Above the feed on narrow screens (the infinite feed would make it unreachable below), collapsed by default */}
-      <div className="w-full xl:w-80 shrink-0 space-y-3 order-first xl:order-last">
-        <button
-          type="button"
-          onClick={() => setStatsOpen((o) => !o)}
-          aria-expanded={statsOpen}
-          aria-controls="dashboard-side-column"
-          data-testid="side-column-toggle"
-          className="xl:hidden w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-200"
-        >
-          <span>Week, fitness &amp; power</span>
-          <span aria-hidden>{statsOpen ? '▲' : '▼'}</span>
-        </button>
-        <div id="dashboard-side-column" className={`${statsOpen ? 'block' : 'hidden'} xl:block space-y-3`}>
-          <WeekStatsCard userId={user?.id} />
-          <FitnessCard userId={user?.id} />
+      {/* Always above the feed on narrow screens (the infinite feed would make it unreachable below); compact there */}
+      <div
+        data-testid="dashboard-side-column"
+        className="w-full xl:w-80 shrink-0 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-2 xl:gap-0 xl:space-y-3 order-first xl:order-last min-w-0"
+      >
+        <WeekStatsCard userId={user?.id} />
+        <FitnessCard userId={user?.id} />
+        <div className="sm:col-span-2 xl:col-span-1 min-w-0">
           <PowerProfileCard userId={user?.id} />
         </div>
       </div>

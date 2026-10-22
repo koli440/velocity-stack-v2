@@ -48,7 +48,7 @@ export default function WeekStatsCard({ userId }) {
   ]
 
   return (
-    <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-4 space-y-3">
+    <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-3 xl:p-4 space-y-2 xl:space-y-3">
       <h2 className="text-xs font-black uppercase tracking-wide text-slate-900 dark:text-white">
         This week
       </h2>
