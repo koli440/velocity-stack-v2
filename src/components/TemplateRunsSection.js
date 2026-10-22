@@ -162,7 +162,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
     try {
       const authHeader = await getAuthHeader()
       const res = await fetch(`/api/templates/${template.slug}/favorite`, {
-        method: wasFavorite ? 'DELETE' : 'POST',
+        method: wasFavorite ? 'DELETE' : 'PUT',
         headers: authHeader,
       })
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to update favorite')
