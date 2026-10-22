@@ -1,39 +1,40 @@
 'use client'
 
 import { useState } from 'react'
-import { setActivityRace, raceTagOrigin } from '../lib/raceTag'
+import { saveActivityRace, raceTagOrigin } from '../lib/raceTag'
 
-/** Checkbox for the "race" activity tag; saves immediately through the audited RPC (rider or coach). */
-export default function RaceTagToggle({ client, activity, onChanged }) {
+/**
+ * "Race" tag shown at the top of the activity (any ride type). Editable (rider or active coach, saved
+ * immediately through the audited RPC) or, with `readOnly`, a plain badge that only renders for races.
+ */
+export default function RaceTagToggle({ client, activity, onChanged, readOnly = false }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const isRace = Boolean(activity.is_race)
+
+  if (readOnly) {
+    return isRace ? (
+      <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Race</span>
+    ) : null
+  }
 
   const toggle = async (e) => {
     const next = e.target.checked
     setSaving(true)
     setError('')
-    const { isRace, error: err } = await setActivityRace(client, activity.id, next)
-    if (err) {
-      setSaving(false)
-      setError(err.message)
-      return
-    }
-    const { data: fresh } = await client
-      .from('shared_activities')
-      .select('is_race, race_tag_auto, race_set_by, race_set_at, race_set_by_coach')
-      .eq('id', activity.id)
-      .maybeSingle()
+    const { fresh, error: err } = await saveActivityRace(client, activity.id, next)
     setSaving(false)
-    onChanged?.(fresh || { is_race: isRace, race_tag_auto: false })
+    if (err) return setError(err.message)
+    onChanged?.(fresh)
   }
 
   return (
-    <div className="mb-4">
-      <label className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-        <input type="checkbox" checked={Boolean(activity.is_race)} disabled={saving} onChange={toggle} className="accent-emerald-500 w-4 h-4" />
+    <div>
+      <label className={`inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full cursor-pointer ${isRace ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300'}`}>
+        <input type="checkbox" checked={isRace} disabled={saving} onChange={toggle} className="accent-emerald-500 w-3.5 h-3.5" />
         Race
       </label>
-      {activity.is_race && <p className="mt-1 text-[11px] text-slate-400">{raceTagOrigin(activity)}</p>}
+      {isRace && <p className="mt-1 text-[11px] text-slate-400">{raceTagOrigin(activity)}</p>}
       {error && <p className="mt-1 text-xs font-bold text-rose-500">{error}</p>}
     </div>
   )
