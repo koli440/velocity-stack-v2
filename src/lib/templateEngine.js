@@ -5,6 +5,7 @@
 // matching efforts (reusing the universal effort detector) and computes the
 // template-specific benchmark metrics (drop-off %, pacing index, recovery, …).
 
+import { applyRepAnalysis } from './templateComparison.js'
 import { analyzeSessionEfforts } from './effortDetectionEngine.js'
 import { applySummaryMetrics, attachWkg, withDefaultMetrics } from './summaryMetrics.js'
 import { applyEffortMetrics } from './effortMetrics.js'
@@ -416,5 +417,5 @@ export function evaluateTemplate(template, timeSeries = {}, ftpAtActivityW = nul
 
   const withTimeDistance = applyEffortMetrics(result, timeSeries, manifest)
   const withMetrics = applySummaryMetrics(withDefaultMetrics(manifest.summary_metrics), withTimeDistance, timeSeries, ftpAtActivityW, lt, weightKg, zones)
-  return attachWkg(withMetrics, weightKg)
+  return applyRepAnalysis(attachWkg(withMetrics, weightKg), { manifest })
 }
