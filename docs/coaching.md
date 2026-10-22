@@ -129,6 +129,10 @@ Shows the template runs the **coach** made on **this athlete's** activities, gro
   PB Vault sending stays hidden for coach runs. The athlete's own templates are not listed (definitions stay private).
 - Choice: an all-athletes-per-template view is not provided.
 
+### Rep analysis in athlete context (#283)
+The activity page in athlete context (`TemplateRunsSection` with `riderId`) uses the same per-effort view as the rider: reference selector (previous run, personal best, median of the last 5, custom run), headline verdict, rep table with ghost line, fade curve and metrics, flags, HR recovery and trend. History comes from `/api/templates/<slug>/history?rider=<id>` (unchanged RLS: `is_coach_of`). The coach's chosen reference is stored in `template_reference_prefs` with `scope_id = athlete`, readable only by the coach himself (never by the athlete or other coaches); the write policy requires an active relationship, so pending/ended/blocked coaches and strangers cannot save one. Coach runs are only compared with the history the viewer could already read, and never enter the coach's own stats.
+The one-off re-run job (`/admin/template-reruns`) keeps coach runs as coach runs: `by_coach`, `run_by_coach_id`, `coach_key` and the owner are verified unchanged, and it evaluates them without GPS, like `coach_template_run_inputs`.
+
 ## Calendar notes (step 4a, `20261205000000_calendar_notes.sql`)
 
 Short day notes on a rider's calendar - e.g. "can train Tue/Thu evenings", "ill", "injury", "vacation", "work" - so the coach can plan the week.

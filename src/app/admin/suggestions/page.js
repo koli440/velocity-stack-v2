@@ -34,7 +34,10 @@ export default function AdminSuggestionsPage() {
     <div className="max-w-3xl mx-auto p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Suggestions</h1>
-        <Link href="/admin/comment-reports" className="text-xs underline text-slate-500">Reported comments</Link>
+        <div className="flex gap-3">
+          <Link href="/admin/comment-reports" className="text-xs underline text-slate-500">Reported comments</Link>
+          <Link href="/admin/template-reruns" className="text-xs underline text-slate-500">Template re-run</Link>
+        </div>
       </div>
       {state.rows.length === 0 && <p className="text-sm text-slate-500">No suggestions yet.</p>}
       {state.rows.map((s) => (

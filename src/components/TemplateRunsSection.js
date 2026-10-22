@@ -6,7 +6,9 @@ import { selectedSummaryKeys, DEFAULT_RUN_KEYS, LEGACY_STATIC_KEYS } from '../li
 import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { computeBaselines } from '../lib/templateBaselines'
+import TemplateRunAnalysis from './TemplateRunAnalysis'
+import { analyzeRun, headlineValue, selectReference, ridden } from '../lib/templateComparison'
+import { loadReferencePref, normalizePref, saveReferencePref } from '../lib/templateReferencePrefs'
 import TemplateCreatorModal from './TemplateCreatorModal'
 import Icon from './Icon'
 import AddPbModal from './AddPbModal'
@@ -14,7 +16,7 @@ import { fetchDisciplines } from '../lib/lookups'
 import { buildPbPrefillFromEffort } from '../lib/pbVault'
 import { CoachRunBadge, useRunCoachNames } from './CoachBadge'
 import { canSendRunToPbVault, coachRunnableTemplates, compareOptions, filterRuns, runActions, runTemplateName, runTemplateSlug } from '../lib/coachRuns'
-import { EFFORT_RESULT_KEYS, describeDelta, formatRaceTime, formatResultValue, isLowerBetterKey } from '../lib/effortMetrics'
+import { EFFORT_RESULT_KEYS, formatRaceTime, formatResultValue, isLowerBetterKey } from '../lib/effortMetrics'
 
 const RUN_COLORS = ['#f59e0b', '#38bdf8', '#d946ef', '#34d399', '#f87171', '#a78bfa']
 
@@ -23,18 +25,6 @@ function formatMetric(value, suffix = '', key = null) {
   if (key && typeof value === 'number' && (EFFORT_RESULT_KEYS.includes(key) || isLowerBetterKey(key))) return formatResultValue(key, value)
   if (typeof value === 'number') return `${Math.round(value * 10) / 10}${suffix}`
   return `${value}${suffix}`
-}
-
-// Times are lower-is-better, so a faster result is green; other metrics are higher-is-better.
-function DeltaBadge({ current, previous, label, metricKey }) {
-  const delta = describeDelta(metricKey, current, previous)
-  if (!delta) return null
-  return (
-    <div className={`flex justify-between gap-3 text-[10px] font-bold ${delta.good ? 'text-emerald-500' : 'text-red-500'}`}>
-      <span className="text-slate-400 font-semibold">{label}</span>
-      <span>{delta.diff > 0 ? '▲' : '▼'} {delta.text}</span>
-    </div>
-  )
 }
 
 function EffortCards({ efforts, onSendToPbVault }) {
@@ -229,8 +219,24 @@ export default function TemplateRunsSection({ activityId, activity = null, track
       return next
     })
 
-  const baselinesFor = (run) =>
-    computeBaselines(historyBySlug[runTemplateSlug(run)] || [], { activityId, runAt: run.activities?.activity_date || run.updated_at })
+  const [prefsBySlug, setPrefsBySlug] = useState({})
+  const [chartMode, setChartMode] = useState('pct')
+
+  useEffect(() => {
+    if (!currentUserId) return
+    const slugs = [...new Set(runs.map((r) => runTemplateSlug(r)).filter(Boolean))].filter((slug) => !prefsBySlug[slug])
+    slugs.forEach((slug) => {
+      loadReferencePref(supabase, { userId: currentUserId, scopeId: athleteMode ? riderId : null, slug }).then((pref) =>
+        setPrefsBySlug((prev) => (prev[slug] ? prev : { ...prev, [slug]: pref }))
+      )
+    })
+  }, [runs, currentUserId, athleteMode, riderId, prefsBySlug])
+
+  const changePref = (slug, pref) => {
+    const clean = normalizePref(pref)
+    setPrefsBySlug((prev) => ({ ...prev, [slug]: clean }))
+    saveReferencePref(supabase, { userId: currentUserId, scopeId: athleteMode ? riderId : null, slug, pref: clean })
+  }
 
   const runTemplate = async (templateId, { hide = false } = {}) => {
     setRunning(true)
@@ -401,17 +407,29 @@ export default function TemplateRunsSection({ activityId, activity = null, track
           )}
           {shownRuns.map((run) => {
             const actions = runActions(run, { userId: currentUserId, athleteContext: athleteMode })
-            const baselines = baselinesFor(run)
-            const prev = baselines.previous
+            const slug = runTemplateSlug(run)
+            const history = historyBySlug[slug] || []
+            const analysis = analyzeRun(run, { manifest: templates.find((t) => t.id === run.template_id)?.manifest })
+            const pref = prefsBySlug[slug] || normalizePref(null)
+            const current = { id: run.id, activity_id: run.activity_id, date: ridden(run) }
+            const reference = analysis.metric ? selectReference(history, current, { mode: pref.mode, customId: pref.customId, metric: analysis.metric }) : null
+            const candidates = analysis.metric
+              ? history
+                  .filter((h) => h.id !== run.id && h.activity_id !== run.activity_id)
+                  .map((h) => ({ ...h, __headline: headlineValue(h, analysis.metric) }))
+                  .filter((h) => h.__headline != null)
+                  .sort((a, b) => ridden(b) - ridden(a))
+              : []
             const expanded = expandedIds.has(run.id)
             const summaryEntries = Object.entries(run.summary || {})
             const manifest = templates.find((t) => t.id === run.template_id)?.manifest
             // Without a readable definition (a coach's template) every non-legacy result is shown.
             const metricKeys = manifest ? selectedSummaryKeys(manifest.summary_metrics) : summaryEntries.map(([key]) => key)
+            const scalar = ([, value]) => value === null || typeof value !== 'object'
             const entries = [
               ...summaryEntries.slice(0, 4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key)),
               ...summaryEntries.slice(4).filter(([key]) => !LEGACY_STATIC_KEYS.includes(key) && (metricKeys.includes(key) || DEFAULT_RUN_KEYS.includes(key) || EFFORT_RESULT_KEYS.includes(key))),
-            ]
+            ].filter(scalar)
             const hasEfforts = Array.isArray(run.efforts) && run.efforts.length > 0
             return (
               <div key={run.id} className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3">
@@ -456,21 +474,22 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                       <div className="text-xs font-black text-orange-500">
                         {formatMetric(value, '', key)}
                       </div>
-                      <div className="mt-1 space-y-0.5 text-left">
-                        <DeltaBadge current={value} previous={prev?.summary?.[key]} label="Last run" metricKey={key} />
-                        <DeltaBadge current={value} previous={baselines.last90.summary[key]} label="90-day avg" metricKey={key} />
-                        <DeltaBadge current={value} previous={baselines.allTime.summary[key]} label="All-time avg" metricKey={key} />
-                      </div>
                     </div>
                   ))}
                 </div>
 
-                {prev && (
-                  <div className="text-[10px] text-slate-400 space-y-0.5">
-                    <div>Last run: {prev.activities?.title || 'Session'}, {formatDate(prev.activities?.activity_date)}</div>
-                    <div>90-day average: {baselines.last90.count} runs</div>
-                    <div>All-time average: {baselines.allTime.count} runs</div>
-                  </div>
+                {analysis.metric && hasEfforts && (
+                  <TemplateRunAnalysis
+                    run={run}
+                    history={history}
+                    reference={reference}
+                    analysis={analysis}
+                    pref={pref}
+                    onPrefChange={(next) => changePref(slug, next)}
+                    candidates={candidates}
+                    chartMode={chartMode}
+                    onChartModeChange={setChartMode}
+                  />
                 )}
 
                 {hasEfforts && (
