@@ -20,6 +20,7 @@ export const ATHLETE_PAGES = Object.freeze([
   { key: 'overview', label: 'Overview', sub: '' },
   { key: 'activities', label: 'Activities', sub: '/activities' },
   { key: 'calendar', label: 'Calendar', sub: '/calendar' },
+  { key: 'fitness', label: 'Fitness', sub: '/fitness' },
   { key: 'pb-vault', label: 'Personal Bests', sub: '/pb-vault' },
   { key: 'templates', label: 'Templates', sub: '/templates' },
   { key: 'physiology', label: 'Physiology', sub: '/physiology' },
@@ -60,6 +61,7 @@ const ATHLETE_ICONS = Object.freeze({
   overview: 'home',
   activities: 'bike',
   calendar: 'calendar',
+  fitness: 'chart',
   'pb-vault': 'trophy',
   templates: 'clipboard',
   physiology: 'settings',
@@ -202,7 +204,7 @@ export function describeCoachEdit(edit, coachName) {
 // Athlete pages whose data queries only need the rider id (access is enforced by RLS), so they can
 // start loading while the layout still verifies the coaching relationship. Pages that need the
 // athlete profile itself (overview, physiology) wait for it.
-const EAGER_SUBPATHS = Object.freeze(['/activities', '/calendar', '/pb-vault', '/templates'])
+const EAGER_SUBPATHS = Object.freeze(['/activities', '/calendar', '/fitness', '/pb-vault', '/templates'])
 
 export function rendersBeforeAthleteLoaded(subPath) {
   const p = String(subPath || '').replace(/\/+$/, '')
