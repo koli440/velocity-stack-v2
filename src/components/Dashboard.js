@@ -19,6 +19,7 @@ import OnboardingChecklist from './OnboardingChecklist'
 
 export default function Dashboard({ initialActivities = [] }) {
   const [user, setUser] = useState(null)
+  const [statsOpen, setStatsOpen] = useState(false)
   const [activities, setActivities] = useState(initialActivities)
   // Dynamic loading of activities (issue #46): with thousands of activities per user,
   // we only ever hold one page in memory at a time and fetch more on demand.
