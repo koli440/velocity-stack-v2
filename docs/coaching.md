@@ -117,6 +117,11 @@ The active coach (`is_coach_of`) can run templates on an athlete's activity (`/c
 - **No notification.** After the relationship ends runs stay, labelled with the coach's name, or "former coach" if the account is gone.
   Deleting a template keeps coach runs (`template_id` becomes NULL, name snapshot stays).
 
+### Template Runs card on the activity page (collapsing)
+The card and each run inside it are collapsible (UI only, no DB). The card's collapsed state is kept in `localStorage`
+(`vs.templateRuns.collapsed`, per browser); runs default to: one run open, several runs → only the most recent open, the
+rest show a one-line summary (result · verdict). Same behaviour in own and coach/athlete context. Logic: `src/lib/templateRunsCollapse.js`.
+
 ### Templates section in athlete context (`/coach/<id>/templates`)
 Shows the template runs the **coach** made on **this athlete's** activities, grouped by template (own + system, with a
 "yours" / "system" / "template removed" label), with usage stats and a run list titled "your runs on <athlete>".
