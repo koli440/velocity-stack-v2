@@ -74,7 +74,7 @@ export default function PowerProfileCard({ userId }) {
 
   return (
     <section
-      className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-4"
+      className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-3 xl:p-4"
       aria-labelledby="power-profile-title"
     >
       <div className="flex items-center justify-between gap-2 mb-2">
@@ -83,7 +83,7 @@ export default function PowerProfileCard({ userId }) {
       </div>
 
       {loading ? (
-        <div role="status" className="h-56 rounded-xl bg-slate-100 dark:bg-white/5 animate-pulse" aria-label="Loading power profile" />
+        <div role="status" className="h-32 xl:h-56 rounded-xl bg-slate-100 dark:bg-white/5 animate-pulse" aria-label="Loading power profile" />
       ) : !hasData ? (
         <p className="text-xs text-slate-500 dark:text-slate-400 py-8 text-center">
           {perKg && !weightKg && (hasProfileData(mapCurvesToProfile(allTime)) || hasProfileData(mapCurvesToProfile(recent)))
@@ -93,7 +93,7 @@ export default function PowerProfileCard({ userId }) {
       ) : (
         <>
           <div
-            className="h-72 -mx-2"
+            className="h-44 sm:h-60 xl:h-72 -mx-2"
             role="img"
             aria-label={`Power profile radar chart in ${unitLabel} across 15 seconds to 1 hour, last 90 days versus all-time. A table with the values follows.`}
           >

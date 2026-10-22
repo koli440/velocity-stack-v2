@@ -47,7 +47,7 @@ export function Metric({ id, label, value, color }) {
           {label}
         </span>
       </dt>
-      <dd className="text-lg font-black" style={{ color }}>
+      <dd className="text-base sm:text-lg font-black" style={{ color }}>
         {value > 0 && id === 'form' ? '+' : ''}
         {value}
       </dd>
@@ -61,7 +61,7 @@ export default function FitnessCard({ userId }) {
   const summary = fitnessSummary(daily, today, firstDay)
 
   return (
-    <section aria-labelledby="fitness-card-title" className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-4 space-y-3">
+    <section aria-labelledby="fitness-card-title" className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-3 xl:p-4 space-y-2 xl:space-y-3">
       <div className="flex items-center justify-between">
         <h2 id="fitness-card-title" className="text-xs font-black uppercase tracking-wide text-slate-900 dark:text-white">
           Fitness &amp; form
@@ -86,12 +86,14 @@ export default function FitnessCard({ userId }) {
             <Metric id="form" label="Form" value={summary.form} color={FITNESS_COLORS.form} />
           </dl>
           <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{summary.status.label}</p>
-          <FitnessChart
-            compact
-            series={series}
-            label={`Fitness ${summary.fitness}, fatigue ${summary.fatigue}, form ${summary.form} over the last 90 days`}
-          />
-          <FitnessNotes summary={summary} skipped={skipped} />
+          <div className="hidden sm:block space-y-2">
+            <FitnessChart
+              compact
+              series={series}
+              label={`Fitness ${summary.fitness}, fatigue ${summary.fatigue}, form ${summary.form} over the last 90 days`}
+            />
+            <FitnessNotes summary={summary} skipped={skipped} />
+          </div>
         </>
       )}
     </section>
