@@ -134,6 +134,18 @@ Shows the template runs the **coach** made on **this athlete's** activities, gro
   PB Vault sending stays hidden for coach runs. The athlete's own templates are not listed (definitions stay private).
 - Choice: an all-athletes-per-template view is not provided.
 
+### Run a template on many activities (#293)
+`POST /api/templates/run-batch { templateId, activityIds (<=10), rider? }` (UI: `TemplateBatchRunner`, "Run on activities…" on the Templates
+page and, for a coach, a template picker on `/coach/<id>/templates`). No migration: it reuses the existing paths.
+- The user searches activities **by name**, adds up to **50** to an "activities to analyse" list; the client sends them in chunks of 5, the server
+  has a 40 s budget per request (unprocessed ids come back `deferred` and are resent) so request limits are respected.
+- Own account: activities and existing runs are queried with an explicit `user_id` filter; runs are upserted on `(activity_id, template_id, coach_key)`.
+- Coach (`rider` = athlete): inputs only via `coach_template_run_inputs` (no GPS, `is_coach_of`), writes only via `coach_save_template_run`
+  (own/system templates, stamped `by_coach`/`run_by_coach_id`); activity search reads the masked `shared_activities` view. Activities not belonging to `rider` are skipped.
+- An existing run of the same template (for the coach: his own) is **re-run**: result replaced in place, same row/stamp, no duplicate.
+  If detection finds no efforts, nothing is written and an existing run is kept (reported as "no matching efforts").
+- Result per activity: done (re-run flagged) / no matching efforts / skipped (not found, no time series) / failed (reason).
+
 ### Rep analysis in athlete context (#283)
 The activity page in athlete context (`TemplateRunsSection` with `riderId`) uses the same per-effort view as the rider: reference selector (previous run, personal best, median of the last 5, custom run), headline verdict, rep table with ghost line, fade curve and metrics, flags, HR recovery and trend. History comes from `/api/templates/<slug>/history?rider=<id>` (unchanged RLS: `is_coach_of`). The coach's chosen reference is stored in `template_reference_prefs` with `scope_id = athlete`, readable only by the coach himself (never by the athlete or other coaches); the write policy requires an active relationship, so pending/ended/blocked coaches and strangers cannot save one. Coach runs are only compared with the history the viewer could already read, and never enter the coach's own stats.
 The one-off re-run job (`/admin/template-reruns`) keeps coach runs as coach runs: `by_coach`, `run_by_coach_id`, `coach_key` and the owner are verified unchanged, and it evaluates them without GPS, like `coach_template_run_inputs`.

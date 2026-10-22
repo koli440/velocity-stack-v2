@@ -599,6 +599,7 @@ Every run stores `rep` numbers and `pct_of_best` on its work efforts and a `summ
 ## Coach runs
 A coach may run his own (or a system) template on an athlete's activity. The athlete sees the result and the template name only,
 never the DSL/manifest. See docs/coaching.md.
+A template can also be run on up to 50 activities at once (re-running existing runs); see "Run a template on many activities" in docs/coaching.md.
 
 ## Planned workouts
 A planned workout (see coaching.md) stores a **snapshot** of DSL text (typed or pre-filled from a template; validated client-side with `parseIntervalDsl`, size/shape-checked server-side) and its compiled manifest; the DSL itself is unchanged (no new syntax).

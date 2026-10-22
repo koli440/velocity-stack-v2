@@ -5,8 +5,9 @@ import { supabase } from '../../../../lib/supabase'
 import { parseJsonResponse } from '../../../../lib/httpJson'
 import { useAthlete } from '../../../../components/AthleteContext'
 import TemplateRunsModal from '../../../../components/TemplateRunsModal'
+import TemplateBatchRunner from '../../../../components/TemplateBatchRunner'
 import { metricLabel, orderMetricKeys, formatStatValue } from '../../../../lib/templateStats'
-import { athleteTemplateGroups } from '../../../../lib/coachRuns'
+import { athleteTemplateGroups, coachRunnableTemplates } from '../../../../lib/coachRuns'
 
 // Coach in athlete context: the template runs THE COACH made on THIS athlete's activities, grouped by
 // template (own + system). Read through /api/templates/stats?rider=, which only returns runs stamped
@@ -17,6 +18,9 @@ export default function AthleteTemplatesPage() {
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
   const [runsFor, setRunsFor] = useState(null)
+  const [runnable, setRunnable] = useState([])
+  const [pick, setPick] = useState('')
+  const [batchFor, setBatchFor] = useState(null)
   const athleteName = athlete?.display_name || 'this athlete'
 
   const load = useCallback(async () => {
@@ -31,6 +35,10 @@ export default function AthleteTemplatesPage() {
       setState({
         groups: athleteTemplateGroups(stats.stats, stats.names, stats.templates || [], session?.user?.id),
       })
+      // Own + system templates only: the coach cannot run the athlete's or other people's templates.
+      const tplRes = await fetch('/api/templates', { headers: authHeader, cache: 'no-store' })
+      const tpl = await parseJsonResponse(tplRes)
+      if (tplRes.ok && !tpl.error) setRunnable(coachRunnableTemplates(tpl.templates, session?.user?.id))
     } catch (err) {
       setError(err.message)
       setState({ groups: [] })
@@ -61,6 +69,20 @@ export default function AthleteTemplatesPage() {
           Template runs you made on {athleteName}&apos;s activities. Only your own runs are listed; they are not part of your own template statistics.
         </p>
       </div>
+      {runnable.length > 0 && (
+        <div className="flex flex-wrap items-end gap-2" data-testid="athlete-batch-run">
+          <div className="flex-1 min-w-[12rem]">
+            <label htmlFor="batch-template" className="text-xs font-bold text-slate-500">Run a template on several activities</label>
+            <select id="batch-template" value={pick} onChange={(e) => setPick(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+              <option value="">Choose a template…</option>
+              {runnable.map((t) => <option key={t.id} value={t.id}>{t.name}{t.user_id ? '' : ' (system)'}</option>)}
+            </select>
+          </div>
+          <button onClick={() => setBatchFor(runnable.find((t) => t.id === pick) || null)} disabled={!pick} aria-haspopup="dialog" className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider disabled:opacity-40">
+            Run on activities…
+          </button>
+        </div>
+      )}
       {error && (
         <div className="text-xs font-bold text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex justify-between gap-3">
           <span>{error}</span>
@@ -103,6 +125,7 @@ export default function AthleteTemplatesPage() {
           )
         })}
       </div>
+      {batchFor && <TemplateBatchRunner template={batchFor} rider={riderId} athleteName={athleteName} onClose={() => setBatchFor(null)} onDone={load} />}
       {runsFor && (
         <TemplateRunsModal
           template={runsFor}
