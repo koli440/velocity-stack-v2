@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Icon from './Icon'
 
 // Shared list of checklist rows (dashboard card and last tour page). Ticks come from real data.
 export default function ChecklistItems({ checklist, onNavigate }) {
@@ -14,7 +15,7 @@ export default function ChecklistItems({ checklist, onNavigate }) {
               item.done ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-400 dark:border-slate-600'
             }`}
           >
-            {item.done ? '✓' : ''}
+            {item.done ? <Icon name="check" size={10} /> : null}
           </span>
           <span className="min-w-0">
             {item.done ? (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Icon from './Icon'
 import Portal from './Portal'
 import { selectedSummaryKeys } from '../lib/summaryMetrics'
 import { groupByCategory, isSystemTemplate, searchTemplates, templatePermissions } from '../lib/templateMenu'
@@ -42,7 +43,7 @@ function Row({ t, userId, selected, checked, onToggleChecked, ran, starred, canF
           onClick={(e) => { e.stopPropagation(); onToggleStar(t) }}
           className={`text-sm leading-none ${starred ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600 hover:text-amber-400'}`}
         >
-          {starred ? '★' : '☆'}
+          <Icon name="star" size="1em" className={starred ? 'fill-current' : ''} />
         </button>
       )}
       <div className="min-w-0 flex-1">
