@@ -129,3 +129,17 @@ test('coach run list keeps every run although the raw activity is unreadable (re
   assert.deepEqual(pageRunRows(enriched, { sort: 'avg_power', dir: 'asc', limit: 1, offset: 1 }).rows.map((r) => r.id), ['b'])
   assert.equal(pageRunRows(rows, {}).total, 2)
 })
+
+import { pickerTemplates } from '../coachRuns.js'
+
+test('pickerTemplates: coach in athlete context gets own + system only; everyone needs a DSL', () => {
+  const t = [
+    { id: 's', user_id: null, dsl_source: 'x' },
+    { id: 'c', user_id: 'coach', dsl_source: 'x' },
+    { id: 'o', user_id: 'other', dsl_source: 'x' },
+    { id: 'n', user_id: 'coach', dsl_source: null },
+  ]
+  assert.deepEqual(pickerTemplates(t, 'coach', { athleteContext: true }).map((x) => x.id), ['s', 'c'])
+  assert.deepEqual(pickerTemplates(t, 'coach').map((x) => x.id), ['s', 'c', 'o'])
+  assert.deepEqual(pickerTemplates(null, 'coach'), [])
+})
