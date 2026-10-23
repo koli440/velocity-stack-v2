@@ -40,3 +40,27 @@ test('sliceRange keeps neighbours at edges', () => {
   assert.equal(sliceRange(data, null), data)
   assert.deepEqual(sliceRange(data, [100, 200]), [])
 })
+
+import { clampRange, zoomBy, panBy } from '../chartZoom.js'
+
+test('clampRange keeps width and stays inside domain', () => {
+  assert.deepEqual(clampRange([-50, 50], [0, 1000]), [0, 100])
+  assert.deepEqual(clampRange([950, 1050], [0, 1000]), [900, 1000])
+  assert.deepEqual(clampRange([-5, 2000], [0, 1000]), [0, 1000])
+})
+
+test('zoomBy is centre-anchored, bounded, and resets at full width', () => {
+  assert.deepEqual(zoomBy(null, [0, 1000], 2), [250, 750])
+  assert.deepEqual(zoomBy([250, 750], [0, 1000], 2), [375, 625])
+  assert.equal(zoomBy([250, 750], [0, 1000], 0.5), null)
+  assert.deepEqual(zoomBy([0, 100], [0, 1000], 0.5), [0, 200])
+  const tiny = zoomBy([400, 600], [0, 1000], 1e9)
+  assert.ok(Math.abs(tiny[1] - tiny[0] - 10) < 1e-9)
+})
+
+test('panBy shifts by a fraction and clamps; no-op when unzoomed', () => {
+  assert.equal(panBy(null, [0, 1000], 0.5), null)
+  assert.deepEqual(panBy([100, 200], [0, 1000], 0.5), [150, 250])
+  assert.deepEqual(panBy([100, 200], [0, 1000], -2), [0, 100])
+  assert.deepEqual(panBy([850, 950], [0, 1000], 1), [900, 1000])
+})
