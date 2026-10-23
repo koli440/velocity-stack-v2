@@ -8,7 +8,7 @@
 
 import { parseGear, gearLabel } from './gear.js'
 import { gearDevelopmentM } from './trackGearing.js'
-import { rideTypeHasGear } from './rideType.js'
+import { rideTypeHasGear, activityHasGear } from './rideType.js'
 
 export const MAX_GEARS = 8
 export const MAX_SEGMENTS = 64
@@ -249,8 +249,7 @@ export function summarizeSegments(totalS, gears, segments, series = {}) {
  * @returns {{ chainring:number, cog:number }|null}
  */
 export function gearForRange(activity, startS, endS) {
-  // An explicit ride type without gear (road) hides its stored gear; an unset type keeps legacy gear.
-  if (activity?.ride_type && !rideTypeHasGear(activity.ride_type)) return null
+  if (!activityHasGear(activity)) return null
   const gears = resolveGears(activity)
   if (!gears.length) return null
   if (!(endS > startS)) return pick(gears[0])
