@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import AuthBackground from '../../components/AuthBackground'
+import GoogleSignInButton from '../../components/GoogleSignInButton'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -89,6 +90,14 @@ export default function RegisterPage() {
             {errorMsg}
           </div>
         )}
+
+        <GoogleSignInButton onError={setErrorMsg} disabled={loading} />
+
+        <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-white/60">
+          <span className="h-px flex-1 bg-white/20" />
+          or register with email
+          <span className="h-px flex-1 bg-white/20" />
+        </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
