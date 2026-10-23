@@ -239,13 +239,17 @@ export default function PlannedWorkoutDialog({
             {linked ? (
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate">
+                  {workout.link_source === 'auto' && <span className="font-semibold text-emerald-600 dark:text-emerald-400" data-testid="planned-link-auto">Linked automatically · </span>}
                   {linked.title} · {[linked.distanceM ? formatKm(linked.distanceM) : null, linked.durationS ? formatDuration(linked.durationS) : null].filter(Boolean).join(' · ')}
                 </span>
-                <button type="button" className={btn} disabled={busy} onClick={() => run_(actions.unlink)}>Unlink</button>
+                <span className="flex gap-1 shrink-0">
+                  {workout.link_source === 'auto' && <button type="button" className={btn} disabled={busy} onClick={() => run_(actions.unlink)}>Change</button>}
+                  <button type="button" className={btn} disabled={busy} onClick={() => run_(actions.unlink)}>Unlink</button>
+                </span>
               </div>
             ) : workout.activity_id ? (
               <div className="flex items-center justify-between gap-2">
-                <span>Linked to an activity outside this month.</span>
+                <span>{workout.link_source === 'auto' ? 'Linked automatically to an activity outside this month.' : 'Linked to an activity outside this month.'}</span>
                 <button type="button" className={btn} disabled={busy} onClick={() => run_(actions.unlink)}>Unlink</button>
               </div>
             ) : (

@@ -30,6 +30,7 @@ import ActivityPhotoGallery from '../../../components/ActivityPhotoGallery'
 import Icon from '../../../components/Icon'
 import RideGearEditor from '../../../components/RideGearEditor'
 import RaceTagToggle from '../../../components/RaceTagToggle'
+import ActivityPlannedLink from '../../../components/ActivityPlannedLink'
 import CoachBadge, { useCoachNames } from '../../../components/CoachBadge'
 import { gearLabel } from '../../../lib/gear'
 import { effectiveRideType, rideTypeHasGear, rideTypeLabel } from '../../../lib/rideType'
@@ -383,6 +384,7 @@ function ActivityDetail() {
               readOnly={sharedView && !(coachRiderId && coachRiderId === activity?.user_id)}
               onChanged={(fresh) => setActivity((prev) => ({ ...prev, ...fresh }))}
             />
+            <ActivityPlannedLink client={supabase} activity={activity} />
             {activity.tracks?.name && (
               <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
                 {activity.tracks.name}

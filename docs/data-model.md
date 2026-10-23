@@ -241,6 +241,7 @@ created_by / updated_by -> profiles ON DELETE SET NULL, set_by_coach, created_at
 - `planned_workout_pushes(workout_id PK (no FK: tombstones outlive the workout), rider_id -> profiles ON DELETE CASCADE, intervals_event_id, pushed_hash,
   pushed_at, pushed_date, push_status pending|pushed|error|pending_delete, attempted_hash, last_error, last_attempt_at, claimed_until, warnings JSONB)`.
   RLS: select for the rider / active coach (never `pending_delete`); no client writes (service_role only).
+- `link_source` (`auto|manual|NULL`) and `auto_link_suppressed` (set by any unlink) are maintained by `planned_workouts_stamp`; `planned_workout_auto_link` (`20261231000000`) links new activities, see docs/coaching.md.
 - Trigger `planned_workouts_push_tombstone` (AFTER DELETE): a pushed workout leaves a `pending_delete` row, a never-pushed one leaves nothing.
 - `connections` gains non-secret `push_planned_workouts` (default FALSE), `planned_push_attempt_at`, `planned_push_at`, `planned_push_error`
   (SELECT granted to authenticated; written by `set_planned_push_enabled(bool)` / the service role). Trigger `connections_reset_planned_push`

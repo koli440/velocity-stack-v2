@@ -17,3 +17,5 @@ Template reference prefs and the template re-run job (issue #283):
 `MIG=<repo>/supabase/migrations/20261228010000_template_rerun_job.sql node harness.mjs <repo>/supabase/migrations ./template-rerun-adversarial.mjs`
 
 Race tag (issue #294): `MIG=<repo>/supabase/migrations/20261230000000_activity_race_tag.sql node harness.mjs <repo>/supabase/migrations ./race-tag-adversarial.mjs`
+
+Planned workout auto-link: `MIG=<repo>/supabase/migrations/20261231000000_planned_workout_auto_link.sql node harness.mjs <repo>/supabase/migrations ./planned-auto-link-adversarial.mjs`

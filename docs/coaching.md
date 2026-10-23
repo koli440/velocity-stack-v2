@@ -213,6 +213,15 @@ Single workouts planned on a rider's calendar (no recurrence, no multi-week plan
   and the calendar recomputes it when the day rolls over. **Replaced activities keep their link** (#284): when an import replaces a lower-priority copy of a ride
   (e.g. Strava -> Intervals.icu), `planned_workouts_relink_activity(old, new)` (`20261226000000_planned_workout_relink_on_replace.sql`) moves the link before the old row is deleted
   (`ON DELETE SET NULL` used to turn the workout into "missed").
+- **Auto-linking** (`20261231000000_planned_workout_auto_link.sql`): a NEW activity (manual upload, bulk import, Strava / Intervals.icu import and background sync) is linked
+  automatically to the rider's own same-day planned workout (written by rider or coach; the link is not a coach edit: `updated_by` / `updated_at` stay, no notification).
+  The same-day rule uses the activity's own LOCAL day (browser time for uploads, `start_date_local` from the providers; no UTC): the caller passes it to
+  `planned_workout_auto_link(workout, activity, local_date)` (rider or service role only; a coach cannot call it), which only checks it is within one day of the UTC date and
+  that the activity is recent (<= 15 days old: no history rewrite, **no backfill of existing activities**). `pickAutoLinkCandidate` (pure, tested) chooses: one open candidate (unlinked, not skipped,
+  not suppressed, not gym) -> link; several -> same discipline required, then closest planned duration (<= 25 % off and clearly better than the runner-up; exact tie -> earliest created), otherwise
+  nothing is linked and the suggestion stays. Never overrides a link or steals an already linked activity (row lock + unique index); idempotent. `link_source` = `auto | manual` (NULL = old manual link)
+  is shown as "Linked automatically" with **Change** / **Unlink** in the dialog and on the activity page (`ActivityPlannedLink`). Any unlink sets `auto_link_suppressed` on the workout (trigger, so every path),
+  so neither a new activity of that day nor a re-sync / re-import ever auto-links it again; a manual link sets `link_source = 'manual'`. Replacing an activity (relink on replace) keeps source and stamps.
 - **Limits**: title 80, notes 2000, DSL 4000 chars, manifest 20 kB, 20 workouts per rider and day.
 - Pure logic and data helpers: `src/lib/plannedWorkouts.js` (tests in `src/lib/__tests__/plannedWorkouts.test.js`).
 
