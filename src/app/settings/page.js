@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
+import { signInMethods } from '../../lib/oauthProfile'
 import VelodromePicker from '../../components/VelodromePicker'
 import { fetchTracks } from '../../lib/lookups'
 import PrivacyZonePanel from '../../components/PrivacyZonePanel'
@@ -259,6 +260,17 @@ export default function SettingsPage() {
             />
           </div>
 
+        </section>
+        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-2">
+          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Sign-in methods</h2>
+          <p className="text-[11px] text-slate-600 dark:text-slate-300">
+            {signInMethods(user).map((m) => (m === 'google' ? 'Google' : m === 'email' ? 'Email and password' : m)).join(', ') || 'Email and password'}
+          </p>
+          {signInMethods(user).length > 0 && !signInMethods(user).includes('email') && (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              You signed up with Google, so there is no password to change. To also sign in with a password, use "Forgot password?" on the login page with the same email address.
+            </p>
+          )}
         </section>
         <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
           <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Preferences</h2>

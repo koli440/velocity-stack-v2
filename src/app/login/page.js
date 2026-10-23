@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import LoginFeaturesModal from '../../components/LoginFeaturesModal'
 import Icon from '../../components/Icon'
 import AuthBackground from '../../components/AuthBackground'
+import GoogleSignInButton from '../../components/GoogleSignInButton'
+import { nextOrDefault, oauthErrorMessage } from '../../lib/authRedirect'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -15,6 +17,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
   const [showInfo, setShowInfo] = useState(false)
+  const [next, setNext] = useState('/')
+
+  // Returning from a failed/cancelled Google sign-in: /login?error=<code>&next=<path>
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setNext(nextOrDefault(params.get('next')))
+    const code = params.get('error')
+    if (code) {
+      setErrorMsg(oauthErrorMessage(code === 'missing_code' ? 'missing_code' : code))
+      window.history.replaceState(null, '', '/login')
+    }
+  }, [])
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -30,7 +44,7 @@ export default function LoginPage() {
       setErrorMsg(error.message)
       setLoading(false)
     } else if (data?.user) {
-      router.push('/')
+      router.push(next)
       router.refresh()
     }
   }
@@ -57,6 +71,14 @@ export default function LoginPage() {
             {errorMsg}
           </div>
         )}
+
+        <GoogleSignInButton next={next} onError={setErrorMsg} disabled={loading} />
+
+        <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-white/60">
+          <span className="h-px flex-1 bg-white/20" />
+          or
+          <span className="h-px flex-1 bg-white/20" />
+        </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
