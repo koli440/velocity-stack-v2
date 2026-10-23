@@ -166,6 +166,13 @@ export default function RegisterPage() {
         </>
         )}
 
+        <p className="text-center text-[11px] text-white/70">
+          By continuing you agree to the{' '}
+          <Link href="/terms" className="font-bold text-emerald-300 hover:underline">Terms of Service</Link>
+          {' '}and the{' '}
+          <Link href="/privacy" className="font-bold text-emerald-300 hover:underline">Privacy Policy</Link>.
+        </p>
+
         <div className="text-center pt-2 border-t border-white/20">
           <p className="text-xs text-white/80">
             Already registered?{' '}

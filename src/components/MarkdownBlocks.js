@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { parseMarkdown } from '../lib/markdownLite'
 
-function Inline({ nodes, onNavigate }) {
+export function Inline({ nodes, onNavigate }) {
   return nodes.map((n, i) => {
     if (n.type === 'strong') return <strong key={i}>{n.text}</strong>
     if (n.type === 'code') {

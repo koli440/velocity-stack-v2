@@ -226,6 +226,11 @@ export default function AboutPage() {
         </p>
         <SupportButton className="mt-3" />
       </div>
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        <Link href="/terms" className={link}>Terms of Service</Link>
+        {' · '}
+        <Link href="/privacy" className={link}>Privacy Policy</Link>
+      </p>
     </section>
   )
 }

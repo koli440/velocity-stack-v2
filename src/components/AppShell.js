@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { supabase } from '../lib/supabase'
@@ -12,6 +13,7 @@ import AppBackground from './AppBackground'
 import OnboardingProvider from './OnboardingProvider'
 import { PROFILE_UPDATED_EVENT } from '../lib/navigation'
 import { parseCoachPath } from '../lib/coachContext'
+import { isLegalPath } from '../lib/legal'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
 
 export default function AppShell({ children }) {
@@ -30,6 +32,8 @@ export default function AppShell({ children }) {
   const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname)
   // Public tools that match v1 behavior: usable without an account (Gear Architect, Velodromes map)
   const isPublicPage = pathname.startsWith('/gears')
+  // Legal pages are always public and render without waiting for the session (crawlers, Google's reviewers).
+  const isLegalPage = isLegalPath(pathname)
 
   useEffect(() => {
     setGlassEnabled(readGlassPref())
@@ -73,7 +77,7 @@ export default function AppShell({ children }) {
       const currentUser = session?.user ?? null
       setUser(currentUser)
 
-      if (!currentUser && !isAuthPage && !isPublicPage) {
+      if (!currentUser && !isAuthPage && !isPublicPage && !isLegalPage) {
         router.push('/login')
       } else if (currentUser) {
         fetchProfile(currentUser.id)
@@ -90,7 +94,7 @@ export default function AppShell({ children }) {
       }
       const currentUser = session?.user ?? null
       setUser(currentUser)
-      if (!currentUser && !isAuthPage && !isPublicPage) {
+      if (!currentUser && !isAuthPage && !isPublicPage && !isLegalPage) {
         router.push('/login')
       } else if (currentUser) {
         fetchProfile(currentUser.id)
@@ -98,7 +102,7 @@ export default function AppShell({ children }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [router, pathname, isAuthPage, isPublicPage, setTheme])
+  }, [router, pathname, isAuthPage, isPublicPage, isLegalPage, setTheme])
 
   // The settings page announces saves so the banner/theme pick up the new profile.
   useEffect(() => {
@@ -121,6 +125,25 @@ export default function AppShell({ children }) {
   // Show Login/Register pages in a clean full window
   if (isAuthPage) {
     return <main className="min-h-screen">{children}</main>
+  }
+
+  if (isLegalPage) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100">
+        <header className="border-b border-slate-200 dark:border-surface-darkBorder bg-white/60 dark:bg-surface-darkCard/40 px-4 sm:px-6 py-3">
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+            <Link href="/" className="font-extrabold text-slate-800 dark:text-slate-200">
+              Velocity<span className="text-emerald-500 dark:text-brand-neon">Stack</span>
+            </Link>
+            <Link href={user ? '/' : '/login'} className="text-xs font-bold text-emerald-600 dark:text-brand-neon hover:underline">
+              {user ? 'Open the app' : 'Sign in'}
+            </Link>
+          </div>
+        </header>
+        <main className="flex-1 w-full px-4 sm:px-6 py-6 sm:py-10">{children}</main>
+        <Footer />
+      </div>
+    )
   }
 
   if (checkingAuth) {
