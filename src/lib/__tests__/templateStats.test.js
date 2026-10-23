@@ -61,11 +61,11 @@ test('mapRunRow shapes a row', () => {
 test('buildStatRows merges identical distance rows and keeps single values', () => {
   const m = (avg, best, n = 3) => ({ avg, best, n })
   const keys = ['avg_hr_bpm', 'avg_distance_m', 'best_distance_m', 'total_distance_m']
-  let rows = buildStatRows(keys, { avg_hr_bpm: m(150, 150, 1), avg_distance_m: m(5, 5), best_distance_m: m(5, 5), total_distance_m: m(5, 5) })
+  let rows = buildStatRows(keys, { avg_hr_bpm: m(150, 150, 1), avg_distance_m: m(5000, 5000), best_distance_m: m(5000, 5000), total_distance_m: m(5000, 5000) })
   assert.deepEqual(rows.map((r) => r.label), ['Avg HR (bpm)', 'Distance'])
   assert.equal(rows[0].best, null)
-  rows = buildStatRows(keys, { avg_hr_bpm: m(150, 160), avg_distance_m: m(5, 8), best_distance_m: m(5, 8), total_distance_m: m(15, 24) })
+  rows = buildStatRows(keys, { avg_hr_bpm: m(150, 160), avg_distance_m: m(5000, 8000), best_distance_m: m(5000, 8000), total_distance_m: m(15000, 24000) })
   assert.deepEqual(rows.map((r) => r.label), ['Avg HR (bpm)', 'Distance avg / best', 'Total distance'])
-  rows = buildStatRows(keys, { avg_hr_bpm: m(1, 1), avg_distance_m: m(5, 8), best_distance_m: m(9, 9), total_distance_m: m(15, 24) })
+  rows = buildStatRows(keys, { avg_hr_bpm: m(1, 1), avg_distance_m: m(5000, 8000), best_distance_m: m(9000, 9000), total_distance_m: m(15000, 24000) })
   assert.equal(rows.length, 4)
 })
