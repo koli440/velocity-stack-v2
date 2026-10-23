@@ -37,3 +37,32 @@ export function sliceRange(data, range) {
   if (data[first].x > lo && first > 0) first--
   return data.slice(first, last + 1)
 }
+
+// Keep a [lo, hi] range inside the full domain without changing its width (unless it is wider than the domain).
+export function clampRange(range, domain) {
+  const [dlo, dhi] = domain
+  const width = range[1] - range[0]
+  if (!(width < dhi - dlo)) return [dlo, dhi]
+  const lo = clamp(range[0], dlo, dhi - width)
+  return [lo, lo + width]
+}
+
+// Zoom around the centre of the current view. factor > 1 zooms in, < 1 zooms out.
+// Returns null when the result is the full domain (i.e. "not zoomed").
+export function zoomBy(range, domain, factor, minFraction = MIN_RANGE_FRACTION) {
+  const [dlo, dhi] = domain
+  const full = dhi - dlo
+  if (!(full > 0) || !(factor > 0)) return range ? [...range] : null
+  const cur = range || domain
+  const centre = (cur[0] + cur[1]) / 2
+  const width = clamp((cur[1] - cur[0]) / factor, full * minFraction, full)
+  if (width >= full) return null
+  return clampRange([centre - width / 2, centre + width / 2], domain)
+}
+
+// Pan by a fraction of the current view width (negative = left). No-op when not zoomed.
+export function panBy(range, domain, fraction) {
+  if (!range) return null
+  const shift = (range[1] - range[0]) * fraction
+  return clampRange([range[0] + shift, range[1] + shift], domain)
+}

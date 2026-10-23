@@ -21,7 +21,10 @@ import {
 } from 'recharts'
 import { ltFromActivity } from '../lib/lactateThresholds'
 import { zoneRanges, zonesFromActivity } from '../lib/powerZones'
-import { resolveSelection, sliceRange } from '../lib/chartZoom'
+import { resolveSelection, sliceRange, zoomBy, panBy } from '../lib/chartZoom'
+import Icon from './Icon'
+import Portal from './Portal'
+import useModalA11y from './useModalA11y'
 import { STREAM_METRICS, buildStreamSeries, formatAxisTick, formatElapsed } from '../lib/activityStreams'
 
 // Lactate threshold lines (issue #121) drawn on the power and heart-rate lanes.
@@ -42,7 +45,7 @@ function zoneBands(metric, zones, data) {
   return zoneRanges(zones).map((r) => ({ label: r.label, y1: r.minW ?? 0, y2: r.maxW ?? top, color: ZONE_COLORS[r.zone - 1] }))
 }
 
-function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones, zoom }) {
+function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones, zoom, laneHeight, idSuffix = '' }) {
   const hasData = data.some((d) => d[metric.key] != null)
   if (!hasData) return null
   const lines = thresholdLines(metric, lt)
@@ -60,7 +63,7 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones, z
         </div>
         <div className="text-[9px] text-slate-400">{metric.unit}</div>
       </div>
-      <div className="h-12 flex-1 min-w-0">
+      <div className="flex-1 min-w-0" style={{ height: laneHeight || 48 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} syncId={syncId} margin={{ top: 2, right: 4, left: 4, bottom: 0 }}>
             {mode === 'time' &&
@@ -79,7 +82,7 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones, z
               <ReferenceArea key={b.label} y1={b.y1} y2={b.y2} fill={b.color} fillOpacity={0.08} stroke="none" ifOverflow="hidden" />
             ))}
             <defs>
-              <linearGradient id={`fill-${metric.key}`} x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={`fill-${metric.key}${idSuffix}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={metric.color} stopOpacity={0.35} />
                 <stop offset="100%" stopColor={metric.color} stopOpacity={0.02} />
               </linearGradient>
@@ -123,7 +126,7 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones, z
               dataKey={metric.key}
               stroke={metric.color}
               strokeWidth={1.5}
-              fill={`url(#fill-${metric.key})`}
+              fill={`url(#fill-${metric.key}${idSuffix})`}
               isAnimationActive={false}
               connectNulls
               dot={false}
@@ -135,28 +138,20 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones, z
   )
 }
 
-export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows = [], activity = null }) {
-  const lt = useMemo(() => ltFromActivity(activity), [activity])
-  const zones = useMemo(() => zonesFromActivity(activity, lt), [activity, lt])
-  const [mode, setMode] = useState('time')
-  // Drag-to-zoom: zoom = [x1, x2] in the current axis unit (null = full view).
-  const [zoom, setZoom] = useState(null)
+const ZOOM_STEP = 1.5
+const PAN_STEP = 0.25
+
+const iconBtn = 'inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500'
+
+function ChartPanel({ data, mode, zoom, setZoom, highlightWindows, lt, zones, enlarged, idSuffix }) {
   const [drag, setDrag] = useState(null) // { startPx, endPx } relative to the plot area
   const plotRef = useRef(null)
   const dragRef = useRef(null)
 
-  const switchMode = (next) => {
-    setMode(next)
-    setZoom(null)
-    setDrag(null)
-    dragRef.current = null
-  }
-
-  const data = useMemo(() => buildStreamSeries(timeSeries, mode), [timeSeries, mode])
-  const hasAnyData = data.length > 0
-  const fullDomain = hasAnyData ? [data[0].x, data[data.length - 1].x] : null
+  const fullDomain = [data[0].x, data[data.length - 1].x]
   const viewDomain = zoom || fullDomain
   const viewData = useMemo(() => sliceRange(data, zoom), [data, zoom])
+  const laneHeight = enlarged ? 'max(64px, calc((100dvh - 15rem) / 5))' : 48
 
   const plotMetrics = (e) => {
     const rect = plotRef.current?.getBoundingClientRect()
@@ -191,9 +186,142 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
     else if (res.type === 'reset') setZoom(null)
   }
 
-  if (!hasAnyData) return null
+  const zoomIn = () => setZoom(zoomBy(zoom, fullDomain, ZOOM_STEP))
+  const zoomOut = () => setZoom(zoomBy(zoom, fullDomain, 1 / ZOOM_STEP))
+  const pan = (f) => setZoom(panBy(zoom, fullDomain, f))
+  const onKeyDown = (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return
+    let handled = true
+    if (e.key === 'ArrowLeft') pan(-PAN_STEP)
+    else if (e.key === 'ArrowRight') pan(PAN_STEP)
+    else if (e.key === '+' || e.key === '=') zoomIn()
+    else if (e.key === '-' || e.key === '_') zoomOut()
+    else if (e.key === '0') setZoom(null)
+    else handled = false
+    if (handled) e.preventDefault()
+  }
+
+  return (
+    <>
+      {enlarged && (
+        <div className="flex flex-wrap items-center gap-1.5 mb-2" role="toolbar" aria-label="Chart zoom controls">
+          <button type="button" className={iconBtn} onClick={() => pan(-PAN_STEP)} disabled={!zoom} aria-label="Pan left" title="Pan left (←)"><Icon name="chevronLeft" size={16} /></button>
+          <button type="button" className={iconBtn} onClick={() => pan(PAN_STEP)} disabled={!zoom} aria-label="Pan right" title="Pan right (→)"><Icon name="chevronRight" size={16} /></button>
+          <button type="button" className={iconBtn} onClick={zoomOut} disabled={!zoom} aria-label="Zoom out" title="Zoom out (-)"><Icon name="zoomOut" size={16} /></button>
+          <button type="button" className={iconBtn} onClick={zoomIn} aria-label="Zoom in" title="Zoom in (+)"><Icon name="zoomIn" size={16} /></button>
+          <button type="button" onClick={() => setZoom(null)} disabled={!zoom} className="h-8 px-3 rounded-lg text-[11px] font-bold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
+            Reset zoom
+          </button>
+          {zoom && (
+            <span className="ml-1 text-[11px] font-bold text-orange-500">
+              {formatAxisTick(zoom[0], mode)} – {formatAxisTick(zoom[1], mode)}
+            </span>
+          )}
+        </div>
+      )}
+      <div
+        className="relative space-y-1.5 select-none cursor-crosshair rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+        style={{ touchAction: enlarged ? 'none' : 'pan-y' }}
+        tabIndex={enlarged ? 0 : undefined}
+        role={enlarged ? 'group' : undefined}
+        aria-label={enlarged ? 'Activity graph. Arrow keys pan, plus and minus zoom, 0 resets zoom.' : undefined}
+        onKeyDown={enlarged ? onKeyDown : undefined}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={(e) => endDrag(e, false)}
+        onPointerCancel={(e) => endDrag(e, true)}
+      >
+        <div ref={plotRef} className="absolute inset-y-0 pointer-events-none" style={{ left: 'calc(4.75rem + 4px)', right: 4 }}>
+          {drag && Math.abs(drag.endPx - drag.startPx) >= 1 && (
+            <div
+              className="absolute inset-y-0 bg-orange-500/20 border-x border-orange-500/60 z-10"
+              style={{ left: Math.min(drag.startPx, drag.endPx), width: Math.abs(drag.endPx - drag.startPx) }}
+            />
+          )}
+        </div>
+        {STREAM_METRICS.map((metric) => (
+          <MetricLane key={metric.key} metric={metric} data={viewData} zoom={zoom} mode={mode} syncId={`activity-streams${idSuffix}`} highlightWindows={highlightWindows} lt={lt} zones={zones} laneHeight={laneHeight} idSuffix={idSuffix} />
+        ))}
+      </div>
+
+      <div className="mt-2 pl-[4.75rem] flex justify-between text-[9px] font-semibold text-slate-400">
+        <span>{formatAxisTick(viewDomain[0], mode)}</span>
+        <span className="text-slate-400/80 font-medium">
+          {enlarged ? 'Drag to zoom · arrows pan · +/- zoom · 0 reset' : 'Drag to zoom · click to reset'}
+        </span>
+        <span>{formatAxisTick(viewDomain[1], mode)}</span>
+      </div>
+    </>
+  )
+}
+
+function EnlargedDialog({ onClose, title, children }) {
+  const dialogRef = useModalA11y(true, onClose)
+  return (
+    <Portal>
+      <div className="fixed inset-0 z-[100] bg-black/60 sm:p-4 flex items-stretch sm:items-center justify-center">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="activity-graph-enlarged-title"
+          tabIndex={-1}
+          className="w-full h-full sm:h-auto sm:max-h-full sm:max-w-[96vw] overflow-y-auto bg-white dark:bg-surface-darkCard sm:rounded-3xl p-4 sm:p-5 shadow-2xl focus:outline-none"
+        >
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <h2 id="activity-graph-enlarged-title" className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+              {title}
+            </h2>
+            <button type="button" data-autofocus onClick={onClose} aria-label="Close enlarged graph" className={iconBtn}>
+              <Icon name="close" size={16} />
+            </button>
+          </div>
+          {children}
+        </div>
+      </div>
+    </Portal>
+  )
+}
+
+export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows = [], activity = null }) {
+  const lt = useMemo(() => ltFromActivity(activity), [activity])
+  const zones = useMemo(() => zonesFromActivity(activity, lt), [activity, lt])
+  const [mode, setMode] = useState('time')
+  // zoom = [x1, x2] in the current axis unit (null = full view); shared by inline and enlarged panels.
+  const [zoom, setZoom] = useState(null)
+  const [enlarged, setEnlarged] = useState(false)
+
+  const switchMode = (next) => {
+    setMode(next)
+    setZoom(null)
+  }
+
+  const data = useMemo(() => buildStreamSeries(timeSeries, mode), [timeSeries, mode])
+  if (data.length === 0) return null
 
   const lastPoint = data[data.length - 1]
+  const modeSwitch = (
+    <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-800">
+      {[
+        { key: 'time', label: 'Time' },
+        { key: 'distance', label: 'Distance' },
+      ].map((opt) => (
+        <button
+          key={opt.key}
+          type="button"
+          onClick={() => switchMode(opt.key)}
+          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+            mode === opt.key
+              ? 'bg-orange-500 text-white shadow-xs'
+              : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+  const panelProps = { data, mode, zoom, setZoom, highlightWindows, lt, zones }
 
   return (
     <div className="glass-dense w-full bg-white dark:bg-surface-darkCard p-4 sm:p-5 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
@@ -211,56 +339,27 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
             )}
           </p>
         </div>
-
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-800">
-          {[
-            { key: 'time', label: 'Time' },
-            { key: 'distance', label: 'Distance' },
-          ].map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => switchMode(opt.key)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
-                mode === opt.key
-                  ? 'bg-orange-500 text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          {modeSwitch}
+          <button type="button" className={iconBtn} onClick={() => setEnlarged(true)} aria-label="Enlarge activity graph" title="Enlarge">
+            <Icon name="expand" size={16} />
+          </button>
         </div>
       </div>
 
-      <div
-        className="relative space-y-1.5 select-none cursor-crosshair"
-        style={{ touchAction: 'pan-y' }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={(e) => endDrag(e, false)}
-        onPointerCancel={(e) => endDrag(e, true)}
-      >
-        <div ref={plotRef} className="absolute inset-y-0 pointer-events-none" style={{ left: 'calc(4.75rem + 4px)', right: 4 }}>
-          {drag && Math.abs(drag.endPx - drag.startPx) >= 1 && (
-            <div
-              className="absolute inset-y-0 bg-orange-500/20 border-x border-orange-500/60 z-10"
-              style={{ left: Math.min(drag.startPx, drag.endPx), width: Math.abs(drag.endPx - drag.startPx) }}
-            />
-          )}
-        </div>
-        {STREAM_METRICS.map((metric) => (
-          <MetricLane key={metric.key} metric={metric} data={viewData} zoom={zoom} mode={mode} syncId="activity-streams" highlightWindows={highlightWindows} lt={lt} zones={zones} />
-        ))}
-      </div>
+      <ChartPanel {...panelProps} idSuffix="" />
 
-      <div className="mt-2 pl-[4.75rem] flex justify-between text-[9px] font-semibold text-slate-400">
-        <span>{formatAxisTick(viewDomain[0], mode)}</span>
-        <span className="text-slate-400/80 font-medium">
-          Drag to zoom · click to reset
-        </span>
-        <span>{formatAxisTick(viewDomain[1], mode)}</span>
-      </div>
+      {enlarged && (
+        <EnlargedDialog onClose={() => setEnlarged(false)} title="Activity Graph">
+          <div className="flex justify-between items-center gap-3 mb-3">
+            <p className="text-[11px] text-slate-400">
+              {mode === 'time' ? `Elapsed ${formatElapsed(lastPoint.x)}` : `Distance ${(lastPoint.x / 1000).toFixed(2)} km`}
+            </p>
+            {modeSwitch}
+          </div>
+          <ChartPanel {...panelProps} enlarged idSuffix="-large" />
+        </EnlargedDialog>
+      )}
     </div>
   )
 }
