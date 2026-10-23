@@ -69,6 +69,10 @@ summary, curves, time_series } }` (see `src/lib/server/intervalsProvider.js`). E
 settings only, never committed): see `.env.example`.
 
 ## Connections (`20261026000000_connections.sql`)
+`public.planned_workout_wahoo_pushes` (`workout_id` PK without FK so deletes leave a `pending_delete` tombstone, `rider_id`, `wahoo_plan_id`,
+`wahoo_workout_id`, `pushed_hash`, `push_status` pending|pushed|error|pending_delete, claim and error columns, `warnings`): mapping of planned
+workouts to Wahoo plans/workouts (rider/coach read via RLS, written by the service role). Migration `20270111000000_wahoo_planned_push.sql`.
+
 `public.connections` (unique `(user_id, provider)`, provider `intervals`|`strava`|`wahoo`): `external_athlete_id`, secrets
 `api_key` (Intervals), `access_token`/`refresh_token`/`token_expires_at` (Strava, Wahoo), `status`
 (`active`|`error`|`disconnected`), `last_error`, `last_synced_at`, `backfill_days` (default 30, NULL = full history),

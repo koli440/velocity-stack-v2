@@ -293,6 +293,7 @@ export default function PlannedWorkoutDialog({
         )}
 
         {workout && <PlannedPushControls workout={workout} onChanged={actions.pushChanged} />}
+        {workout && <PlannedPushControls workout={workout} onChanged={actions.pushChanged} provider="wahoo" />}
 
         <p className="text-[11px] text-slate-400">Only you and your active coach can see planned workouts. The structure is a copy taken when planned.</p>
         {error && <div className="rounded-lg bg-rose-500/10 border border-rose-500/30 p-2 text-xs font-semibold text-rose-500" role="alert">{error}</div>}

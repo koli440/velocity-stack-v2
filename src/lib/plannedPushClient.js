@@ -35,3 +35,35 @@ export async function setAutoPush(client, enabled) {
   const { error } = await client.rpc('set_planned_push_enabled', { p_enabled: !!enabled })
   return error ? new Error(error.message) : null
 }
+
+// Wahoo Cloud (#311): same flow, own mapping table and RPCs.
+const WAHOO_PUSH_COLUMNS = 'workout_id, wahoo_plan_id, wahoo_workout_id, pushed_hash, pushed_at, push_status, last_error, warnings'
+
+export async function fetchWahooPushRows(client, workoutIds) {
+  if (!workoutIds?.length) return new Map()
+  const { data } = await client.from('planned_workout_wahoo_pushes').select(WAHOO_PUSH_COLUMNS).in('workout_id', workoutIds)
+  return new Map((data || []).map((r) => [r.workout_id, r]))
+}
+
+export async function fetchWahooPushContext(client, riderId) {
+  const { data, error } = await client.rpc('wahoo_push_context', { p_rider: riderId })
+  return error ? null : data
+}
+
+async function callWahoo(id, method) {
+  const res = await fetch(`/api/planned-workouts/${encodeURIComponent(id)}/wahoo`, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+  })
+  const data = await parseJsonResponse(res)
+  if (!res.ok) throw new Error(data.error || 'Request failed')
+  return data
+}
+
+export const pushToWahoo = (id) => callWahoo(id, 'POST')
+export const removeFromWahoo = (id) => callWahoo(id, 'DELETE')
+
+export async function setWahooAutoPush(client, enabled) {
+  const { error } = await client.rpc('set_wahoo_push_enabled', { p_enabled: !!enabled })
+  return error ? new Error(error.message) : null
+}

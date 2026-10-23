@@ -5,7 +5,7 @@
 import { timingSafeEqual } from 'node:crypto'
 
 export const WAHOO_API = 'https://api.wahooligan.com'
-export const WAHOO_SCOPES = ['user_read', 'workouts_read', 'offline_data']
+export const WAHOO_SCOPES = ['user_read', 'workouts_read', 'workouts_write', 'plans_write', 'offline_data']
 // Registered with Wahoo, so it is fixed (not derived from the request host).
 export const WAHOO_REDIRECT_URI = 'https://www.velocity-stack.app/api/connections/wahoo/callback'
 // Wahoo access tokens last 2 h. Refresh only right before a call: every refresh that is not followed by an API

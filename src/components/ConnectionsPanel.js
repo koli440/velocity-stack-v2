@@ -207,6 +207,7 @@ function OAuthProviderCard({ userId, provider }) {
             </select>
           </div>
           <p className="text-[11px] text-slate-400">{cfg.notice}</p>
+          {provider === 'wahoo' && <PlannedPushSetting userId={userId} provider="wahoo" />}
           {syncMsg && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
           <div className="flex items-center gap-4">
             {conn.status === 'error' ? (

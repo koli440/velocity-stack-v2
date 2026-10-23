@@ -7,12 +7,23 @@ Data model details: [data-model.md](data-model.md).
 - **Intervals.icu**: athlete id + API key (validated against Intervals.icu, stored write-only in `public.connections`).
 - **Strava**: OAuth (`activity:read_all`). The authorize endpoint returns a URL with an HMAC-signed, 10-minute state bound
   to the user; the callback stores the tokens server-side with the service role.
-- **Wahoo** (Wahoo Cloud, migration `20270110000000_wahoo.sql`): OAuth (`user_read workouts_read offline_data`), same signed state as Strava
+- **Wahoo** (Wahoo Cloud, migration `20270110000000_wahoo.sql`): OAuth (`user_read workouts_read workouts_write plans_write offline_data`), same signed state as Strava
   (keyed with `WAHOO_CLIENT_SECRET`). Rides arrive as `.fit` files and are analysed with `analyzeFit`, like Intervals.icu. Access tokens last
   2 h and are refreshed just before an API call (Wahoo revokes the old token only after the new one is used; max 10 live tokens per user). Wahoo's
   list API has no date filter, so the newest-first listing is paged (binary search for the window start). Webhook `workout_summary` events
   (`/api/webhooks/wahoo`, verified by `WAHOO_WEBHOOK_TOKEN`) trigger the rider's sync; the 15-minute pg_cron job `wahoo-sync` is the fallback.
   Wahoo only exposes the rider's own recordings, not third-party workouts. Disconnect calls `DELETE /v1/permissions`.
+- **Planned workout upload to Wahoo** (migration `20270111000000_wahoo_planned_push.sql`, same design as the Intervals push above): a planned
+  ride/track workout becomes a Wahoo *plan* (`POST /v1/plans`, plan JSON 1.0.0 built by `src/lib/wahooPlan.js`: warm-up/cool-down, repeat blocks,
+  `ftp`/watts/rpm/hr/speed targets, FTP from `profiles.ftp_w`) plus a scheduled *workout* (`POST /v1/workouts`, `plan_id`, day at noon UTC) that
+  references it. Needs the `plans_write` and `workouts_write` scopes, so riders who connected earlier must reconnect (the API answers 403 and the
+  UI says so). Manual push/update/remove from the workout dialog (`/api/planned-workouts/:id/wahoo`), opt-in auto push on the Wahoo card
+  (`connections.push_planned_workouts` of the wahoo row, RPC `set_wahoo_push_enabled`) handled by the same 15-minute cron
+  (`/api/planned-workouts/push/run` runs the Intervals cycle, then `runWahooPushCycle`). Mapping/status live in `planned_workout_wahoo_pushes`
+  (own plan/workout ids, claim, hash, tombstones for deleted workouts); records are found again by `plan[external_id]` = `velocity-stack:<workout id>`
+  if a response was lost. Steps Wahoo cannot express (HR %, W/kg, LT1/LT2, zones) are converted with a warning or kept as duration-only steps; workouts
+  without steps are scheduled without a plan. Wahoo only shows a plan on the ELEMNT within 6 days before the workout; the portal's deauthorisation
+  flags can delete upcoming workouts/plans. Rate limits (200/5 min) surface as `rate_limited`. Gym/other disciplines are not sent.
 - **Disconnect** clears all credentials/tokens (Strava access is also deauthorized at Strava) and stops syncing; imported
   rides stay. Revoking the app at Strava is detected via webhook and disconnects automatically.
 - Secrets are never selectable by clients (column grants on `connections` expose only non-secret columns).
