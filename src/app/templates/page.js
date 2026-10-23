@@ -14,7 +14,8 @@ import {
   templatePermissions,
   visibleTabs,
 } from '../../lib/templateMenu'
-import { metricLabel, orderMetricKeys, formatStatValue } from '../../lib/templateStats'
+import TemplateStatsTable from '../../components/TemplateStatsTable'
+import { orderMetricKeys } from '../../lib/templateStats'
 
 
 const TAB_LABELS = { mine: 'Mine', favorites: 'Favorites', public: 'Public', system: 'System' }
@@ -194,19 +195,8 @@ export default function TemplatesPage() {
           {st.last_run_at && <span className="font-normal text-slate-400"> · last {new Date(st.last_run_at).toLocaleDateString()}</span>}
         </p>
         {keys.length > 0 && (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-slate-500 dark:text-slate-400">
-            {keys.map((k) => (
-              <div key={k} className="flex justify-between gap-2">
-                <span>{metricLabel(k)}</span>
-                <span className="font-mono text-slate-700 dark:text-slate-200">
-                  {formatStatValue(k, st.metrics[k].avg)}
-                  {st.metrics[k].best != null && st.metrics[k].n > 1 && <span className="text-slate-400"> / {formatStatValue(k, st.metrics[k].best)}</span>}
-                </span>
-              </div>
-            ))}
-          </div>
+          <TemplateStatsTable keys={keys} metrics={st.metrics} caption={`${t.name} statistics`} />
         )}
-        {keys.length > 0 && <p className="text-[10px] text-slate-400">Average / best across runs</p>}
         <button onClick={() => setRunsFor(t)} className="font-bold text-emerald-500 hover:underline" aria-haspopup="dialog">
           View {st.count} {st.count === 1 ? 'run' : 'runs'}
         </button>

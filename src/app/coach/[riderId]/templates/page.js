@@ -7,7 +7,8 @@ import { useAthlete } from '../../../../components/AthleteContext'
 import TemplateRunsModal from '../../../../components/TemplateRunsModal'
 import TemplateBatchRunner from '../../../../components/TemplateBatchRunner'
 import TemplateSearchPicker from '../../../../components/TemplateSearchPicker'
-import { metricLabel, orderMetricKeys, formatStatValue } from '../../../../lib/templateStats'
+import TemplateStatsTable from '../../../../components/TemplateStatsTable'
+import { orderMetricKeys } from '../../../../lib/templateStats'
 import { athleteTemplateGroups } from '../../../../lib/coachRuns'
 
 // Coach in athlete context: the template runs THE COACH made on THIS athlete's activities, grouped by
@@ -101,14 +102,7 @@ export default function AthleteTemplatesPage() {
                 {g.stat.last_run_at && <span className="font-normal text-slate-400"> · last {new Date(g.stat.last_run_at).toLocaleDateString()}</span>}
               </p>
               {keys.length > 0 && (
-                <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-slate-500 dark:text-slate-400">
-                  {keys.map((k) => (
-                    <div key={k} className="flex justify-between gap-2">
-                      <span>{metricLabel(k)}</span>
-                      <span className="font-mono text-slate-700 dark:text-slate-200">{formatStatValue(k, g.stat.metrics[k].avg)}</span>
-                    </div>
-                  ))}
-                </div>
+                <TemplateStatsTable keys={keys} metrics={g.stat.metrics} showBest={false} caption={`${g.name} statistics`} />
               )}
               <button onClick={() => setRunsFor(g)} className="self-start font-bold text-emerald-500 hover:underline" aria-haspopup="dialog">
                 View {g.stat.count} {g.stat.count === 1 ? 'run' : 'runs'}
