@@ -45,8 +45,8 @@ test('several same-discipline workouts: clearly closest duration wins, otherwise
   const long = W({ structure_dsl: dsl(60) })
   assert.equal(pickAutoLinkCandidate([short, long], ACT, DAY), long)
   assert.equal(pickAutoLinkCandidate([short, long], { ...ACT, moving_time_s: 1800 }, DAY), short)
-  // 45 min is 50 % off both: not confident
-  assert.equal(pickAutoLinkCandidate([short, long], { ...ACT, moving_time_s: 2700 }, DAY), null)
+  // 40 min is a third off both: not confident
+  assert.equal(pickAutoLinkCandidate([short, long], { ...ACT, moving_time_s: 2400 }, DAY), null)
   // without any estimate we cannot tell
   assert.equal(pickAutoLinkCandidate([W(), W()], ACT, DAY), null)
   // no duration on the activity
