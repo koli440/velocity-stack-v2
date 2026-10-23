@@ -132,3 +132,39 @@ export function formatStatValue(key, v) {
   if (EFFORT_RESULT_KEYS.includes(key)) return formatResultValue(key, v)
   return Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/0$/, '')
 }
+
+const DISTANCE_KEYS = ['avg_distance_m', 'best_distance_m', 'total_distance_m']
+
+/**
+ * One display row per metric: { id, label, avg, best } (formatted strings, best null when absent).
+ * Distance rows whose values are identical are merged ("Distance"; "Distance avg / best" when only
+ * avg and best match).
+ */
+export function buildStatRows(keys, metrics) {
+  const cell = (k) => {
+    const m = metrics[k]
+    return { avg: formatStatValue(k, m.avg), best: m.best != null && m.n > 1 ? formatStatValue(k, m.best) : null }
+  }
+  const same = (a, b) => a.avg === b.avg && a.best === b.best
+  const present = DISTANCE_KEYS.filter((k) => keys.includes(k))
+  const c = Object.fromEntries(present.map((k) => [k, cell(k)]))
+  const merged = new Map()
+  if (present.length === 3 && same(c.avg_distance_m, c.best_distance_m) && same(c.avg_distance_m, c.total_distance_m)) {
+    merged.set('avg_distance_m', { label: 'Distance', ...c.avg_distance_m })
+    merged.set('best_distance_m', null)
+    merged.set('total_distance_m', null)
+  } else if (present.includes('avg_distance_m') && present.includes('best_distance_m') && same(c.avg_distance_m, c.best_distance_m)) {
+    merged.set('avg_distance_m', { label: 'Distance avg / best', ...c.avg_distance_m })
+    merged.set('best_distance_m', null)
+  }
+  const rows = []
+  for (const k of keys) {
+    if (merged.has(k)) {
+      const m = merged.get(k)
+      if (m) rows.push({ id: k, ...m })
+      continue
+    }
+    rows.push({ id: k, label: metricLabel(k), ...cell(k) })
+  }
+  return rows
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { aggregateTemplateStats, runMetrics, orderMetricKeys, parseRunsParams, escapeLike, mapRunRow } from '../templateStats.js'
+import { aggregateTemplateStats, runMetrics, orderMetricKeys, parseRunsParams, escapeLike, mapRunRow, buildStatRows } from '../templateStats.js'
 
 const row = (id, tpl, date, summary, title = 'Ride') => ({
   id, template_id: tpl, activity_id: `act-${id}`, summary, created_at: '2020-01-01T00:00:00Z',
@@ -56,4 +56,16 @@ test('escapeLike escapes wildcards', () => {
 test('mapRunRow shapes a row', () => {
   const r = mapRunRow(row('7', 't', '2026-05-01', { avg_power: 250, foo: 1 }, 'Hill'))
   assert.deepEqual(r, { id: '7', activity_id: 'act-7', title: 'Hill', date: '2026-05-01', metrics: { avg_power: 250 }, by_coach: false, run_by_coach_id: null })
+})
+
+test('buildStatRows merges identical distance rows and keeps single values', () => {
+  const m = (avg, best, n = 3) => ({ avg, best, n })
+  const keys = ['avg_hr_bpm', 'avg_distance_m', 'best_distance_m', 'total_distance_m']
+  let rows = buildStatRows(keys, { avg_hr_bpm: m(150, 150, 1), avg_distance_m: m(5, 5), best_distance_m: m(5, 5), total_distance_m: m(5, 5) })
+  assert.deepEqual(rows.map((r) => r.label), ['Avg HR (bpm)', 'Distance'])
+  assert.equal(rows[0].best, null)
+  rows = buildStatRows(keys, { avg_hr_bpm: m(150, 160), avg_distance_m: m(5, 8), best_distance_m: m(5, 8), total_distance_m: m(15, 24) })
+  assert.deepEqual(rows.map((r) => r.label), ['Avg HR (bpm)', 'Distance avg / best', 'Total distance'])
+  rows = buildStatRows(keys, { avg_hr_bpm: m(1, 1), avg_distance_m: m(5, 8), best_distance_m: m(9, 9), total_distance_m: m(15, 24) })
+  assert.equal(rows.length, 4)
 })
