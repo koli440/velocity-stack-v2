@@ -42,6 +42,14 @@ export default function Footer() {
           </Link>
           </>}
 
+          <Link href="/terms" className="hover:text-slate-900 dark:hover:text-white transition">
+            Terms
+          </Link>
+
+          <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white transition">
+            Privacy
+          </Link>
+
           <span className="text-slate-400 font-mono text-[10px]">v0.4.2-beta</span>
         </div>
       </div>

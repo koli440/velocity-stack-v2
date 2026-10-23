@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import { signInMethods } from '../../lib/oauthProfile'
 import VelodromePicker from '../../components/VelodromePicker'
@@ -394,6 +395,13 @@ export default function SettingsPage() {
       <div className="mt-6">
         <CoachingPanel userId={user?.id} />
       </div>
+
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        <Link href="/privacy" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Privacy Policy</Link>
+        {' · '}
+        <Link href="/terms" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Terms of Service</Link>
+        {' · To access, export or delete your data, see the Privacy Policy.'}
+      </p>
     </section>
   )
 }
