@@ -7,6 +7,7 @@
 import { buildActivityInsert } from '../activityRecord.js'
 import { findDuplicate, loadExistingActivityFingerprints, resolveDuplicate } from '../activityDuplicates.js'
 import { ImportError, DUPLICATE_MESSAGE } from './importErrors.js'
+import { autoLinkActivity, dayOfLocalStamp } from '../plannedWorkouts.js'
 import { effectiveRideType, rideTypeHasGear, isKnownRideType } from '../rideType.js'
 
 /**
@@ -124,10 +125,18 @@ export async function importActivity({
     if (relinkErr) console.warn(`Failed to keep planned workout links of ${plan.existing.id}:`, relinkErr.message)
     const { error: delErr } = await supabase.from('activities').delete().eq('id', plan.existing.id)
     if (delErr) console.warn(`Failed to remove replaced activity ${plan.existing.id}:`, delErr.message)
+    await autoLinkImported(supabase, activity, fetched.startDateLocal)
     return { status: 'upgraded', activity, replacedId: plan.existing.id }
   }
 
+  await autoLinkImported(supabase, activity, fetched.startDateLocal)
   return { status: 'imported', activity }
+}
+
+// Auto-link to the same-day planned workout, by the provider's own local start (no timezone on the server).
+async function autoLinkImported(supabase, activity, startDateLocal) {
+  const localDay = dayOfLocalStamp(startDateLocal)
+  if (localDay) await autoLinkActivity(supabase, { activity, localDay })
 }
 
 /** One activity_curves row per metric; empty/null curves are skipped. Returns the insert error, if any. */

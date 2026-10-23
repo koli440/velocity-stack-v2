@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
+import { autoLinkActivity, localDayOf } from '../lib/plannedWorkouts'
 import { fetchWeightHistory } from '../lib/weightHistory'
 import { fetchFtpHistory } from '../lib/ftpHistory'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
@@ -208,6 +209,9 @@ export default function FitUploader({
 
         if (curvesError) throw curvesError
       }
+
+      // Link to the same-day planned workout when the choice is clear (the browser knows the local day).
+      await autoLinkActivity(supabase, { activity, localDay: localDayOf(activity.activity_date) })
 
       // 3. Pass the new ID back for redirection
       if (onSaved) {

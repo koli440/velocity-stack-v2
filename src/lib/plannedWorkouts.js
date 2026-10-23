@@ -13,7 +13,7 @@ export const PLANNED_DSL_MAX = 4000
 export const PLANNED_DISCIPLINES = Object.freeze(['ride', 'track', 'gym', 'other'])
 export const PLANNED_DISCIPLINE_LABELS = Object.freeze({ ride: 'Ride', track: 'Track', gym: 'Gym', other: 'Other' })
 export const PLANNED_COLUMNS =
-  'id, rider_id, workout_date, discipline, title, description, structure_dsl, structure_manifest, source_template_name, status, activity_id, created_by, updated_by, set_by_coach, created_at, updated_at'
+  'id, rider_id, workout_date, discipline, title, description, structure_dsl, structure_manifest, source_template_name, status, activity_id, link_source, auto_link_suppressed, created_by, updated_by, set_by_coach, created_at, updated_at'
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
 export const isDayKey = (v) => typeof v === 'string' && DAY_RE.test(v)
@@ -218,6 +218,94 @@ export function suggestMatches(workouts, activities) {
     }
   }
   return out
+}
+
+// --- Automatic linking ----------------------------------------------------------------------
+
+/** Relative duration difference within which a planned estimate still counts as "the same session". */
+export const AUTO_LINK_DURATION_TOLERANCE = 0.25
+/** The best candidate must beat the runner-up by this much (relative duration difference) to be unambiguous. */
+export const AUTO_LINK_MARGIN = 0.1
+
+/** The calendar derives the discipline of an activity from its track. */
+export const activityDiscipline = (a) => (a?.track_id || a?.trackId ? 'track' : 'ride')
+
+/**
+ * Picks the planned workout a NEW activity should be linked to automatically, or null (then the user still
+ * gets the suggestion). `workouts` are the rider's planned workouts of the activity's local day (rows with
+ * workout_date); already linked, skipped and "unlinked by the user" (auto_link_suppressed) ones are ignored and
+ * gym sessions never complete a ride. Rules, deterministic:
+ *  1. exactly one candidate -> it;
+ *  2. several -> same discipline as the activity (track when it has a track, else ride) is required; one such
+ *     candidate -> it;
+ *  3. still several -> closest planned duration estimate (relative difference <= AUTO_LINK_DURATION_TOLERANCE)
+ *     that beats the runner-up by AUTO_LINK_MARGIN; an exact tie goes to the earliest created; else null.
+ */
+export function pickAutoLinkCandidate(workouts, activity, localDay) {
+  if (!activity) return null
+  const open = (workouts || []).filter(
+    (w) => w && !w.activity_id && w.status !== 'skipped' && !w.auto_link_suppressed && w.discipline !== 'gym' && (!localDay || w.workout_date === localDay)
+  )
+  if (open.length === 0) return null
+  if (open.length === 1) return open[0]
+  const disc = activityDiscipline(activity)
+  const same = open.filter((w) => w.discipline === disc)
+  if (same.length === 0) return null
+  if (same.length === 1) return same[0]
+  const actual = Number(activity.moving_time_s) || Number(activity.elapsed_time_s) || Number(activity.durationS) || Number(activity.duration_sec) || 0
+  if (!actual) return null
+  const scored = same
+    .map((w) => {
+      const est = workoutSummary(w)?.durationS || null
+      return { w, est, diff: est ? Math.abs(actual - est) / est : Infinity }
+    })
+    .filter((c) => c.diff <= AUTO_LINK_DURATION_TOLERANCE)
+    .sort((a, b) => a.diff - b.diff || String(a.w.created_at).localeCompare(String(b.w.created_at)) || String(a.w.id).localeCompare(String(b.w.id)))
+  if (scored.length === 0) return null
+  if (scored.length === 1) return scored[0].w
+  const [best, next] = scored
+  return next.diff - best.diff >= AUTO_LINK_MARGIN || next.diff === best.diff ? best.w : null
+}
+
+/**
+ * Links a just-created activity to the rider's planned workout of its local day when the choice is clear.
+ * `localDay` is the activity's own local calendar day ("YYYY-MM-DD"; the server has no timezone). Never throws:
+ * a failed attempt only leaves today's manual suggestion. Resolves { linked, workoutId }.
+ */
+export async function autoLinkActivity(client, { activity, localDay }) {
+  const none = { linked: false, workoutId: null }
+  try {
+    if (!client || !activity?.id || !activity.user_id || !isDayKey(localDay)) return none
+    const { data, error } = await client
+      .from('planned_workouts')
+      .select(PLANNED_COLUMNS)
+      .eq('rider_id', activity.user_id)
+      .eq('workout_date', localDay)
+      .order('created_at', { ascending: true })
+    if (error || !data?.length) return none
+    const chosen = pickAutoLinkCandidate(data, activity, localDay)
+    if (!chosen) return none
+    const { data: ok, error: rpcErr } = await client.rpc('planned_workout_auto_link', {
+      p_workout: chosen.id,
+      p_activity: activity.id,
+      p_local_date: localDay,
+    })
+    return rpcErr || ok !== true ? none : { linked: true, workoutId: chosen.id }
+  } catch {
+    return none
+  }
+}
+
+/** Local day key of an ISO timestamp in the runtime's timezone (the browser's, like the calendar). */
+export const localDayOf = (iso) => {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? null : dayKey(d)
+}
+
+/** Day key from a provider's naive local start ("2026-10-23T07:30:00"), else null. */
+export const dayOfLocalStamp = (stamp) => {
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(stamp ?? ''))
+  return m ? m[1] : null
 }
 
 /**

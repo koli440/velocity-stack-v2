@@ -178,3 +178,25 @@ test('importActivity applies no gear when the rider has no saved default', async
   assert.equal(row.chainring, null)
   assert.equal(row.cog, null)
 })
+
+test('importActivity auto-links the same-day planned workout by the provider local day', async () => {
+  const supabase = fakeSupabase()
+  const baseFrom = supabase.from.bind(supabase)
+  const planned = { id: 'pw1', rider_id: 'u1', workout_date: '2026-10-01', discipline: 'ride', status: 'planned', activity_id: null, auto_link_suppressed: false }
+  const q = { select: () => q, eq: () => q, order: () => Promise.resolve({ data: [planned], error: null }) }
+  supabase.from = (t) => (t === 'planned_workouts' ? q : baseFrom(t))
+  const wrapped = { ...supabase, from: supabase.from }
+  const p = { ...provider, fetchActivity: async () => ({ ...(await provider.fetchActivity()), startDateLocal: '2026-10-01T23:30:00' }) }
+  // the mocked insert returns { id: 'new1' } without user_id, so give the pipeline one
+  const from = wrapped.from
+  wrapped.from = (t) => {
+    const base = from(t)
+    if (t !== 'activities') return base
+    return { ...base, insert: (rows) => ({ ...base.insert(rows), select: () => ({ single: () => Promise.resolve({ data: { id: 'new1', user_id: 'u1' }, error: null }) }) }) }
+  }
+  wrapped.calls = supabase.calls
+  wrapped.rpc = supabase.rpc
+  const r = await importActivity({ supabase: wrapped, userId: 'u1', provider: p, externalId: '42', profile })
+  assert.equal(r.status, 'imported')
+  assert.deepEqual(supabase.calls.rpcs, [{ name: 'planned_workout_auto_link', args: { p_workout: 'pw1', p_activity: 'new1', p_local_date: '2026-10-01' } }])
+})

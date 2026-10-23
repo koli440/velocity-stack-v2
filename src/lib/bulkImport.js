@@ -10,6 +10,7 @@
 // `analyzeFile`/`supabase` doubles in unit tests without a browser or network access.
 
 import { buildActivityInsert } from './activityRecord.js'
+import { autoLinkActivity, localDayOf } from './plannedWorkouts.js'
 import { findDuplicate } from './activityDuplicates.js'
 
 const FIT_EXTENSION_RE = /\.fit$/i
@@ -214,6 +215,9 @@ export async function importSingleFitFile({
         console.warn(`Failed to persist durational curves for ${fileName}:`, curvesError.message)
       }
     }
+
+    // Recent rides only (the database ignores older days): same-day planned workout, by the browser's local day.
+    await autoLinkActivity(supabase, { activity, localDay: localDayOf(activity.activity_date) })
 
     // Make this activity visible to the duplicate check for subsequent files in the batch.
     existingFingerprints.push({ file_sha256: fileSha256, start_time: startTime, elapsed_time_s: elapsedTimeS })
