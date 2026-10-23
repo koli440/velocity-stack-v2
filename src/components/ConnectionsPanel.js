@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { parseJsonResponse } from '../lib/httpJson'
 import { getAuthHeader } from '../lib/supabase'
-import { callIntervals, callStrava, startStravaAuthorize, fetchConnection } from '../lib/connectionsClient'
-import { stravaFlagMessage } from '../lib/emptyFeed'
+import { callIntervals, callStrava, callWahoo, startStravaAuthorize, startWahooAuthorize, fetchConnection } from '../lib/connectionsClient'
+import { stravaFlagMessage, wahooFlagMessage } from '../lib/emptyFeed'
 import {
   DEFAULT_BACKFILL_DAYS,
   connectionStatusLabel,
@@ -53,7 +53,32 @@ function useBackfillRefresh(conn, load) {
   }, [importing, load])
 }
 
-function StravaCard({ userId }) {
+const OAUTH_PROVIDERS = {
+  strava: {
+    label: 'Strava',
+    call: callStrava,
+    start: startStravaAuthorize,
+    flagMessage: stravaFlagMessage,
+    buttonCls: 'bg-[#fc4c02]',
+    description: 'Import rides from Strava automatically. Rides that also come from Intervals.icu are kept once, from Intervals.icu.',
+    notice: 'New rides arrive within moments, with a check about every 15 minutes.',
+    setup: 'an administrator needs to add the Strava app credentials',
+  },
+  wahoo: {
+    label: 'Wahoo',
+    call: callWahoo,
+    start: startWahooAuthorize,
+    flagMessage: wahooFlagMessage,
+    buttonCls: 'bg-[#0f6ddc]',
+    description:
+      'Import rides recorded on your Wahoo devices (with their .fit files) directly from Wahoo Cloud. A ride that is already here from Intervals.icu is kept once; a Wahoo ride replaces a Strava copy.',
+    notice: 'New rides arrive within moments, with a check about every 15 minutes.',
+    setup: 'an administrator needs to add the Wahoo app credentials',
+  },
+}
+
+function OAuthProviderCard({ userId, provider }) {
+  const cfg = OAUTH_PROVIDERS[provider]
   const [conn, setConn] = useState(null)
   const [configured, setConfigured] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -64,11 +89,11 @@ function StravaCard({ userId }) {
 
   const load = useCallback(async () => {
     if (!userId) return
-    const data = await fetchConnection(userId, 'strava')
+    const data = await fetchConnection(userId, provider)
     setConn(data)
     if (data) setBackfill(backfillToValue(data.backfill_days))
     setLoading(false)
-  }, [userId])
+  }, [userId, provider])
 
   useEffect(() => {
     load()
@@ -76,21 +101,21 @@ function StravaCard({ userId }) {
   useBackfillRefresh(conn, load)
 
   useEffect(() => {
-    fetch('/api/connections/strava')
+    fetch(`/api/connections/${provider}`)
       .then((r) => r.json())
       .then((d) => setConfigured(!!d.configured))
       .catch(() => setConfigured(false))
   }, [])
 
-  // Result of the OAuth round trip (?strava=connected|denied|...), shown once and removed from the URL.
+  // Result of the OAuth round trip (?strava|wahoo=connected|denied|...), shown once and removed from the URL.
   useEffect(() => {
     const url = new URL(window.location.href)
-    const flag = url.searchParams.get('strava')
+    const flag = url.searchParams.get(provider)
     if (!flag) return
-    const { text, isError } = stravaFlagMessage(flag)
+    const { text, isError } = cfg.flagMessage(flag)
     if (isError) setError(text)
     else setSyncMsg(text)
-    url.searchParams.delete('strava')
+    url.searchParams.delete(provider)
     window.history.replaceState({}, '', url.pathname + url.search + url.hash)
   }, [])
 
@@ -107,12 +132,12 @@ function StravaCard({ userId }) {
     }
   }
 
-  const connect = () => run(() => startStravaAuthorize())
+  const connect = () => run(() => cfg.start())
 
   const syncNow = () =>
     run(async () => {
       setSyncMsg(null)
-      const res = await fetch('/api/sync/strava/run', {
+      const res = await fetch(`/api/sync/${provider}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: '{}',
@@ -131,7 +156,7 @@ function StravaCard({ userId }) {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Strava</span>
+        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">{cfg.label}</span>
         <span
           className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
             conn?.status === 'error'
@@ -145,7 +170,7 @@ function StravaCard({ userId }) {
         </span>
       </div>
       <p className="text-[11px] text-slate-400">
-        Import rides from Strava automatically. Rides that also come from Intervals.icu are kept once, from Intervals.icu.
+        {cfg.description}
       </p>
 
       {connected ? (
@@ -170,7 +195,7 @@ function StravaCard({ userId }) {
               onChange={(e) => {
                 const v = e.target.value
                 setBackfill(v)
-                run(() => callStrava('PATCH', { backfillDays: v === 'full' ? null : Number(v) }))
+                run(() => cfg.call('PATCH', { backfillDays: v === 'full' ? null : Number(v) }))
               }}
               className={inputCls}
             >
@@ -181,7 +206,7 @@ function StravaCard({ userId }) {
               ))}
             </select>
           </div>
-          <p className="text-[11px] text-slate-400">New rides arrive within moments, with a check about every 15 minutes.</p>
+          <p className="text-[11px] text-slate-400">{cfg.notice}</p>
           {syncMsg && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
           <div className="flex items-center gap-4">
             {conn.status === 'error' ? (
@@ -206,7 +231,7 @@ function StravaCard({ userId }) {
             <button
               type="button"
               disabled={busy}
-              onClick={() => run(() => callStrava('DELETE'))}
+              onClick={() => run(() => cfg.call('DELETE'))}
               className="text-[11px] font-bold uppercase text-red-500 hover:text-red-400 disabled:opacity-50"
             >
               Disconnect
@@ -215,16 +240,16 @@ function StravaCard({ userId }) {
         </div>
       ) : configured === false ? (
         <p className="text-[11px] text-slate-400">
-          Strava is not set up on this deployment yet (an administrator needs to add the Strava app credentials).
+          {cfg.label} is not set up on this deployment yet ({cfg.setup}).
         </p>
       ) : (
         <button
           type="button"
           disabled={busy || configured === null}
           onClick={connect}
-          className="px-3 py-2 rounded-xl bg-[#fc4c02] text-white text-[11px] font-bold uppercase tracking-wider disabled:opacity-50"
+          className={`px-3 py-2 rounded-xl ${cfg.buttonCls} text-white text-[11px] font-bold uppercase tracking-wider disabled:opacity-50`}
         >
-          {busy ? 'Redirecting...' : 'Connect with Strava'}
+          {busy ? 'Redirecting...' : `Connect with ${cfg.label}`}
         </button>
       )}
       {syncMsg && !connected && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
@@ -455,7 +480,8 @@ export default function ConnectionsPanel({ userId }) {
         {error && <p className="text-[11px] text-red-500">{error}</p>}
       </div>
 
-      <StravaCard userId={userId} />
+      <OAuthProviderCard userId={userId} provider="strava" />
+      <OAuthProviderCard userId={userId} provider="wahoo" />
     </div>
   )
 }

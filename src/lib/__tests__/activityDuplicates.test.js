@@ -144,3 +144,9 @@ test('buildActivityInsert sets source and external ids', () => {
   assert.equal(icu.external_source, 'intervals')
   assert.equal(icu.external_id, '42')
 })
+
+test('wahoo ranks equal to intervals and above strava', async () => {
+  const { sourcePriority } = await import('../activityDuplicates.js')
+  assert.equal(sourcePriority('wahoo'), sourcePriority('intervals'))
+  assert.ok(sourcePriority('wahoo') > sourcePriority('strava'))
+})

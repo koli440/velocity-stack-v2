@@ -1,5 +1,5 @@
 // src/lib/server/intervalsSync.js
-// Background Intervals.icu / Strava sync for one or more connections (#109, faster backfill follow-up).
+// Background Intervals.icu / Strava / Wahoo sync for one or more connections (#109, faster backfill follow-up).
 //
 // Two cursors per connection:
 //  - forward: last_synced_at. Each run first imports rides newer than it (minus a small overlap), newest first,
@@ -11,6 +11,7 @@
 
 import { createIntervalsProvider } from './intervalsProvider.js'
 import { createStravaProviderForConnection } from './stravaProvider.js'
+import { createWahooProviderForConnection } from './wahooProvider.js'
 import { importActivity, loadImportProfile } from './importActivity.js'
 import { repairStravaActivities, STRAVA_REPAIR_PER_RUN } from './stravaRepair.js'
 import { loadExistingActivityFingerprints } from '../activityDuplicates.js'
@@ -28,14 +29,16 @@ import {
 } from '../syncPlan.js'
 
 export const INTERVALS_CONCURRENCY = 4
+// Each Wahoo import runs the .fit analyzer; the list call (the only API request) is shared.
+export const WAHOO_CONCURRENCY = 2
 // Listings that only contained already-known rides are cheap, but still bounded per run.
 export const MAX_BACKFILL_LISTINGS = 5
 
 // Strava needs the service client (token refresh persists new tokens) and the whole connection row.
 function defaultCreateProvider(args, conn, service, deps = {}) {
-  return conn.provider === 'strava'
-    ? createStravaProviderForConnection(service, conn, { budget: deps.budget })
-    : createIntervalsProvider(args)
+  if (conn.provider === 'strava') return createStravaProviderForConnection(service, conn, { budget: deps.budget })
+  if (conn.provider === 'wahoo') return createWahooProviderForConnection(service, conn)
+  return createIntervalsProvider(args)
 }
 
 /**
@@ -129,7 +132,7 @@ export async function syncConnection(service, conn, deps = {}) {
     const isStrava = provider.source === 'strava'
     const existing = await loadExistingActivityFingerprints(service, conn.user_id)
     const profile = await loadImportProfile(service, conn.user_id)
-    const concurrency = deps.concurrency ?? (isStrava ? 1 : INTERVALS_CONCURRENCY)
+    const concurrency = deps.concurrency ?? (isStrava ? 1 : provider.source === 'wahoo' ? WAHOO_CONCURRENCY : INTERVALS_CONCURRENCY)
 
     const run = async (todo, limit) => {
       const outcome = await processRides(todo, {

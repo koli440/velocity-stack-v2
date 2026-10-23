@@ -18,6 +18,20 @@ export function stravaFlagMessage(flag) {
   return { text, isError }
 }
 
+/** Result of the Wahoo OAuth round trip (?wahoo=<flag>) as [message, isError]. */
+export const WAHOO_FLAGS = {
+  connected: ['Wahoo connected. Importing your rides…', false],
+  denied: ['Wahoo authorization was cancelled.', true],
+  invalid_state: ['The Wahoo connection request expired. Please try again.', true],
+  not_configured: ['Wahoo is not configured on this deployment.', true],
+  error: ['Could not connect Wahoo. Please try again.', true],
+}
+
+export function wahooFlagMessage(flag) {
+  const [text, isError] = WAHOO_FLAGS[flag] || WAHOO_FLAGS.error
+  return { text, isError }
+}
+
 /**
  * Which welcome-card state to show.
  * - 'hidden': feed has activities, or connections are not loaded yet (avoids flashing the connect buttons)

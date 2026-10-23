@@ -150,7 +150,7 @@ export async function insertCurves(supabase, activityId, curves) {
 }
 
 function providerLabel(source) {
-  return source === 'strava' ? 'Strava' : source === 'intervals' ? 'Intervals.icu' : 'Import'
+  return source === 'strava' ? 'Strava' : source === 'intervals' ? 'Intervals.icu' : source === 'wahoo' ? 'Wahoo' : 'Import'
 }
 
 export async function loadImportProfile(supabase, userId) {
