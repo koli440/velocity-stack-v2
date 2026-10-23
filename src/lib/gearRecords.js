@@ -3,7 +3,7 @@
 // Own-account queries filter by owner explicitly (docs/coaching.md); this is never an athlete-context page.
 
 import { parseGear } from './gear.js'
-import { rideTypeHasGear } from './rideType.js'
+import { activityHasGear } from './rideType.js'
 import { resolveGears, resolveSegments } from './gearSegments.js'
 import { scopeToOwner } from './ownerScope.js'
 
@@ -24,7 +24,7 @@ const sameGear = (g, chainring, cog) => g.chainring === chainring && g.cog === c
  * @returns {Array<{ id: string, chainring: number, cog: number, note: string, role: 'primary'|'segment' }>}
  */
 export function gearsUsed(activity) {
-  if (activity?.ride_type && !rideTypeHasGear(activity.ride_type)) return []
+  if (!activityHasGear(activity)) return []
   const gears = resolveGears(activity)
   if (!gears.length) return []
   const inSegments = new Set(resolveSegments(activity).map((s) => s.gear_id))

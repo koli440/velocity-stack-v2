@@ -27,3 +27,12 @@ export function rideTypeHasGear(value) {
 export function isKnownRideType(value) {
   return RIDE_TYPES.some((t) => t.key === value)
 }
+
+/**
+ * THE rule for whether a ride's stored gear counts (activity detail, feed, Gear Architect records, PB prefill):
+ * only track rides use gear. An unset ride type (legacy rows) is road, exactly like the activity detail, so
+ * stored chainring/cog on such a ride is never read as a used gear. Race tag and gear are independent.
+ */
+export function activityHasGear(activity) {
+  return rideTypeHasGear(activity?.ride_type)
+}

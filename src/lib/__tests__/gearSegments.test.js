@@ -99,12 +99,14 @@ test('summarizeSegments covers the whole ride with duration and averages', () =>
 })
 
 test('gearForRange prefills from the dominant segment gear, primary otherwise', () => {
-  const a = { gears: [G1, G2], gear_segments: [{ start_s: 100, end_s: 400, gear_id: 'g2' }] }
+  const a = { ride_type: 'track', gears: [G1, G2], gear_segments: [{ start_s: 100, end_s: 400, gear_id: 'g2' }] }
   assert.deepEqual(gearForRange(a, 150, 350), { chainring: 52, cog: 15 })
   assert.deepEqual(gearForRange(a, 0, 90), { chainring: 58, cog: 14 })
   assert.deepEqual(gearForRange(a), { chainring: 58, cog: 14 })
-  assert.equal(gearForRange({ chainring: null, cog: null }, 0, 10), null)
-  assert.deepEqual(gearForRange({ chainring: 50, cog: 15 }, 0, 10), { chainring: 50, cog: 15 })
+  assert.equal(gearForRange({ ride_type: 'track', chainring: null, cog: null }, 0, 10), null)
+  assert.equal(gearForRange({ ride_type: null, chainring: 58, cog: 14 }, 0, 10), null)
+  assert.equal(gearForRange({ ride_type: 'road', chainring: 58, cog: 14 }, 0, 10), null)
+  assert.deepEqual(gearForRange({ ride_type: 'track', chainring: 50, cog: 15 }, 0, 10), { chainring: 50, cog: 15 })
 })
 
 test('toGearPayload normalises form strings and drops empty rows', () => {
@@ -136,6 +138,6 @@ test('PB Vault prefill uses the segment gear for the effort window', async () =>
   const e = { keyed_by: 'time', start_sec: 110, end_sec: 190, duration_sec: 80 }
   assert.equal(buildPbPrefillFromEffort(e, activity, []).chainring, 54)
   assert.equal(buildPbPrefillFromEffort({ ...e, start_sec: 0, end_sec: 50 }, activity, []).chainring, 50)
-  assert.equal(buildPbPrefillFromEffort(e, { chainring: 48, cog: 16 }, []).cog, 16)
+  assert.equal(buildPbPrefillFromEffort(e, { ride_type: 'track', chainring: 48, cog: 16 }, []).cog, 16)
   assert.equal(buildPbPrefillFromEffort(e, { ...activity, ride_type: 'road' }, []).chainring, null)
 })

@@ -101,7 +101,7 @@ test('matchDisciplineByDistance respects track length bounds', () => {
 test('buildPbPrefillFromEffort maps effort and activity fields', () => {
   const p = buildPbPrefillFromEffort(
     { distance_m: 3995, target_distance_m: 4000, duration_sec: 281.5, avg_power: 410, avg_speed_kmh: 51.2 },
-    { activity_date: '2026-05-01T10:00:00Z', track_id: 't1', tracks: { length_m: 250 }, chainring: 60, cog: 14, name: 'Track night' },
+    { activity_date: '2026-05-01T10:00:00Z', track_id: 't1', tracks: { length_m: 250 }, ride_type: 'track', chainring: 60, cog: 14, name: 'Track night' },
     DISCS
   )
   assert.equal(p.discipline, '4 km IP')

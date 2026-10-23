@@ -16,10 +16,20 @@ test('gearsUsed: primary plus gears referenced by segments, not unused extras', 
   assert.equal(activityUsesGear(a, 60, 14), false)
 })
 
-test('gearsUsed: road rides hide gear, unset type keeps legacy gear', () => {
+test('gearsUsed: only track rides use gear; road race and unset type never count a stored gear', () => {
   assert.deepEqual(gearsUsed(ride({ ride_type: 'road' })), [])
-  assert.equal(activityUsesGear({ chainring: 58, cog: 14, ride_type: null }, 58, 14), true)
+  assert.deepEqual(gearsUsed(ride({ ride_type: 'road', gears: [], gear_segments: [], chainring: 58, cog: 14 })), [])
+  assert.equal(activityUsesGear({ chainring: 58, cog: 14, ride_type: null, is_race: true }, 58, 14), false)
+  assert.equal(activityUsesGear({ chainring: 58, cog: 14, ride_type: 'track', is_race: true }, 58, 14), true)
   assert.deepEqual(gearsUsed({}), [])
+})
+
+test('buildGearRecords: a road race with a stored 58x14 is not a 58x14 record, a track race is', () => {
+  const road = { id: 'r1', activity_date: '2026-06-01', ride_type: 'road', is_race: true, chainring: 58, cog: 14 }
+  const legacy = { id: 'r2', activity_date: '2026-06-02', ride_type: null, is_race: true, chainring: 58, cog: 14 }
+  const track = { id: 'r3', activity_date: '2026-06-03', ride_type: 'track', is_race: true, chainring: 58, cog: 14 }
+  const { raceRecords } = buildGearRecords({ chainring: 58, cog: 14, activities: [road, legacy, track] })
+  assert.deepEqual(raceRecords.map((r) => r.id), ['r3'])
 })
 
 test('selectedGear rejects empty and invalid gears', () => {
