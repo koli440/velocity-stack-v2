@@ -8,7 +8,7 @@ This Privacy Policy explains what personal data VelocityStack ("we", "us", "the 
 **Draft notice:** this text describes how the Service works today. It is a draft prepared for the operator and is not legal advice; it should be reviewed before being relied on.
 
 ## 1. Who is responsible
-The controller of your personal data is **[OPERATOR NAME]**, the operator of VelocityStack. Contact for all privacy questions and requests: **koli440@gmail.com**. Postal address (if you need one): **[OPERATOR ADDRESS]**.
+The controller of your personal data is **Jan Kolář**, an individual based in the Czech Republic, who operates VelocityStack. Contact for all privacy questions and requests: **koli440@gmail.com**.
 
 ## 2. Data we collect
 **Account data**
@@ -103,7 +103,7 @@ Depending on where you live (for example under the GDPR) you have the right to:
 - receive your data in a portable format (you can also download your own original files from the app where offered, and we will provide an export on request);
 - restrict or object to processing based on legitimate interests;
 - withdraw consent at any time, for example by ending coaching, disconnecting an integration, or asking us to delete your account;
-- complain to your local data protection supervisory authority.
+- complain to a data protection supervisory authority. In the Czech Republic this is the Office for Personal Data Protection (Úřad pro ochranu osobních údajů, ÚOOÚ, [uoou.gov.cz](https://uoou.gov.cz)); you may also contact the authority where you live.
 
 To use these rights, email **koli440@gmail.com**. We may need to verify your identity and will respond within one month.
 
@@ -114,4 +114,4 @@ VelocityStack is not intended for people under 16. We do not knowingly collect d
 We may update this policy. The "Last updated" date above shows the latest version. If a change is significant we will tell you in the app (for example in "What's new") or by email before it applies where required.
 
 ## 16. Contact
-**[OPERATOR NAME]**, **[OPERATOR ADDRESS]**, **koli440@gmail.com**.
+Jan Kolář, **koli440@gmail.com**.

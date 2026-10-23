@@ -3,7 +3,7 @@ title: Terms of Service
 description: The terms for using VelocityStack: accounts, your content, coaching, integrations, acceptable use, liability and termination.
 updated: 2027-01-10
 ---
-These Terms of Service ("Terms") govern your use of VelocityStack at velocity-stack.app ("the Service"), operated by **[OPERATOR NAME]** ("we", "us"). Our [Privacy Policy](/privacy) explains how we handle personal data and forms part of these Terms.
+These Terms of Service ("Terms") govern your use of VelocityStack at velocity-stack.app ("the Service"), operated by **Jan Kolář**, an individual ("we", "us"). Our [Privacy Policy](/privacy) explains how we handle personal data and forms part of these Terms.
 
 **Draft notice:** this text is a draft prepared for the operator and is not legal advice; it should be reviewed before being relied on.
 
@@ -68,7 +68,7 @@ You can stop using the Service at any time and ask us to delete your account as 
 We may update these Terms. The "Last updated" date shows the latest version. If a change is significant we will tell you in the app or by email in advance where required. Continuing to use the Service after changes take effect means you accept them; if you do not, stop using the Service and delete your account.
 
 ## 15. Governing law
-These Terms are governed by the laws of **[JURISDICTION]**, and the courts of **[JURISDICTION]** have jurisdiction, without affecting any mandatory consumer protection rights you have in the country where you live.
+These Terms are governed by the laws of the **Czech Republic**, and the courts of the Czech Republic have jurisdiction, without affecting any mandatory consumer protection rights you have in the country where you live.
 
 ## 16. Contact
-**[OPERATOR NAME]**, **[OPERATOR ADDRESS]**, **koli440@gmail.com**.
+Jan Kolář, **koli440@gmail.com**.
