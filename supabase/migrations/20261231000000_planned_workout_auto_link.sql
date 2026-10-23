@@ -16,6 +16,8 @@
 --    re-import cannot undo the unlink. Applies to every unlink path (RPC or direct update).
 --  * An automatic link does not change updated_by / updated_at, so the coach / rider edit stamps stay intact.
 --    It sends no notification.
+--  * The link mode ('auto' / 'keep') lives in planned_link_ctx, writable only by the definer functions, so a client
+--    cannot forge it with set_config().
 --  * Callable by the rider (their own activity) or the service role (background sync); a coach cannot call it.
 
 ALTER TABLE public.planned_workouts ADD COLUMN IF NOT EXISTS link_source TEXT;
@@ -24,18 +26,42 @@ ALTER TABLE public.planned_workouts DROP CONSTRAINT IF EXISTS planned_workouts_l
 ALTER TABLE public.planned_workouts ADD CONSTRAINT planned_workouts_link_source
     CHECK (link_source IS NULL OR link_source IN ('auto', 'manual'));
 
--- The stamp trigger (see 20261206000000_planned_workouts.sql) plus link bookkeeping. The transaction-local
--- setting app.planned_link is 'auto' (auto-link function) or 'keep' (relink on replace); anything else is a
--- user change.
+-- Link mode of the current transaction: 'auto' (auto-link function) or 'keep' (relink on replace); no row =
+-- a user change. Kept in a table nobody but the SECURITY DEFINER functions can touch rather than in a GUC,
+-- because any session can call set_config() and would otherwise be able to forge the mode.
+CREATE UNLOGGED TABLE IF NOT EXISTS public.planned_link_ctx (
+    txid BIGINT PRIMARY KEY,
+    mode TEXT NOT NULL CHECK (mode IN ('auto', 'keep'))
+);
+ALTER TABLE public.planned_link_ctx ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.planned_link_ctx FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.planned_link_mode_set(p_mode TEXT)
+RETURNS VOID
+LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+    INSERT INTO public.planned_link_ctx(txid, mode) VALUES (txid_current(), p_mode)
+    ON CONFLICT (txid) DO UPDATE SET mode = EXCLUDED.mode
+$$;
+CREATE OR REPLACE FUNCTION public.planned_link_mode_clear()
+RETURNS VOID
+LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+    DELETE FROM public.planned_link_ctx WHERE txid = txid_current()
+$$;
+REVOKE ALL ON FUNCTION public.planned_link_mode_set(TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.planned_link_mode_clear() FROM PUBLIC, anon, authenticated;
+-- The definer functions below run as the table owner, so they can call these helpers; callers cannot.
+
+-- The stamp trigger (see 20261206000000_planned_workouts.sql) plus link bookkeeping.
 CREATE OR REPLACE FUNCTION public.planned_workouts_stamp()
 RETURNS TRIGGER
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE
     v_uid UUID := auth.uid();
-    v_mode TEXT := COALESCE(current_setting('app.planned_link', TRUE), '');
+    v_mode TEXT := COALESCE((SELECT c.mode FROM public.planned_link_ctx c WHERE c.txid = txid_current()), '');
 BEGIN
     IF TG_OP = 'UPDATE' AND pg_trigger_depth() > 1 THEN
         -- Referential action (ON DELETE SET NULL of an account / activity): keep everything else.
+        IF NEW.activity_id IS NULL THEN NEW.link_source := NULL; END IF;
         RETURN NEW;
     END IF;
 
@@ -124,14 +150,14 @@ BEGIN
     IF v_uid IS NOT NULL AND v_uid <> v_old_owner THEN
         RAISE EXCEPTION 'Activity not found';
     END IF;
-    PERFORM set_config('app.planned_link', 'keep', TRUE);
+    PERFORM public.planned_link_mode_set('keep');
     UPDATE public.planned_workouts w
        SET activity_id = p_new
      WHERE w.activity_id = p_old
        AND w.rider_id = v_old_owner
        AND NOT EXISTS (SELECT 1 FROM public.planned_workouts x WHERE x.activity_id = p_new);
     GET DIAGNOSTICS v_moved = ROW_COUNT;
-    PERFORM set_config('app.planned_link', '', TRUE);
+    PERFORM public.planned_link_mode_clear();
     RETURN v_moved;
 END;
 $$;
@@ -170,14 +196,14 @@ BEGIN
         RETURN FALSE;
     END IF;
 
-    PERFORM set_config('app.planned_link', 'auto', TRUE);
+    PERFORM public.planned_link_mode_set('auto');
     BEGIN
         UPDATE public.planned_workouts SET activity_id = p_activity WHERE id = w.id;
     EXCEPTION WHEN unique_violation THEN
-        PERFORM set_config('app.planned_link', '', TRUE);
+        PERFORM public.planned_link_mode_clear();
         RETURN FALSE;
     END;
-    PERFORM set_config('app.planned_link', '', TRUE);
+    PERFORM public.planned_link_mode_clear();
     RETURN TRUE;
 END;
 $$;
