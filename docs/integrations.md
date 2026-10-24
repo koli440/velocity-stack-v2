@@ -9,7 +9,7 @@ Data model details: [data-model.md](data-model.md).
   `INTERVALS_CLIENT_SECRET`) and a PKCE S256 challenge; the verifier travels in a short-lived httpOnly cookie. The callback exchanges the
   code (valid 2 minutes) at `POST https://intervals.icu/api/oauth/token`, stores the access token in `connections.access_token`
   (service role only; the token does not expire) and the athlete id from the response, so riders type nothing. API calls use
-  `Authorization: Bearer` with athlete id `0`. Disconnect calls `DELETE /api/v1/disconnect-app`. No webhooks are configured (polling only).
+  `Authorization: Bearer` with athlete id `0`. Disconnect calls `DELETE /api/v1/disconnect-app`. Webhooks (#316) give near-real-time sync, see "Intervals.icu webhooks" below; the 15-minute cron stays the safety net.
   Existing **API-key connections keep working** (athlete id + API key, Basic auth); `connections.auth_method` (`oauth` | `api_key`, non-secret)
   drives the "Reconnect with one click" prompt in Settings. Reconnecting keeps the backfill settings and sync cursor
   (a previously disconnected row resets its backfill via `trg_reset_backfill_on_reconnect`) and drops the legacy API key.
@@ -88,6 +88,7 @@ Strava costs about one read per ride (list item data is reused; only the streams
 | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET` | Strava API app (https://www.strava.com/settings/api). The secret also signs the OAuth state. |
 
 | `INTERVALS_CLIENT_ID`, `INTERVALS_CLIENT_SECRET` | Intervals.icu OAuth app (not a public client; PKCE S256 is sent, "Require PKCE" not yet enabled). The secret also signs the OAuth state. Redirect URI `https://www.velocity-stack.app/api/connections/intervals/callback` (exact match). Without them the API-key form is the only option. |
+| `INTERVALS_WEBHOOK_TOKEN` | Shared secret for `/api/webhooks/intervals`; set the same value as the app's *Webhook Authorization Header* on Intervals.icu. Without it the endpoint answers 503. |
 | `WAHOO_CLIENT_ID`, `WAHOO_CLIENT_SECRET`, `WAHOO_WEBHOOK_TOKEN` | Wahoo API app. The secret also signs the OAuth state; the webhook token authenticates events. Redirect URI `https://www.velocity-stack.app/api/connections/wahoo/callback`, webhook `https://www.velocity-stack.app/api/webhooks/wahoo`. |
 
 Strava app settings: **Authorization Callback Domain** = `www.velocity-stack.app` (the canonical host; the apex `velocity-stack.app` 308-redirects to it).
@@ -95,6 +96,21 @@ The OAuth `redirect_uri` is built from the request host (`src/lib/server/appUrl.
 The webhook subscription (one per Strava app, callback `{app_base_url}/api/webhooks/strava`) is created automatically when
 the first rider connects, or manually with `POST /api/webhooks/strava/subscribe` while signed in. The verify token and
 the cron token live in `public.sync_settings`; `app_base_url` there decides where pg_cron calls.
+
+## Intervals.icu webhooks (#316)
+Configured once on the Intervals.icu *Manage App* page: URL `https://www.velocity-stack.app/api/webhooks/intervals`, the secret from
+`INTERVALS_WEBHOOK_TOKEN`, and the types `ACTIVITY_UPLOADED`, `ACTIVITY_UPDATED`, `ACTIVITY_DELETED`, `CALENDAR_UPDATED`, `APP_SCOPE_CHANGED`
+(not the legacy `CALENDAR_EVENT_*`). No migration or database secret is needed.
+- **Payload**: `{ "secret": "...", "events": [{ "athlete_id": "...", "type": "...", "timestamp": "...", ... }] }`; one POST can carry several
+  events. Authenticity: the body `secret` (as documented in the Intervals.icu API cookbook) or an `Authorization` header (raw or `Bearer`)
+  must equal `INTERVALS_WEBHOOK_TOKEN` (constant-time); otherwise 403. Activity webhooks are not delivered for Strava-sourced rides.
+- **Mapping**: `athlete_id` -> non-disconnected Intervals `connections` row (`external_athlete_id`, with or without the `i` prefix).
+- **Events**: `ACTIVITY_*` make the rider's connection due and trigger `/api/sync/intervals/run` for that user (nothing from the payload is
+  imported directly). `ACTIVITY_DELETED` only triggers a sync: imported rides are never deleted. `CALENDAR_UPDATED` makes the rider due for
+  the planned push cycle (only when auto push is on; echoes of our own `velocity-stack:` events are skipped). `APP_SCOPE_CHANGED` sets an
+  OAuth connection to `error` with a "Reconnect" message unless the payload still lists an `ACTIVITY:` scope.
+- **Reliability**: the endpoint answers 200 quickly (errors are logged, the cron catches up); repeated deliveries are harmless because
+  imports are de-duplicated and triggers only mark the rider due.
 
 ## Planned workouts -> Intervals.icu (`20261208000000_planned_workout_intervals_push.sql`)
 A planned workout can be sent to the rider's Intervals.icu calendar as an event (`POST/PUT/DELETE /api/v1/athlete/{id}/events`,
