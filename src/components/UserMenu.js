@@ -115,6 +115,9 @@ export default function UserMenu({ user, profile, displayName }) {
               <button role="menuitem" onClick={() => go('/dsl-guide')} className={row(false)}>
                 Template syntax guide
               </button>
+              <button role="menuitem" onClick={() => go('/import-help')} className={row(pathname === '/import-help')}>
+                Import .fit from SRM PC8
+              </button>
             </div>
           )}
         </div>

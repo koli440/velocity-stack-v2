@@ -180,7 +180,10 @@ function BulkImportModalInner({
           </div>
           <p className="text-xs text-slate-400">
             Select a .zip export (Strava, Garmin, etc.), individual .fit/.fit.gz files, or
-            multiple at once to bulk-import your full ride history.
+            multiple at once to bulk-import your full ride history.{' '}
+            <a href="/import-help" target="_blank" rel="noopener noreferrer" className="font-bold text-orange-500 hover:underline">
+              How to get .fit files from an SRM PC8
+            </a>
           </p>
 
           {/* Options shared across every file in the batch */}
