@@ -86,9 +86,9 @@ export async function loadExistingActivityFingerprints(supabase, userId) {
   return all
 }
 
-const SOURCE_PRIORITY = { intervals: 3, strava: 2 }
+const SOURCE_PRIORITY = { intervals: 3, wahoo: 3, strava: 2 }
 
-/** Intervals.icu (has the .fit file) > Strava > manual / anything else. Mirrors SQL activity_source_priority(). */
+/** Intervals.icu = Wahoo (both have the .fit file) > Strava > manual / anything else. Mirrors SQL activity_source_priority(). */
 export function sourcePriority(source) {
   return SOURCE_PRIORITY[source] ?? 1
 }

@@ -1,4 +1,4 @@
-# Activity integrations (Strava, Intervals.icu)
+# Activity integrations (Strava, Wahoo, Intervals.icu)
 
 Riders connect a platform once under **Settings → Connections**; new rides then arrive without further action.
 Data model details: [data-model.md](data-model.md).
@@ -7,6 +7,23 @@ Data model details: [data-model.md](data-model.md).
 - **Intervals.icu**: athlete id + API key (validated against Intervals.icu, stored write-only in `public.connections`).
 - **Strava**: OAuth (`activity:read_all`). The authorize endpoint returns a URL with an HMAC-signed, 10-minute state bound
   to the user; the callback stores the tokens server-side with the service role.
+- **Wahoo** (Wahoo Cloud, migration `20270110000000_wahoo.sql`): OAuth (`user_read workouts_read workouts_write plans_write offline_data`), same signed state as Strava
+  (keyed with `WAHOO_CLIENT_SECRET`). Rides arrive as `.fit` files and are analysed with `analyzeFit`, like Intervals.icu. Access tokens last
+  2 h and are refreshed just before an API call (Wahoo revokes the old token only after the new one is used; max 10 live tokens per user). Wahoo's
+  list API has no date filter, so the newest-first listing is paged (binary search for the window start). Webhook `workout_summary` events
+  (`/api/webhooks/wahoo`, verified by `WAHOO_WEBHOOK_TOKEN`) trigger the rider's sync; the 15-minute pg_cron job `wahoo-sync` is the fallback.
+  Wahoo only exposes the rider's own recordings, not third-party workouts. Disconnect calls `DELETE /v1/permissions`.
+- **Planned workout upload to Wahoo** (migration `20270111000000_wahoo_planned_push.sql`, same design as the Intervals push above): a planned
+  ride/track workout becomes a Wahoo *plan* (`POST /v1/plans`, plan JSON 1.0.0 built by `src/lib/wahooPlan.js`: warm-up/cool-down, repeat blocks,
+  `ftp`/watts/rpm/hr/speed targets, FTP from `profiles.ftp_w`) plus a scheduled *workout* (`POST /v1/workouts`, `plan_id`, day at noon UTC) that
+  references it. Needs the `plans_write` and `workouts_write` scopes, so riders who connected earlier must reconnect (the API answers 403 and the
+  UI says so). Manual push/update/remove from the workout dialog (`/api/planned-workouts/:id/wahoo`), opt-in auto push on the Wahoo card
+  (`connections.push_planned_workouts` of the wahoo row, RPC `set_wahoo_push_enabled`) handled by the same 15-minute cron
+  (`/api/planned-workouts/push/run` runs the Intervals cycle, then `runWahooPushCycle`). Mapping/status live in `planned_workout_wahoo_pushes`
+  (own plan/workout ids, claim, hash, tombstones for deleted workouts); records are found again by `plan[external_id]` = `velocity-stack:<workout id>`
+  if a response was lost. Steps Wahoo cannot express (HR %, W/kg, LT1/LT2, zones) are converted with a warning or kept as duration-only steps; workouts
+  without steps are scheduled without a plan. Wahoo only shows a plan on the ELEMNT within 6 days before the workout; the portal's deauthorisation
+  flags can delete upcoming workouts/plans. Rate limits (200/5 min) surface as `rate_limited`. Gym/other disciplines are not sent.
 - **Disconnect** clears all credentials/tokens (Strava access is also deauthorized at Strava) and stops syncing; imported
   rides stay. Revoking the app at Strava is detected via webhook and disconnects automatically.
 - Secrets are never selectable by clients (column grants on `connections` expose only non-secret columns).
@@ -41,7 +58,7 @@ Each card shows a health line (Syncing normally / Sync looks delayed after 60 mi
 ## De-duplication and priority
 - Same external id from the same provider is imported once (unique index).
 - A ride matching an existing one (same user, start time and duration within 5 s, or same `.fit` hash) is not imported again.
-- Priority Intervals.icu > Strava: when both deliver a ride, the Intervals.icu copy is kept (it replaces a Strava copy).
+- Priority Intervals.icu = Wahoo > Strava (a tie keeps the first copy; a Wahoo copy replaces a Strava copy): when both deliver a ride, the Intervals.icu copy is kept (it replaces a Strava copy).
   Manual uploads and bot rides are never replaced or deleted by an import.
 - Deleting a ride on Strava does not delete it in the app.
 
@@ -60,6 +77,8 @@ Strava costs about one read per ride (list item data is reused; only the streams
 |---|---|
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only. Required for background sync, the Strava callback and webhook. Without it the run endpoints return 503. |
 | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET` | Strava API app (https://www.strava.com/settings/api). The secret also signs the OAuth state. |
+
+| `WAHOO_CLIENT_ID`, `WAHOO_CLIENT_SECRET`, `WAHOO_WEBHOOK_TOKEN` | Wahoo API app. The secret also signs the OAuth state; the webhook token authenticates events. Redirect URI `https://www.velocity-stack.app/api/connections/wahoo/callback`, webhook `https://www.velocity-stack.app/api/webhooks/wahoo`. |
 
 Strava app settings: **Authorization Callback Domain** = `www.velocity-stack.app` (the canonical host; the apex `velocity-stack.app` 308-redirects to it).
 The OAuth `redirect_uri` is built from the request host (`src/lib/server/appUrl.js`), so riders should connect via the canonical host. Reaching the app via the `vercel.app` alias still works, but Strava rejects the callback there because the domain does not match.

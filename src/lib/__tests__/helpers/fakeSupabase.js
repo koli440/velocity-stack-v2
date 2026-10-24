@@ -36,7 +36,7 @@ export function fakeSupabase(tables) {
     function run() {
       const rows = db[name]
       if (op === 'insert') {
-        const key = name === 'planned_workout_pushes' ? 'workout_id' : 'id'
+        const key = (name === 'planned_workout_pushes' || name === 'planned_workout_wahoo_pushes') ? 'workout_id' : 'id'
         if (rows.some((r) => r[key] === patch[key])) return { data: null, error: { message: 'duplicate key' } }
         rows.push({ ...patch })
         return { data: [patch], error: null }
@@ -66,4 +66,24 @@ export function fakeEventsClient(over = {}) {
     async remove(id) { calls.push(['remove', id]); if (over.remove) return over.remove(id) },
   }
   return client
+}
+
+// Records calls to the Wahoo plan client; behaviour per method can be overridden.
+export function fakeWahooClient(over = {}) {
+  const calls = []
+  let n = 100
+  const wrap = (name, fallback) => async (...args) => {
+    calls.push([name, ...args])
+    return over[name] ? over[name](...args) : fallback(...args)
+  }
+  return {
+    calls,
+    createPlan: wrap('createPlan', () => String(n++)),
+    updatePlan: wrap('updatePlan', (id) => id),
+    deletePlan: wrap('deletePlan', () => undefined),
+    findPlanByExternalId: wrap('findPlanByExternalId', () => null),
+    createWorkout: wrap('createWorkout', () => String(n++)),
+    updateWorkout: wrap('updateWorkout', (id) => id),
+    deleteWorkout: wrap('deleteWorkout', () => undefined),
+  }
 }

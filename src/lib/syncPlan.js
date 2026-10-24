@@ -74,6 +74,10 @@ export function selectNewRides(rides, existing = [], source = 'intervals') {
 /** Auth failures are fatal (status 'error' until the user reconnects); everything else is retried. */
 export function classifySyncError(err, provider = 'intervals') {
   const status = err?.status
+  if (provider === 'wahoo') {
+    const fatal = err?.fatal === true || status === 401
+    return { fatal, message: String(err?.message || (fatal ? 'Wahoo rejected the connection. Reconnect Wahoo.' : 'Sync failed')).slice(0, 300) }
+  }
   if (provider === 'strava') {
     const fatal = err?.fatal === true || status === 401
     return { fatal, message: fatal ? String(err?.message || 'Strava rejected the connection. Reconnect Strava.').slice(0, 300) : String(err?.message || 'Sync failed').slice(0, 300) }
@@ -85,7 +89,7 @@ export function classifySyncError(err, provider = 'intervals') {
   return { fatal, message }
 }
 
-export const PROVIDER_LABELS = { intervals: 'Intervals.icu', strava: 'Strava' }
+export const PROVIDER_LABELS = { intervals: 'Intervals.icu', strava: 'Strava', wahoo: 'Wahoo' }
 
 /** Connections the cron should process now: active, not attempted recently, least recently tried first.
  *  Credentials: an Intervals api_key or a Strava refresh_token. */

@@ -16,6 +16,7 @@ async function call(url, method, body) {
 
 export const callIntervals = (method, body) => call('/api/connections/intervals', method, body)
 export const callStrava = (method, body) => call('/api/connections/strava', method, body)
+export const callWahoo = (method, body) => call('/api/connections/wahoo', method, body)
 
 /** Starts the Strava OAuth round trip; `returnTo: 'home'` brings the rider back to the dashboard. */
 export async function startStravaAuthorize({ returnTo } = {}) {
@@ -27,7 +28,17 @@ export async function startStravaAuthorize({ returnTo } = {}) {
   window.location.href = data.url
 }
 
-/** Triggers a sync for 'strava' | 'intervals'. Returns { status, data }. */
+/** Starts the Wahoo OAuth round trip; `returnTo: 'home'` brings the rider back to the dashboard. */
+export async function startWahooAuthorize({ returnTo } = {}) {
+  const res = await fetch(`/api/connections/wahoo/authorize${returnTo === 'home' ? '?return=home' : ''}`, {
+    headers: await getAuthHeader(),
+  })
+  const data = await parseJsonResponse(res)
+  if (!res.ok || !data.url) throw new Error(data.error || 'Could not start Wahoo authorization')
+  window.location.href = data.url
+}
+
+/** Triggers a sync for 'strava' | 'intervals' | 'wahoo'. Returns { status, data }. */
 export async function runProviderSync(provider) {
   const res = await fetch(`/api/sync/${provider}/run`, {
     method: 'POST',

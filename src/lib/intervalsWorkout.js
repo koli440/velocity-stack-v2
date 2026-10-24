@@ -62,7 +62,7 @@ function range(lo, hi, suffix) {
 const withSuffix = (text, word) => (text ? `${text} ${word}` : null)
 
 /** [lower, upper] of zone `n` (1-6) as % of FTP under the default zone model; null = open end. */
-function zoneBoundsPctFtp(zone) {
+export function zoneBoundsPctFtp(zone) {
   const [z1, z2, z3, z4, z5] = DEFAULT_ZONE_PCTS
   const b = [z1 * FTP_LT1_FRACTION, z2 * FTP_LT1_FRACTION, z3 * FTP_LT2_FRACTION, z4 * FTP_LT2_FRACTION, z5 * FTP_LT2_FRACTION]
   return [zone <= 1 ? null : b[zone - 2], zone >= 6 ? null : b[zone - 1]]
