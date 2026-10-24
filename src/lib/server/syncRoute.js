@@ -24,7 +24,7 @@ export const TIME_BUDGET_MS = 45000
 const CRON_BATCH = 10
 const COLUMNS =
   'id, provider, user_id, external_athlete_id, api_key, access_token, refresh_token, token_expires_at, backfill_days, status, last_synced_at, last_attempt_at, backfill_cursor, backfill_complete, backfill_imported'
-const CREDENTIAL_COLUMN = { intervals: 'api_key', strava: 'refresh_token', wahoo: 'refresh_token' }
+const CREDENTIAL_COLUMN = { intervals: 'api_key,access_token', strava: 'refresh_token', wahoo: 'refresh_token' }
 
 // Absolute /api/analyze URL on this deployment (a background job has no browser origin).
 export function makeAnalyzeFit(req) {
@@ -124,7 +124,7 @@ export async function handleSyncRequest(req, provider) {
         .select(COLUMNS)
         .eq('provider', provider)
         .eq('status', 'active')
-        .not(credentialColumn, 'is', null)
+        .or(credentialColumn.split(',').map((c) => `${c}.not.is.null`).join(','))
       if (typeof body?.userId === 'string') query = query.eq('user_id', body.userId)
       const { data, error } = await query
         .order('last_attempt_at', { ascending: true, nullsFirst: true })
@@ -150,7 +150,7 @@ export async function handleSyncRequest(req, provider) {
       .eq('provider', provider)
       .maybeSingle()
     if (error) throw error
-    if (!row || row.status === 'disconnected' || !row[credentialColumn]) {
+    if (!row || row.status === 'disconnected' || !credentialColumn.split(',').some((c) => row[c])) {
       return NextResponse.json({ error: `${PROVIDER_LABELS[provider]} is not connected.` }, { status: 400 })
     }
     const wait = manualCooldownRemaining(row.last_attempt_at)

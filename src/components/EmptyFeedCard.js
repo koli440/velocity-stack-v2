@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { callIntervals, startStravaAuthorize, runProviderSync, fetchConnection } from '../lib/connectionsClient'
+import { callIntervals, startStravaAuthorize, startIntervalsAuthorize, runProviderSync, fetchConnection } from '../lib/connectionsClient'
 import { emptyFeedState } from '../lib/emptyFeed'
 import { backfillProgressText, describeSyncResult } from '../lib/syncPlan'
 import { syncHealth } from '../lib/connections'
@@ -84,6 +84,8 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
 
   const connectStrava = () => run(() => startStravaAuthorize({ returnTo: 'home' }))
 
+  const connectIntervalsOAuth = () => run(() => startIntervalsAuthorize({ returnTo: 'home' }))
+
   const connectIntervals = (e) => {
     e.preventDefault()
     return run(async () => {
@@ -135,14 +137,22 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
             </button>
             <button
               type="button"
-              aria-expanded={showIntervals}
-              aria-controls="empty-feed-intervals"
-              onClick={() => setShowIntervals((v) => !v)}
+              disabled={busy}
+              onClick={connectIntervalsOAuth}
               className={`${primaryBtn} bg-slate-900 dark:bg-emerald-500 dark:text-slate-950 hover:opacity-90`}
             >
               Connect Intervals.icu
             </button>
           </div>
+          <button
+            type="button"
+            aria-expanded={showIntervals}
+            aria-controls="empty-feed-intervals"
+            onClick={() => setShowIntervals((v) => !v)}
+            className="text-[11px] text-slate-500 dark:text-slate-400 underline"
+          >
+            Use an Intervals.icu API key instead
+          </button>
 
           {showIntervals && (
             <form id="empty-feed-intervals" onSubmit={connectIntervals} className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-700 p-3">

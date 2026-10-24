@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
 import { getServiceClient } from '../../../../lib/server/connections'
-import { validateIntervalsCredentials } from '../../../../lib/server/intervalsProvider'
+import { validateIntervalsCredentials, revokeIntervalsToken } from '../../../../lib/server/intervalsProvider'
 import { ImportError } from '../../../../lib/server/importErrors'
 import { parseBackfillDays, normalizeIntervalsAthleteId } from '../../../../lib/connections'
 
@@ -74,11 +74,22 @@ export async function PATCH(req) {
   }
 }
 
-// Disconnect: clears the stored credentials and stops syncing.
+// Disconnect: revokes an OAuth token, clears the stored credentials and stops syncing.
 export async function DELETE(req) {
   try {
     const ctx = await authed(req)
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Revoke the OAuth token first (best effort); it is unreadable once the row is cleared.
+    const service = getServiceClient()
+    if (service) {
+      const { data } = await service
+        .from('connections')
+        .select('access_token')
+        .eq('user_id', ctx.user.id)
+        .eq('provider', 'intervals')
+        .maybeSingle()
+      await revokeIntervalsToken(data?.access_token)
+    }
     const { error } = await ctx.supabase.rpc('disconnect_connection', { p_provider: 'intervals' })
     if (error) throw new ImportError(error.message, 500)
     return NextResponse.json({ success: true })

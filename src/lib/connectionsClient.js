@@ -28,6 +28,16 @@ export async function startStravaAuthorize({ returnTo } = {}) {
   window.location.href = data.url
 }
 
+/** Starts the Intervals.icu OAuth round trip; `returnTo: 'home'` brings the rider back to the dashboard. */
+export async function startIntervalsAuthorize({ returnTo } = {}) {
+  const res = await fetch(`/api/connections/intervals/authorize${returnTo === 'home' ? '?return=home' : ''}`, {
+    headers: await getAuthHeader(),
+  })
+  const data = await parseJsonResponse(res)
+  if (!res.ok || !data.url) throw new Error(data.error || 'Could not start Intervals.icu authorization')
+  window.location.href = data.url
+}
+
 /** Starts the Wahoo OAuth round trip; `returnTo: 'home'` brings the rider back to the dashboard. */
 export async function startWahooAuthorize({ returnTo } = {}) {
   const res = await fetch(`/api/connections/wahoo/authorize${returnTo === 'home' ? '?return=home' : ''}`, {
@@ -64,7 +74,7 @@ export async function fetchConnection(userId, provider) {
     .eq('user_id', userId)
     .maybeSingle()
   if (legacy?.intervals_athlete_id && legacy?.intervals_api_key) {
-    return { provider: 'intervals', status: 'active', external_athlete_id: legacy.intervals_athlete_id, backfill_days: DEFAULT_BACKFILL_DAYS }
+    return { provider: 'intervals', status: 'active', auth_method: 'api_key', external_athlete_id: legacy.intervals_athlete_id, backfill_days: DEFAULT_BACKFILL_DAYS }
   }
   return null
 }

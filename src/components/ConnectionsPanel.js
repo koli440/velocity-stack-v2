@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { parseJsonResponse } from '../lib/httpJson'
 import { getAuthHeader } from '../lib/supabase'
-import { callIntervals, callStrava, callWahoo, startStravaAuthorize, startWahooAuthorize, fetchConnection } from '../lib/connectionsClient'
-import { stravaFlagMessage, wahooFlagMessage } from '../lib/emptyFeed'
+import { callIntervals, callStrava, callWahoo, startStravaAuthorize, startWahooAuthorize, startIntervalsAuthorize, fetchConnection } from '../lib/connectionsClient'
+import { stravaFlagMessage, wahooFlagMessage, intervalsFlagMessage } from '../lib/emptyFeed'
 import {
   DEFAULT_BACKFILL_DAYS,
   connectionStatusLabel,
@@ -99,6 +99,18 @@ function OAuthProviderCard({ userId, provider }) {
     load()
   }, [load])
   useBackfillRefresh(conn, load)
+
+  // Result of the Intervals.icu OAuth round trip (?intervals=connected|denied|...), shown once.
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    const flag = url.searchParams.get('intervals')
+    if (!flag) return
+    const { text, isError } = intervalsFlagMessage(flag)
+    if (isError) setError(text)
+    else setSyncMsg(text)
+    url.searchParams.delete('intervals')
+    window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+  }, [])
 
   useEffect(() => {
     fetch(`/api/connections/${provider}`)
@@ -313,6 +325,7 @@ export default function ConnectionsPanel({ userId }) {
       setSyncMsg(describeSyncResult(data))
     })
 
+  const authorize = () => run(() => startIntervalsAuthorize())
   const backfillPayload = (v) => (v === 'full' ? null : Number(v))
   const connected = isConnected(conn)
   const showSummary = connected && !reconnecting
@@ -357,7 +370,7 @@ export default function ConnectionsPanel({ userId }) {
               <p className={`text-[11px] ${conn.status === 'error' ? 'text-red-500' : 'text-amber-500'}`}>
                 {conn.status === 'error' ? 'Sync stopped: ' : 'Last sync issue: '}
                 {conn.last_error}
-                {conn.status === 'error' ? ' Use Reconnect below with a valid API key.' : ' It will retry automatically.'}
+                {conn.status === 'error' ? ' Reconnect with Intervals.icu below.' : ' It will retry automatically.'}
               </p>
             )}
             <div>
@@ -380,6 +393,21 @@ export default function ConnectionsPanel({ userId }) {
               </select>
             </div>
             <p className="text-[11px] text-slate-400">New rides are imported automatically about every 15 minutes.</p>
+            {conn.auth_method === 'api_key' && conn.status !== 'error' && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2 space-y-1">
+                <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                  You are connected with an API key. Reconnect with Intervals.icu in one click: no key to paste, and access can be revoked from your Intervals.icu settings.
+                </p>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={authorize}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider disabled:opacity-50"
+                >
+                  Reconnect with one click
+                </button>
+              </div>
+            )}
             <PlannedPushSetting userId={userId} />
             {syncMsg && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
             <div className="flex items-center gap-4">
@@ -387,10 +415,18 @@ export default function ConnectionsPanel({ userId }) {
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => setReconnecting(true)}
+                  onClick={authorize}
                   className="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider disabled:opacity-50"
                 >
-                  Reconnect
+                  Reconnect with Intervals.icu
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setReconnecting(true)}
+                  className="text-[11px] font-bold uppercase text-slate-500 hover:text-slate-400 disabled:opacity-50"
+                >
+                  Use API key
                 </button>
               )}
               <button
@@ -417,6 +453,18 @@ export default function ConnectionsPanel({ userId }) {
           </div>
         ) : (
           <div className="space-y-2">
+            {!reconnecting && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={authorize}
+                className="px-3 py-2 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider disabled:opacity-50"
+              >
+                Connect with Intervals.icu
+              </button>
+            )}
+            <details open={reconnecting} className="space-y-2">
+              <summary className="cursor-pointer text-[11px] text-slate-400">Use an API key instead</summary>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
@@ -476,6 +524,7 @@ export default function ConnectionsPanel({ userId }) {
                 Cancel
               </button>
             )}
+            </details>
           </div>
         )}
         {error && <p className="text-[11px] text-red-500">{error}</p>}

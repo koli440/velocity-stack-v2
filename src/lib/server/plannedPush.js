@@ -38,7 +38,7 @@ export async function defaultLoadConnection(args) {
 /** Loads the rider's active Intervals connection or throws PushError('not_connected'). */
 async function requireConnection(service, riderId, loadConnection = defaultLoadConnection) {
   const conn = await loadConnection({ supabase: service, userId: riderId, serviceClient: service })
-  if (!conn.apiKey || !conn.athleteId || conn.status !== 'active') {
+  if (!(conn.apiKey || conn.accessToken) || !conn.athleteId || conn.status !== 'active') {
     const message =
       conn.status === 'error'
         ? 'Your Intervals.icu connection needs attention. Reconnect it in Settings → Connections.'
@@ -88,7 +88,7 @@ const safeMessage = (e) => (e instanceof PushError ? e.message : 'Unexpected err
  */
 export async function pushPlannedWorkout({ service, workout, now = Date.now(), makeClient = createIntervalsEventsClient, conn = null, loadConnection }) {
   const connection = conn || (await requireConnection(service, workout.rider_id, loadConnection))
-  const client = makeClient({ athleteId: connection.athleteId, apiKey: connection.apiKey })
+  const client = makeClient({ athleteId: connection.athleteId, apiKey: connection.apiKey, accessToken: connection.accessToken })
   const row = await getPushRow(service, workout.id)
   await claim(service, workout, row, now)
 
@@ -150,7 +150,7 @@ export async function removePlannedWorkoutPush({ service, riderId, workoutId, no
     return { removed: false }
   }
   const conn = await requireConnection(service, riderId, loadConnection)
-  const client = makeClient({ athleteId: conn.athleteId, apiKey: conn.apiKey })
+  const client = makeClient({ athleteId: conn.athleteId, apiKey: conn.apiKey, accessToken: conn.accessToken })
   await claim(service, { id: workoutId, rider_id: riderId }, row, now)
   try {
     const remote = await client.get(row.intervals_event_id)
@@ -274,7 +274,7 @@ export async function runPlannedPushCycle({ service, now = Date.now(), timeBudge
     .eq('provider', 'intervals')
     .eq('status', 'active')
     .eq('push_planned_workouts', true)
-    .not('api_key', 'is', null)
+    .or('api_key.not.is.null,access_token.not.is.null')
     .or(`planned_push_attempt_at.is.null,planned_push_attempt_at.lt.${staleBefore}`)
     .order('planned_push_attempt_at', { ascending: true, nullsFirst: true })
     .limit(RIDERS_PER_RUN)

@@ -32,6 +32,20 @@ export function wahooFlagMessage(flag) {
   return { text, isError }
 }
 
+/** Result of the OAuth round trip (?intervals=<flag>). */
+export const INTERVALS_FLAGS = {
+  connected: ['Intervals.icu connected. Importing your rides…', false],
+  denied: ['Intervals.icu authorization was cancelled.', true],
+  invalid_state: ['The Intervals.icu connection request expired. Please try again.', true],
+  not_configured: ['Intervals.icu OAuth is not configured on this deployment.', true],
+  error: ['Could not connect Intervals.icu. Please try again.', true],
+}
+
+export function intervalsFlagMessage(flag) {
+  const [text, isError] = INTERVALS_FLAGS[flag] || INTERVALS_FLAGS.error
+  return { text, isError }
+}
+
 /**
  * Which welcome-card state to show.
  * - 'hidden': feed has activities, or connections are not loaded yet (avoids flashing the connect buttons)

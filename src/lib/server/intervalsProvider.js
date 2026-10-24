@@ -17,8 +17,49 @@ import { newestFirst, rideTimeMs } from '../syncPlan.js'
 const BASE_URL = 'https://intervals.icu/api/v1'
 const STREAM_TYPES = 'watts,cadence,heartrate,velocity_smooth,latlng,altitude,distance'
 
-export function intervalsAuthHeader(apiKey) {
+/** OAuth tokens use Bearer; legacy API keys use Basic. */
+export function intervalsAuthHeader(apiKey, accessToken) {
+  if (accessToken) return `Bearer ${accessToken}`
   return `Basic ${Buffer.from(`API_KEY:${apiKey}`).toString('base64')}`
+}
+
+/** Athlete id for API paths: "0" resolves to the token's athlete when using OAuth. */
+export function intervalsPathAthlete(athleteId, accessToken) {
+  return accessToken ? '0' : athleteId
+}
+
+/** Exchange an authorization code (valid for 2 minutes) for an access token. */
+export async function exchangeIntervalsCode({ code, codeVerifier, redirectUri, env = process.env, fetchImpl = fetch }) {
+  const body = new URLSearchParams({
+    client_id: String(env.INTERVALS_CLIENT_ID),
+    client_secret: String(env.INTERVALS_CLIENT_SECRET),
+    code,
+    code_verifier: codeVerifier,
+    redirect_uri: redirectUri,
+  })
+  const res = await fetchImpl('https://intervals.icu/api/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+    cache: 'no-store',
+  })
+  if (!res.ok) throw new ImportError(`Intervals.icu token exchange failed (${res.status})`, 502)
+  return res.json()
+}
+
+/** Revoke an OAuth access token (best effort; the connection is dropped locally either way). */
+export async function revokeIntervalsToken(accessToken, fetchImpl = fetch) {
+  if (!accessToken) return false
+  try {
+    const res = await fetchImpl(`${BASE_URL}/disconnect-app`, {
+      method: 'DELETE',
+      headers: { Authorization: intervalsAuthHeader(null, accessToken) },
+      cache: 'no-store',
+    })
+    return res.ok
+  } catch {
+    return false
+  }
 }
 
 export function filterRides(activities) {
@@ -55,13 +96,14 @@ export async function validateIntervalsCredentials({ athleteId, apiKey, fetchImp
 }
 
 /**
- * @param {{ athleteId: string, apiKey: string, fetchImpl?: typeof fetch }} opts
+ * @param {{ athleteId: string, apiKey?: string, accessToken?: string, fetchImpl?: typeof fetch }} opts
  */
-export function createIntervalsProvider({ athleteId, apiKey, fetchImpl = fetch }) {
-  if (!athleteId || !apiKey) {
-    throw new ImportError('Missing Intervals Athlete ID or API Key', 400)
+export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchImpl = fetch }) {
+  if (!athleteId || !(apiKey || accessToken)) {
+    throw new ImportError('Missing Intervals.icu credentials', 400)
   }
-  const headers = { Authorization: intervalsAuthHeader(apiKey) }
+  const headers = { Authorization: intervalsAuthHeader(apiKey, accessToken) }
+  athleteId = intervalsPathAthlete(athleteId, accessToken)
   const get = (url) => fetchImpl(url, { headers, cache: 'no-store' })
 
   return {
