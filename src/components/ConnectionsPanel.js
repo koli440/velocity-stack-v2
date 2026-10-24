@@ -412,6 +412,7 @@ export default function ConnectionsPanel({ userId }) {
             {syncMsg && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
             <div className="flex items-center gap-4">
               {conn.status === 'error' && (
+                <>
                 <button
                   type="button"
                   disabled={busy}
@@ -428,6 +429,7 @@ export default function ConnectionsPanel({ userId }) {
                 >
                   Use API key
                 </button>
+                </>
               )}
               <button
                 type="button"
