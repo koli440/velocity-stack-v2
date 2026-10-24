@@ -173,6 +173,7 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
             <button type="button" onClick={openAdd} className={linkBtn}>Upload .fit</button>
             <button type="button" onClick={openAdd} className={linkBtn}>Import history</button>
+            <Link href="/import-help" className={linkBtn}>Using an SRM PC8?</Link>
             <Link href="/settings" className={linkBtn}>More options in Settings</Link>
           </div>
         </>
