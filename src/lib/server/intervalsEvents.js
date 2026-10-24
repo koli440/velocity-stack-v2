@@ -5,7 +5,7 @@
 // and `fatal` (true = stop pushing for this rider until the key is fixed). The API key and the
 // Authorization header are never put into messages.
 
-import { intervalsAuthHeader } from './intervalsProvider.js'
+import { intervalsAuthHeader, intervalsPathAthlete } from './intervalsProvider.js'
 
 export const INTERVALS_BASE_URL = 'https://intervals.icu/api/v1'
 const TIMEOUT_MS = 15000
@@ -52,10 +52,10 @@ async function failFromResponse(res, action) {
 }
 
 /**
- * @param {{ athleteId: string, apiKey: string, fetchImpl?: typeof fetch, baseUrl?: string }} opts
+ * @param {{ athleteId: string, apiKey?: string, accessToken?: string, fetchImpl?: typeof fetch, baseUrl?: string }} opts
  */
-export function createIntervalsEventsClient({ athleteId, apiKey, fetchImpl = fetch, baseUrl = INTERVALS_BASE_URL }) {
-  const root = `${baseUrl}/athlete/${encodeURIComponent(athleteId)}/events`
+export function createIntervalsEventsClient({ athleteId, apiKey, accessToken, fetchImpl = fetch, baseUrl = INTERVALS_BASE_URL }) {
+  const root = `${baseUrl}/athlete/${encodeURIComponent(intervalsPathAthlete(athleteId, accessToken))}/events`
 
   async function request(method, url, body, action) {
     let res
@@ -63,7 +63,7 @@ export function createIntervalsEventsClient({ athleteId, apiKey, fetchImpl = fet
       res = await fetchImpl(url, {
         method,
         headers: {
-          Authorization: intervalsAuthHeader(apiKey),
+          Authorization: intervalsAuthHeader(apiKey, accessToken),
           Accept: 'application/json',
           ...(body ? { 'Content-Type': 'application/json' } : {}),
         },

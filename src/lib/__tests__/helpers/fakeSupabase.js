@@ -23,7 +23,7 @@ export function fakeSupabase(tables) {
         const parts = expr.split(/,(?=[a-z_]+\.)/).map((p) => {
           const [c, o, ...rest] = p.split('.')
           const v = rest.join('.')
-          return (r) => (o === 'is' ? (r[c] ?? null) === null : o === 'lt' ? (r[c] ?? null) !== null && r[c] < v : false)
+          return (r) => (o === 'not' ? (r[c] ?? null) !== null : o === 'is' ? (r[c] ?? null) === null : o === 'lt' ? (r[c] ?? null) !== null && r[c] < v : false)
         })
         filters.push((r) => parts.some((f) => f(r)))
         return q

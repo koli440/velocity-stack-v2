@@ -38,7 +38,7 @@ export async function POST(req) {
 
     // Credentials always come from the caller's own connection (never the request body).
     const conn = await loadIntervalsConnection({ supabase, userId: user.id })
-    const provider = createIntervalsProvider({ athleteId: conn.athleteId, apiKey: conn.apiKey })
+    const provider = createIntervalsProvider({ athleteId: conn.athleteId, apiKey: conn.apiKey, accessToken: conn.accessToken })
     const report = async (error) => {
       try {
         await supabase.rpc('record_connection_result', { p_provider: 'intervals', p_error: error })

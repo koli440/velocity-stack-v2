@@ -16,7 +16,7 @@ export function getServiceClient() {
 /**
  * Resolve a user's Intervals credentials + backfill window.
  * @param {{ supabase: any, userId: string, serviceClient?: any }} opts supabase = request-scoped (RLS) client
- * @returns {Promise<{ athleteId: string|null, apiKey: string|null, backfillDays: number|null, status: string|null, source: 'connections'|'profile_secrets'|'none' }>}
+ * @returns {Promise<{ athleteId: string|null, apiKey: string|null, accessToken: string|null, backfillDays: number|null, status: string|null, source: 'connections'|'profile_secrets'|'none' }>}
  */
 export async function loadIntervalsConnection({ supabase, userId, serviceClient = getServiceClient() }) {
   let backfillDays = DEFAULT_BACKFILL_DAYS
@@ -25,18 +25,18 @@ export async function loadIntervalsConnection({ supabase, userId, serviceClient 
   if (serviceClient) {
     const { data } = await serviceClient
       .from('connections')
-      .select('external_athlete_id, api_key, backfill_days, status')
+      .select('external_athlete_id, api_key, access_token, backfill_days, status')
       .eq('user_id', userId)
       .eq('provider', 'intervals')
       .maybeSingle()
     if (data) {
       backfillDays = data.backfill_days
       status = data.status
-      if (data.status !== 'disconnected' && data.external_athlete_id && data.api_key) {
-        return { athleteId: data.external_athlete_id, apiKey: data.api_key, backfillDays, status, source: 'connections' }
+      if (data.status !== 'disconnected' && data.external_athlete_id && (data.api_key || data.access_token)) {
+        return { athleteId: data.external_athlete_id, apiKey: data.api_key, accessToken: data.access_token, backfillDays, status, source: 'connections' }
       }
       if (data.status === 'disconnected') {
-        return { athleteId: null, apiKey: null, backfillDays, status, source: 'none' }
+        return { athleteId: null, apiKey: null, accessToken: null, backfillDays, status, source: 'none' }
       }
     }
   } else {
@@ -62,10 +62,11 @@ export async function loadIntervalsConnection({ supabase, userId, serviceClient 
     return {
       athleteId: secrets.intervals_athlete_id,
       apiKey: secrets.intervals_api_key,
+      accessToken: null,
       backfillDays,
       status,
       source: 'profile_secrets',
     }
   }
-  return { athleteId: null, apiKey: null, backfillDays, status, source: 'none' }
+  return { athleteId: null, apiKey: null, accessToken: null, backfillDays, status, source: 'none' }
 }

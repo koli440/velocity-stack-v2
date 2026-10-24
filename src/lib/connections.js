@@ -6,7 +6,7 @@ export const MAX_BACKFILL_DAYS = 36500
 
 // Non-secret columns clients may select from public.connections.
 export const CONNECTION_PUBLIC_COLUMNS =
-  'id, provider, external_athlete_id, status, last_error, last_synced_at, backfill_days, backfill_cursor, backfill_complete, backfill_imported, backfill_total'
+  'id, provider, external_athlete_id, status, last_error, last_synced_at, backfill_days, backfill_cursor, backfill_complete, backfill_imported, backfill_total, auth_method'
 
 /**
  * Validate a backfill setting. `undefined` => default (30), `null`/'full' => full history (null).

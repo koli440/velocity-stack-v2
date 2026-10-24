@@ -84,7 +84,7 @@ export function classifySyncError(err, provider = 'intervals') {
   }
   const fatal = status === 401 || status === 403 || status === 404
   const message = fatal
-    ? 'Intervals.icu rejected the API key. Reconnect with a valid key.'
+    ? 'Intervals.icu rejected the credentials. Reconnect Intervals.icu in Settings.'
     : String(err?.message || 'Sync failed').slice(0, 300)
   return { fatal, message }
 }
@@ -96,7 +96,7 @@ export const PROVIDER_LABELS = { intervals: 'Intervals.icu', strava: 'Strava', w
 export function pickDueConnections(rows, { now = new Date(), minIntervalS = CRON_MIN_INTERVAL_S, limit = 10 } = {}) {
   const cutoff = now.getTime() - minIntervalS * 1000
   return (rows || [])
-    .filter((r) => r.status === 'active' && (r.api_key || r.refresh_token) && r.external_athlete_id)
+    .filter((r) => r.status === 'active' && (r.api_key || r.access_token || r.refresh_token) && r.external_athlete_id)
     .filter((r) => !r.last_attempt_at || new Date(r.last_attempt_at).getTime() <= cutoff)
     .sort((a, b) => (a.last_attempt_at ? new Date(a.last_attempt_at).getTime() : 0) - (b.last_attempt_at ? new Date(b.last_attempt_at).getTime() : 0))
     .slice(0, limit)

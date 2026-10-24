@@ -4,7 +4,16 @@ Riders connect a platform once under **Settings → Connections**; new rides the
 Data model details: [data-model.md](data-model.md).
 
 ## Connect / disconnect
-- **Intervals.icu**: athlete id + API key (validated against Intervals.icu, stored write-only in `public.connections`).
+- **Intervals.icu** (migration `20270112000000_intervals_oauth.sql`): OAuth2 with scopes `ACTIVITY:READ,CALENDAR:WRITE`
+  (`ACTIVITY:WRITE` is not needed). `/api/connections/intervals/authorize` returns a URL with the HMAC-signed state (keyed with
+  `INTERVALS_CLIENT_SECRET`) and a PKCE S256 challenge; the verifier travels in a short-lived httpOnly cookie. The callback exchanges the
+  code (valid 2 minutes) at `POST https://intervals.icu/api/oauth/token`, stores the access token in `connections.access_token`
+  (service role only; the token does not expire) and the athlete id from the response, so riders type nothing. API calls use
+  `Authorization: Bearer` with athlete id `0`. Disconnect calls `DELETE /api/v1/disconnect-app`. No webhooks are configured (polling only).
+  Existing **API-key connections keep working** (athlete id + API key, Basic auth); `connections.auth_method` (`oauth` | `api_key`, non-secret)
+  drives the "Reconnect with one click" prompt in Settings. Reconnecting keeps the backfill settings and sync cursor
+  (a previously disconnected row resets its backfill via `trg_reset_backfill_on_reconnect`) and drops the legacy API key.
+  The API-key form remains available as a fallback.
 - **Strava**: OAuth (`activity:read_all`). The authorize endpoint returns a URL with an HMAC-signed, 10-minute state bound
   to the user; the callback stores the tokens server-side with the service role.
 - **Wahoo** (Wahoo Cloud, migration `20270110000000_wahoo.sql`): OAuth (`user_read workouts_read workouts_write plans_write offline_data`), same signed state as Strava
@@ -78,6 +87,7 @@ Strava costs about one read per ride (list item data is reused; only the streams
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only. Required for background sync, the Strava callback and webhook. Without it the run endpoints return 503. |
 | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET` | Strava API app (https://www.strava.com/settings/api). The secret also signs the OAuth state. |
 
+| `INTERVALS_CLIENT_ID`, `INTERVALS_CLIENT_SECRET` | Intervals.icu OAuth app (not a public client; PKCE S256 is sent, "Require PKCE" not yet enabled). The secret also signs the OAuth state. Redirect URI `https://www.velocity-stack.app/api/connections/intervals/callback` (exact match). Without them the API-key form is the only option. |
 | `WAHOO_CLIENT_ID`, `WAHOO_CLIENT_SECRET`, `WAHOO_WEBHOOK_TOKEN` | Wahoo API app. The secret also signs the OAuth state; the webhook token authenticates events. Redirect URI `https://www.velocity-stack.app/api/connections/wahoo/callback`, webhook `https://www.velocity-stack.app/api/webhooks/wahoo`. |
 
 Strava app settings: **Authorization Callback Domain** = `www.velocity-stack.app` (the canonical host; the apex `velocity-stack.app` 308-redirects to it).

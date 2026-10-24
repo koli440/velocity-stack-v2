@@ -128,7 +128,7 @@ export async function syncConnection(service, conn, deps = {}) {
   let progress = null // backfill progress to persist, set when the backfill phase ran
 
   try {
-    const provider = await createProvider({ athleteId: conn.external_athlete_id, apiKey: conn.api_key }, conn, service, deps)
+    const provider = await createProvider({ athleteId: conn.external_athlete_id, apiKey: conn.api_key, accessToken: conn.access_token }, conn, service, deps)
     const isStrava = provider.source === 'strava'
     const existing = await loadExistingActivityFingerprints(service, conn.user_id)
     const profile = await loadImportProfile(service, conn.user_id)
