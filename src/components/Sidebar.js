@@ -114,7 +114,7 @@ export default function Sidebar({
           <aside
             data-testid="sidebar-drawer"
             aria-hidden={!isOpen}
-            className={`fixed top-0 left-0 z-[70] h-dvh w-64 max-w-[85vw] overflow-y-auto flex flex-col justify-between p-5 bg-white dark:bg-surface-darkCard border-r border-slate-200 dark:border-surface-darkBorder shadow-2xl transition-transform duration-300 ease-in-out ${
+            className={`fixed top-0 left-0 z-[70] h-dvh w-64 max-w-[85vw] overflow-y-auto flex flex-col justify-between p-5 glass-popover bg-white dark:bg-surface-darkCard border-r border-slate-200 dark:border-surface-darkBorder shadow-2xl transition-[transform,visibility] duration-300 ease-in-out ${
               isOpen ? 'translate-x-0' : '-translate-x-full invisible'
             }`}
           >
