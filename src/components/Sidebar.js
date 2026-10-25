@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import Portal from './Portal'
 import { NAV_ITEMS } from '../lib/navigation'
 import { parseCoachPath, sidebarItems, isSidebarItemActive, isContextNavActive, navHref, logoHref, chromeVisibility } from '../lib/coachContext'
 import Icon from './Icon'
@@ -28,22 +30,20 @@ export default function Sidebar({
         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'
     }`
 
-  return (
-    <>
-      {/* 1. Backdrop for mobile view */}
-      {isOpen && (
-        <div
-          onClick={onClose}
-          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs md:hidden animate-fade-in"
-        />
-      )}
+  // Close the drawer on navigation and on Escape.
+  useEffect(() => {
+    if (isOpen && onClose) onClose()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
 
-      {/* 2. The panel itself */}
-      <aside
-        className={`fixed md:sticky top-0 left-0 z-50 h-screen w-64 shrink-0 flex flex-col justify-between p-5 glass-nav bg-white dark:bg-surface-darkCard border-r border-slate-200 dark:border-surface-darkBorder transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        }`}
-      >
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e) => { if (e.key === 'Escape' && onClose) onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isOpen, onClose])
+
+  const panel = (mobile) => (
         <div className="space-y-6">
           {/* Logo & close icon for mobile */}
           <div className="flex items-center justify-between px-2">
@@ -59,13 +59,15 @@ export default function Sidebar({
               </span>
             </div>
 
-            {/* Close icon visible only on mobile */}
-            <button
-              onClick={onClose}
-              className="md:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-1"
-            >
-              <Icon name="close" size={18} />
-            </button>
+            {mobile && (
+              <button
+                onClick={onClose}
+                aria-label="Close navigation menu"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-1"
+              >
+                <Icon name="close" size={18} />
+              </button>
+            )}
           </div>
 
           {/* Navigation */}
@@ -89,8 +91,37 @@ export default function Sidebar({
             )}
           </nav>
         </div>
+  )
 
+  return (
+    <>
+      {/* Persistent sidebar from lg (1024px) up */}
+      <aside className="hidden lg:flex sticky top-0 left-0 z-50 h-screen w-64 shrink-0 flex-col justify-between p-5 glass-nav bg-white dark:bg-surface-darkCard border-r border-slate-200 dark:border-surface-darkBorder">
+        {panel(false)}
       </aside>
+
+      {/* Mobile/tablet drawer, portalled to <body> so no ancestor (sticky header, glass
+          backdrop-filter, transforms) can clip it or become its containing block. */}
+      <Portal>
+        <div className="lg:hidden">
+          {isOpen && (
+            <div
+              onClick={onClose}
+              data-testid="sidebar-backdrop"
+              className="fixed inset-0 z-[60] bg-slate-950/60 animate-fade-in"
+            />
+          )}
+          <aside
+            data-testid="sidebar-drawer"
+            aria-hidden={!isOpen}
+            className={`fixed top-0 left-0 z-[70] h-dvh w-64 max-w-[85vw] overflow-y-auto flex flex-col justify-between p-5 bg-white dark:bg-surface-darkCard border-r border-slate-200 dark:border-surface-darkBorder shadow-2xl transition-transform duration-300 ease-in-out ${
+              isOpen ? 'translate-x-0' : '-translate-x-full invisible'
+            }`}
+          >
+            {panel(true)}
+          </aside>
+        </div>
+      </Portal>
     </>
   )
 }

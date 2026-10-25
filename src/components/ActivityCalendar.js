@@ -203,8 +203,8 @@ function RaceChip({ race, onOpen }) {
 function PlannedTime({ summary }) {
   const pct = summary.plannedDurationS > 0 ? Math.min(100, Math.round((summary.durationS / summary.plannedDurationS) * 100)) : 0
   return (
-    <div className="col-span-3 md:col-span-1 space-y-1" data-testid="week-planned-time" data-partial={summary.plannedPartial ? 'true' : 'false'}>
-      <div className="text-[10px] font-bold text-sky-700 dark:text-sky-300 text-center md:text-left">
+    <div className="col-span-3 lg:col-span-1 space-y-1" data-testid="week-planned-time" data-partial={summary.plannedPartial ? 'true' : 'false'}>
+      <div className="text-[10px] font-bold text-sky-700 dark:text-sky-300 text-center lg:text-left">
         {summary.plannedDurationS > 0
           ? `planned ${formatDuration(summary.plannedDurationS)} h${summary.plannedPartial ? '+' : ''}`
           : 'planned time unknown'}
@@ -221,34 +221,34 @@ function PlannedTime({ summary }) {
 
 function WeekSummary({ summary }) {
   const stat = (value, label) => (
-    <div className="text-center md:text-left">
-      <b className="block text-xl md:text-2xl font-black leading-tight text-emerald-700 dark:text-brand-neon">{value}</b>
+    <div className="text-center lg:text-left">
+      <b className="block text-xl lg:text-2xl font-black leading-tight text-emerald-700 dark:text-brand-neon">{value}</b>
       <span className="text-[10px] uppercase tracking-widest font-bold text-slate-600 dark:text-slate-300">{label}</span>
     </div>
   )
   return (
     <div
-      className="rounded-xl border-2 border-emerald-500/50 bg-emerald-500/10 dark:bg-emerald-500/15 p-3 grid grid-cols-3 md:grid-cols-1 gap-2 md:content-center"
+      className="rounded-xl border-2 border-emerald-500/50 bg-emerald-500/10 dark:bg-emerald-500/15 p-3 grid grid-cols-3 lg:grid-cols-1 gap-2 lg:content-center"
       aria-label="Week summary"
     >
       {stat(`${formatDuration(summary.durationS)} h`, 'Time')}
       {stat(formatKm(summary.distanceM), 'Distance')}
       {stat(summary.count, summary.count === 1 ? 'Activity' : 'Activities')}
       {summary.raceActivityCount > 0 && (
-        <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 text-center md:text-left" data-testid="week-race-activities">
+        <span className="col-span-3 lg:col-span-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 text-center lg:text-left" data-testid="week-race-activities">
           <Icon name={CALENDAR_ICONS.raceRidden} size={12} /> {summary.raceActivityCount} {summary.raceActivityCount === 1 ? 'race' : 'races'} ridden
         </span>
       )}
       {summary.plannedCount > 0 && <PlannedTime summary={summary} />}
       {summary.races?.length > 0 && (
-        <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-rose-600 dark:text-rose-300 text-center md:text-left" data-testid="week-races">
+        <span className="col-span-3 lg:col-span-1 text-[10px] font-bold text-rose-600 dark:text-rose-300 text-center lg:text-left" data-testid="week-races">
           {summary.races.map((r, i) => (
             <span key={r.id ?? i}>{i > 0 && ' · '}<Icon name={CALENDAR_ICONS.race} size={12} /> {r.name} ({r.priority})</span>
           ))}
         </span>
       )}
       {summary.plannedCount > 0 && (
-        <span className="col-span-3 md:col-span-1 text-[10px] font-bold text-sky-600 dark:text-sky-300 text-center md:text-left">
+        <span className="col-span-3 lg:col-span-1 text-[10px] font-bold text-sky-600 dark:text-sky-300 text-center lg:text-left">
           {summary.plannedCount} planned
         </span>
       )}
@@ -493,12 +493,12 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
       )}
 
       <div className={`space-y-2 ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
-        <div className="hidden md:grid grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5 text-[10px] uppercase tracking-widest font-bold text-slate-400">
+        <div className="hidden lg:grid grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5 text-[10px] uppercase tracking-widest font-bold text-slate-400">
           {weekdayLabels.map((l, i) => <div key={i} className="px-1">{l}</div>)}
           <div className="px-1">Week total</div>
         </div>
         {rows.map((row, ri) => (
-          <div key={ri} className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5">
+          <div key={ri} className="grid grid-cols-1 lg:grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5">
             {row.cells.map((cell) => {
               const hideOnMobile = !isShownOnMobile(cell)
               const slimOnMobile = isEmptyDay(cell)
@@ -507,7 +507,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                   key={cell.key}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => dropOnDay(e, cell.date)}
-                  className={`rounded-xl border p-1.5 ${slimOnMobile ? 'min-h-[1.75rem] py-0.5 opacity-80 md:py-1.5 md:opacity-100' : 'min-h-[3rem]'} md:min-h-[6.5rem] space-y-1 ${hideOnMobile ? 'hidden md:block' : ''} ${
+                  className={`rounded-xl border p-1.5 ${slimOnMobile ? 'min-h-[1.75rem] py-0.5 opacity-80 lg:py-1.5 lg:opacity-100' : 'min-h-[3rem]'} lg:min-h-[6.5rem] space-y-1 ${hideOnMobile ? 'hidden lg:block' : ''} ${
                     cell.isToday
                       ? 'border-emerald-500 bg-emerald-500/5'
                       : 'border-slate-200 dark:border-slate-800'
@@ -515,8 +515,8 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                 >
                   <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
                     <span>
-                      <span className="md:hidden">{formatDate(cell.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
-                      <span className="hidden md:inline">{cell.date.getDate()}</span>
+                      <span className="lg:hidden">{formatDate(cell.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                      <span className="hidden lg:inline">{cell.date.getDate()}</span>
                     </span>
                     <span className="flex items-center">
                     <button
