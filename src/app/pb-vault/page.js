@@ -15,6 +15,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { formatTime, formatDate } from '../../lib/pbVault'
+import { timeDomain, formatTimeTick } from '../../lib/pbChartDomain'
 import AddPbModal from '../../components/AddPbModal'
 import Icon from '../../components/Icon'
 
@@ -182,7 +183,7 @@ export default function PbVaultPage() {
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fontSize: 11 }} />
+                    <YAxis domain={timeDomain(chartData.map((d) => d.timeSeconds)) || ['auto', 'auto']} tickFormatter={formatTimeTick} tick={{ fontSize: 11 }} label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fontSize: 11 }} />
                     <Tooltip />
                     <Line
                       type="monotone"
