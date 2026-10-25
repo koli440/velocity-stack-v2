@@ -4,7 +4,7 @@ import { parseFrontmatter } from './news.js'
 import { parseMarkdown } from './markdownLite.js'
 
 export const LEGAL_SLUGS = ['privacy', 'terms']
-export const SITE_URL = 'https://www.velocity-stack.app'
+export { SITE_URL } from './seo.js'
 
 export const isLegalPath = (pathname) => LEGAL_SLUGS.some((s) => pathname === `/${s}` || pathname === `/${s}/`)
 

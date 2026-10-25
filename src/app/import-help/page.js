@@ -1,8 +1,9 @@
 import Icon from '../../components/Icon'
 
 export const metadata = {
-  title: 'Get .fit files from your SRM PC8 | VelocityStack',
+  title: 'Get .fit files from your SRM PC8',
   description: 'How to copy ride files off an SRM PowerControl 8 head unit and import them in bulk.',
+  alternates: { canonical: '/import-help' },
 }
 
 const CARD = 'glass-dense rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4'

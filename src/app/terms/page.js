@@ -6,7 +6,7 @@ const doc = loadLegal('terms')
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'Terms of Service | VelocityStack',
+  title: 'Terms of Service',
   description: doc.description,
   alternates: { canonical: '/terms' },
   robots: { index: true, follow: true },

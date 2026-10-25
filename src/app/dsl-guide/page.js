@@ -9,8 +9,9 @@ import {
 import Icon from '../../components/Icon'
 
 export const metadata = {
-  title: 'DSL Syntax Guide | VelocityStack',
+  title: 'DSL Syntax Guide',
   description: 'How to write interval templates with the VelocityStack interval DSL.',
+  alternates: { canonical: '/dsl-guide' },
 }
 
 const CARD = 'glass-dense rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4'

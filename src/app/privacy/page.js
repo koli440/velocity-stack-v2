@@ -6,7 +6,7 @@ const doc = loadLegal('privacy')
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'Privacy Policy | VelocityStack',
+  title: 'Privacy Policy',
   description: doc.description,
   alternates: { canonical: '/privacy' },
   robots: { index: true, follow: true },

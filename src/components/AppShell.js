@@ -14,6 +14,7 @@ import OnboardingProvider from './OnboardingProvider'
 import { PROFILE_UPDATED_EVENT } from '../lib/navigation'
 import { parseCoachPath } from '../lib/coachContext'
 import { isLegalPath } from '../lib/legal'
+import { AuthStateContext } from './AuthState'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
 
 export default function AppShell({ children }) {
@@ -146,6 +147,17 @@ export default function AppShell({ children }) {
     )
   }
 
+  if (checkingAuth && pathname === '/') {
+    // The landing section must be in the initial HTML for crawlers.
+    return (
+      <AuthStateContext.Provider value={{ checking: true, user: null }}>
+        <main className="min-h-screen bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100 px-4">
+          {children}
+        </main>
+      </AuthStateContext.Provider>
+    )
+  }
+
   if (checkingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-surface-dark text-slate-500 font-bold text-xs uppercase tracking-widest">
@@ -158,6 +170,7 @@ export default function AppShell({ children }) {
   const ownContext = !parseCoachPath(pathname).riderId
 
   return (
+    <AuthStateContext.Provider value={{ checking: false, user }}>
     <OnboardingProvider userId={user?.id} enabled={!!user && ownContext}>
     <div className="app-shell-root flex min-h-screen bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
       <AppBackground />
@@ -189,5 +202,6 @@ export default function AppShell({ children }) {
       </div>
     </div>
     </OnboardingProvider>
+    </AuthStateContext.Provider>
   )
 }
