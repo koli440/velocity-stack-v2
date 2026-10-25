@@ -72,16 +72,37 @@ const defaultFetchRaces = (args) => fetchRacesInRange(supabase, args)
 
 const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike' }
 
+// Shared stacked layout: meta line (icon, label, right-aligned extras), name on its own line, wrapping stats.
+function ChipBody({ icon, iconClass, label, extras, name, stats }) {
+  const items = stats.filter(Boolean)
+  return (
+    <>
+      <span className="flex items-center gap-1 min-w-0 text-[9px] font-bold uppercase tracking-wide opacity-80">
+        <Icon name={icon} size={12} className={`shrink-0 ${iconClass || ''}`} />
+        <span className="truncate">{label}</span>
+        {extras && <span className="ml-auto flex items-center gap-1 shrink-0">{extras}</span>}
+      </span>
+      <span className="block mt-0.5 text-xs font-bold leading-snug break-words line-clamp-2" data-testid="calendar-chip-name">{name}</span>
+      {items.length > 0 && (
+        <span className="mt-0.5 flex flex-wrap gap-x-1.5 text-[10px] font-semibold opacity-80" data-testid="calendar-chip-stats">
+          {items.map((t, i) => <span key={i} className={i === 0 ? 'font-bold' : undefined}>{t}</span>)}
+        </span>
+      )}
+    </>
+  )
+}
+
 function EventChip({ event, race, returnTo }) {
   const { riderId } = parseCoachPath(usePathname())
   const planned = event.kind === 'planned'
+  const pushed = event.pushState && event.pushState !== 'not_pushed'
   return (
     <Link
       href={withReturnTo(contextualHref(event.href, riderId), returnTo)}
       data-testid={race ? 'calendar-race-activity' : undefined}
       data-race-tag={event.isRace ? 'true' : undefined}
       title={[race ? `${race.name} · ${RACE_PRIORITY_LABELS[race.priority]}` : null, event.isRace ? 'Race' : null].filter(Boolean).join(' · ') || undefined}
-      className={`block rounded-lg px-1.5 py-1 text-[11px] leading-tight border transition hover:border-emerald-500 ${event.isRace ? 'border-l-4 border-l-amber-500' : ''} ${
+      className={`block rounded-lg px-1.5 py-1 text-[11px] leading-tight border transition hover:border-emerald-500 text-slate-900 dark:text-white ${event.isRace ? 'border-l-4 border-l-amber-500' : ''} ${
         race
           ? RACE_PRIORITY_STYLES[race.priority]
           : planned
@@ -89,25 +110,23 @@ function EventChip({ event, race, returnTo }) {
             : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60'
       }`}
     >
-      <span className="flex items-center gap-1 font-bold text-slate-900 dark:text-white min-w-0">
-        {race
-          ? <Icon name={CALENDAR_ICONS.race} size={12} className="shrink-0 text-rose-500" />
-          : <Icon name={DISCIPLINE_ICON[event.discipline] || 'bike'} size={12} className="shrink-0 text-emerald-600 dark:text-brand-neon" />}
-        <span className="truncate">{race ? `${race.name} (${race.priority})` : event.title}</span>
-        {event.isRace && (
-          <RaceBadge testId="calendar-race-tag" size="xs" className="ml-auto" />
+      <ChipBody
+        icon={race ? CALENDAR_ICONS.race : DISCIPLINE_ICON[event.discipline] || 'bike'}
+        iconClass={race ? 'text-rose-500' : 'text-emerald-600 dark:text-brand-neon'}
+        label={race ? `Race · ${race.priority}` : planned ? 'Planned' : 'Ride'}
+        extras={(event.isRace || pushed) && (
+          <>
+            {event.isRace && <RaceBadge testId="calendar-race-tag" size="xs" />}
+            {pushed && (
+              <span aria-label={PUSH_STATE_LABELS[event.pushState]} data-testid="calendar-planned-push" data-state={event.pushState} className="shrink-0">
+                <Icon name={PUSH_STATE_ICONS[event.pushState]} size={12} />
+              </span>
+            )}
+          </>
         )}
-        {event.pushState && event.pushState !== 'not_pushed' && (
-          <span aria-label={PUSH_STATE_LABELS[event.pushState]} data-testid="calendar-planned-push" data-state={event.pushState} className="ml-auto shrink-0">
-            <Icon name={PUSH_STATE_ICONS[event.pushState]} size={12} />
-          </span>
-        )}
-      </span>
-      <span className="block text-slate-500 dark:text-slate-400 truncate">
-        {[event.distanceM ? formatKm(event.distanceM) : null, event.durationS ? formatDuration(event.durationS) : null, event.metric?.value]
-          .filter(Boolean)
-          .join(' · ')}
-      </span>
+        name={race ? race.name : event.title}
+        stats={[event.distanceM ? formatKm(event.distanceM) : null, event.durationS ? formatDuration(event.durationS) : null, event.metric?.value]}
+      />
     </Link>
   )
 }
@@ -128,13 +147,17 @@ function PlannedChip({ event, onOpen }) {
       title={`${event.title} · ${PLANNED_STATUS_LABELS[event.status]}${event.pushState && event.pushState !== 'not_pushed' ? ` · ${PUSH_STATE_LABELS[event.pushState]}` : ''}`}
       className={`block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight border cursor-grab hover:border-emerald-500 transition ${STATUS_STYLES[event.status]}`}
     >
-      <span className="flex items-center gap-1 font-bold min-w-0">
-        <Icon name={PLANNED_STATUS_ICONS[event.status]} size={12} className="shrink-0" />
-        <span className="truncate">{event.title}</span>
-      </span>
-      <span className="block opacity-80 truncate">
-        {[PLANNED_STATUS_LABELS[event.status], event.durationS ? formatDuration(event.durationS) : null, event.metric?.value].filter(Boolean).join(' · ')}
-      </span>
+      <ChipBody
+        icon={PLANNED_STATUS_ICONS[event.status]}
+        label={PLANNED_STATUS_LABELS[event.status]}
+        extras={event.pushState && event.pushState !== 'not_pushed' && (
+          <span aria-label={PUSH_STATE_LABELS[event.pushState]}>
+            <Icon name={PUSH_STATE_ICONS[event.pushState]} size={12} />
+          </span>
+        )}
+        name={event.title}
+        stats={[event.durationS ? formatDuration(event.durationS) : null, event.metric?.value]}
+      />
     </button>
   )
 }
@@ -147,12 +170,9 @@ function NoteChip({ note, onOpen }) {
       onClick={() => onOpen(note)}
       title={note.body ? `${note.title}\n${note.body}` : note.title}
       data-testid="calendar-note"
-      className="block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight font-bold border border-amber-400/70 bg-amber-400/15 text-amber-900 dark:text-amber-200 hover:border-amber-500 transition"
+      className="block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight border border-amber-400/70 bg-amber-400/15 text-amber-900 dark:text-amber-200 hover:border-amber-500 transition"
     >
-      <span className="flex items-center gap-1 min-w-0">
-        <Icon name={CALENDAR_ICONS.note} size={12} className="shrink-0" />
-        <span className="truncate">{note.title}</span>
-      </span>
+      <ChipBody icon={CALENDAR_ICONS.note} label="Note" name={note.title} stats={[]} />
     </button>
   )
 }
@@ -167,16 +187,14 @@ function RaceChip({ race, onOpen }) {
       data-testid="calendar-race"
       data-priority={race.priority}
       title={[`${race.name} · ${RACE_PRIORITY_LABELS[race.priority]} · ${RACE_DISCIPLINE_LABELS[race.discipline]}`, time, race.location, race.format_note].filter(Boolean).join('\n')}
-      className={`block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight font-bold border hover:brightness-110 transition ${RACE_PRIORITY_STYLES[race.priority]}`}
+      className={`block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight border hover:brightness-110 transition ${RACE_PRIORITY_STYLES[race.priority]}`}
     >
-      <span className="flex items-center gap-1 min-w-0">
-        <Icon name={CALENDAR_ICONS.race} size={12} className="shrink-0" />
-        <span className="truncate">{race.name}</span>
-        <span className="ml-auto shrink-0">{race.priority}</span>
-      </span>
-      {(time || race.activity_id) && (
-        <span className="block font-semibold opacity-80 truncate">{[time, race.activity_id ? 'ridden' : null].filter(Boolean).join(' · ')}</span>
-      )}
+      <ChipBody
+        icon={CALENDAR_ICONS.race}
+        label={`Race · ${race.priority}`}
+        name={race.name}
+        stats={[time, race.activity_id ? 'ridden' : null]}
+      />
     </button>
   )
 }
