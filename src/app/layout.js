@@ -2,10 +2,25 @@ import './globals.css'
 import Script from 'next/script'
 import { ThemeProvider } from '../components/ThemeProvider' // Your existing theme provider
 import AppShell from '../components/AppShell'
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '../lib/seo'
 
 export const metadata = {
-  title: 'VelocityStack | Velodrome Telemetry Platform',
-  description: 'Pure speed, cadence & power durational analysis for track cyclists',
+  metadataBase: new URL(SITE_URL),
+  title: { default: 'VelocityStack | Velodrome Telemetry Platform', template: '%s | VelocityStack' },
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    url: '/',
+    title: 'VelocityStack | Velodrome Telemetry Platform',
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'VelocityStack | Velodrome Telemetry Platform',
+    description: SITE_DESCRIPTION,
+  },
 }
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID

@@ -4,8 +4,9 @@ import Icon from '../../components/Icon'
 import SupportButton from '../../components/SupportButton'
 
 export const metadata = {
-  title: 'About | VelocityStack',
+  title: 'About',
   description: 'Precision engineering for the track cycling community: ride analysis, templates, planning and coaching.',
+  alternates: { canonical: '/about' },
 }
 
 const link = 'font-semibold text-emerald-600 dark:text-brand-neon hover:underline'
