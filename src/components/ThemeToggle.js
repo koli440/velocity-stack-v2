@@ -30,10 +30,11 @@ export default function ThemeToggle({ currentUser = null }) {
   return (
     <button
       onClick={handleToggle}
-      className="p-2.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-slate-700 dark:text-slate-200 hover:opacity-80 transition flex items-center gap-2 text-xs font-semibold shadow-sm"
+      className="p-2 sm:p-2.5 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder text-slate-700 dark:text-slate-200 hover:opacity-80 transition flex items-center gap-2 text-xs font-semibold shadow-sm"
       title="Toggle Light / Dark mode"
+      aria-label="Toggle Light / Dark mode"
     >
-      {theme === 'dark' ? <><Icon name="sun" size={16} /> Light</> : <><Icon name="moon" size={16} /> Dark</>}
+      {theme === 'dark' ? <><Icon name="sun" size={16} /><span className="hidden sm:inline">Light</span></> : <><Icon name="moon" size={16} /><span className="hidden sm:inline">Dark</span></>}
     </button>
   )
 }
