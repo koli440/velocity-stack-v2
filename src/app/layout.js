@@ -1,10 +1,18 @@
 import './globals.css'
 import Script from 'next/script'
 import { ThemeProvider } from '../components/ThemeProvider' // Your existing theme provider
+import ServiceWorkerRegister from '../components/ServiceWorkerRegister'
 import AppShell from '../components/AppShell'
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '../lib/seo'
 
+export const viewport = {
+  viewportFit: 'cover',
+  themeColor: '#0F172A',
+}
+
 export const metadata = {
+  applicationName: 'VelocityStack',
+  appleWebApp: { capable: true, title: 'VelocityStack', statusBarStyle: 'black-translucent' },
   metadataBase: new URL(SITE_URL),
   title: { default: 'VelocityStack | Velodrome Telemetry Platform', template: '%s | VelocityStack' },
   description: SITE_DESCRIPTION,
@@ -29,6 +37,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased font-sans">
+        <ServiceWorkerRegister />
         {GA_ID && (
           <>
             <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
