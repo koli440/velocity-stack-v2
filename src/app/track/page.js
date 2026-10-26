@@ -52,6 +52,7 @@ export default function TrackLandingPage() {
           <CarryLink href="/register" className={btnPrimary}>Sign up</CarryLink>
           <CarryLink href="/login" className={btnSecondary}>Sign in with Google</CarryLink>
         </div>
+        <p className="text-sm text-slate-500 dark:text-slate-400">A free account is required. It powers your personalised analysis.</p>
       </header>
 
       {/* 2. Gear Architect */}
@@ -76,7 +77,7 @@ export default function TrackLandingPage() {
             <p className={muted}>See which gears you raced in. Gear applies to track rides only, so a road race never counts as a gear record.</p>
           </div>
         </div>
-        <p><CarryLink href="/gears" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Try the gear calculator, no account needed &rarr;</CarryLink></p>
+        <p><CarryLink href="/register" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Create a free account to try the gear calculator &rarr;</CarryLink></p>
       </section>
 
       {/* 3. Analysis templates */}
