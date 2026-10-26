@@ -14,6 +14,12 @@ export function normalizeActivityType(value) {
 
 export const isGymActivity = (a) => normalizeActivityType(a?.activity_type ?? a?.activityType) === 'gym'
 
+/**
+ * Track (velodrome) session: a non-gym activity recorded at a velodrome. Purely visual: track sessions are
+ * counted and analysed exactly like rides (activity_type stays 'ride'). Same rule as the calendar discipline.
+ */
+export const isTrackActivity = (a) => !isGymActivity(a) && Boolean(a?.track_id ?? a?.trackId ?? a?.tracks?.name)
+
 /** Strava `sport_type` / Intervals.icu `type` values that are gym sessions. */
 export const GYM_SPORT_TYPES = Object.freeze(['WeightTraining', 'Workout', 'Crossfit', 'HighIntensityIntervalTraining'])
 export const isGymSportType = (type) => GYM_SPORT_TYPES.includes(type)
