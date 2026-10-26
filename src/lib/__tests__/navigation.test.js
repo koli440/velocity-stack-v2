@@ -54,10 +54,11 @@ test('dashboard only has My sessions + Following; riders/discover moved to /ride
   assert.ok(!existsSync(new URL('../../components/RosterPanel.js', import.meta.url)))
 })
 
-test('riders page hosts find / following / discover tabs', () => {
+test('riders page hosts find / following tabs, no discover feed', () => {
   const p = readFileSync(new URL('../../app/riders/page.js', import.meta.url), 'utf8')
-  for (const t of ['Find riders', 'Following', 'Discover sessions', '<RidersExplorer', '<FollowPanel', '<DiscoverFeed']) assert.ok(p.includes(t), t)
-  assert.match(read('DiscoverFeed.js'), /fetchDiscoverFeedPage/)
+  for (const t of ['Find riders', 'Following', '<RidersExplorer', '<FollowPanel']) assert.ok(p.includes(t), t)
+  assert.doesNotMatch(p, /Discover|DiscoverFeed/)
+  assert.ok(!existsSync(new URL('../../components/DiscoverFeed.js', import.meta.url)))
   assert.equal(NAV_ITEMS.find((i) => i.key === 'riders').href, '/riders')
 })
 

@@ -15,7 +15,6 @@ import {
   fetchFollowCounts,
   approveFollowRequest,
   removeFollowRequest,
-  fetchDiscoverFeedPage,
   setRequireFollowApproval,
   VISIBILITY_OPTIONS,
   DEFAULT_VISIBILITY,
@@ -215,31 +214,15 @@ test('setRequireFollowApproval coerces to boolean', async () => {
   assert.deepEqual(c.log[0].ops[0], ['update', { require_follow_approval: true }])
 })
 
-test('discover feed requests public rows from others, excludes blocked, attaches authors', async () => {
-  const c = fakeClient({
-    shared_activities: { data: [{ id: 'a1', user_id: 'u1' }], error: null },
-    public_profiles: { data: [{ id: 'u1', display_name: 'ann' }], error: null },
-  })
-  const res = await fetchDiscoverFeedPage(c, { userId: 'me', excludeIds: ['b1', 'b2'], pageSize: 1 })
-  const ops = c.log[0].ops
-  assert.ok(ops.some((o) => o[0] === 'eq' && o[1] === 'visibility' && o[2] === 'public'))
-  assert.ok(ops.some((o) => o[0] === 'neq' && o[1] === 'user_id' && o[2] === 'me'))
-  assert.ok(ops.some((o) => o[0] === 'not' && o[1] === 'user_id' && o[3] === '(b1,b2)'))
-  assert.equal(res.hasMore, true)
-  assert.equal(res.data[0].author.display_name, 'ann')
-  assert.deepEqual((await fetchDiscoverFeedPage(c, { userId: null })).data, [])
-})
-
 test('other riders\' feeds read the restricted shared_activities view, never activities', async () => {
   const c = fakeClient({
     follows: { data: [{ followee_id: 'r1' }], error: null },
     shared_activities: { data: [], error: null },
   })
   await fetchFollowingFeedPage(c, { userId: 'me' })
-  await fetchDiscoverFeedPage(c, { userId: 'me' })
   const tables = c.log.map((l) => l.table)
   assert.ok(!tables.includes('activities'))
-  assert.equal(tables.filter((x) => x === 'shared_activities').length, 2)
+  assert.equal(tables.filter((x) => x === 'shared_activities').length, 1)
   for (const call of c.log.filter((l) => l.table === 'shared_activities')) {
     const cols = call.ops.find((o) => o[0] === 'select')[1]
     assert.ok(!cols.includes('raw_file_url'))

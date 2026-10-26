@@ -15,7 +15,7 @@ export const VISIBILITY_OPTIONS = Object.freeze([
   {
     value: 'public',
     label: 'Public',
-    hint: 'Any signed-in VelocityStack rider can see this session (including its route) in Discover, unless you blocked them',
+    hint: 'Any signed-in VelocityStack rider can see this session (including its route), unless you blocked them',
   },
 ])
 
@@ -241,39 +241,6 @@ export async function fetchRequireFollowApproval(client, userId) {
     .eq('id', userId)
     .maybeSingle()
   return { value: !!data?.require_follow_approval, error: error || null }
-}
-
-// ---- Discover (public activities) -------------------------------------------------------
-
-/**
- * One page of public activities from other riders. RLS already hides activities of
- * riders who blocked the viewer; `excludeIds` also hides riders the viewer blocked.
- */
-export async function fetchDiscoverFeedPage(
-  client,
-  { userId, excludeIds = [], page = 0, pageSize = DEFAULT_ACTIVITIES_PAGE_SIZE } = {}
-) {
-  if (!userId) return { data: [], hasMore: false, error: null }
-  const from = page * pageSize
-  let query = client
-    .from('shared_activities')
-    .select(SHARED_FEED_COLUMNS)
-    .eq('visibility', 'public')
-    .neq('user_id', userId)
-  if (excludeIds.length) query = query.not('user_id', 'in', `(${excludeIds.join(',')})`)
-  const { data, error } = await query
-    .order('activity_date', { ascending: false })
-    .order('id', { ascending: false })
-    .range(from, from + pageSize - 1)
-  if (error) return { data: [], hasMore: false, error }
-
-  const rows = data || []
-  const { profiles } = await fetchProfilesByIds(client, rows.map((r) => r.user_id))
-  return {
-    data: rows.map((r) => ({ ...r, author: profiles.get(r.user_id) || null })),
-    hasMore: rows.length === pageSize,
-    error: null,
-  }
 }
 
 // ---- GPS privacy zone ---------------------------------------------------------------------
