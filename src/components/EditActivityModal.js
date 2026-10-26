@@ -34,7 +34,7 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     setTitle(activity.title || '')
     setTrackId(activity.track_id || '')
     setVisibility(activity.visibility || 'private')
-    setRideType(effectiveRideType(activity.ride_type))
+    setRideType(activity.activity_type === 'gym' ? 'gym' : effectiveRideType(activity.ride_type))
     setGears(gearsToForm(activity))
     setSegments(resolveSegments(activity))
     setDescription(activity.description || '')
@@ -48,15 +48,17 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     e.preventDefault()
     setSaving(true)
     setError('')
+    const isGym = rideType === 'gym'
     const hasGear = rideTypeHasGear(rideType)
     // An unset ride type is road: leave it (and the hidden gear) alone unless the user picks a type.
-    const untouchedRoad = !hasGear && activity.ride_type == null
+    const untouchedRoad = !isGym && !hasGear && activity.ride_type == null
     const { updates, error: err } = await updateActivity(client, activity.id, {
       title,
       trackId,
       visibility,
       description,
-      rideType: untouchedRoad ? undefined : rideType,
+      activityType: isGym ? 'gym' : activity.activity_type === 'gym' ? 'ride' : undefined,
+      rideType: untouchedRoad || isGym ? undefined : rideType,
       keepGear: untouchedRoad,
       gears: hasGear ? gears : undefined,
       gearSegments: hasGear ? segments : undefined,
@@ -126,6 +128,7 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
         </label>
 
         <RideGearEditor
+          allowGym
           rideType={rideType}
           onRideTypeChange={setRideType}
           gears={gears}
