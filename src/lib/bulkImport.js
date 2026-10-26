@@ -10,6 +10,7 @@
 // `analyzeFile`/`supabase` doubles in unit tests without a browser or network access.
 
 import { buildActivityInsert } from './activityRecord.js'
+import { prepareAnalysis } from './gymAnalysis.js'
 import { autoLinkActivity, localDayOf } from './plannedWorkouts.js'
 import { findDuplicate } from './activityDuplicates.js'
 
@@ -155,6 +156,8 @@ export async function importSingleFitFile({
       return { fileName, status: 'error', error: 'Analysis did not return a summary.' }
     }
 
+    const prepared = prepareAnalysis(analysis)
+
     const { start_time: startTime = null, elapsed_time_s: elapsedTimeS = null } = analysis.summary
 
     // Heuristic check: same ride re-imported from a different source won't share a file hash,
@@ -183,12 +186,13 @@ export async function importSingleFitFile({
     const fallbackActivityDate =
       meta.fallbackActivityDate || (file.lastModified ? new Date(file.lastModified).toISOString() : undefined)
 
-    const activityInsert = buildActivityInsert(analysis.summary, {
+    const activityInsert = buildActivityInsert(prepared.summary, {
       ...meta,
       title: meta.title || fileName.replace(/\.[^/.]+$/, ''),
       userId,
-      timeSeries: analysis.time_series,
-      curvesData: analysis.curves,
+      timeSeries: prepared.time_series,
+      curvesData: prepared.curves,
+      activityType: prepared.activityType,
       rawFileUrl,
       fileSha256,
       fallbackActivityDate,
@@ -204,8 +208,8 @@ export async function importSingleFitFile({
       return { fileName, status: 'error', error: insertError.message }
     }
 
-    if (analysis.curves && Object.keys(analysis.curves).length > 0) {
-      const curveRows = Object.entries(analysis.curves).map(([curveType, curveData]) => ({
+    if (prepared.curves && Object.keys(prepared.curves).length > 0) {
+      const curveRows = Object.entries(prepared.curves).map(([curveType, curveData]) => ({
         activity_id: activity.id,
         curve_type: curveType,
         data: curveData,

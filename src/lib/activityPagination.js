@@ -28,6 +28,8 @@ const FEED_COLUMN_LIST = [
   'avg_power_w',
   'max_power_w',
   'avg_hr',
+  'activity_type',
+  'calories',
   'avg_speed_kmh',
   'max_speed_kmh',
   'elevation_gain_m',

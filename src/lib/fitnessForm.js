@@ -205,6 +205,7 @@ export async function fetchFitnessActivities(client, { userId, days = 365, now =
       .from('activities')
       .select(FITNESS_ACTIVITY_COLUMNS)
       .eq('user_id', userId)
+      .eq('activity_type', 'ride')
       .gte('activity_date', since)
       .order('activity_date', { ascending: true })
       .order('id', { ascending: true })
@@ -217,6 +218,7 @@ export async function fetchFitnessActivities(client, { userId, days = 365, now =
     .from('activities')
     .select('activity_date')
     .eq('user_id', userId)
+    .eq('activity_type', 'ride')
     .order('activity_date', { ascending: true })
     .limit(1)
   if (firstError) return { data: [], firstDay: null, error: firstError }

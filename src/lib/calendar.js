@@ -22,6 +22,7 @@ export const CALENDAR_ACTIVITY_COLUMNS = [
   'avg_speed_kmh',
   'training_load',
   'is_race',
+  'activity_type',
 ].join(', ')
 
 export function dayKey(date) {
@@ -98,12 +99,13 @@ export function activityToEvent(row) {
   if (row.avg_power_w) metric = { label: 'W', value: `${Math.round(row.avg_power_w)} W` }
   else if (row.avg_speed_kmh) metric = { label: 'km/h', value: `${Number(row.avg_speed_kmh).toFixed(1)} km/h` }
   else if (row.training_load) metric = { label: 'TL', value: `TL ${Math.round(row.training_load)}` }
+  else if (row.avg_hr) metric = { label: 'bpm', value: `${Math.round(row.avg_hr)} bpm` }
   return {
     id: row.id,
     kind: 'activity',
     date,
     title: row.title || 'Untitled session',
-    discipline: row.track_id ? 'track' : 'ride',
+    discipline: row.activity_type === 'gym' ? 'gym' : row.track_id ? 'track' : 'ride',
     distanceM: Number(row.distance_m) || 0,
     durationS: Number(row.moving_time_s) || 0,
     metric,

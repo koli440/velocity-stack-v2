@@ -72,6 +72,13 @@ export function isWahooCyclingWorkout(w) {
   return WAHOO_CYCLING_TYPE_IDS.includes(Number(w?.workout_type_id))
 }
 
+/** Strength / gym-class workouts (issue #326): WORKOUT (42) and CARDIO_CLASS (43). */
+export const WAHOO_GYM_TYPE_IDS = [42, 43]
+
+export function isWahooGymWorkout(w) {
+  return WAHOO_GYM_TYPE_IDS.includes(Number(w?.workout_type_id))
+}
+
 const num = (v) => {
   const n = Number(v)
   return Number.isFinite(n) ? n : null
@@ -108,6 +115,7 @@ export function localStamp(startsIso, timeZone) {
  */
 export function isImportableWorkout(w) {
   const s = w?.workout_summary
+  if (isWahooGymWorkout(w)) return s?.manual !== true
   return isWahooCyclingWorkout(w) && !!s?.file?.url && s.manual !== true
 }
 
@@ -125,6 +133,13 @@ export function mapWahooWorkout(w) {
     distance_m: num(s.distance_accum),
     average_watts: num(s.power_avg),
     file_url: s.file?.url || null,
+    ...(isWahooGymWorkout(w)
+      ? {
+          activity_type: 'gym',
+          average_heartrate: num(s.heart_rate_avg),
+          calories: num(s.calories_accum),
+        }
+      : {}),
   }
 }
 

@@ -3,6 +3,7 @@
 // event parsing, rate-limit parsing. No network or DB access here.
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { isGymSportType } from './activityType.js'
 
 export const STRAVA_SCOPE = 'activity:read_all'
 export const STATE_TTL_S = 600
@@ -107,6 +108,11 @@ export function isStravaRide(a) {
   return STRAVA_RIDE_TYPES.includes(type)
 }
 
+/** Gym / strength sessions (issue #326): WeightTraining, Workout, Crossfit, HIIT. */
+export function isStravaGym(a) {
+  return isGymSportType(a?.sport_type || a?.type)
+}
+
 /** Strava list item -> the shared "ride" shape used by selectNewRides. */
 export function mapStravaListItem(a) {
   return {
@@ -123,6 +129,23 @@ export function mapStravaListItem(a) {
 
 export function filterStravaRides(activities) {
   return (Array.isArray(activities) ? activities : []).filter(isStravaRide).map(mapStravaListItem)
+}
+
+/** Rides (shape unchanged) plus gym sessions (`activity_type: 'gym'` with the list's heart rate / calories). */
+export function filterStravaActivities(activities) {
+  return (Array.isArray(activities) ? activities : []).flatMap((a) => {
+    if (isStravaRide(a)) return [mapStravaListItem(a)]
+    if (!isStravaGym(a)) return []
+    return [
+      {
+        ...mapStravaListItem(a),
+        activity_type: 'gym',
+        average_heartrate: a.average_heartrate ?? null,
+        max_heartrate: a.max_heartrate ?? null,
+        calories: a.calories ?? null,
+      },
+    ]
+  })
 }
 
 /** Forward-fill a sparse (time-indexed) series onto a 1 Hz grid so analysis can assume 1 sample/s. */

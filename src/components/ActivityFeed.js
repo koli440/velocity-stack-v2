@@ -305,6 +305,13 @@ export default function ActivityFeed({
                 >
                   {act.title || 'Velodrome Session'}
                 </Link>
+                {act.activity_type === 'gym' && (
+                  <div className="mt-1" data-testid="feed-gym-tag">
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[10px] font-black uppercase tracking-wider">
+                      Gym{act.calories ? ` · ${Math.round(act.calories)} kcal` : ''}
+                    </span>
+                  </div>
+                )}
                 {act.is_race === true && <div className="mt-1"><RaceBadge testId="feed-race-tag" /></div>}
 
                 {(act.tracks?.name || (rideTypeHasGear(act.ride_type) && act.chainring && act.cog)) && (

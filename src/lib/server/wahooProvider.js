@@ -18,6 +18,7 @@ import {
   tokenNeedsRefresh,
   tokensToColumns,
 } from '../wahoo.js'
+import { gymSummaryFromMeta } from '../gymAnalysis.js'
 
 const PAGE_SIZE = 100
 const MAX_PAGES = 10
@@ -270,6 +271,40 @@ export function createWahooProvider({ accessToken, fetchImpl = fetch }) {
         const workout = await res.json()
         if (!isImportableWorkout(workout)) throw new ImportError(`Wahoo workout ${id} is not a recorded ride with a file.`, 422)
         ride = mapWahooWorkout(workout)
+      }
+
+      if (ride.activity_type === 'gym') {
+        // File when there is one (HR series), else the workout summary alone.
+        let parsed = null
+        if (analyzeFit && ride.file_url) {
+          try {
+            const fileRes = await fetchImpl(ride.file_url, { cache: 'no-store' })
+            const blob = fileRes.ok ? await fileRes.blob() : null
+            if (blob?.size) parsed = await analyzeFit(blob, `${id}.fit`, gearing)
+          } catch {
+            parsed = null
+          }
+        }
+        const meta = gymSummaryFromMeta({
+          startTime: ride.start_time,
+          elapsedS: ride.elapsed_time_s,
+          movingS: ride.moving_time_s,
+          avgHr: ride.average_heartrate,
+          calories: ride.calories,
+        })
+        const base = parsed?.success ? parsed : meta
+        return {
+          activityType: 'gym',
+          title: ride.name,
+          startDateLocal: ride.start_date_local,
+          summary: {
+            ...meta.summary,
+            ...Object.fromEntries(Object.entries(base.summary || {}).filter(([, v]) => v != null)),
+            start_time: base.summary?.start_time || ride.start_time,
+          },
+          curves: base.curves || {},
+          time_series: base.time_series || {},
+        }
       }
 
       if (!analyzeFit) throw new ImportError('Wahoo import needs the .fit analyzer.', 500)

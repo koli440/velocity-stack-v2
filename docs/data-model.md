@@ -311,3 +311,9 @@ No new tables or columns: computed on read in `src/lib/fitnessForm.js` from `act
 
 ## Fitness / Fatigue / Form, coach view (#290, phase 2)
 New function `coach_fitness_activities(p_riders uuid[] default null, p_days int default 365)` (SECURITY DEFINER, `authenticated` only; `p_days` clamped 1..800): per-ride load inputs of the caller's active athletes, ordered by (rider, date, id) for `.range()` paging, plus the athlete's resolved `lthr` and `first_activity_at` (whole history, for the baseline flag). No new tables or policies. See docs/coaching.md.
+
+## Activity type and gym sessions (`20270113000000_activity_type.sql`, #326 layer 1)
+- `activities.activity_type` (`'ride'` default for every existing row | `'gym'`) and `activities.calories` (kcal, optional). Index `(user_id, activity_type, activity_date DESC)`.
+- A gym session has no track, ride type, gear, power/speed/cadence curves, route or load. Kept: start, elapsed/moving time, avg/max HR, calories, the `HeartRate` curve and `time_series.heartrate` when the source has them (`src/lib/gymAnalysis.js` `prepareAnalysis`, applied on every ingestion path).
+- Ride-only readers filter `activity_type = 'ride'`: fitness/fatigue/form (`fetchFitnessActivities`, `coach_fitness_activities`), the week stats card. The calendar shows gym sessions with discipline `gym`; they link only to `gym` planned workouts and rides never link to gym workouts. `shared_activities` exposes both new columns.
+- Not yet (layer 2): exercises / sets / reps / weights tables, `.fit` set messages, gym detail UI, repair of already-synced history. Bar-velocity data is #327.
