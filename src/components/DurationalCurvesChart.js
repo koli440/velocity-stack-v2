@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Icon from './Icon'
 import Link from 'next/link'
 import useContextHref from './useContextHref'
 import {
@@ -153,7 +154,7 @@ export default function DurationalCurvesChart({
                   : 'bg-transparent text-slate-400 border-slate-200 dark:border-slate-800'
               }`}
             >
-              {showBaseline ? `✓ ${baselineLabel} enabled` : `+ Show ${baselineLabel}`}
+              {showBaseline ? <><Icon name="check" /> {baselineLabel} enabled</> : `+ Show ${baselineLabel}`}
             </button>
           )}
 

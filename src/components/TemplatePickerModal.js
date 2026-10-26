@@ -280,7 +280,7 @@ export default function TemplatePickerModal({
                           })}
                           className="w-full flex items-center gap-1.5 py-1 text-[11px] font-black text-slate-600 dark:text-slate-300"
                         >
-                          <span className="text-slate-400">{open ? '▾' : '▸'}</span> {g.category}
+                          <span className="text-slate-400"><Icon name={open ? 'chevronDown' : 'chevronRight'} /></span> {g.category}
                           <span className="text-slate-400 font-semibold">({g.items.length})</span>
                         </button>
                         {open && g.items.map((t) => <Row key={`all-${t.id}`} {...rowProps(t)} />)}

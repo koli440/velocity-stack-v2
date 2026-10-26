@@ -87,8 +87,8 @@ export default function RideGearEditor({
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] font-bold text-slate-500">{i === 0 ? 'Primary gear' : `Gear ${i + 1}`}</span>
                 <div className="flex gap-1.5">
-                  <button type="button" aria-label="Move gear up" disabled={disabled || i === 0} onClick={() => onGearsChange(moveGear(gears, g.id, -1))} className={iconBtn}>↑</button>
-                  <button type="button" aria-label="Move gear down" disabled={disabled || i === gears.length - 1} onClick={() => onGearsChange(moveGear(gears, g.id, 1))} className={iconBtn}>↓</button>
+                  <button type="button" aria-label="Move gear up" disabled={disabled || i === 0} onClick={() => onGearsChange(moveGear(gears, g.id, -1))} className={iconBtn}><Icon name="chevronUp" /></button>
+                  <button type="button" aria-label="Move gear down" disabled={disabled || i === gears.length - 1} onClick={() => onGearsChange(moveGear(gears, g.id, 1))} className={iconBtn}><Icon name="chevronDown" /></button>
                   <button type="button" aria-label="Remove gear" disabled={disabled} onClick={() => remove(g.id)} className={`${iconBtn} text-rose-500`}><Icon name="close" size="1em" /></button>
                 </div>
               </div>

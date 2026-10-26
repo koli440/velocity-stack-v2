@@ -5,6 +5,7 @@
 // existed are analysed from their efforts[], so nothing here requires new data.
 
 import { useMemo } from 'react'
+import Icon from './Icon'
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { formatDate } from '../lib/dateFormat'
 import {
@@ -20,9 +21,9 @@ import {
 } from '../lib/templateComparison'
 
 const VERDICT_STYLE = {
-  better: { text: 'Better', cls: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', icon: '▲' },
-  similar: { text: 'Similar', cls: 'bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-500/20', icon: '＝' },
-  worse: { text: 'Worse', cls: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30', icon: '▼' },
+  better: { text: 'Better', cls: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', icon: 'chevronUp' },
+  similar: { text: 'Similar', cls: 'bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-500/20', icon: null },
+  worse: { text: 'Worse', cls: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30', icon: 'chevronDown' },
 }
 
 const ORANGE = '#f97316'
@@ -167,7 +168,7 @@ export default function TemplateRunAnalysis({ run, history, reference, analysis,
             className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border ${comp.complete === false ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30' : 'bg-slate-500/10 text-slate-500 border-slate-500/20'}`}
             data-testid="completeness"
           >
-            {comp.complete === false ? '⚠ ' : ''}
+            {comp.complete === false && <><Icon name="alert" />{' '}</>}
             {comp.text}
           </span>
         )}
@@ -178,7 +179,7 @@ export default function TemplateRunAnalysis({ run, history, reference, analysis,
           <div className={`px-3 py-2 rounded-xl border ${style.cls} min-w-[9rem]`} data-testid="verdict">
             <div className="text-[9px] uppercase font-bold opacity-70">vs {reference.label.toLowerCase()}</div>
             <div className="text-sm font-black">
-              <span aria-hidden="true">{style.icon} </span>
+              <span aria-hidden="true">{style.icon ? <Icon name={style.icon} /> : '＝'} </span>
               {style.text} than reference
             </div>
             <div className="text-[10px] font-bold">
@@ -208,7 +209,7 @@ export default function TemplateRunAnalysis({ run, history, reference, analysis,
         <ul className="space-y-1" aria-label="Rep flags">
           {flags.map((f) => (
             <li key={`${f.type}-${f.rep}`} className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
-              <span aria-hidden="true">⚠ </span>
+              <Icon name="alert" />{' '}
               {f.text}
             </li>
           ))}
@@ -236,12 +237,12 @@ export default function TemplateRunAnalysis({ run, history, reference, analysis,
                   const hr = hrRecovery?.values.find((x) => x.rep === r.rep)
                   return (
                     <tr key={r.rep} className={flagged ? 'bg-amber-500/10' : ''}>
-                      <th scope="row" className="py-1 pr-3 font-black">{r.rep}{flagged ? ' ⚠' : ''}</th>
+                      <th scope="row" className="py-1 pr-3 font-black">{r.rep}{flagged && <>{' '}<Icon name="alert" /></>}</th>
                       <td className="pr-3 font-mono font-bold">{formatHeadline(metric, r.value)}</td>
                       {reference && <td className="pr-3 font-mono text-slate-400">{r.ref != null ? formatHeadline(metric, r.ref) : '—'}</td>}
                       {reference && (
                         <td className={`pr-3 font-mono font-bold ${goodTone(r.good)}`}>
-                          {r.diff != null ? `${r.good ? '▲' : r.good === false ? '▼' : ''} ${formatDiff(metric, r.diff)} (${signed(r.pct)})` : '—'}
+                          {r.diff != null ? <>{r.good ? <Icon name="chevronUp" /> : r.good === false ? <Icon name="chevronDown" /> : null} {formatDiff(metric, r.diff)} ({signed(r.pct)})</> : '—'}
                         </td>
                       )}
                       <td className="pr-3 font-mono">{r.vsFirstPct != null ? signed(r.vsFirstPct) : '—'}</td>
