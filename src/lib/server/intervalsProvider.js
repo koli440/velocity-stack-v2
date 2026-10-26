@@ -12,6 +12,8 @@
 
 import { analyzeStreams } from '../streamAnalysis.js'
 import { ImportError } from './importErrors.js'
+import { isGymSportType } from '../activityType.js'
+import { gymSummaryFromMeta } from '../gymAnalysis.js'
 import { newestFirst, rideTimeMs } from '../syncPlan.js'
 
 const BASE_URL = 'https://intervals.icu/api/v1'
@@ -77,6 +79,24 @@ export function filterRides(activities) {
     }))
 }
 
+/** Rides (shape unchanged) plus gym sessions tagged `activity_type: 'gym'` (issue #326). */
+export function filterActivities(activities) {
+  const list = Array.isArray(activities) ? activities : []
+  const gymIds = new Set(list.filter((a) => isGymSportType(a?.type)).map((a) => a.id))
+  return list
+    .filter((a) => a.type === 'Ride' || a.type === 'VirtualRide' || gymIds.has(a.id))
+    .map((a) => {
+      const base = filterRides([a])[0] || {
+        id: a.id,
+        name: a.name,
+        start_date_local: a.start_date_local,
+        distance_m: a.distance,
+        moving_time_s: a.moving_time,
+      }
+      return gymIds.has(a.id) ? { ...base, activity_type: 'gym' } : base
+    })
+}
+
 /** Verify credentials against the Intervals.icu API. Throws ImportError (401/403 => bad credentials). */
 export async function validateIntervalsCredentials({ athleteId, apiKey, fetchImpl = fetch }) {
   if (!athleteId || !apiKey) throw new ImportError('Athlete ID and API key are required', 400)
@@ -117,7 +137,7 @@ export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchI
         const errText = await res.text()
         throw new ImportError(`Intervals.icu API error (${res.status}): ${errText}`, res.status)
       }
-      return filterRides(await res.json())
+      return filterActivities(await res.json())
     },
 
     /**
@@ -134,7 +154,7 @@ export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchI
         const errText = await res.text()
         throw new ImportError(`Intervals.icu API error (${res.status}): ${errText}`, res.status)
       }
-      const rides = newestFirst(filterRides(await res.json())).filter(
+      const rides = newestFirst(filterActivities(await res.json())).filter(
         (r) => beforeMs == null || Number.isNaN(beforeMs) || rideTimeMs(r) <= beforeMs
       )
       return { rides, exhausted: true, nextBefore: null }
@@ -145,15 +165,30 @@ export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchI
 
       let title = null
       let startDateLocal = null
+      let meta = null
       try {
         const metaRes = await get(`${BASE_URL}/activity/${actId}`)
         if (metaRes.ok) {
-          const meta = await metaRes.json()
+          meta = await metaRes.json()
           title = meta?.name || null
           startDateLocal = meta?.start_date_local || null
         }
       } catch {
         // metadata is cosmetic; fall back to defaults
+      }
+      const activityType = isGymSportType(meta?.type) ? 'gym' : 'ride'
+      const typeField = activityType === 'gym' ? { activityType } : {}
+      // Summary-only fallback for gym sessions without a file or streams (manual entries).
+      const gymFallback = () => {
+        const m = gymSummaryFromMeta({
+          startTime: meta?.start_date ? new Date(meta.start_date).toISOString() : null,
+          elapsedS: meta?.elapsed_time,
+          movingS: meta?.moving_time,
+          avgHr: meta?.average_heartrate,
+          maxHr: meta?.max_heartrate,
+          calories: meta?.calories,
+        })
+        return { title, startDateLocal, activityType, ...m }
       }
 
       // Preferred: raw .fit through the shared analyzer so metrics match a manual upload (issue #11).
@@ -169,6 +204,7 @@ export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchI
                 return {
                   title,
                   startDateLocal,
+                  ...typeField,
                   summary: parsed.summary,
                   curves: parsed.curves,
                   time_series: parsed.time_series || {},
@@ -185,9 +221,10 @@ export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchI
       const streamsData = streamsRes.ok ? await streamsRes.json() : null
       const analyzed = analyzeStreams(streamsData, gearing)
       if (!analyzed) {
+        if (activityType === 'gym') return gymFallback()
         throw new ImportError(`No data is available in Intervals.icu for ride ${actId}.`, 404)
       }
-      return { title, startDateLocal, ...analyzed }
+      return { title, startDateLocal, ...typeField, ...analyzed }
     },
   }
 }

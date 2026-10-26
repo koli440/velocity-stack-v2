@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
 import { autoLinkActivity, localDayOf } from '../lib/plannedWorkouts'
+import { prepareAnalysis } from '../lib/gymAnalysis'
+import { isGymActivity } from '../lib/activityType'
 import { fetchWeightHistory } from '../lib/weightHistory'
 import { fetchFtpHistory } from '../lib/ftpHistory'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
@@ -167,7 +169,8 @@ export default function FitUploader({
       const { history: ftpHistory } = await fetchFtpHistory(supabase, currentUser.id)
       const { history: weightHistory } = await fetchWeightHistory(supabase, currentUser.id)
 
-      const activityRecord = buildActivityInsert(analysis.summary, {
+      const prepared = prepareAnalysis(analysis)
+      const activityRecord = buildActivityInsert(prepared.summary, {
         title,
         userId: currentUser.id,
         trackId: selectedTrack,
@@ -175,8 +178,9 @@ export default function FitUploader({
         chainring: parseGear(chainring, cog).chainring,
         cog: parseGear(chainring, cog).cog,
         crankLengthMm: 165.0,
-        timeSeries: analysis.time_series,
-        curvesData: analysis.curves,
+        timeSeries: prepared.time_series,
+        curvesData: prepared.curves,
+        activityType: prepared.activityType,
         rawFileUrl,
         fileSha256,
         processingStatus: 'baseline_completed',
@@ -194,8 +198,8 @@ export default function FitUploader({
       if (actError) throw actError
 
       // 2. Write the curves into the activity_curves table (data column)
-      if (analysis.curves && Object.keys(analysis.curves).length > 0) {
-        const curveRows = Object.entries(analysis.curves).map(
+      if (prepared.curves && Object.keys(prepared.curves).length > 0) {
+        const curveRows = Object.entries(prepared.curves).map(
           ([metricType, metricData]) => ({
             activity_id: activity.id,
             curve_type: metricType,
@@ -223,6 +227,8 @@ export default function FitUploader({
       setSaving(false)
     }
   }
+
+  const isGym = isGymActivity(analysis?.summary)
 
   return (
     <div className="glass-dense bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl relative">
@@ -278,6 +284,17 @@ export default function FitUploader({
               />
             </div>
 
+            {isGym && (
+              <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-600 dark:text-violet-400 text-[11px] font-semibold">
+                <span>🏋️</span>
+                <span>
+                  This is a gym / strength session. Duration, heart rate and calories are saved;
+                  it is kept apart from ride stats and fitness load.
+                </span>
+              </div>
+            )}
+
+            {!isGym && (<>
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Velodrome
@@ -339,6 +356,7 @@ export default function FitUploader({
                 </span>
               </div>
             )}
+            </>)}
 
             <button
               type="submit"

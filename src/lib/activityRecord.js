@@ -10,6 +10,7 @@ import { buildPowerPreview } from './powerPreview.js'
 import { zoneSignature } from './privacyZone.js'
 import { ftpAt } from './ftpHistory.js'
 import { weightAt } from './weightHistory.js'
+import { normalizeActivityType } from './activityType.js'
 
 /**
  * @param {object} summary - output of api/analyze.py's `analyze_fit_file().summary`
@@ -36,6 +37,8 @@ import { weightAt } from './weightHistory.js'
  * @param {number|null} [meta.ftpWatts] - fallback FTP when no history is supplied, used to derive
  *   intensity_factor/training_load
  * @param {object|null} [meta.privacyZone] - owner's GPS privacy zone, applied to route_preview
+ * @param {string|null} [meta.activityType] - 'ride' (default) | 'gym'; falls back to summary.activity_type. Gym sessions
+ *   take no track, ride type, gear or load (the analysis is expected to come through prepareAnalysis).
  * @param {string} [meta.fallbackActivityDate] - used when summary.start_time is unavailable
  */
 export function buildActivityInsert(summary = {}, meta = {}) {
@@ -60,7 +63,11 @@ export function buildActivityInsert(summary = {}, meta = {}) {
     weightHistory = null,
     privacyZone = null,
     fallbackActivityDate = new Date().toISOString(),
+    activityType: metaActivityType = null,
   } = meta
+
+  const activityType = normalizeActivityType(metaActivityType || summary.activity_type)
+  const isGym = activityType === 'gym'
 
   const activityDate = summary.start_time || fallbackActivityDate
   const ftpWatts = Array.isArray(ftpHistory) ? ftpAt(ftpHistory, activityDate) : fallbackFtp
@@ -72,7 +79,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
   // and we have a normalized power + elapsed time to work from.
   let intensityFactor = null
   let trainingLoad = null
-  if (ftpWatts && normalizedPower && elapsedTime) {
+  if (!isGym && ftpWatts && normalizedPower && elapsedTime) {
     intensityFactor = Math.round((normalizedPower / ftpWatts) * 1000) / 1000
     trainingLoad =
       Math.round(
@@ -81,12 +88,15 @@ export function buildActivityInsert(summary = {}, meta = {}) {
   }
 
   return {
-    title: title?.trim() || 'Track Session',
+    title: title?.trim() || (isGym ? 'Gym Session' : 'Track Session'),
     user_id: userId,
-    track_id: trackId || null,
-    ride_type: rideType || null,
-    chainring: chainring ? parseInt(chainring) : null,
-    cog: cog ? parseInt(cog) : null,
+    // Rides leave both columns out (the database default is 'ride'), so ride inserts do not depend on the migration.
+    ...(isGym ? { activity_type: 'gym' } : {}),
+    ...(isGym && summary.calories != null ? { calories: summary.calories } : {}),
+    track_id: isGym ? null : trackId || null,
+    ride_type: isGym ? null : rideType || null,
+    chainring: !isGym && chainring ? parseInt(chainring) : null,
+    cog: !isGym && cog ? parseInt(cog) : null,
     crank_length_mm: crankLengthMm,
     activity_date: activityDate,
     start_time: summary.start_time ?? null,

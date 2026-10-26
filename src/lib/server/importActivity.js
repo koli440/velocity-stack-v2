@@ -9,6 +9,7 @@ import { findDuplicate, loadExistingActivityFingerprints, resolveDuplicate } fro
 import { ImportError, DUPLICATE_MESSAGE } from './importErrors.js'
 import { autoLinkActivity, dayOfLocalStamp } from '../plannedWorkouts.js'
 import { effectiveRideType, rideTypeHasGear, isKnownRideType } from '../rideType.js'
+import { prepareAnalysis } from '../gymAnalysis.js'
 
 /**
  * Pure: decides what to do given the candidate and the user's existing activities.
@@ -65,7 +66,9 @@ export async function importActivity({
     gearing: { chainring, cog, isFixedGear },
     analyzeFit,
   })
-  const { summary = {}, curves = {}, time_series = {} } = fetched
+  // Gym sessions keep only duration / heart rate / calories; rides pass through untouched.
+  const { activityType, summary, curves, time_series } = prepareAnalysis(fetched, fetched.activityType)
+  const isGym = activityType === 'gym'
 
   const existing = await loadExistingActivityFingerprints(supabase, userId)
   const plan = planImport(
@@ -80,9 +83,10 @@ export async function importActivity({
   if (plan.action === 'skip') return { status: 'skipped', activity: null }
 
   const record = buildActivityInsert(summary, {
-    title: options.title || fetched.title || `${providerLabel(provider.source)} Sync`,
+    title: options.title || fetched.title || `${providerLabel(provider.source)} ${isGym ? 'Gym Session' : 'Sync'}`,
     userId,
-    trackId: options.trackId || null,
+    trackId: isGym ? null : options.trackId || null,
+    activityType,
     rideType,
     chainring,
     cog,

@@ -27,6 +27,7 @@ export default function WeekStatsCard({ userId }) {
       .from('activities')
       .select(COLUMNS)
       .eq('user_id', userId)
+      .eq('activity_type', 'ride')
       .gte('activity_date', prevStart.toISOString())
       .lt('activity_date', end.toISOString())
     if (!error) setTotals(weekTotals(data || [], new Date()))

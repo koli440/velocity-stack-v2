@@ -4,6 +4,7 @@
 // friendly errors, derives status / labels, suggests activity matches and builds the readable structure summary.
 
 import { addDays, dayKey, parseDayKey } from './calendar.js'
+import { isGymActivity } from './activityType.js'
 import { BAND_SUFFIXES, buildIntervalManifest, parseIntervalDsl } from './intervalDsl.js'
 
 export const PLANNED_TITLE_MAX = 80
@@ -228,7 +229,7 @@ export const AUTO_LINK_DURATION_TOLERANCE = 0.25
 export const AUTO_LINK_MARGIN = 0.1
 
 /** The calendar derives the discipline of an activity from its track. */
-export const activityDiscipline = (a) => (a?.track_id || a?.trackId ? 'track' : 'ride')
+export const activityDiscipline = (a) => (isGymActivity(a) ? 'gym' : a?.track_id || a?.trackId ? 'track' : 'ride')
 
 /**
  * Picks the planned workout a NEW activity should be linked to automatically, or null (then the user still
@@ -243,8 +244,16 @@ export const activityDiscipline = (a) => (a?.track_id || a?.trackId ? 'track' : 
  */
 export function pickAutoLinkCandidate(workouts, activity, localDay) {
   if (!activity) return null
+  const gymActivity = isGymActivity(activity)
+  // Gym sessions only complete gym workouts and rides never complete a gym workout.
   const open = (workouts || []).filter(
-    (w) => w && !w.activity_id && w.status !== 'skipped' && !w.auto_link_suppressed && w.discipline !== 'gym' && (!localDay || w.workout_date === localDay)
+    (w) =>
+      w &&
+      !w.activity_id &&
+      w.status !== 'skipped' &&
+      !w.auto_link_suppressed &&
+      (gymActivity ? w.discipline === 'gym' : w.discipline !== 'gym') &&
+      (!localDay || w.workout_date === localDay)
   )
   if (open.length === 0) return null
   if (open.length === 1) return open[0]

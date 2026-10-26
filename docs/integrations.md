@@ -64,6 +64,11 @@ Each card shows a health line (Syncing normally / Sync looks delayed after 60 mi
 - Strava rate limit or other transient errors: shown as "Last sync issue", retried automatically.
 - Not configured on this deployment (missing env vars): the Strava card says so; the run endpoints answer 503.
 
+## Gym sessions (#326)
+- Imported by every source, tagged `activity_type = 'gym'`; rides are unchanged. Intervals.icu: `WeightTraining`, `Workout`, `Crossfit`, `HighIntensityIntervalTraining`; Strava: the same `sport_type`s; Wahoo: workout types 42 (WORKOUT) and 43 (CARDIO_CLASS); .fit upload (single and bulk): session `sport = training` or `sub_sport` `strength_training` / `hiit` (`api/analyze.py`).
+- Gym sessions without a file or streams (e.g. manual Strava workouts) are imported summary-only from the list fields (duration, avg/max HR, calories). Heart-rate series come from the file or streams when available.
+- Not imported yet: exercises, sets, reps, weights (layer 2).
+
 ## De-duplication and priority
 - Same external id from the same provider is imported once (unique index).
 - A ride matching an existing one (same user, start time and duration within 5 s, or same `.fit` hash) is not imported again.

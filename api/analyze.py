@@ -100,9 +100,32 @@ def derive_speed_and_distance_from_gps(gps_points):
         speed_kmh[i] = round((step_m / dt_s) * 3.6, 1) if dt_s > 0 else 0.0
     return speed_kmh, round(distance_m, 1)
 
+def classify_activity(sport, sub_sport):
+    """'gym' for strength / training sessions, 'ride' for everything else (existing behaviour)."""
+    sport = str(sport or '').lower()
+    sub_sport = str(sub_sport or '').lower()
+    if sport == 'training' or sub_sport in ('strength_training', 'hiit'):
+        return 'gym'
+    return 'ride'
+
+def read_session_info(fitfile):
+    """Sport / sub-sport / calories / start / duration from the FIT session message (first one)."""
+    for msg in fitfile.get_messages('session'):
+        vals = msg.get_values()
+        return {
+            'sport': vals.get('sport'),
+            'sub_sport': vals.get('sub_sport'),
+            'calories': vals.get('total_calories'),
+            'start_time': vals.get('start_time'),
+            'elapsed_time_s': vals.get('total_elapsed_time'),
+        }
+    return {}
+
 def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
     fitfile = FitFile(file_path)
-    
+    session_info = read_session_info(fitfile)
+    activity_type = classify_activity(session_info.get('sport'), session_info.get('sub_sport'))
+
     watts_stream = []
     cadence_stream = []
     speed_stream = []
@@ -239,6 +262,13 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         start_time = timestamp_stream[0] if timestamp_stream else None
         elapsed_time_s = float(max(len(watts_stream) - 1, 0))
 
+    # Strength files may carry no (or sparse) records: the session message still knows start and duration.
+    if activity_type == 'gym':
+        if start_time is None and session_info.get('start_time') is not None:
+            start_time = session_info['start_time']
+        if session_info.get('elapsed_time_s') is not None:
+            elapsed_time_s = float(session_info['elapsed_time_s'])
+
     MOVING_SPEED_THRESHOLD_KMH = 1.0
     # If we have no way to determine/derive speed, it's more honest to return None than
     # to silently pretend 0 seconds moving.
@@ -282,8 +312,12 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         'elevation_gain_m': elevation_gain_m,
         'elevation_loss_m': elevation_loss_m,
         'speed_source': speed_source,
+        'activity_type': activity_type,
+        'sport': str(session_info['sport']) if session_info.get('sport') is not None else None,
+        'sub_sport': str(session_info['sub_sport']) if session_info.get('sub_sport') is not None else None,
+        'calories': session_info.get('calories'),
     }
-    
+
     output = {
         'success': True,
         'summary': summary,

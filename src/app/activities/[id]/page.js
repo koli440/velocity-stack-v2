@@ -366,8 +366,13 @@ function ActivityDetail() {
           ) : null}
           <div className="space-y-1 min-w-0">
             <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-              {activity.title || 'Velodrome Session'}
+              {activity.title || (activity.activity_type === 'gym' ? 'Gym Session' : 'Velodrome Session')}
             </h1>
+            {activity.activity_type === 'gym' && (
+              <p className="mt-1 text-xs font-bold text-violet-600 dark:text-violet-400" data-testid="detail-gym-tag">
+                Gym session{activity.calories ? ` · ${Math.round(activity.calories)} kcal` : ''}
+              </p>
+            )}
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-1.5">
               {rider?.id && (
                 <>

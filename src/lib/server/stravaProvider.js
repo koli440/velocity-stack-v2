@@ -6,11 +6,13 @@
 
 import { analyzeStreams } from '../streamAnalysis.js'
 import { ImportError } from './importErrors.js'
+import { gymSummaryFromMeta } from '../gymAnalysis.js'
 import {
   STRAVA_STREAM_KEYS,
   isStravaRide,
   afterEpoch,
-  filterStravaRides,
+  filterStravaActivities,
+  isStravaGym,
   isRateLimitNear,
   isRevokedGrant,
   parseRateLimit,
@@ -208,7 +210,7 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
           if (!Number.isNaN(t) && t < minStartMs) minStartMs = t
         }
         const inWindow = afterSec ? arr.filter((it) => Date.parse(it?.start_date) / 1000 >= afterSec) : arr
-        rides.push(...filterStravaRides(inWindow))
+        rides.push(...filterStravaActivities(inWindow))
         // Short page, or the page reached back past the lower bound: nothing older remains in the window.
         if (arr.length < PAGE_SIZE || (afterSec && minStartMs / 1000 < afterSec)) {
           exhausted = true
@@ -230,7 +232,7 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
         const res = await get(`/athlete/activities?${qs}`)
         if (!res.ok) throw new ImportError(`Strava API error (${res.status})`, res.status)
         const items = await res.json()
-        rides.push(...filterStravaRides(items))
+        rides.push(...filterStravaActivities(items))
         if (!Array.isArray(items) || items.length < PAGE_SIZE) break
       }
       remember(rides)
@@ -258,6 +260,10 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
           start_date_local: item.start_date_local,
           elapsed_time: item.elapsed_time_s ?? undefined,
           moving_time: item.moving_time_s,
+          average_heartrate: item.average_heartrate,
+          max_heartrate: item.max_heartrate,
+          calories: item.calories,
+          gym: item.activity_type === 'gym',
         }
       } else {
         // Not seen in a list (single-ride import): one extra read for the same fields.
@@ -265,7 +271,36 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
         if (detailRes.status === 404) throw new ImportError(`Strava activity ${id} was not found.`, 404)
         if (!detailRes.ok) throw new ImportError(`Strava API error (${detailRes.status})`, detailRes.status)
         detail = await detailRes.json()
-        if (!isStravaRide(detail)) throw new ImportError(`Strava activity ${id} is not a ride.`, 422)
+        detail.gym = isStravaGym(detail)
+        if (!detail.gym && !isStravaRide(detail)) {
+          throw new ImportError(`Strava activity ${id} is not a ride or gym session.`, 422)
+        }
+      }
+
+      if (detail.gym) {
+        // Manual strength sessions have no streams: fall back to the heart-rate stream when present, else list fields.
+        let analyzed = null
+        try {
+          analyzed = await this.analyzeStreamsFor(id, gearing)
+        } catch (e) {
+          if (!(e instanceof ImportError) || e.status !== 404) throw e
+        }
+        const meta = gymSummaryFromMeta({
+          startTime: detail.start_date || null,
+          elapsedS: detail.elapsed_time,
+          movingS: detail.moving_time,
+          avgHr: detail.average_heartrate,
+          maxHr: detail.max_heartrate,
+          calories: detail.calories,
+        })
+        return {
+          activityType: 'gym',
+          title: detail.name || null,
+          startDateLocal: detail.start_date_local ? String(detail.start_date_local).replace(/Z$/, '') : null,
+          summary: { ...(analyzed?.summary || {}), ...meta.summary, start_time: detail.start_date || null },
+          curves: analyzed?.curves || meta.curves,
+          time_series: analyzed?.time_series || meta.time_series,
+        }
       }
 
       const analyzed = await this.analyzeStreamsFor(id, gearing)
