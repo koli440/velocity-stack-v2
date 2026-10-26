@@ -130,7 +130,7 @@ const FEATURES = [
     bullets: [
       ['Instant speed', 'at your target cadence'],
       ['Similar gears', 'suggestions within a tolerance'],
-      ['Zero setup', 'no account data needed'],
+      ['Zero setup', 'no data import needed to get started'],
     ],
   },
   {
