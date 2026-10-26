@@ -77,3 +77,14 @@ test('Strava repair only looks at rides, never gym sessions', async () => {
 test('session search still finds gym sessions by title', () => {
   assert.match(buildSessionSearch('legs').orFilter, /title\.ilike/)
 })
+
+test('track sessions get their own label but stay rides', async () => {
+  const { isTrackActivity, normalizeActivityType } = await import('../activityType.js')
+  assert.equal(isTrackActivity({ activity_type: 'ride', track_id: 'x' }), true)
+  assert.equal(isTrackActivity({ track_id: null }), false)
+  assert.equal(isTrackActivity({ activity_type: 'gym', track_id: 'x' }), false)
+  assert.equal(normalizeActivityType('ride'), 'ride')
+  const e = activityToEvent({ id: 1, activity_date: '2027-01-05T10:00:00Z', track_id: 'x' })
+  assert.equal(activityChipLabel(e), 'Track')
+  assert.equal(activityChipLabel({ discipline: 'ride' }), 'Ride')
+})

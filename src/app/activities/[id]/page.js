@@ -40,6 +40,7 @@ import { updateActivityGear } from '../../../lib/coaching'
 import { computeDurationalCurve } from '../../../lib/streamAnalysis'
 import ActivityComments from '../../../components/ActivityComments'
 import GymSessionSection from '../../../components/GymSessionSection'
+import { isTrackActivity } from '../../../lib/activityType'
 
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
   ssr: false,
@@ -373,6 +374,11 @@ function ActivityDetail() {
             {activity.activity_type === 'gym' && (
               <p className="mt-1 text-xs font-bold text-violet-600 dark:text-violet-400" data-testid="detail-gym-tag">
                 Gym session{activity.calories ? ` · ${Math.round(activity.calories)} kcal` : ''}
+              </p>
+            )}
+            {isTrackActivity(activity) && (
+              <p className="mt-1 text-xs font-bold text-amber-600 dark:text-amber-400" data-testid="detail-track-tag">
+                Track session
               </p>
             )}
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-1.5">
