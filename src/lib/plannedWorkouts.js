@@ -319,13 +319,14 @@ export const dayOfLocalStamp = (stamp) => {
 
 /**
  * Activities the given workout can be linked to: those of the planned DAY only (local day, like the calendar
- * cell), not linked to another workout, whatever their discipline (activities carry no discipline, the
- * calendar derives ride/track from the track). Same-discipline ones first, then by time.
+ * cell), not linked to another workout. Gym sessions only go with gym workouts and gym workouts only with gym
+ * sessions; a ride and a track session are interchangeable (the calendar derives track from the track). Same-discipline
+ * ones first, then by time.
  */
 export function linkableActivities(workout, workouts, activities) {
   const linkedElsewhere = new Set((workouts || []).filter((w) => w.activity_id && w.id !== workout.id).map((w) => w.activity_id))
   return (activities || [])
-    .filter((a) => a && a.kind !== 'planned' && dayKey(a.date) === workout.workout_date && !linkedElsewhere.has(a.id))
+    .filter((a) => a && a.kind !== 'planned' && dayKey(a.date) === workout.workout_date && !linkedElsewhere.has(a.id) && (a.discipline === 'gym') === (workout.discipline === 'gym'))
     .sort((a, b) => (b.discipline === workout.discipline) - (a.discipline === workout.discipline) || a.date - b.date || String(a.id).localeCompare(String(b.id)))
 }
 

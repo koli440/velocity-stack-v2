@@ -131,7 +131,7 @@ test('linkableActivities lists the planned day only, free activities, same disci
   const acts = [act('a1', 8), act('a2', 9), { ...act('a3', 8), date: new Date(2026, 9, 25, 8) }, trk, { ...act('a5', 23), date: new Date(2026, 9, 20, 23, 59) }, { ...act('a6', 0), date: new Date(2026, 9, 21, 0, 1) }]
   assert.deepEqual(linkableActivities(ws[0], ws, acts).map((a) => a.id), ['a1', 'a5', 'a4'])
   assert.deepEqual(linkableActivities(ws[1], ws, acts).map((a) => a.id), ['a1', 'a2', 'a5', 'a4'])
-  assert.deepEqual(linkableActivities(W({ discipline: 'gym' }), ws, acts).map((a) => a.id), ['a1', 'a4', 'a5'])
+  assert.deepEqual(linkableActivities(W({ discipline: 'gym' }), ws, acts).map((a) => a.id), [])
 })
 
 test('parseStructure validates with the template parser and builds the manifest', () => {

@@ -136,7 +136,7 @@ export default function SessionSearch({ userId, tracks = [] }) {
               >
                 <div className="font-semibold text-slate-900 dark:text-white truncate">{r.title || 'Untitled session'}</div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  {[trackName(r), formatDate(r.activity_date)].filter(Boolean).join(' · ')}
+                  {[r.activity_type === 'gym' ? 'Gym' : trackName(r), formatDate(r.activity_date)].filter(Boolean).join(' · ')}
                 </div>
               </li>
             ))}

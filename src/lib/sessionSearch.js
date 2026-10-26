@@ -84,7 +84,7 @@ export async function searchSessions(client, { userId, term, tracks = [], limit 
   const { date, orFilter } = buildSessionSearch(term, tracks)
   let q = client
     .from('activities')
-    .select('id, title, activity_date, track_id, tracks(name)')
+    .select('id, title, activity_date, track_id, activity_type, tracks(name)')
     .eq('user_id', userId)
   if (date) q = q.gte('activity_date', date.from).lt('activity_date', date.to)
   else q = q.or(orFilter)

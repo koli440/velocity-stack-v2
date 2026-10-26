@@ -10,4 +10,4 @@ export class ImportError extends Error {
 }
 
 export const DUPLICATE_MESSAGE =
-  'This ride appears to already be in your vault (matching start time/duration). Import blocked to avoid a duplicate.'
+  'This activity appears to already be in your vault (matching start time/duration). Import blocked to avoid a duplicate.'

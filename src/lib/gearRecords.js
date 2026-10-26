@@ -109,6 +109,7 @@ export async function fetchGearRecords(client, ownerId, chainring, cog) {
       .order('achieved_date', { ascending: false }),
     scopeToOwner(client.from('activities').select(RACE_RIDE_COLUMNS), ownerId)
       .eq('is_race', true)
+      .eq('activity_type', 'ride')
       .order('activity_date', { ascending: false })
       .limit(MAX_GEAR_RECORD_RIDES),
     scopeToOwner(client.from('calendar_races').select(LINKED_RACE_COLUMNS), ownerId, 'rider_id').not('activity_id', 'is', null),

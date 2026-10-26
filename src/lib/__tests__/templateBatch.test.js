@@ -105,7 +105,7 @@ test('searchActivities filters by owner and escapes the query', async () => {
   const q = { select: () => q, eq: (c, v) => (calls.push([c, v]), q), ilike: (c, v) => (calls.push([c, v]), q), order: () => q, limit: () => Promise.resolve({ data: [{ id: 1 }], error: null }) }
   const client = { from: (t) => (calls.push(['from', t]), q) }
   await searchActivities(client, { ownerId: 'u', shared: true, query: '50%' })
-  assert.deepEqual(calls, [['from', 'shared_activities'], ['user_id', 'u'], ['title', '%50\\%%']])
+  assert.deepEqual(calls, [['from', 'shared_activities'], ['user_id', 'u'], ['activity_type', 'ride'], ['title', '%50\\%%']])
   assert.deepEqual((await searchActivities(client, { ownerId: null, query: 'x' })).data, [])
 })
 

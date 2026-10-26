@@ -27,6 +27,7 @@ export async function findCurveGaps(service, userId, limit = CURVE_SCAN_LIMIT) {
     .select('id, curves_data')
     .eq('user_id', userId)
     .eq('external_source', 'strava')
+    .eq('activity_type', 'ride')
     .order('created_at', { ascending: false })
     .limit(limit)
   if (error || !rides?.length) return []
@@ -42,6 +43,7 @@ export async function findHeartrateGaps(service, userId, limit = STRAVA_REPAIR_P
     .select('id, external_id, chainring, cog')
     .eq('user_id', userId)
     .eq('external_source', 'strava')
+    .eq('activity_type', 'ride')
     .is('time_series->heartrate', null)
     .order('created_at', { ascending: false })
     .limit(limit)

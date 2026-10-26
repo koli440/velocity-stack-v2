@@ -63,6 +63,7 @@ import {
   startOfDay,
   dayKey,
   fetchActivitiesInRange,
+  activityChipLabel,
 } from '../lib/calendar'
 
 const defaultFetchEvents = (args) => fetchActivitiesInRange(supabase, args)
@@ -70,7 +71,7 @@ const defaultFetchNotes = (args) => fetchNotesInRange(supabase, args)
 const defaultFetchPlanned = (args) => fetchPlannedInRange(supabase, args)
 const defaultFetchRaces = (args) => fetchRacesInRange(supabase, args)
 
-const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike' }
+const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike', gym: 'flame' }
 
 // Shared stacked layout: meta line (icon, label, right-aligned extras), name on its own line, wrapping stats.
 function ChipBody({ icon, iconClass, label, extras, name, stats }) {
@@ -107,13 +108,15 @@ function EventChip({ event, race, returnTo }) {
           ? RACE_PRIORITY_STYLES[race.priority]
           : planned
             ? 'border-dashed border-sky-400/60 bg-sky-500/5'
-            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60'
+            : event.discipline === 'gym'
+              ? 'border-violet-300/70 dark:border-violet-500/40 bg-violet-500/5'
+              : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60'
       }`}
     >
       <ChipBody
         icon={race ? CALENDAR_ICONS.race : DISCIPLINE_ICON[event.discipline] || 'bike'}
-        iconClass={race ? 'text-rose-500' : 'text-emerald-600 dark:text-brand-neon'}
-        label={race ? `Race · ${race.priority}` : planned ? 'Planned' : 'Ride'}
+        iconClass={race ? 'text-rose-500' : event.discipline === 'gym' ? 'text-violet-600 dark:text-violet-400' : 'text-emerald-600 dark:text-brand-neon'}
+        label={race ? `Race · ${race.priority}` : planned ? 'Planned' : activityChipLabel(event)}
         extras={(event.isRace || pushed) && (
           <>
             {event.isRace && <RaceBadge testId="calendar-race-tag" size="xs" />}

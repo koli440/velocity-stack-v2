@@ -179,6 +179,7 @@ export function weeklyVolume(row) {
     duration: formatDuration(row?.week_moving_time_s),
     distance: formatDistanceKm(row?.week_distance_m),
     load: Math.round(Number(row?.week_training_load) || 0),
+    gymSessions: Number(row?.week_gym_count) || 0,
   }
 }
 
