@@ -114,6 +114,9 @@ export function activityToEvent(row) {
   }
 }
 
+/** Chip label of a completed activity: gym sessions are "Gym", every other session (road, track) stays "Ride". */
+export const activityChipLabel = (event) => (event?.discipline === 'gym' ? 'Gym' : 'Ride')
+
 /** Groups events by local day key, sorted by time within each day. */
 export function groupEventsByDay(events) {
   const map = {}

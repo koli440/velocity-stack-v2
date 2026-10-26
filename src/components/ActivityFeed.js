@@ -303,7 +303,7 @@ export default function ActivityFeed({
                   href={withReturnTo(activityHref(act), returnTo)}
                   className="mt-2 block text-base font-black text-slate-900 dark:text-white group-hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"
                 >
-                  {act.title || 'Velodrome Session'}
+                  {act.title || (act.activity_type === 'gym' ? 'Gym Session' : 'Velodrome Session')}
                 </Link>
                 {act.activity_type === 'gym' && (
                   <div className="mt-1" data-testid="feed-gym-tag">

@@ -35,6 +35,7 @@ export async function searchActivities(client, { ownerId, shared = false, query,
     .from(shared ? 'shared_activities' : 'activities')
     .select('id, title, activity_date')
     .eq('user_id', ownerId)
+    .eq('activity_type', 'ride')
     .ilike('title', `%${escapeLike(q)}%`)
     .order('activity_date', { ascending: false })
     .order('id', { ascending: false })

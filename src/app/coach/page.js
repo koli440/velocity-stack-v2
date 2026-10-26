@@ -145,7 +145,7 @@ export default function CoachDashboardPage() {
                   Last activity: {formatLastActivity(a.stats?.last_activity_at)}
                 </span>
                 <span className="block text-[11px] font-mono text-slate-600 dark:text-slate-300">
-                  7 days: {v.sessions} sessions · {v.duration} · {v.distance} · load {v.load}
+                  7 days: {v.sessions} rides · {v.duration} · {v.distance} · load {v.load}{v.gymSessions > 0 ? ` · ${v.gymSessions} gym` : ''}
                 </span>
                 <FitnessSummaryLine fitness={a.fitness} />
               </Link>

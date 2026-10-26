@@ -97,7 +97,7 @@ export function racesByActivity(races) {
  */
 export function linkableRaceActivities(race, races, activities, day = race?.race_date) {
   const elsewhere = new Set((races || []).filter((r) => r.activity_id && r.id !== race?.id).map((r) => r.activity_id))
-  return (activities || []).filter((a) => a && a.kind !== 'planned' && a.date && localDay(a.date) === day && !elsewhere.has(a.id))
+  return (activities || []).filter((a) => a && a.kind !== 'planned' && a.discipline !== 'gym' && a.date && localDay(a.date) === day && !elsewhere.has(a.id))
 }
 
 function localDay(date) {
@@ -116,6 +116,7 @@ export function checkRaceLink({ day, activityId, currentActivityId = null, curre
   if (!activityId) return null
   const a = (activities || []).find((x) => x.id === activityId)
   if (!a) return activityId === currentActivityId && day === currentDay ? null : 'Pick an activity from this day.'
+  if (a.discipline === 'gym') return 'A gym session cannot be a race activity.'
   return localDay(a.date) === day ? null : 'The linked activity must be on the race day. Unlink it or keep the date.'
 }
 

@@ -74,9 +74,9 @@ test('banner and dashboard formatting', () => {
   assert.equal(formatDistanceKm(123456), '123.5 km')
   assert.deepEqual(
     weeklyVolume({ week_count: 3, week_moving_time_s: 7200, week_distance_m: '50000', week_training_load: '212.6' }),
-    { sessions: 3, duration: '2h 00m', distance: '50.0 km', load: 213 },
+    { sessions: 3, duration: '2h 00m', distance: '50.0 km', load: 213, gymSessions: 0 },
   )
-  assert.deepEqual(weeklyVolume(null), { sessions: 0, duration: '0m', distance: '0.0 km', load: 0 })
+  assert.deepEqual(weeklyVolume(null), { sessions: 0, duration: '0m', distance: '0.0 km', load: 0, gymSessions: 0 })
 })
 
 test('describeCoachEdit and coach_edited notification link', async () => {
