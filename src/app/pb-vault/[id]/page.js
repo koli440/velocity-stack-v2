@@ -159,7 +159,7 @@ export default function PbDetailPage() {
           {errorMsg}
         </div>
         <Link href="/pb-vault" className="text-sm font-bold text-emerald-600 dark:text-brand-neon hover:underline">
-          ⬅️ Back to PB Vault
+          <Icon name="chevronLeft" /> Back to PB Vault
         </Link>
       </div>
     )
@@ -257,7 +257,7 @@ export default function PbDetailPage() {
           className="w-full text-left px-5 py-4 text-sm font-bold text-slate-900 dark:text-white flex items-center justify-between"
         >
           <Icon name="edit" /> Edit PB Details
-          <span className="text-xs">{isEditing ? '▾' : '▸'}</span>
+          <span className="text-xs"><Icon name={isEditing ? 'chevronDown' : 'chevronRight'} /></span>
         </button>
 
         {isEditing && (
@@ -370,7 +370,7 @@ export default function PbDetailPage() {
         href="/pb-vault"
         className="block text-center py-3 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
       >
-        ⬅️ Back to PB Vault
+        <Icon name="chevronLeft" /> Back to PB Vault
       </Link>
     </div>
   )

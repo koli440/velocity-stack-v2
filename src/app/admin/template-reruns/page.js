@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import Icon from '../../../components/Icon'
 import { getAuthHeader, supabase } from '../../../lib/supabase'
 import { formatDateTime } from '../../../lib/dateFormat'
 
@@ -121,7 +122,7 @@ export default function AdminTemplateRerunsPage() {
                   <td className={`py-1 pr-3 font-black ${i.status === 'failed' ? 'text-red-500' : i.status === 'done' ? 'text-emerald-500' : 'text-slate-500'}`}>{i.status}</td>
                   <td className="pr-3">{i.template_slug || '—'}{i.by_coach ? ' (coach run)' : ''}</td>
                   <td className="pr-3 font-mono">{i.efforts_before ?? '—'} → {i.efforts_after ?? '—'}</td>
-                  <td className="pr-3">{i.reason || ''}{i.warning ? ` ⚠ ${i.warning}` : ''}</td>
+                  <td className="pr-3">{i.reason || ''}{i.warning ? <> <Icon name="alert" /> {i.warning}</> : ''}</td>
                   <td className="text-slate-400">{formatDateTime(i.processed_at)}</td>
                 </tr>
               ))}

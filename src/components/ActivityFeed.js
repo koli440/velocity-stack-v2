@@ -287,7 +287,7 @@ export default function ActivityFeed({
                       aria-label={commentCountLabel(commentCounts.get(act.id))}
                       className="relative z-10 shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-orange-500"
                     >
-                      💬 {commentCounts.get(act.id)}
+                      <Icon name="chat" size={11} /> {commentCounts.get(act.id)}
                       {unread.get(act.id) > 0 && (
                         <span
                           data-testid="comment-unread-dot"

@@ -1,5 +1,6 @@
 'use client'
 
+import Icon from './Icon'
 import { useEffect, useRef, useState } from 'react'
 import { runsBadgeLabel } from '../lib/activityTemplateRuns'
 
@@ -33,7 +34,7 @@ export default function TemplateRunsBadge({ runs, className = '' }) {
         onClick={() => setOpen((o) => !o)}
         className="max-w-[10rem] truncate text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-orange-500"
       >
-        🧩 {label}
+        <Icon name="puzzle" /> {label}
       </button>
       {open && (
         <div

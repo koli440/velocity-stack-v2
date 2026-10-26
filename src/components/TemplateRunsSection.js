@@ -382,7 +382,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
             aria-controls="template-runs-body"
             className="flex items-center gap-2 py-1 -my-1 text-left uppercase font-black tracking-wider"
           >
-            <span aria-hidden="true" className={`inline-block text-slate-400 transition-transform ${sectionCollapsed ? '' : 'rotate-90'}`}>▸</span>
+            <span aria-hidden="true" className={`inline-block text-slate-400 transition-transform ${sectionCollapsed ? '' : 'rotate-90'}`}><Icon name="chevronRight" /></span>
             <Icon name="flask" /> Template Runs <span className="text-slate-400">({shownRuns.length})</span>
           </button>
         </h3>
@@ -475,7 +475,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                       aria-controls={bodyId}
                       className="flex items-center gap-2 min-w-0 py-1 -my-1 text-left"
                     >
-                      <span aria-hidden="true" className={`inline-block text-slate-400 transition-transform ${open ? 'rotate-90' : ''}`}>▸</span>
+                      <span aria-hidden="true" className={`inline-block text-slate-400 transition-transform ${open ? 'rotate-90' : ''}`}><Icon name="chevronRight" /></span>
                       <span className="w-3 h-3 rounded-full shrink-0" style={{ background: colorById[run.id] }} />
                       <b className="text-xs text-slate-900 dark:text-white truncate">
                         {runTemplateName(run)}
@@ -538,7 +538,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
 
                 {hasEfforts && (
                   <button type="button" onClick={() => toggleIn(setExpandedIds, run.id)} className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                    {expanded ? '▴ Hide efforts' : `▾ Show efforts (${run.efforts.length})`}
+                    {expanded ? <><Icon name="chevronUp" /> Hide efforts</> : <><Icon name="chevronDown" /> Show efforts ({run.efforts.length})</>}
                   </button>
                 )}
                 {expanded && hasEfforts && <EffortCards efforts={run.efforts} onSendToPbVault={activity && canSendRunToPbVault(run) && !athleteMode ? sendToPbVault : null} />}

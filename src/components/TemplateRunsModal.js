@@ -114,7 +114,7 @@ function Inner({ template, metricKeys, filter = 'all', rider = null, athleteName
             className={`${field} font-bold`}
             aria-label={dir === 'desc' ? 'Descending' : 'Ascending'}
           >
-            {dir === 'desc' ? '↓' : '↑'}
+            <Icon name={dir === 'desc' ? 'chevronDown' : 'chevronUp'} />
           </button>
         </div>
 
