@@ -36,6 +36,7 @@ const GROUPS = [
     items: [
       { name: 'Pursuit Strategist', text: 'Lap-by-lap pacing based on real physics.', href: '/pursuit', cta: 'Plan a pursuit' },
       { name: 'Gear Architect', text: 'Gear inch and development calculations.', href: '/gears', cta: 'Open gears' },
+      { name: 'Built for track cycling', text: 'A short tour of gear tracking, template analysis, race tagging and coaching for track riders.', href: '/track', cta: 'See the track overview' },
       { name: 'Aero Lab', text: 'Field-test your position and equipment (CdA) without a wind tunnel.', href: '/aero-lab', cta: 'Open Aero Lab' },
       { name: 'Velodromes', text: 'Track details for the velodromes in the database.', href: '/velodromes', cta: 'Browse velodromes' },
     ],
