@@ -86,3 +86,31 @@ test('keepGear leaves gear columns out without changing the ride type', () => {
   const { updates } = buildActivityUpdates({ ...base, keepGear: true })
   for (const k of ['ride_type', 'gears', 'gear_segments', 'chainring', 'cog']) assert.equal(k in updates, false)
 })
+
+test('switching to gym sets activity_type, drops track and gear, keeps ride data', () => {
+  const { updates, error } = buildActivityUpdates({ title: 'Legs', trackId: 't1', visibility: 'private', chainring: '48', cog: '15', activityType: 'gym', rideType: 'track' })
+  assert.equal(error, null)
+  assert.deepEqual(updates, { title: 'Legs', track_id: null, visibility: 'private', description: null, activity_type: 'gym' })
+})
+
+test('switching back to ride sets activity_type ride and the chosen ride type', () => {
+  const { updates } = buildActivityUpdates({ title: 'R', trackId: 't1', visibility: 'private', rideType: 'road', activityType: 'ride' })
+  assert.equal(updates.activity_type, 'ride')
+  assert.equal(updates.ride_type, 'road')
+  assert.equal(buildActivityUpdates({ title: 'R', visibility: 'private', activityType: 'swim' }).error, 'Invalid activity type')
+  assert.equal('activity_type' in buildActivityUpdates({ title: 'R', visibility: 'private', rideType: 'road' }).updates, false)
+})
+
+test('a gym/ride switch unlinks planned workouts of the other kind', async () => {
+  const calls = []
+  const client = {
+    from: (t) => ({
+      update: (u) => ({ eq: async () => { calls.push(['update', t, u]); return { error: null } } }),
+      select: () => ({ eq: async () => ({ data: [{ id: 'w1', discipline: 'ride' }, { id: 'w2', discipline: 'gym' }] }) }),
+    }),
+    rpc: async (fn, args) => { calls.push([fn, args]) },
+  }
+  const { error } = await updateActivity(client, 'a1', { title: 'G', visibility: 'private', activityType: 'gym' })
+  assert.equal(error, null)
+  assert.deepEqual(calls.filter((c) => c[0] === 'planned_workout_unlink'), [['planned_workout_unlink', { p_id: 'w1' }]])
+})

@@ -36,11 +36,12 @@ export default function RideGearEditor({
   timeSeries,
   disabled = false,
   showSegments = true,
+  allowGym = false,
 }) {
   const uid = useId()
-  const type = effectiveRideType(rideType)
+  const type = rideType === 'gym' && allowGym ? 'gym' : effectiveRideType(rideType)
   const hasGear = rideTypeHasGear(type)
-  const known = RIDE_TYPES.some((t) => t.key === type)
+  const known = type === 'gym' || RIDE_TYPES.some((t) => t.key === type)
   const payload = useMemo(() => toGearPayload(gears), [gears])
   const { totalS, series } = useMemo(() => segmentSeriesOf(timeSeries), [timeSeries])
   const allValid = payload.length === gears.length
@@ -56,7 +57,7 @@ export default function RideGearEditor({
   return (
     <div className="space-y-4">
       <div>
-        <label className={labelClass} htmlFor={`${uid}-type`}>Ride type</label>
+        <label className={labelClass} htmlFor={`${uid}-type`}>Activity type</label>
         <select
           id={`${uid}-type`}
           value={type}
@@ -67,6 +68,7 @@ export default function RideGearEditor({
           {RIDE_TYPES.map((t) => (
             <option key={t.key} value={t.key}>{t.label}</option>
           ))}
+          {allowGym && <option value="gym">Gym</option>}
           {!known && <option value={type}>{type}</option>}
         </select>
         {!hasGear && gears.length > 0 && (
