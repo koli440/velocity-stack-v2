@@ -304,6 +304,7 @@ export function createWahooProvider({ accessToken, fetchImpl = fetch }) {
           },
           curves: base.curves || {},
           time_series: base.time_series || {},
+          strength: base.strength,
         }
       }
 

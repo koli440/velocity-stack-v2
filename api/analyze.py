@@ -121,6 +121,59 @@ def read_session_info(fitfile):
         }
     return {}
 
+MAX_STRENGTH_SETS = 1000
+
+def _first(value):
+    """FIT category / subtype fields are arrays; fitparse yields a list or a single value."""
+    if isinstance(value, (list, tuple)):
+        value = value[0] if value else None
+    return value
+
+def _iso(value):
+    return value.isoformat() if hasattr(value, 'isoformat') else None
+
+def extract_strength_sets(set_values, title_values):
+    """Raw strength detail from FIT `set` / `exercise_title` message value dicts.
+
+    Returns None when the file has no sets. Exercise grouping and naming live in src/lib/gymDetail.js;
+    this only reads. Weight is kilograms, durations seconds; unset / invalid fields are None.
+    """
+    sets = []
+    for vals in set_values[:MAX_STRENGTH_SETS]:
+        category = _first(vals.get('category'))
+        subtype = _first(vals.get('category_subtype'))
+        weight = vals.get('weight')
+        reps = vals.get('repetitions')
+        duration = vals.get('duration')
+        set_type = str(vals.get('set_type')).lower() if vals.get('set_type') is not None else None
+        sets.append({
+            'index': vals.get('message_index'),
+            'type': 'rest' if set_type in ('rest', '0') else 'active',
+            'start_time': _iso(vals.get('start_time') or vals.get('timestamp')),
+            'duration_s': float(duration) if isinstance(duration, (int, float)) and duration >= 0 else None,
+            'reps': int(reps) if isinstance(reps, (int, float)) and 0 <= reps < 65535 else None,
+            'weight_kg': float(weight) if isinstance(weight, (int, float)) and 0 <= weight < 4000 else None,
+            'category': str(category) if category is not None else None,
+            'subtype': str(subtype) if subtype is not None else None,
+        })
+    if not any(s['type'] == 'active' for s in sets):
+        return None
+    titles = []
+    for vals in title_values[:200]:
+        category = _first(vals.get('exercise_category'))
+        title = vals.get('wkt_step_name') or vals.get('exercise_title') or vals.get('wkt_name')
+        titles.append({
+            'category': str(category) if category is not None else None,
+            'name_id': vals.get('exercise_name'),
+            'title': str(title) if title else None,
+        })
+    return {'sets': sets, 'titles': titles}
+
+def read_strength_sets(fitfile):
+    set_values = [m.get_values() for m in fitfile.get_messages('set')]
+    title_values = [m.get_values() for m in fitfile.get_messages('exercise_title')]
+    return extract_strength_sets(set_values, title_values)
+
 def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
     fitfile = FitFile(file_path)
     session_info = read_session_info(fitfile)
@@ -318,6 +371,8 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         'calories': session_info.get('calories'),
     }
 
+    strength = read_strength_sets(fitfile) if activity_type == 'gym' else None
+
     output = {
         'success': True,
         'summary': summary,
@@ -333,6 +388,8 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
             'altitude': altitude_stream,
         }
     }
+    if strength:
+        output['strength'] = strength
     
     return output
 

@@ -208,6 +208,7 @@ export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchI
                   summary: parsed.summary,
                   curves: parsed.curves,
                   time_series: parsed.time_series || {},
+                  strength: parsed.strength,
                 }
               }
             }

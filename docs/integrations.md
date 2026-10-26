@@ -66,6 +66,7 @@ Each card shows a health line (Syncing normally / Sync looks delayed after 60 mi
 
 ## Gym sessions (#326)
 - Imported by every source, tagged `activity_type = 'gym'`; rides are unchanged. Intervals.icu: `WeightTraining`, `Workout`, `Crossfit`, `HighIntensityIntervalTraining`; Strava: the same `sport_type`s; Wahoo: workout types 42 (WORKOUT) and 43 (CARDIO_CLASS); .fit upload (single and bulk): session `sport = training` or `sub_sport` `strength_training` / `hiit` (`api/analyze.py`).
+- Sets: `.fit` files with `set` / `exercise_title` messages (upload, bulk, Intervals.icu file, Wahoo file) store exercises and sets (`gym_exercises`, `gym_sets`); the activity page shows them next to the HR series. Strava sessions and any summary-only import keep summary + HR only. History: a one-time backfill re-open (migration `20270114000000`) imports earlier gym sessions within the usual quotas and the Strava budget, and a repair of 3 sessions per run adds sets to file-backed sessions imported earlier (no Strava requests).
 - Gym sessions without a file or streams (e.g. manual Strava workouts) are imported summary-only from the list fields (duration, avg/max HR, calories). Heart-rate series come from the file or streams when available.
 - Not imported yet: exercises, sets, reps, weights (layer 2).
 

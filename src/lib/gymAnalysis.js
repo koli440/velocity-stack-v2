@@ -6,19 +6,21 @@
 // keep only what applies: duration, heart rate (summary, curve, series) and calories.
 
 import { normalizeActivityType } from './activityType.js'
+import { buildGymDetail } from './gymDetail.js'
 
 const GYM_SUMMARY_KEYS = ['start_time', 'elapsed_time_s', 'moving_time_s', 'avg_hr', 'max_hr', 'calories']
 
 /**
  * @param {{ summary?: object, curves?: object, time_series?: object }} analysis - api/analyze.py shape
  * @param {string|null} [activityType] - explicit type (provider/user); falls back to summary.activity_type
- * @returns {{ activityType: string, summary: object, curves: object, time_series: object }}
+ * @returns {{ activityType: string, summary: object, curves: object, time_series: object, gym: object|null }}
+ *   `gym` is the exercises/sets detail (FIT strength files only), null for rides and summary-only sessions
  */
 export function prepareAnalysis(analysis, activityType = null) {
   const summary = analysis?.summary || {}
   const type = normalizeActivityType(activityType || summary.activity_type)
   if (type !== 'gym') {
-    return { activityType: 'ride', summary, curves: analysis?.curves || {}, time_series: analysis?.time_series || {} }
+    return { activityType: 'ride', summary, curves: analysis?.curves || {}, time_series: analysis?.time_series || {}, gym: null }
   }
   const gymSummary = { activity_type: 'gym' }
   for (const k of GYM_SUMMARY_KEYS) if (summary[k] != null) gymSummary[k] = summary[k]
@@ -31,6 +33,7 @@ export function prepareAnalysis(analysis, activityType = null) {
     summary: gymSummary,
     curves,
     time_series: Array.isArray(hr) && hr.length ? { heartrate: hr } : {},
+    gym: buildGymDetail(analysis?.strength),
   }
 }
 

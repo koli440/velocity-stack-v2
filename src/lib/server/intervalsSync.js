@@ -14,6 +14,7 @@ import { createStravaProviderForConnection } from './stravaProvider.js'
 import { createWahooProviderForConnection } from './wahooProvider.js'
 import { importActivity, loadImportProfile } from './importActivity.js'
 import { repairStravaActivities, STRAVA_REPAIR_PER_RUN } from './stravaRepair.js'
+import { repairGymDetail, GYM_REPAIR_PER_RUN } from './gymRepair.js'
 import { loadExistingActivityFingerprints } from '../activityDuplicates.js'
 import {
   selectNewRides,
@@ -107,6 +108,7 @@ export async function syncConnection(service, conn, deps = {}) {
     importFn = importActivity,
     maxBackfillRides,
     repairFn = repairStravaActivities,
+    repairGymFn = repairGymDetail,
   } = deps
   const startedAt = now()
   const providerName = conn.provider || 'intervals'
@@ -219,6 +221,21 @@ export async function syncConnection(service, conn, deps = {}) {
         if (fixed.error) softMessage = softMessage || `Repair issue: ${String(fixed.error).slice(0, 150)}`
       } catch (err) {
         console.warn('Strava repair failed:', err?.message)
+      }
+    }
+
+    // ---- Repair: file-backed gym sessions imported before exercises/sets existed (no Strava requests) ----
+    if (!isStrava && forwardDone && !fatalMessage) {
+      try {
+        const fixed = await repairGymFn(service, {
+          userId: conn.user_id,
+          provider,
+          analyzeFit,
+          maxFetches: Math.min(GYM_REPAIR_PER_RUN, maxFetches),
+        })
+        result.repaired += fixed.repaired || 0
+      } catch (err) {
+        console.warn('Gym detail repair failed:', err?.message)
       }
     }
   } catch (err) {
