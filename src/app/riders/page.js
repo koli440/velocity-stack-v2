@@ -29,7 +29,7 @@ function RidersContent() {
     <div className="max-w-2xl mx-auto space-y-4">
       <div>
         <h1 className="text-xl font-black text-slate-900 dark:text-white">Riders</h1>
-        <p className="text-xs text-slate-500">Find riders (and bots), manage who you follow and manage who you follow.</p>
+        <p className="text-xs text-slate-500">Find riders (and bots) and manage who you follow.</p>
       </div>
       <SegmentedTabs label="Riders sections" tabs={RIDER_TABS} value={tab} onChange={setTab} />
       {!userId ? (
