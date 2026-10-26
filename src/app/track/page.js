@@ -241,19 +241,14 @@ export default function TrackLandingPage() {
 
       {/* 8. Final CTA */}
       <section className="relative isolate overflow-hidden rounded-3xl text-center">
-        <picture>
-          <source media="(min-width: 768px)" srcSet="/landing/velodrome-hero.webp" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/landing/velodrome-hero-mobile.webp"
-            alt=""
-            width={800}
-            height={533}
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 -z-20 h-full w-full object-cover"
-          />
-        </picture>
+        <Image
+          src="/login-bg.jpg"
+          alt=""
+          fill
+          loading="lazy"
+          sizes="(min-width: 1024px) 1024px, 100vw"
+          className="absolute inset-0 -z-20 object-cover object-[50%_60%]"
+        />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/70 to-slate-950/80" aria-hidden="true" />
         <div className="px-5 py-14 sm:py-20 space-y-5 text-white">
           <h2 className="text-2xl sm:text-3xl font-black">Know your gear. Analyse every interval.</h2>
@@ -261,7 +256,6 @@ export default function TrackLandingPage() {
             <CarryLink href="/register" className={btnPrimary}>Sign up</CarryLink>
             <CarryLink href="/login" className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-white/60 font-bold text-base text-white hover:bg-white/10">Sign in with Google</CarryLink>
           </div>
-          <p className="text-xs text-slate-300">Photo: Louis Legon / Paul Perret</p>
         </div>
       </section>
       <div className="pb-8" />
