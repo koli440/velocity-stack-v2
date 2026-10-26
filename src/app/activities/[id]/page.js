@@ -546,7 +546,7 @@ function ActivityDetail() {
       <ActivityStreamsChart timeSeries={segmentView.activity.time_series} activity={segmentView.activity} highlightWindows={highlightWindows} />
 
       {/* 3d. Gym sessions: exercises and sets (#326) */}
-      {isGym && <GymSessionSection client={supabase} activityId={activity.id} />}
+      {isGym && <GymSessionSection client={supabase} activityId={activity.id} ownerId={activity.user_id} coachContext={inAthleteContext} />}
 
       {/* 4. Durational Curves Chart: current ride vs. a selectable baseline/"history
            curve" (all-time, last 30/90 days, this calendar year, last floating year,

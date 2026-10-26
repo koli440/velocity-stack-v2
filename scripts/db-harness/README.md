@@ -21,3 +21,5 @@ Race tag (issue #294): `MIG=<repo>/supabase/migrations/20261230000000_activity_r
 Planned workout auto-link: `MIG=<repo>/supabase/migrations/20261231000000_planned_workout_auto_link.sql node harness.mjs <repo>/supabase/migrations ./planned-auto-link-adversarial.mjs`
 
 Google sign-in profiles: `MIG=<repo>/supabase/migrations/20270101000000_oauth_signup_profile.sql node harness.mjs <repo>/supabase/migrations ./oauth-signup-adversarial.mjs`
+
+Gym editing (issue #335): `MIG=<repo>/supabase/migrations/20270116000000_gym_editing.sql node harness.mjs <repo>/supabase/migrations ./gym-editing-adversarial.mjs`

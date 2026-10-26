@@ -210,12 +210,17 @@ export default function ActivityFeed({
           {title}
         </h2>
         {onAddWorkout && (
-          <button
-            onClick={onAddWorkout}
-            className="text-xs font-bold text-orange-500 hover:text-orange-600 transition"
-          >
-            + Manual Upload
-          </button>
+          <div className="flex items-center gap-4">
+            <Link href="/gym/new" data-testid="log-gym-session" className="text-xs font-bold text-violet-500 hover:text-violet-600 transition">
+              + Log gym session
+            </Link>
+            <button
+              onClick={onAddWorkout}
+              className="text-xs font-bold text-orange-500 hover:text-orange-600 transition"
+            >
+              + Manual Upload
+            </button>
+          </div>
         )}
       </div>
 
