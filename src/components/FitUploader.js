@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { buildActivityInsert } from '../lib/activityRecord'
 import { autoLinkActivity, localDayOf } from '../lib/plannedWorkouts'
 import { prepareAnalysis } from '../lib/gymAnalysis'
+import { saveGymDetail, buildGymDetail, gymTotals } from '../lib/gymDetail'
 import { isGymActivity } from '../lib/activityType'
 import { fetchWeightHistory } from '../lib/weightHistory'
 import { fetchFtpHistory } from '../lib/ftpHistory'
@@ -214,6 +215,11 @@ export default function FitUploader({
         if (curvesError) throw curvesError
       }
 
+      if (prepared.gym) {
+        const gymError = await saveGymDetail(supabase, prepared.gym, { activityId: activity.id, userId: currentUser.id })
+        if (gymError) console.warn('Saving exercises and sets failed:', gymError.message)
+      }
+
       // Link to the same-day planned workout when the choice is clear (the browser knows the local day).
       await autoLinkActivity(supabase, { activity, localDay: localDayOf(activity.activity_date) })
 
@@ -229,6 +235,7 @@ export default function FitUploader({
   }
 
   const isGym = isGymActivity(analysis?.summary)
+  const gymTotal = isGym ? gymTotals(buildGymDetail(analysis?.strength)) : null
 
   return (
     <div className="glass-dense bg-white dark:bg-surface-darkCard p-6 md:p-8 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-2xl relative">
@@ -288,7 +295,8 @@ export default function FitUploader({
               <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-600 dark:text-violet-400 text-[11px] font-semibold">
                 <span>🏋️</span>
                 <span>
-                  This is a gym / strength session. Duration, heart rate and calories are saved;
+                  This is a gym / strength session. Duration, heart rate and calories
+                  {gymTotal?.sets ? `, ${gymTotal.exercises} exercises and ${gymTotal.sets} sets` : ''} are saved;
                   it is kept apart from ride stats and fitness load.
                 </span>
               </div>

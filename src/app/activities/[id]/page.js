@@ -39,6 +39,7 @@ import { buildActivityUpdates } from '../../../lib/activityEdit'
 import { updateActivityGear } from '../../../lib/coaching'
 import { computeDurationalCurve } from '../../../lib/streamAnalysis'
 import ActivityComments from '../../../components/ActivityComments'
+import GymSessionSection from '../../../components/GymSessionSection'
 
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
   ssr: false,
@@ -345,6 +346,7 @@ function ActivityDetail() {
   }
 
   const actWhen = activity.activity_date || activity.created_at
+  const isGym = activity.activity_type === 'gym'
   const riderName = authorName(rider)
 
   return (
@@ -543,24 +545,29 @@ function ActivityDetail() {
       {/* 3c. Telemetry chart over time/distance: speed, HR, power, cadence, torque (issue #12) */}
       <ActivityStreamsChart timeSeries={segmentView.activity.time_series} activity={segmentView.activity} highlightWindows={highlightWindows} />
 
+      {/* 3d. Gym sessions: exercises and sets (#326) */}
+      {isGym && <GymSessionSection client={supabase} activityId={activity.id} />}
+
       {/* 4. Durational Curves Chart: current ride vs. a selectable baseline/"history
            curve" (all-time, last 30/90 days, this calendar year, last floating year,
            or a custom day-picker range) - issue #28 */}
-      <DurationalCurvesChart
-        curves={effectiveCurves}
-        masterCurves={masterCurves}
-        baselineCurves={baselineCurves}
-        baselineLoading={baselineLoading}
-        weightKg={sharedView ? null : weightFromActivity(activity)}
-        onPeriodChange={handleBaselinePeriodChange}
-      />
+      {!isGym && (
+        <DurationalCurvesChart
+          curves={effectiveCurves}
+          masterCurves={masterCurves}
+          baselineCurves={baselineCurves}
+          baselineLoading={baselineLoading}
+          weightKg={sharedView ? null : weightFromActivity(activity)}
+          onPeriodChange={handleBaselinePeriodChange}
+        />
+      )}
 
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
-      {!sharedView && (
+      {!sharedView && !isGym && (
         <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} onVisibleWindowsChange={setHighlightWindows} />
       )}
       {/* Athlete context: an active coach runs his own / system templates on the athlete's activity. */}
-      {sharedView && coachRiderId && coachRiderId === activity?.user_id && (
+      {sharedView && !isGym && coachRiderId && coachRiderId === activity?.user_id && (
         <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} riderId={coachRiderId} onVisibleWindowsChange={setHighlightWindows} />
       )}
 
@@ -568,7 +575,7 @@ function ActivityDetail() {
       <ActivityComments activityId={activityId} />
 
       {/* 5. Bottom panel: velodrome, ride type, gears and gear segments (own activities only) */}
-      {!sharedView && (
+      {!sharedView && !isGym && (
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Icon name="settings" /> Track & Gearing Setup for this Ride
@@ -611,7 +618,7 @@ function ActivityDetail() {
       )}
 
       {/* 5b. Coach editor (athlete context): ride type, gears and segments via the audited RPC */}
-      {sharedView && coachRiderId && coachRiderId === activity?.user_id && (
+      {sharedView && !isGym && coachRiderId && coachRiderId === activity?.user_id && (
       <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-1 flex items-center gap-2">
           <Icon name="settings" /> Ride type &amp; gears (coach)

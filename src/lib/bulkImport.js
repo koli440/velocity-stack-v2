@@ -11,6 +11,7 @@
 
 import { buildActivityInsert } from './activityRecord.js'
 import { prepareAnalysis } from './gymAnalysis.js'
+import { saveGymDetail } from './gymDetail.js'
 import { autoLinkActivity, localDayOf } from './plannedWorkouts.js'
 import { findDuplicate } from './activityDuplicates.js'
 
@@ -218,6 +219,11 @@ export async function importSingleFitFile({
       if (curvesError) {
         console.warn(`Failed to persist durational curves for ${fileName}:`, curvesError.message)
       }
+    }
+
+    if (prepared.gym) {
+      const gymError = await saveGymDetail(supabase, prepared.gym, { activityId: activity.id, userId })
+      if (gymError) console.warn(`Failed to persist exercises and sets for ${fileName}:`, gymError.message)
     }
 
     // Recent rides only (the database ignores older days): same-day planned workout, by the browser's local day.

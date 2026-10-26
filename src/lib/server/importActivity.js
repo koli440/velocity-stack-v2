@@ -10,6 +10,7 @@ import { ImportError, DUPLICATE_MESSAGE } from './importErrors.js'
 import { autoLinkActivity, dayOfLocalStamp } from '../plannedWorkouts.js'
 import { effectiveRideType, rideTypeHasGear, isKnownRideType } from '../rideType.js'
 import { prepareAnalysis } from '../gymAnalysis.js'
+import { saveGymDetail } from '../gymDetail.js'
 
 /**
  * Pure: decides what to do given the candidate and the user's existing activities.
@@ -67,7 +68,7 @@ export async function importActivity({
     analyzeFit,
   })
   // Gym sessions keep only duration / heart rate / calories; rides pass through untouched.
-  const { activityType, summary, curves, time_series } = prepareAnalysis(fetched, fetched.activityType)
+  const { activityType, summary, curves, time_series, gym } = prepareAnalysis(fetched, fetched.activityType)
   const isGym = activityType === 'gym'
 
   const existing = await loadExistingActivityFingerprints(supabase, userId)
@@ -103,6 +104,9 @@ export async function importActivity({
     fallbackActivityDate: fetched.startDateLocal || undefined,
   })
 
+  // Sets were looked for in this very file: the repair must not fetch it again.
+  if (isGym) record.gym_detail_checked_at = new Date().toISOString()
+
   const { data: activity, error: insertErr } = await supabase
     .from('activities')
     .insert([record])
@@ -120,6 +124,15 @@ export async function importActivity({
     const { error: rollbackErr } = await supabase.from('activities').delete().eq('id', activity.id)
     if (rollbackErr) console.warn(`Rollback of activity ${activity.id} failed:`, rollbackErr.message)
     throw new ImportError(`Saving curves failed: ${curveErr.message}`, 500)
+  }
+
+  if (gym) {
+    const gymErr = await saveGymDetail(supabase, gym, { activityId: activity.id, userId })
+    if (gymErr) {
+      const { error: rollbackErr } = await supabase.from('activities').delete().eq('id', activity.id)
+      if (rollbackErr) console.warn(`Rollback of activity ${activity.id} failed:`, rollbackErr.message)
+      throw new ImportError(`Saving exercises and sets failed: ${gymErr.message}`, 500)
+    }
   }
 
   if (plan.action === 'upgrade') {
