@@ -14,6 +14,7 @@ import OnboardingProvider from './OnboardingProvider'
 import { PROFILE_UPDATED_EVENT } from '../lib/navigation'
 import { parseCoachPath } from '../lib/coachContext'
 import { isLegalPath } from '../lib/legal'
+import { isLandingPath } from '../lib/trackLanding'
 import { AuthStateContext } from './AuthState'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
 
@@ -34,7 +35,7 @@ export default function AppShell({ children }) {
   // Public tools that match v1 behavior: usable without an account (Gear Architect, Velodromes map)
   const isPublicPage = pathname.startsWith('/gears')
   // Legal pages are always public and render without waiting for the session (crawlers, Google's reviewers).
-  const isLegalPage = isLegalPath(pathname)
+  const isLegalPage = isLegalPath(pathname) || isLandingPath(pathname)
 
   useEffect(() => {
     setGlassEnabled(readGlassPref())
@@ -132,7 +133,7 @@ export default function AppShell({ children }) {
     return (
       <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100">
         <header className="border-b border-slate-200 dark:border-surface-darkBorder bg-white/60 dark:bg-surface-darkCard/40 px-4 sm:px-6 py-3">
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
             <Link href="/" className="font-extrabold text-slate-800 dark:text-slate-200">
               Velocity<span className="text-emerald-500 dark:text-brand-neon">Stack</span>
             </Link>
