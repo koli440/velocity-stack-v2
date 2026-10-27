@@ -6,7 +6,7 @@ import { disciplineFitsTrack } from '../../../lib/lookups'
 import { trackJsonLd, trackDescription, jsonLdString } from '../../../lib/geo'
 import { loadPublicTracks, loadCountryNames, loadDisciplines } from '../../../lib/server/publicTracks'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export async function generateStaticParams() {
   return (await loadPublicTracks()).map((t) => ({ slug: t.slug }))
