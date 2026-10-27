@@ -275,3 +275,11 @@ The active coach can set or clear an athlete's activity **race tag** (`activitie
 
 ## Gym session edits (#335)
 The active coach can edit the exercises and sets of an athlete's gym session in athlete context, only through the `save_gym_session` SECURITY DEFINER RPC (no coach write policy on `gym_exercises` / `gym_sets`). It audits in `coach_edits` (`table_name = 'gym_sets'`), notifies the rider and stamps `gym_session_edits.edited_by_coach` (shown as "Edited by your coach"; a later rider edit clears it). Strangers and pending / ended coaches get "Activity not found". Own-account name suggestions / "repeat last session" filter by owner explicitly (`scopeToOwner`). Checks: `scripts/db-harness/gym-editing-adversarial.mjs`.
+
+## Fitness projection from planned workouts (#348)
+`/fitness` and `/coach/<riderId>/fitness` can continue the Fitness / Fatigue / Form chart forward (2, 4, 6 or 8 weeks, selectable; default 4, "Off" hides it) as a **dashed forecast**. Pure helper: `src/lib/fitnessProjection.js` (`projectFitness`), built on `computeSeries` / `formStatus` in `fitnessForm.js` and the planned load (`workoutSummary().load`, "~TL") from `plannedWorkouts.js`.
+- Starts from today's real values; only days **after today** use plans (the past uses real activities only). `today` is the same local day key as the fitness series.
+- **Zero load**: unplanned days, skipped workouts, and planned workouts without a load estimate (gym, no %FTP structure). The latter are counted and shown as "Partial forecast: N planned workouts have no load estimate". Missed days are in the past, so only real rides count there.
+- Tooltip shows each planned workout and its load; calendar races within the horizon get a marker with projected form and the usual status label. The calendar race chip shows a short "Projected form" line for races up to 8 weeks away (`useRaceForms`).
+- **Data access**: planned workouts are read with an explicit `rider_id` filter (a coach reads the athlete's through RLS); real load comes from the same paths as before (own page: owner-filtered `activities`; coach: the `coach_fitness_activities` RPC only). No migration.
+- Not included: the optional what-if ("add a hypothetical load") is a follow-up.
