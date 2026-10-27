@@ -40,6 +40,7 @@ export default function VelodromeMap({ tracks = [] }) {
             key={track.id}
             position={[track.latitude, track.longitude]}
             icon={customIcon}
+            alt={track.name ? `${track.name} velodrome` : 'Velodrome'}
           >
             <Popup className="track-popup">
               <div className="text-slate-900 p-1">
