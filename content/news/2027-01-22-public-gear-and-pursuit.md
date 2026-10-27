@@ -13,3 +13,5 @@ Both calculators are now open to everyone, no login needed. Share them with a te
 A free account is still required for the full app: it saves your gear, home track and records.
 
 Visitors without an account now also keep the full menu on public pages like Velodromes; items that need a free account are marked with a lock.
+
+The login page now links to both calculators too.

@@ -16,3 +16,9 @@ export const loginHref = (pathname) => authHref('/login', pathname)
 export const CATCH_THRESHOLD = 3
 export const shouldShowCatch = ({ interactions, dismissed, signedIn }) =>
   !signedIn && !dismissed && interactions >= CATCH_THRESHOLD
+
+// Cards beside the login box: real tools anyone can open without an account.
+export const LOGIN_TOOL_CARDS = [
+  { key: 'gears', title: 'Gear Architect', icon: 'gears', href: '/gears', description: 'Gear inches, ratio and speed at cadence for any chainring and cog.' },
+  { key: 'pursuit', title: 'Pursuit Strategist', icon: 'stopwatch', href: '/pursuit', description: 'Turn a target time into lap-by-lap splits and a pacing plan.' },
+]

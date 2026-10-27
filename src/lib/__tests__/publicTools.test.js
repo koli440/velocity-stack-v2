@@ -61,3 +61,15 @@ test('public content and tool pages keep the app menu for visitors', () => {
   assert.doesNotMatch(shell, /isPublicContentPath\(pathname\) && \(checkingAuth/)
   assert.ok(fs.readFileSync('src/lib/iconSet.js', 'utf8').includes('lock:'))
 })
+
+test('login page offers the two public tools as cards', async () => {
+  const { LOGIN_TOOL_CARDS } = await import('../signupCatch.js')
+  const { ICON_SET } = await import('../iconSet.js')
+  assert.deepEqual(LOGIN_TOOL_CARDS.map((c) => c.href), ['/gears', '/pursuit'])
+  for (const c of LOGIN_TOOL_CARDS) {
+    assert.ok(isPublicToolPath(c.href))
+    assert.ok(ICON_SET[c.icon])
+    assert.ok(c.description.length > 10)
+  }
+  assert.match(fs.readFileSync('src/app/login/page.js', 'utf8'), /LOGIN_TOOL_CARDS/)
+})
