@@ -13,7 +13,7 @@ export default function NewsEntries({ entries, onNavigate }) {
           <h3 className="text-base font-black text-slate-900 dark:text-white">{e.title}</h3>
           {e.image && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={e.image} alt={e.imageAlt || ''} loading="lazy" className="rounded-xl max-h-48 w-full object-cover" />
+            <img src={e.image} alt={e.imageAlt || e.title} loading="lazy" className="rounded-xl max-h-48 w-full object-cover" />
           )}
           <MarkdownBlocks source={e.body} onNavigate={onNavigate} />
           {e.link &&
