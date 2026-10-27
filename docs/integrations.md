@@ -148,3 +148,6 @@ syntax, `external_id = velocity-stack:<planned workout id>`).
 
 ## Tests
 CI runs `npm test` (`.github/workflows/test.yml`).
+
+## IndexNow
+The public key lives in `public/<key>.txt` (served at `https://velocity-stack.app/<key>.txt`; no secrets). After a deploy, run `npm run indexnow` to submit every URL from the live sitemap to `api.indexnow.org` in one request (`-- --dry-run` prints the payload; `-- --sitemap <url|file>` overrides the source). It is not run on build.
