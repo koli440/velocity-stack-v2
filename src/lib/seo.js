@@ -40,7 +40,6 @@ export const PRIVATE_PATHS = [
   '/report-bug',
   '/riders',
   '/templates',
-  '/velodromes',
 ]
 
-export const PUBLIC_PATHS = ['/', '/about', '/dsl-guide', '/whats-new', '/import-help', '/gears', '/track', '/privacy', '/terms']
+export const PUBLIC_PATHS = ['/', '/how-it-works', '/about', '/dsl-guide', '/whats-new', '/velodromes', '/import-help', '/gears', '/track', '/privacy', '/terms']

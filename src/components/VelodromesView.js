@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import Icon from './Icon'
 import SuggestionNotice from './SuggestionNotice'
-import { getAuthHeader } from '../lib/supabase'
+import { supabase, getAuthHeader } from '../lib/supabase'
 import { buildVelodromePayload } from '../lib/velodromeSuggestions'
 
 // Dynamic import of the Leaflet map
@@ -26,6 +27,13 @@ export default function VelodromesView({ tracks = [] }) {
   const [showCountries, setShowCountries] = useState(false)
   const [viewMode, setViewMode] = useState('cards') // 'cards' | 'table'
   const [submitting, setSubmitting] = useState(false)
+  // The directory is public; suggesting new tracks or edits needs an account.
+  const [signedIn, setSignedIn] = useState(false)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data?.session))
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setSignedIn(!!session))
+    return () => sub.subscription.unsubscribe()
+  }, [])
 
   const emptyForm = {
     name: '',
@@ -165,12 +173,12 @@ export default function VelodromesView({ tracks = [] }) {
           </p>
         </div>
 
-        <button
+        {signedIn && <button
           onClick={openAdd}
           className="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider shadow-sm transition"
         >
           {showAddModal && !editingTrack ? 'Close Form' : '+ Suggest Velodrome'}
-        </button>
+        </button>}
       </div>
 
       {/* KPI Indicators (clickable filters) */}
@@ -214,7 +222,7 @@ export default function VelodromesView({ tracks = [] }) {
       )}
 
       {/* Form for adding a track */}
-      {showAddModal && (
+      {signedIn && showAddModal && (
         <form onSubmit={handleSubmit} className="bg-white dark:bg-surface-darkCard p-6 rounded-2xl border border-emerald-500/40 shadow-md space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
             <Icon name="flag" /> {editingTrack ? `Suggest edit: ${editingTrack.name}` : 'Suggest New Track Oval'}
@@ -432,7 +440,7 @@ export default function VelodromesView({ tracks = [] }) {
               <div>
                 <div className="flex justify-between items-start gap-2 mb-2">
                   <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">
-                    {t.name}
+                    {t.slug ? <Link href={`/velodromes/${t.slug}`} className="hover:underline">{t.name}</Link> : t.name}
                   </h3>
                   {t.country_code && (
                     <span className="bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-brand-neon font-mono text-[10px] font-bold px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 shrink-0">
@@ -474,9 +482,11 @@ export default function VelodromesView({ tracks = [] }) {
                       </a>
                     ) : null
                   )}
-                  <button type="button" onClick={() => openEdit(t)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline ml-auto">
-                    Suggest edit
-                  </button>
+                  {signedIn && (
+                    <button type="button" onClick={() => openEdit(t)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline ml-auto">
+                      Suggest edit
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -506,7 +516,7 @@ export default function VelodromesView({ tracks = [] }) {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
               {filteredTracks.map(t => (
                 <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                  <td className="p-3 font-semibold text-slate-900 dark:text-white">{t.name}</td>
+                  <td className="p-3 font-semibold text-slate-900 dark:text-white">{t.slug ? <Link href={`/velodromes/${t.slug}`} className="hover:underline">{t.name}</Link> : t.name}</td>
                   <td className="p-3 font-mono text-emerald-600 dark:text-brand-neon font-bold">{t.country_code || '-'}</td>
                   <td className="p-3">{t.length_m} m</td>
                   <td className="p-3">{t.surface}</td>
