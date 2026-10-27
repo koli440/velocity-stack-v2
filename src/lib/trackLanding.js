@@ -17,7 +17,7 @@ export function carryQuery(href, search) {
 
 export const TRACK_TITLE = 'Track Cycling Analysis App'
 export const TRACK_DESCRIPTION =
-  'Built for track cycling: know what gear you really rode and analyse every interval. Gear Architect, template analysis on up to 50 rides, race tagging and consent-based coaching.'
+  'Built for track cycling: know the gear you really rode and analyse every interval. Gear Architect, template analysis, race tagging and coaching.'
 
 export function trackJsonLd() {
   return {
