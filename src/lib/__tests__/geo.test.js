@@ -3,6 +3,9 @@ import assert from 'node:assert/strict'
 import { withSlugs, isIndexableTrack } from '../trackSlug.js'
 import { isPublicContentPath } from '../publicPaths.js'
 import { faqJsonLd, organizationJsonLd, trackJsonLd } from '../geo.js'
+import { TRACK_DESCRIPTION } from '../trackLanding.js'
+import { SITE_DESCRIPTION, MAX_DESCRIPTION } from '../seo.js'
+import { trackDescription } from '../geo.js'
 import { llmsTxt } from '../llms.js'
 import { PUBLIC_PATHS, PRIVATE_PATHS, TITLE_SUFFIX, MAX_TITLE, trackTitle, fitTitle, fitDescription } from '../seo.js'
 
@@ -49,4 +52,11 @@ test('track titles fit 60 chars with suffix', () => {
   assert.ok(huge.length + TITLE_SUFFIX.length <= MAX_TITLE)
   assert.ok(fitTitle('word '.repeat(30)).length + TITLE_SUFFIX.length <= MAX_TITLE)
   assert.ok(fitDescription('d '.repeat(200)).length <= 160)
+})
+
+test('meta descriptions stay within limit', () => {
+  assert.ok(SITE_DESCRIPTION.length <= MAX_DESCRIPTION)
+  assert.ok(TRACK_DESCRIPTION.length <= MAX_DESCRIPTION)
+  const d = fitDescription(trackDescription({ ...t, name: 'N'.repeat(120), location: 'L'.repeat(60) }, 'Country'))
+  assert.ok(d.length <= MAX_DESCRIPTION)
 })

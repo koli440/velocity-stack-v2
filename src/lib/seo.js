@@ -6,7 +6,7 @@ export const SITE_DESCRIPTION =
 
 export const TITLE_SUFFIX = ` | ${SITE_NAME}`
 export const MAX_TITLE = 60
-export const MAX_DESCRIPTION = 160
+export const MAX_DESCRIPTION = 155
 
 // Truncate at a word boundary with an ellipsis so `text` fits in `max` chars.
 export function truncateWords(text, max) {
