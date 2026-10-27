@@ -11,6 +11,33 @@ export function profileName(p) {
 }
 
 /** @returns {{ subject: string, text: string, html: string }} */
+// Comment notifications: gives the email the same coaching context as the in-app bell.
+// Only set when the recipient is the activity owner's active coach.
+export async function withCoachContext(service, n) {
+  if (!n.activity_id || !['activity_comment', 'comment_mention'].includes(n.type)) return n
+  const { data: act } = await service.from('activities').select('user_id').eq('id', n.activity_id).maybeSingle()
+  if (!act?.user_id) return n
+  if (act.user_id === n.user_id) return { ...n, activity_owned: true, activity_info: { owner_id: act.user_id, viewer_is_coach: false } }
+  const { data: rel } = await service
+    .from('coaching_relationships')
+    .select('id')
+    .eq('coach_id', n.user_id)
+    .eq('rider_id', act.user_id)
+    .eq('status', 'active')
+    .maybeSingle()
+  if (!rel) return n
+  const { data: owner } = await service
+    .from('profiles')
+    .select('nickname, first_name, last_name')
+    .eq('id', act.user_id)
+    .maybeSingle()
+  return {
+    ...n,
+    activity_owner_name: profileName(owner),
+    activity_info: { owner_id: act.user_id, viewer_is_coach: true },
+  }
+}
+
 export function buildNotificationEmail(notification, actor, origin) {
   const message = describeNotification(notification, actor ? { display_name: profileName(actor) } : null)
   const path = notificationHref(notification) || '/'

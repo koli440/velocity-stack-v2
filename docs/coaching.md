@@ -12,6 +12,9 @@
 `follow_request` → `/riders?tab=following#follow-requests`; `new_follower`/`follow_approved` → the rider's profile;
 `coach_invite`/`coach_request`/`coach_accepted`/`coach_ended`/`coach_replaced` → `/settings#coaching`; `coach_edited` →
 `/settings#physiology`. Both target pages scroll to the section and say so when the request is no longer pending.
+Comment notifications (`activity_comment`, `comment_mention`) for the athlete's coach link into `/coach/<rider>/activities/<id>#comments`
+and read as coaching context ("ann (your athlete) commented on their activity", "ann commented on Bob's activity"), never
+"an activity you follow"; the notification email uses the same wording (`withCoachContext` in `src/lib/notificationEmail.js`).
 Follow notifications are deduplicated (one unread per recipient + actor + type, none across a block) by a trigger.
 
 ## Privacy rules
