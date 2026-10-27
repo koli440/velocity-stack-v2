@@ -4,6 +4,7 @@ import { ThemeProvider } from '../components/ThemeProvider' // Your existing the
 import ServiceWorkerRegister from '../components/ServiceWorkerRegister'
 import AppShell from '../components/AppShell'
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '../lib/seo'
+import { redditPixelSnippet } from '../lib/redditPixel'
 import { organizationJsonLd, jsonLdString } from '../lib/geo'
 
 export const viewport = {
@@ -33,6 +34,7 @@ export const metadata = {
 }
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+const REDDIT_PIXEL_ID = process.env.NEXT_PUBLIC_REDDIT_PIXEL_ID
 
 export default function RootLayout({ children }) {
   return (
@@ -47,6 +49,11 @@ export default function RootLayout({ children }) {
               {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config',${JSON.stringify(GA_ID)});`}
             </Script>
           </>
+        )}
+        {REDDIT_PIXEL_ID && (
+          <Script id="reddit-pixel" strategy="afterInteractive">
+            {redditPixelSnippet(REDDIT_PIXEL_ID)}
+          </Script>
         )}
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <AppShell>{children}</AppShell>
