@@ -15,6 +15,7 @@ const SOURCES = {
   '/dsl-guide': 'src/app/dsl-guide/page.js',
   '/import-help': 'src/app/import-help/page.js',
   '/gears': 'src/app/gears/page.js',
+  '/pursuit': 'src/app/pursuit/page.js',
   '/track': 'src/app/track/page.js',
   '/velodromes': 'src/app/velodromes/page.js',
 }

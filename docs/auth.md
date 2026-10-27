@@ -33,3 +33,8 @@ trigger on `public.profiles`, so Google users get it exactly like email users. P
 Supabase default: a Google sign-in with an email that already belongs to an account with the **same verified email** is linked to that account
 (same user id, same data). Nothing is configured in the app. A password can be added to a Google-only account via "Forgot password?" on the login page.
 Settings -> Sign-in methods shows the linked methods; there is no in-app password change, so nothing to hide for Google-only users.
+
+## Public tools (Gear Architect, Pursuit Strategist)
+`/gears` and `/pursuit` are listed in `PUBLIC_TOOL_PATHS` (`src/lib/publicPaths.js`), the single list `AppShell` uses. Logged-out visitors get a slim header (Sign up / Log in) and the page renders without waiting for the session; signed-in users get the full shell. Personal extras (saved gear, home track, records) show a locked teaser (`src/components/SignupCatch.js`) and a dismissible banner after a few input changes. CTA links use `next` (validated by `safeNextPath`) to return to the tool and keep UTM params via `CarryLink`.
+
+Anonymous reads rely on existing RLS: `tracks` (`tracks_read_all`, anon + authenticated) and `disciplines` ("Lookups are readable"); no migration needed. User data (profiles, PBs, gear records) stays behind the owner's session. A free account is required for the full app.

@@ -15,7 +15,9 @@ import { PROFILE_UPDATED_EVENT } from '../lib/navigation'
 import { parseCoachPath } from '../lib/coachContext'
 import { isLegalPath } from '../lib/legal'
 import { isLandingPath } from '../lib/trackLanding'
-import { isPublicContentPath } from '../lib/publicPaths'
+import { isPublicContentPath, isPublicToolPath } from '../lib/publicPaths'
+import { loginHref, registerHref } from '../lib/signupCatch'
+import CarryLink from './CarryLink'
 import { AuthStateContext } from './AuthState'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
 
@@ -33,8 +35,9 @@ export default function AppShell({ children }) {
 
   // Paths that don't need the Shell (Login, Register and password recovery)
   const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname)
-  // Public tools that match v1 behavior: usable without an account (Gear Architect, Velodromes map)
-  const isPublicPage = pathname.startsWith('/gears') || isPublicContentPath(pathname)
+  // Public tools usable without an account (Gear Architect, Pursuit Strategist) and public content pages
+  const isPublicTool = isPublicToolPath(pathname)
+  const isPublicPage = isPublicTool || isPublicContentPath(pathname)
   // Legal pages are always public and render without waiting for the session (crawlers, Google's reviewers).
   const isLegalPage = isLegalPath(pathname) || isLandingPath(pathname)
 
@@ -148,6 +151,34 @@ export default function AppShell({ children }) {
         <main className="flex-1 w-full px-4 sm:px-6 py-6 sm:py-10">{children}</main>
         <Footer />
       </div>
+    )
+  }
+
+  // Public tools render at once for visitors (no waiting for the session) with a slim header; the
+  // calculators work fully, personal extras show a sign-up teaser. Signed-in users get the full shell.
+  if (isPublicTool && (checkingAuth || !user)) {
+    return (
+      <AuthStateContext.Provider value={{ checking: checkingAuth, user: null }}>
+        <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100">
+          <header className="border-b border-slate-200 dark:border-surface-darkBorder bg-white/60 dark:bg-surface-darkCard/40 px-4 sm:px-6 py-3">
+            <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+              <Link href="/" className="font-extrabold text-slate-800 dark:text-slate-200">
+                Velocity<span className="text-emerald-500 dark:text-brand-neon">Stack</span>
+              </Link>
+              <nav className="flex items-center gap-4" aria-label="Account">
+                <CarryLink href={registerHref(pathname)} className="rounded-lg bg-emerald-500 dark:bg-brand-neon px-3 py-1.5 text-xs font-bold text-white dark:text-slate-950 hover:opacity-90">
+                  Sign up
+                </CarryLink>
+                <CarryLink href={loginHref(pathname)} className="text-xs font-bold text-emerald-600 dark:text-brand-neon hover:underline">
+                  Log in
+                </CarryLink>
+              </nav>
+            </div>
+          </header>
+          <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">{children}</main>
+          <Footer />
+        </div>
+      </AuthStateContext.Provider>
     )
   }
 

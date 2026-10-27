@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { LockedExtra, SignupBanner } from '../../components/SignupCatch'
 import GearRecords from '../../components/GearRecords'
 import GearPicker, { useGearState } from '../../components/GearPicker'
 import { CALCULATOR_GEAR_START, parseGear } from '../../lib/gear'
@@ -120,7 +121,14 @@ export default function GearsPage() {
         )}
       </div>
 
-      <GearRecords client={supabase} userId={userId} chainring={gear.chainring} cog={gear.cog} />
+      <SignupBanner usage={`${gear.chainring}x${gear.cog}|${cadence}|${wheelSize}|${tolerancePct}`} />
+
+      <LockedExtra
+        title="Your records in this gear"
+        description="Save your default gear and see your PB Vault records and race rides for each gear you've ridden."
+      >
+        <GearRecords client={supabase} userId={userId} chainring={gear.chainring} cog={gear.cog} />
+      </LockedExtra>
     </div>
   )
 }

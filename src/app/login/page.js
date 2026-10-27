@@ -8,6 +8,7 @@ import LoginFeaturesModal from '../../components/LoginFeaturesModal'
 import Icon from '../../components/Icon'
 import AuthBackground from '../../components/AuthBackground'
 import GoogleSignInButton from '../../components/GoogleSignInButton'
+import { registerHref } from '../../lib/signupCatch'
 import { nextOrDefault, oauthErrorMessage } from '../../lib/authRedirect'
 
 export default function LoginPage() {
@@ -142,7 +143,7 @@ export default function LoginPage() {
           <p className="text-xs text-white/80">
             Don't have an athlete account?{' '}
             <Link
-              href="/register"
+              href={registerHref(next)}
               className="font-bold text-emerald-300 hover:underline"
             >
               Register here
