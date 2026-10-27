@@ -45,3 +45,19 @@ test('anonymous reads of tool reference tables are allowed by RLS', () => {
   assert.match(sql, /CREATE POLICY "tracks_read_all" ON public\.tracks FOR SELECT TO anon, authenticated USING \(TRUE\)/)
   assert.match(sql, /CREATE POLICY "Lookups are readable" ON public\.disciplines FOR SELECT USING \(true\)/)
 })
+
+test('nav items: public ones stay open, the rest are gated for visitors', async () => {
+  const { NAV_ITEMS, isNavItemPublic, isNavItemLocked } = await import('../navigation.js')
+  const publicKeys = NAV_ITEMS.filter(isNavItemPublic).map((i) => i.key)
+  assert.deepEqual(publicKeys, ['home', 'gears', 'pursuit', 'velodromes', 'about'])
+  const gated = NAV_ITEMS.filter((i) => isNavItemLocked(i, false)).map((i) => i.key)
+  assert.deepEqual(gated, ['calendar', 'fitness', 'pb-vault', 'riders', 'aero-lab', 'templates', 'feedback', 'settings'])
+  assert.equal(NAV_ITEMS.filter((i) => isNavItemLocked(i, true)).length, 0)
+})
+
+test('public content and tool pages keep the app menu for visitors', () => {
+  const shell = fs.readFileSync('src/components/AppShell.js', 'utf8')
+  assert.match(shell, /signedIn=\{!!user\}/)
+  assert.doesNotMatch(shell, /isPublicContentPath\(pathname\) && \(checkingAuth/)
+  assert.ok(fs.readFileSync('src/lib/iconSet.js', 'utf8').includes('lock:'))
+})

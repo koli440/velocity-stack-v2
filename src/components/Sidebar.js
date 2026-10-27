@@ -3,14 +3,16 @@
 import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Portal from './Portal'
-import { NAV_ITEMS } from '../lib/navigation'
+import { NAV_ITEMS, NAV_LOCKED_LABEL, isNavItemLocked } from '../lib/navigation'
 import { parseCoachPath, sidebarItems, isSidebarItemActive, isContextNavActive, navHref, logoHref, chromeVisibility } from '../lib/coachContext'
 import Icon from './Icon'
+import { loginHref } from '../lib/signupCatch'
 
 export default function Sidebar({
   isOpen = false,
   onClose,
   isAdmin = false,
+  signedIn = true,
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -72,16 +74,33 @@ export default function Sidebar({
 
           {/* Navigation */}
           <nav className="space-y-1">
-            {items.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => handleNavigate(riderId ? item.href : navHref(item, riderId))}
-                className={navItemClass(riderId ? isSidebarItemActive(item, pathname) : isContextNavActive(item, pathname, riderId))}
-              >
-                <Icon name={item.icon} size={18} /> {item.label}
-              </button>
-            ))}
-            {isAdmin && chrome.adminLink && (
+            {items.map((item) => {
+              const locked = isNavItemLocked(item, signedIn)
+              if (locked) {
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => handleNavigate(loginHref(item.href))}
+                    title={NAV_LOCKED_LABEL}
+                    aria-label={`${item.label} (${NAV_LOCKED_LABEL})`}
+                    className={`${navItemClass(false)} opacity-60`}
+                  >
+                    <Icon name={item.icon} size={18} /> <span className="flex-1">{item.label}</span>
+                    <Icon name="lock" size={14} />
+                  </button>
+                )
+              }
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => handleNavigate(riderId ? item.href : navHref(item, riderId))}
+                  className={navItemClass(riderId ? isSidebarItemActive(item, pathname) : isContextNavActive(item, pathname, riderId))}
+                >
+                  <Icon name={item.icon} size={18} /> {item.label}
+                </button>
+              )
+            })}
+            {signedIn && isAdmin && chrome.adminLink && (
               <button
                 onClick={() => handleNavigate('/admin/suggestions')}
                 className={navItemClass(pathname?.startsWith('/admin'))}

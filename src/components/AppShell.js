@@ -16,8 +16,6 @@ import { parseCoachPath } from '../lib/coachContext'
 import { isLegalPath } from '../lib/legal'
 import { isLandingPath } from '../lib/trackLanding'
 import { isPublicContentPath, isPublicToolPath } from '../lib/publicPaths'
-import { loginHref, registerHref } from '../lib/signupCatch'
-import CarryLink from './CarryLink'
 import { AuthStateContext } from './AuthState'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
 
@@ -135,7 +133,7 @@ export default function AppShell({ children }) {
 
   // Public content pages render in the lightweight shell for visitors and crawlers (so their HTML is
   // complete); signed-in users get the full app shell once the session is known.
-  if (isLegalPage || (isPublicContentPath(pathname) && (checkingAuth || !user))) {
+  if (isLegalPage) {
     return (
       <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100">
         <header className="border-b border-slate-200 dark:border-surface-darkBorder bg-white/60 dark:bg-surface-darkCard/40 px-4 sm:px-6 py-3">
@@ -154,34 +152,6 @@ export default function AppShell({ children }) {
     )
   }
 
-  // Public tools render at once for visitors (no waiting for the session) with a slim header; the
-  // calculators work fully, personal extras show a sign-up teaser. Signed-in users get the full shell.
-  if (isPublicTool && (checkingAuth || !user)) {
-    return (
-      <AuthStateContext.Provider value={{ checking: checkingAuth, user: null }}>
-        <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100">
-          <header className="border-b border-slate-200 dark:border-surface-darkBorder bg-white/60 dark:bg-surface-darkCard/40 px-4 sm:px-6 py-3">
-            <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
-              <Link href="/" className="font-extrabold text-slate-800 dark:text-slate-200">
-                Velocity<span className="text-emerald-500 dark:text-brand-neon">Stack</span>
-              </Link>
-              <nav className="flex items-center gap-4" aria-label="Account">
-                <CarryLink href={registerHref(pathname)} className="rounded-lg bg-emerald-500 dark:bg-brand-neon px-3 py-1.5 text-xs font-bold text-white dark:text-slate-950 hover:opacity-90">
-                  Sign up
-                </CarryLink>
-                <CarryLink href={loginHref(pathname)} className="text-xs font-bold text-emerald-600 dark:text-brand-neon hover:underline">
-                  Log in
-                </CarryLink>
-              </nav>
-            </div>
-          </header>
-          <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">{children}</main>
-          <Footer />
-        </div>
-      </AuthStateContext.Provider>
-    )
-  }
-
   if (checkingAuth && pathname === '/') {
     // The landing section must be in the initial HTML for crawlers.
     return (
@@ -193,7 +163,7 @@ export default function AppShell({ children }) {
     )
   }
 
-  if (checkingAuth) {
+  if (checkingAuth && !isPublicPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-surface-dark text-slate-500 font-bold text-xs uppercase tracking-widest">
         Verifying athlete credentials...
@@ -205,7 +175,7 @@ export default function AppShell({ children }) {
   const ownContext = !parseCoachPath(pathname).riderId
 
   return (
-    <AuthStateContext.Provider value={{ checking: false, user }}>
+    <AuthStateContext.Provider value={{ checking: checkingAuth, user }}>
     <OnboardingProvider userId={user?.id} enabled={!!user && ownContext}>
     <div className="app-shell-root flex min-h-screen bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
       <AppBackground />
@@ -215,6 +185,7 @@ export default function AppShell({ children }) {
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         isAdmin={!!profile?.is_admin}
+        signedIn={!!user}
       />
 
       {/* 2. Main application body */}

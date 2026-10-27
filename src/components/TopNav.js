@@ -8,6 +8,8 @@ import SessionSearch from './SessionSearch'
 import NotificationBell from './NotificationBell'
 import AddSessionModal from './AddSessionModal'
 import { usePathname } from 'next/navigation'
+import CarryLink from './CarryLink'
+import { loginHref, registerHref } from '../lib/signupCatch'
 import { OPEN_ADD_SESSION_EVENT } from '../lib/navigation'
 import { parseCoachPath, chromeVisibility } from '../lib/coachContext'
 
@@ -19,7 +21,8 @@ export default function TopNav({
   tracks = [],
 }) {
   const [addOpen, setAddOpen] = useState(false)
-  const chrome = chromeVisibility(parseCoachPath(usePathname()).riderId)
+  const pathname = usePathname()
+  const chrome = chromeVisibility(parseCoachPath(pathname).riderId)
 
   useEffect(() => {
     const open = () => setAddOpen(true)
@@ -43,7 +46,7 @@ export default function TopNav({
           <Icon name="menu" size={20} />
         </button>
 
-        {chrome.search && <SessionSearch userId={user?.id} tracks={tracks} />}
+        {user && chrome.search && <SessionSearch userId={user?.id} tracks={tracks} />}
       </div>
 
       {/* Right side: Profile, ThemeToggle and Sign Out */}
@@ -69,6 +72,17 @@ export default function TopNav({
         )}
 
         <ThemeToggle currentUser={user} />
+
+        {!user && (
+          <nav className="flex items-center gap-2 sm:gap-3" aria-label="Account">
+            <CarryLink href={loginHref(pathname)} className="text-xs font-bold text-emerald-600 dark:text-brand-neon hover:underline whitespace-nowrap">
+              Log in
+            </CarryLink>
+            <CarryLink href={registerHref(pathname)} className="rounded-xl bg-emerald-500 dark:bg-brand-neon px-3 py-1.5 text-xs font-bold text-white dark:text-slate-950 hover:opacity-90 whitespace-nowrap">
+              Sign up
+            </CarryLink>
+          </nav>
+        )}
 
         {user && onSignOut && (
           <button
