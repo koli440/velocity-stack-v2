@@ -63,10 +63,9 @@ export const PRIVATE_PATHS = [
   '/feedback',
   '/fitness',
   '/pb-vault',
-  '/pursuit',
   '/report-bug',
   '/riders',
   '/templates',
 ]
 
-export const PUBLIC_PATHS = ['/', '/how-it-works', '/about', '/dsl-guide', '/whats-new', '/velodromes', '/import-help', '/gears', '/track', '/privacy', '/terms']
+export const PUBLIC_PATHS = ['/', '/how-it-works', '/about', '/dsl-guide', '/whats-new', '/velodromes', '/import-help', '/gears', '/pursuit', '/track', '/privacy', '/terms']

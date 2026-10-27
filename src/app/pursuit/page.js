@@ -23,6 +23,7 @@ import {
 import VelodromePicker from '../../components/VelodromePicker'
 import Icon from '../../components/Icon'
 import GearPicker, { useGearState } from '../../components/GearPicker'
+import { LockedExtra, LockedHint, SignupBanner } from '../../components/SignupCatch'
 import { parseGear, PURSUIT_GEAR_START } from '../../lib/gear'
 
 const STRATEGY_BANNER = {
@@ -44,8 +45,8 @@ const STRATEGY_BANNER = {
   },
 }
 
-// "Pursuit Strategist" - migrated from v1's pages/10_pursuit.py. Account-free (v1 never gated
-// this page behind check_access, unlike PB Vault/Aero Lab), so no login is required here either.
+// "Pursuit Strategist" - migrated from v1's pages/10_pursuit.py. Account-free: AppShell lists it in
+// the public tool paths (src/lib/publicPaths.js). Home track and saved gear are signed-in extras.
 export default function PursuitPage() {
   const [tracks, setTracks] = useState([])
   const [loadingTracks, setLoadingTracks] = useState(true)
@@ -261,6 +262,7 @@ export default function PursuitPage() {
             <div className="relative z-30 block space-y-1.5">
               <span className="text-xs uppercase font-bold text-slate-400">Velodrome</span>
               <VelodromePicker tracks={tracks} value={trackId} onChange={setTrackId} favoriteId={homeTrackId} />
+              <LockedHint>Set a home track and a default gear to have them preselected.</LockedHint>
             </div>
 
             {selectedDiscipline && (
@@ -508,6 +510,12 @@ export default function PursuitPage() {
           </div>
         </>
       )}
+      <SignupBanner usage={`${trackId}|${disciplineName}|${targetMin}|${targetSec}|${startPenalty}|${pacingDrift}|${gear.chainring}x${gear.cog}`} />
+
+      <LockedExtra
+        title="Your personal bests"
+        description="Compare your plan with your PB Vault for this discipline and keep your home track and gear ready every time."
+      />
     </div>
   )
 }

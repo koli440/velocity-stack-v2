@@ -15,7 +15,7 @@ import { PROFILE_UPDATED_EVENT } from '../lib/navigation'
 import { parseCoachPath } from '../lib/coachContext'
 import { isLegalPath } from '../lib/legal'
 import { isLandingPath } from '../lib/trackLanding'
-import { isPublicContentPath } from '../lib/publicPaths'
+import { isPublicContentPath, isPublicToolPath } from '../lib/publicPaths'
 import { AuthStateContext } from './AuthState'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
 
@@ -33,8 +33,9 @@ export default function AppShell({ children }) {
 
   // Paths that don't need the Shell (Login, Register and password recovery)
   const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname)
-  // Public tools that match v1 behavior: usable without an account (Gear Architect, Velodromes map)
-  const isPublicPage = pathname.startsWith('/gears') || isPublicContentPath(pathname)
+  // Public tools usable without an account (Gear Architect, Pursuit Strategist) and public content pages
+  const isPublicTool = isPublicToolPath(pathname)
+  const isPublicPage = isPublicTool || isPublicContentPath(pathname)
   // Legal pages are always public and render without waiting for the session (crawlers, Google's reviewers).
   const isLegalPage = isLegalPath(pathname) || isLandingPath(pathname)
 
@@ -132,7 +133,7 @@ export default function AppShell({ children }) {
 
   // Public content pages render in the lightweight shell for visitors and crawlers (so their HTML is
   // complete); signed-in users get the full app shell once the session is known.
-  if (isLegalPage || (isPublicContentPath(pathname) && (checkingAuth || !user))) {
+  if (isLegalPage) {
     return (
       <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100">
         <header className="border-b border-slate-200 dark:border-surface-darkBorder bg-white/60 dark:bg-surface-darkCard/40 px-4 sm:px-6 py-3">
@@ -162,7 +163,7 @@ export default function AppShell({ children }) {
     )
   }
 
-  if (checkingAuth) {
+  if (checkingAuth && !isPublicPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-surface-dark text-slate-500 font-bold text-xs uppercase tracking-widest">
         Verifying athlete credentials...
@@ -174,7 +175,7 @@ export default function AppShell({ children }) {
   const ownContext = !parseCoachPath(pathname).riderId
 
   return (
-    <AuthStateContext.Provider value={{ checking: false, user }}>
+    <AuthStateContext.Provider value={{ checking: checkingAuth, user }}>
     <OnboardingProvider userId={user?.id} enabled={!!user && ownContext}>
     <div className="app-shell-root flex min-h-screen bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
       <AppBackground />
@@ -184,6 +185,7 @@ export default function AppShell({ children }) {
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         isAdmin={!!profile?.is_admin}
+        signedIn={!!user}
       />
 
       {/* 2. Main application body */}

@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import AuthBackground from '../../components/AuthBackground'
 import GoogleSignInButton from '../../components/GoogleSignInButton'
+import { nextOrDefault } from '../../lib/authRedirect'
+import { loginHref } from '../../lib/signupCatch'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -18,6 +20,11 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
   const [sentTo, setSentTo] = useState(null)
+  const [next, setNext] = useState('/')
+
+  useEffect(() => {
+    setNext(nextOrDefault(new URLSearchParams(window.location.search).get('next')))
+  }, [])
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -45,7 +52,7 @@ export default function RegisterPage() {
       if (data?.user && !data.session) {
         setSentTo(formData.email)
       } else if (data?.user) {
-        router.push('/')
+        router.push(next)
         router.refresh()
       }
     } catch (err) {
@@ -91,7 +98,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <GoogleSignInButton onError={setErrorMsg} disabled={loading} />
+        <GoogleSignInButton next={next} onError={setErrorMsg} disabled={loading} />
 
         <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider text-white/60">
           <span className="h-px flex-1 bg-white/20" />
@@ -177,7 +184,7 @@ export default function RegisterPage() {
           <p className="text-xs text-white/80">
             Already registered?{' '}
             <Link
-              href="/login"
+              href={loginHref(next)}
               className="font-bold text-emerald-300 hover:underline"
             >
               Sign In

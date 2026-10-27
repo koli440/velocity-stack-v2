@@ -14,6 +14,7 @@ export const ICON_SET = {
   bulb: { group: 'nav', replaces: '💡', svg: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>' },
   settings: { group: 'nav', replaces: '⚙️', svg: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>' },
   // Actions
+  lock: { group: 'status', replaces: '🔒', svg: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>' },
   close: { group: 'action', replaces: '✕', svg: '<path d="M6 6l12 12M18 6L6 18"/>' },
   expand: { group: 'action', replaces: '', svg: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>' },
   zoomIn: { group: 'action', replaces: '', svg: '<circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21M8 11h6M11 8v6"/>' },

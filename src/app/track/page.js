@@ -120,7 +120,8 @@ export default function TrackLandingPage() {
             <p className={muted}>Every personal best by discipline, charted over time with the track and gear you rode.</p>
           </div>
         </div>
-        <p><CarryLink href="/register" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Create a free account to try the gear calculator &rarr;</CarryLink></p>
+        <p><CarryLink href="/gears" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Try the Gear Architect calculator &rarr;</CarryLink></p>
+        <p className={muted}>Racing a pursuit? The <CarryLink href="/pursuit" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Pursuit Strategist</CarryLink> turns a target time into lap-by-lap splits. Both calculators work without an account; a free account unlocks your saved gear, home track and records.</p>
       </section>
 
       {/* 3. Analysis templates */}

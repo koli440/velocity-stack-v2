@@ -33,3 +33,10 @@ trigger on `public.profiles`, so Google users get it exactly like email users. P
 Supabase default: a Google sign-in with an email that already belongs to an account with the **same verified email** is linked to that account
 (same user id, same data). Nothing is configured in the app. A password can be added to a Google-only account via "Forgot password?" on the login page.
 Settings -> Sign-in methods shows the linked methods; there is no in-app password change, so nothing to hide for Google-only users.
+
+## Public tools (Gear Architect, Pursuit Strategist)
+`/gears` and `/pursuit` are listed in `PUBLIC_TOOL_PATHS` (`src/lib/publicPaths.js`), the single list `AppShell` uses. Logged-out visitors on these and the public content pages (`/velodromes`, `/about`, `/how-it-works`, `/whats-new`, `/dsl-guide`) get the full app shell with the sidebar menu, rendered without waiting for the session, plus Log in / Sign up buttons in the top bar. Menu items that need an account (everything except Rider Telemetry, Gear Architect, Pursuit Strategist, Velodromes, About; see `isNavItemPublic` in `src/lib/navigation.js`) show a lock icon, a muted style and a "Requires a free account" tooltip, and lead to `/login?next=…`. `/privacy`, `/terms` and `/track` stay standalone pages without the menu. Personal extras (saved gear, home track, records) show a locked teaser (`src/components/SignupCatch.js`) and a dismissible banner after a few input changes. CTA links use `next` (validated by `safeNextPath`) to return to the tool and keep UTM params via `CarryLink`.
+
+Anonymous reads rely on existing RLS: `tracks` (`tracks_read_all`, anon + authenticated) and `disciplines` ("Lookups are readable"); no migration needed. User data (profiles, PBs, gear records) stays behind the owner's session. A free account is required for the full app.
+
+The login page shows two cards beside the login box (stacked below it on mobile) linking to `/gears` and `/pursuit` ("Try without an account"); they use `CarryLink`, so UTM params carry over. Cards are defined in `LOGIN_TOOL_CARDS` (`src/lib/signupCatch.js`).

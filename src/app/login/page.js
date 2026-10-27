@@ -8,6 +8,8 @@ import LoginFeaturesModal from '../../components/LoginFeaturesModal'
 import Icon from '../../components/Icon'
 import AuthBackground from '../../components/AuthBackground'
 import GoogleSignInButton from '../../components/GoogleSignInButton'
+import CarryLink from '../../components/CarryLink'
+import { LOGIN_TOOL_CARDS, registerHref } from '../../lib/signupCatch'
 import { nextOrDefault, oauthErrorMessage } from '../../lib/authRedirect'
 
 export default function LoginPage() {
@@ -50,7 +52,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4">
+    <div className="relative min-h-screen flex flex-col lg:flex-row items-center justify-center gap-6 p-4">
       <AuthBackground />
       <div className="bg-white/25 dark:bg-white/10 backdrop-blur-2xl backdrop-saturate-150 border border-white/20 rounded-3xl w-full max-w-md p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_8px_32px_rgba(0,0,0,0.35)] space-y-6">
         {/* Logo */}
@@ -142,7 +144,7 @@ export default function LoginPage() {
           <p className="text-xs text-white/80">
             Don't have an athlete account?{' '}
             <Link
-              href="/register"
+              href={registerHref(next)}
               className="font-bold text-emerald-300 hover:underline"
             >
               Register here
@@ -150,6 +152,23 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+      <aside aria-label="Try without an account" className="w-full max-w-md lg:w-72 lg:max-w-xs grid gap-4 relative">
+        {LOGIN_TOOL_CARDS.map((c) => (
+          <div
+            key={c.key}
+            data-testid={`login-card-${c.key}`}
+            className="bg-white/25 dark:bg-white/10 backdrop-blur-2xl backdrop-saturate-150 border border-white/20 rounded-3xl p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_8px_32px_rgba(0,0,0,0.35)] space-y-2"
+          >
+            <h2 className="text-sm font-black text-white uppercase tracking-tight">
+              <Icon name={c.icon} size={18} /> {c.title}
+            </h2>
+            <p className="text-xs text-white/80">{c.description}</p>
+            <CarryLink href={c.href} className="inline-block text-xs font-bold text-emerald-300 hover:underline">
+              Try without an account &rarr;
+            </CarryLink>
+          </div>
+        ))}
+      </aside>
       <LoginFeaturesModal open={showInfo} onClose={() => setShowInfo(false)} />
     </div>
   )
