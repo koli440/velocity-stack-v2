@@ -7,8 +7,17 @@ import L from 'leaflet'
 import { MAP_TILES } from '@/lib/mapTiles'
 import Icon from './Icon'
 
+// Leaflet renders the marker shadow with an empty alt; Bing flags that as missing
+class AltIcon extends L.Icon {
+  createShadow(oldIcon) {
+    const el = super.createShadow(oldIcon)
+    if (el) el.setAttribute('alt', 'Marker shadow')
+    return el
+  }
+}
+
 // Fix for Leaflet's default icons with the Next.js bundler
-const customIcon = new L.Icon({
+const customIcon = new AltIcon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -34,6 +43,7 @@ export default function VelodromeMap({ tracks = [] }) {
           attribution={MAP_TILES.attribution}
           url={MAP_TILES.url}
           maxZoom={MAP_TILES.maxZoom}
+          alt="Map tile"
         />
         {validTracks.map((track) => (
           <Marker

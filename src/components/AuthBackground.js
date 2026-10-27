@@ -6,7 +6,7 @@ export default function AuthBackground() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/login-bg-mobile.jpg"
-          alt=""
+          alt="Velocity Stack track cycling background" aria-hidden="true"
           fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover object-center scale-105 blur-[3px] brightness-75"
         />
