@@ -17,7 +17,7 @@ export default function AppBackground() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/login-bg-mobile.jpg"
-          alt=""
+          alt="Velocity Stack track cycling background" aria-hidden="true"
           loading="lazy"
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover object-[50%_35%] blur-[3px] brightness-75 saturate-[1.25]"

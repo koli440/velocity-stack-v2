@@ -65,7 +65,7 @@ export default function TrackLandingPage() {
       <header className="relative isolate overflow-hidden rounded-3xl text-center">
         <Image
           src="/login-bg.jpg"
-          alt=""
+          alt="Velocity Stack track cycling background" aria-hidden="true"
           fill
           priority
           sizes="(min-width: 1024px) 1024px, 100vw"
@@ -243,7 +243,7 @@ export default function TrackLandingPage() {
       <section className="relative isolate overflow-hidden rounded-3xl text-center">
         <Image
           src="/login-bg.jpg"
-          alt=""
+          alt="Velocity Stack track cycling background" aria-hidden="true"
           fill
           loading="lazy"
           sizes="(min-width: 1024px) 1024px, 100vw"

@@ -6,8 +6,17 @@ import L from 'leaflet'
 import { MAP_TILES } from '@/lib/mapTiles'
 import Icon from './Icon'
 
+// Leaflet renders the marker shadow with an empty alt; Bing flags that as missing
+class AltIcon extends L.Icon {
+  createShadow(oldIcon) {
+    const el = super.createShadow(oldIcon)
+    if (el) el.setAttribute('alt', 'Marker shadow')
+    return el
+  }
+}
+
 // Custom icons for the route's start / finish
-const startIcon = new L.Icon({
+const startIcon = new AltIcon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -18,7 +27,7 @@ const startIcon = new L.Icon({
   className: 'hue-rotate-[90deg]', // greenish hue for the start
 })
 
-const finishIcon = new L.Icon({
+const finishIcon = new AltIcon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -60,6 +69,7 @@ export default function ActivityMap({ latitude = [], longitude = [] }) {
           attribution={MAP_TILES.attribution}
           url={MAP_TILES.url}
           maxZoom={MAP_TILES.maxZoom}
+          alt="Map tile"
         />
         <Polyline positions={points} pathOptions={{ color: '#f97316', weight: 4, opacity: 0.9 }} />
         <Marker position={start} icon={startIcon}>
