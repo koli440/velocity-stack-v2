@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Icon from './Icon'
 import SuggestionNotice from './SuggestionNotice'
 import { supabase, getAuthHeader } from '../lib/supabase'
+import { fetchSurfaces, mergeSurfaces } from '../lib/lookups'
 import { buildVelodromePayload } from '../lib/velodromeSuggestions'
 
 // Dynamic import of the Leaflet map
@@ -34,6 +35,13 @@ export default function VelodromesView({ tracks = [] }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setSignedIn(!!session))
     return () => sub.subscription.unsubscribe()
   }, [])
+
+  const [lookupSurfaces, setLookupSurfaces] = useState([])
+  useEffect(() => {
+    fetchSurfaces(supabase).then(setLookupSurfaces).catch(() => {})
+  }, [])
+
+  const surfaceOptions = mergeSurfaces(lookupSurfaces, tracks)
 
   const emptyForm = {
     name: '',
@@ -259,10 +267,7 @@ export default function VelodromesView({ tracks = [] }) {
                 onChange={e => setFormData({...formData, surface: e.target.value})}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
               >
-                <option value="Wood">Wood</option>
-                <option value="Concrete">Concrete</option>
-                <option value="Asphalt">Asphalt</option>
-                <option value="Tarmac">Tarmac</option>
+                {surfaceOptions.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
           </div>
@@ -396,9 +401,7 @@ export default function VelodromesView({ tracks = [] }) {
             className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500"
           >
             <option value="ALL">All Surfaces</option>
-            <option value="Wood">Wood</option>
-            <option value="Concrete">Concrete</option>
-            <option value="Asphalt">Asphalt</option>
+            {surfaceOptions.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
 

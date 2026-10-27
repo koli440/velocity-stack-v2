@@ -56,3 +56,13 @@ test('fetchTracks queries the tracks table ordered by name', async () => {
 test('migration adds Oderlandhalle as a selectable GER track', () => {
   assert.match(migration, /Oderlandhalle[\s\S]*'GER'/)
 })
+
+test('mergeSurfaces uses the lookup, adds track surfaces, and falls back', async () => {
+  const { mergeSurfaces, FALLBACK_SURFACES } = await import('../lookups.js')
+  assert.deepEqual(mergeSurfaces([], []), FALLBACK_SURFACES)
+  assert.ok(FALLBACK_SURFACES.includes('Aluminium'))
+  assert.deepEqual(
+    mergeSurfaces(['Wood', 'Aluminium'], [{ surface: 'aluminium' }, { surface: 'Glass' }, { surface: null }]),
+    ['Wood', 'Aluminium', 'Glass'],
+  )
+})
