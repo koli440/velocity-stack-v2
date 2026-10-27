@@ -7,7 +7,7 @@ import Icon from './Icon'
 import SuggestionNotice from './SuggestionNotice'
 import { supabase, getAuthHeader } from '../lib/supabase'
 import { fetchSurfaces, mergeSurfaces } from '../lib/lookups'
-import { buildVelodromePayload } from '../lib/velodromeSuggestions'
+import { buildVelodromePayload, surfaceEnvironmentHint } from '../lib/velodromeSuggestions'
 
 // Dynamic import of the Leaflet map
 const VelodromeMap = dynamic(() => import('./VelodromeMap'), {
@@ -295,6 +295,9 @@ export default function VelodromesView({ tracks = [] }) {
                 <option value="true">Indoor</option>
                 <option value="false">Outdoor</option>
               </select>
+              {surfaceEnvironmentHint(formData.surface, formData.is_indoor) && (
+                <p className="mt-1 text-[11px] text-amber-500">{surfaceEnvironmentHint(formData.surface, formData.is_indoor)}</p>
+              )}
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-slate-400 mb-1">Altitude (m a.s.l.)</label>

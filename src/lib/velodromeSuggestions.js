@@ -58,3 +58,11 @@ export function buildVelodromePayload(form, current = null) {
   if (!Object.keys(payload).length) return { error: 'No changes to suggest' }
   return { payload }
 }
+
+// Wooden tracks are almost always indoor; flag the unusual combination so mistakes get corrected.
+export function surfaceEnvironmentHint(surface, isIndoor) {
+  if (String(surface ?? '').trim().toLowerCase() === 'wood' && isIndoor === false) {
+    return 'Wooden tracks are usually indoor. Please double-check the environment.'
+  }
+  return null
+}
