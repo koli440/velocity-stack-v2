@@ -46,6 +46,20 @@ test('comment notifications are described and link into the right context', () =
   assert.equal(notificationHref({ type: 'activity_comment', activity_id: 'a1', activity_info: null }), null)
 })
 
+test('coach comment notifications are coaching-aware', () => {
+  const actor = { display_name: 'ann' }
+  const info = { owner_id: 'r1', viewer_is_coach: true }
+  const base = { type: 'activity_comment', activity_id: 'a1', activity_info: info }
+  assert.equal(describeNotification({ ...base, actor_id: 'r1' }, actor), 'ann (your athlete) commented on their activity')
+  assert.equal(describeNotification({ ...base, actor_id: 'x' }, actor), "ann commented on your athlete's activity")
+  assert.equal(describeNotification({ ...base, actor_id: 'x', activity_owner_name: 'Bob' }, actor), "ann commented on Bob's activity")
+  assert.equal(
+    describeNotification({ ...base, type: 'comment_mention', activity_owner_name: 'Bob' }, actor),
+    "ann mentioned you in a comment on Bob's activity"
+  )
+  assert.equal(describeNotification({ ...base, activity_info: { owner_id: 'r1', viewer_is_coach: false } }, actor), 'ann commented on an activity you follow')
+})
+
 test('fetchNotifications resolves comment activity info', async () => {
   const c = fakeClient({
     notifications: { data: [{ id: 'n1', type: 'activity_comment', actor_id: 'a1', activity_id: 'act1' }], error: null },

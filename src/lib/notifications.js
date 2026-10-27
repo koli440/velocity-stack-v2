@@ -7,6 +7,14 @@ import { fetchCommentInfo, activityCommentsHref } from './activityComments.js'
 
 export const NOTIFICATION_PAGE_SIZE = 20
 
+// Set when the recipient is the activity owner's active coach (not the owner themselves).
+function coachedAthlete(notification) {
+  const info = notification?.activity_info
+  if (!info?.viewer_is_coach || notification.activity_owned) return null
+  const owner = notification.activity_owner_name
+  return { id: info.owner_id, label: owner ? `${owner}'s` : "your athlete's" }
+}
+
 export function describeNotification(notification, actor) {
   const name = actor ? authorName(actor) : 'A rider'
   switch (notification?.type) {
@@ -28,12 +36,21 @@ export function describeNotification(notification, actor) {
       return `${name} chose a different coach — you no longer have access to their data`
     case 'coach_edited':
       return `${name} (your coach) updated your training settings`
-    case 'activity_comment':
-      return notification.activity_owned
-        ? `${name} commented on your activity`
-        : `${name} commented on an activity you follow`
-    case 'comment_mention':
-      return `${name} mentioned you in a comment`
+    case 'activity_comment': {
+      if (notification.activity_owned) return `${name} commented on your activity`
+      const athlete = coachedAthlete(notification)
+      if (!athlete) return `${name} commented on an activity you follow`
+      if (notification.actor_id && notification.actor_id === athlete.id) {
+        return `${name} (your athlete) commented on their activity`
+      }
+      return `${name} commented on ${athlete.label} activity`
+    }
+    case 'comment_mention': {
+      const athlete = coachedAthlete(notification)
+      return athlete
+        ? `${name} mentioned you in a comment on ${athlete.label} activity`
+        : `${name} mentioned you in a comment`
+    }
     case 'suggestion_submitted':
       return `${name} submitted a suggestion for review`
     case 'suggestion_approved':
@@ -97,6 +114,10 @@ export async function fetchNotifications(client, userId, limit = NOTIFICATION_PA
     client,
     rows.filter((n) => n.activity_id).map((n) => n.activity_id)
   )
+  const { profiles: owners } = await fetchProfilesByIds(
+    client,
+    [...info.values()].filter((i) => i.viewer_is_coach).map((i) => i.owner_id)
+  )
   return {
     notifications: rows.map((n) => {
       const activity_info = n.activity_id ? info.get(n.activity_id) || null : null
@@ -105,6 +126,9 @@ export async function fetchNotifications(client, userId, limit = NOTIFICATION_PA
         actor: profiles.get(n.actor_id) || null,
         activity_info,
         activity_owned: activity_info?.owner_id === userId,
+        activity_owner_name: activity_info?.viewer_is_coach
+          ? owners.get(activity_info.owner_id)?.display_name || null
+          : null,
       }
     }),
     error: null,

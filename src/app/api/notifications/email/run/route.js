@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 import { getServiceClient } from '../../../../../lib/server/connections'
 import { isCronToken } from '../../../../../lib/server/syncRoute'
 import { appOrigin } from '../../../../../lib/server/appUrl'
-import { buildNotificationEmail, sendEmail, profileName } from '../../../../../lib/notificationEmail'
+import { buildNotificationEmail, sendEmail, profileName, withCoachContext } from '../../../../../lib/notificationEmail'
 
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
@@ -58,7 +58,7 @@ export async function POST(req) {
           .maybeSingle()
         actor = data
       }
-      await sendEmail({ to, ...buildNotificationEmail(n, actor, origin) })
+      await sendEmail({ to, ...buildNotificationEmail(await withCoachContext(service, n), actor, origin) })
       sent++
     } catch (e) {
       console.error('notification email failed', n.id, e?.message)
