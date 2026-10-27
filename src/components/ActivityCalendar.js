@@ -110,12 +110,14 @@ function EventChip({ event, race, returnTo }) {
             ? 'border-dashed border-sky-400/60 bg-sky-500/5'
             : event.discipline === 'gym'
               ? 'border-violet-300/70 dark:border-violet-500/40 bg-violet-500/5'
-              : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60'
+              : event.discipline === 'track'
+                ? 'border-amber-300/70 dark:border-amber-500/40 bg-amber-500/5'
+                : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60'
       }`}
     >
       <ChipBody
         icon={race ? CALENDAR_ICONS.race : DISCIPLINE_ICON[event.discipline] || 'bike'}
-        iconClass={race ? 'text-rose-500' : event.discipline === 'gym' ? 'text-violet-600 dark:text-violet-400' : 'text-emerald-600 dark:text-brand-neon'}
+        iconClass={race ? 'text-rose-500' : event.discipline === 'gym' ? 'text-violet-600 dark:text-violet-400' : event.discipline === 'track' ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-brand-neon'}
         label={race ? `Race · ${race.priority}` : planned ? 'Planned' : activityChipLabel(event)}
         extras={(event.isRace || pushed) && (
           <>
