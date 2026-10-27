@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { SITE_URL } from '../../../lib/seo'
+import { SITE_URL, trackTitle, fitDescription } from '../../../lib/seo'
 import { isIndexableTrack } from '../../../lib/trackSlug'
 import { disciplineFitsTrack } from '../../../lib/lookups'
 import { trackJsonLd, trackDescription, jsonLdString } from '../../../lib/geo'
@@ -23,8 +23,8 @@ export async function generateMetadata({ params }) {
   if (!t) return { title: 'Velodrome not found', robots: { index: false, follow: false } }
   const countries = await loadCountryNames()
   const country = countries[t.country_code] || t.country_code
-  const title = `${t.name}${country ? ` (${country})` : ''} velodrome: length, surface, location`
-  const description = trackDescription(t, country)
+  const title = trackTitle(t.name, country)
+  const description = fitDescription(trackDescription(t, country))
   const path = `/velodromes/${t.slug}`
   return {
     title,
@@ -59,7 +59,7 @@ export default async function TrackPage({ params }) {
       <nav className="text-xs text-slate-500">
         <Link href="/velodromes" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Velodromes</Link>
       </nav>
-      <h1 className="text-3xl font-black text-slate-900 dark:text-white">{t.name} velodrome</h1>
+      <h1 className="text-3xl font-black text-slate-900 dark:text-white">{t.name} velodrome: length, surface and location</h1>
       <p className="text-sm text-slate-600 dark:text-slate-300">{trackDescription(t, country)}</p>
       <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-5">
         <Row label="Track length">{t.length_m ? `${Number(t.length_m)} m` : 'Unknown'}</Row>

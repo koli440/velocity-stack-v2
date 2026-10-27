@@ -4,7 +4,7 @@ import { withSlugs, isIndexableTrack } from '../trackSlug.js'
 import { isPublicContentPath } from '../publicPaths.js'
 import { faqJsonLd, organizationJsonLd, trackJsonLd } from '../geo.js'
 import { llmsTxt } from '../llms.js'
-import { PUBLIC_PATHS, PRIVATE_PATHS } from '../seo.js'
+import { PUBLIC_PATHS, PRIVATE_PATHS, TITLE_SUFFIX, MAX_TITLE, trackTitle, fitTitle, fitDescription } from '../seo.js'
 
 const t = { id: 'abcdef12-0000', name: 'Vélodrome de Saint-Quentin', country_code: 'FRA', length_m: 250, surface: 'Wood', is_indoor: true }
 
@@ -38,4 +38,15 @@ test('llms.txt lists pages and tracks', () => {
   const out = llmsTxt(withSlugs([t]))
   assert.match(out, /^# VelocityStack/)
   assert.match(out, /\/velodromes\/velodrome-de-saint-quentin-fra/)
+})
+
+test('track titles fit 60 chars with suffix', () => {
+  assert.equal(trackTitle('Lee Valley VeloPark', 'France') + TITLE_SUFFIX, 'Lee Valley VeloPark velodrome, France | VelocityStack')
+  const long = trackTitle('Velòdrom Municipal Illes Balears Palma de Mallorca Sant Antoni', 'Spain')
+  assert.ok(long.length + TITLE_SUFFIX.length <= MAX_TITLE)
+  assert.match(long, /… velodrome, Spain$/)
+  const huge = trackTitle('X'.repeat(200), 'Democratic Republic of the Congo')
+  assert.ok(huge.length + TITLE_SUFFIX.length <= MAX_TITLE)
+  assert.ok(fitTitle('word '.repeat(30)).length + TITLE_SUFFIX.length <= MAX_TITLE)
+  assert.ok(fitDescription('d '.repeat(200)).length <= 160)
 })

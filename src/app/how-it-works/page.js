@@ -4,7 +4,7 @@ import { FAQ, POSITIONING, faqJsonLd, jsonLdString } from '../../lib/geo'
 
 export const metadata = publicPage(
   '/how-it-works',
-  'How VelocityStack works: track cycling analysis and coaching',
+  'How it works: track cycling analysis & coaching',
   'What VelocityStack measures (durational power, flying 200s, velodrome telemetry), how analytic coaching templates work, and how it compares with TrainingPeaks and Strava.',
 )
 

@@ -4,7 +4,7 @@ import CarryLink from '../../components/CarryLink'
 import { publicPage } from '../../lib/seo'
 import { TRACK_PATH, TRACK_DESCRIPTION, trackJsonLd, jsonLdString } from '../../lib/trackLanding'
 
-export const metadata = publicPage(TRACK_PATH, 'Track Cycling Analysis App | Gear, Templates, Coaching', TRACK_DESCRIPTION)
+export const metadata = publicPage(TRACK_PATH, 'Track Cycling Analysis App: Gear & Templates', TRACK_DESCRIPTION)
 
 const card = 'glass-dense rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white/60 dark:bg-surface-darkCard/40 p-5'
 const h2 = 'text-2xl sm:text-3xl font-black text-slate-900 dark:text-white'
