@@ -4,6 +4,7 @@ import { ThemeProvider } from '../components/ThemeProvider' // Your existing the
 import ServiceWorkerRegister from '../components/ServiceWorkerRegister'
 import AppShell from '../components/AppShell'
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '../lib/seo'
+import { organizationJsonLd, jsonLdString } from '../lib/geo'
 
 export const viewport = {
   viewportFit: 'cover',
@@ -37,6 +38,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased font-sans">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(organizationJsonLd()) }} />
         <ServiceWorkerRegister />
         {GA_ID && (
           <>
