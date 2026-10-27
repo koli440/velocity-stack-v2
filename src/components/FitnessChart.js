@@ -22,13 +22,25 @@ function FitnessTooltip({ active, payload }) {
   return (
     <div className="bg-slate-900 text-white text-xs py-2 px-3 rounded-xl shadow-lg border border-slate-800 space-y-1">
       <div className="font-bold text-slate-400 border-b border-slate-800 pb-1">{shortDay(p.day)}</div>
-      <div style={{ color: FITNESS_COLORS.fitness }}>Fitness: <b>{p.fitness}</b></div>
-      <div style={{ color: FITNESS_COLORS.fatigue }}>Fatigue: <b>{p.fatigue}</b></div>
-      <div style={{ color: FITNESS_COLORS.form }}>Form: <b>{p.form}</b></div>
-      <div className="text-slate-300">
-        Load: <b>{p.load}</b>
-        {p.estimatedLoad > 0 && <span className="text-slate-400"> ({p.estimatedLoad} estimated from heart rate)</span>}
-      </div>
+      <div style={{ color: FITNESS_COLORS.fitness }}>Fitness{p.projected ? ' (forecast)' : ''}: <b>{p.projected ? p.fitnessF : p.fitness}</b></div>
+      <div style={{ color: FITNESS_COLORS.fatigue }}>Fatigue{p.projected ? ' (forecast)' : ''}: <b>{p.projected ? p.fatigueF : p.fatigue}</b></div>
+      <div style={{ color: FITNESS_COLORS.form }}>Form{p.projected ? ' (forecast)' : ''}: <b>{p.projected ? p.formF : p.form}</b></div>
+      {p.projected ? (
+        <>
+          <div className="text-slate-400 italic">Forecast (estimate)</div>
+          <div className="text-slate-300">Planned load: <b>{p.plannedLoad}</b></div>
+          {p.workouts?.map((w) => (
+            <div key={w.id} className="text-slate-300">
+              {w.title}: <b>{w.load === null ? 'no load estimate' : `~${Math.round(w.load)} TL`}</b>
+            </div>
+          ))}
+        </>
+      ) : (
+        <div className="text-slate-300">
+          Load: <b>{p.load}</b>
+          {p.estimatedLoad > 0 && <span className="text-slate-400"> ({p.estimatedLoad} estimated from heart rate)</span>}
+        </div>
+      )}
       {p.races?.map((r) => (
         <div key={r.id} className="text-amber-300">Race: {r.name}</div>
       ))}
@@ -40,13 +52,30 @@ function FitnessTooltip({ active, payload }) {
  * Fitness / Fatigue / Form chart. `compact` is the dashboard mini chart (no axes, no bars).
  * Daily load bars: solid = measured (power) load, hatched/lighter = estimated from heart rate.
  */
-export default function FitnessChart({ series, races = [], compact = false, label }) {
+export default function FitnessChart({ series, races = [], projection = [], compact = false, label }) {
   const raceDays = new Set(races.map((r) => r.race_date))
-  const data = series.map((p) => ({
-    ...p,
-    measuredLoad: Math.max(0, p.load - p.estimatedLoad),
-    races: races.filter((r) => r.race_date === p.day),
-  }))
+  // Forecast days carry their own keys (dashed lines); the last real day is repeated in them so the lines join.
+  const last = series[series.length - 1]
+  const data = [
+    ...series.map((p) => ({
+      ...p,
+      measuredLoad: Math.max(0, p.load - p.estimatedLoad),
+      races: races.filter((r) => r.race_date === p.day),
+      ...(projection.length && p === last ? { fitnessF: p.fitness, fatigueF: p.fatigue, formF: p.form } : {}),
+    })),
+    ...projection.map((p) => ({
+      ...p,
+      fitnessF: p.fitness,
+      fatigueF: p.fatigue,
+      formF: p.form,
+      fitness: undefined,
+      fatigue: undefined,
+      form: undefined,
+      measuredLoad: 0,
+      estimatedLoad: 0,
+      races: races.filter((r) => r.race_date === p.day),
+    })),
+  ]
   const grid = '#334155'
   const axis = { fill: '#94a3b8', fontSize: 11, fontWeight: 600 }
 
@@ -80,6 +109,9 @@ export default function FitnessChart({ series, races = [], compact = false, labe
           {!compact && (
             <Bar dataKey="measuredLoad" stackId="load" fill="#94a3b8" fillOpacity={0.35} isAnimationActive={false} name="Load" />
           )}
+          {!compact && projection.length > 0 && (
+            <Bar dataKey="plannedLoad" fill="#94a3b8" fillOpacity={0.15} stroke="#94a3b8" strokeDasharray="3 2" isAnimationActive={false} name="Planned load" />
+          )}
           {!compact && (
             <Bar dataKey="estimatedLoad" stackId="load" fill="url(#fitness-est-hatch)" isAnimationActive={false} name="Estimated load" />
           )}
@@ -89,6 +121,13 @@ export default function FitnessChart({ series, races = [], compact = false, labe
               .map((p) => (
                 <ReferenceLine key={p.day} x={p.day} stroke="#f59e0b" strokeDasharray="4 3" strokeWidth={2} />
               ))}
+          {projection.length > 0 && !compact && (
+            <>
+              <Line type="monotone" dataKey="fitnessF" stroke={FITNESS_COLORS.fitness} strokeWidth={2} strokeDasharray="6 4" dot={false} isAnimationActive={false} name="Fitness (forecast)" />
+              <Line type="monotone" dataKey="fatigueF" stroke={FITNESS_COLORS.fatigue} strokeWidth={1.5} strokeDasharray="6 4" dot={false} isAnimationActive={false} name="Fatigue (forecast)" />
+              <Line type="monotone" dataKey="formF" stroke={FITNESS_COLORS.form} strokeWidth={1.5} strokeDasharray="6 4" dot={false} isAnimationActive={false} name="Form (forecast)" />
+            </>
+          )}
           <Line type="monotone" dataKey="fitness" stroke={FITNESS_COLORS.fitness} strokeWidth={compact ? 2 : 3} dot={false} isAnimationActive={false} name="Fitness" />
           <Line type="monotone" dataKey="fatigue" stroke={FITNESS_COLORS.fatigue} strokeWidth={compact ? 1.5 : 2} dot={false} isAnimationActive={false} name="Fatigue" />
           <Line type="monotone" dataKey="form" stroke={FITNESS_COLORS.form} strokeWidth={compact ? 1.5 : 2} dot={false} isAnimationActive={false} name="Form" />

@@ -12,6 +12,7 @@ import { formatDate } from '../lib/dateFormat'
 import CalendarNoteDialog from './CalendarNoteDialog'
 import CalendarRaceDialog from './CalendarRaceDialog'
 import RaceBadge from './RaceBadge'
+import { useRaceForms } from './useRaceForms'
 import PlannedWorkoutDialog, { STATUS_STYLES } from './PlannedWorkoutDialog'
 import { fetchPushRows } from '../lib/plannedPushClient'
 import { pushState, PUSH_STATE_LABELS } from '../lib/intervalsWorkout'
@@ -181,7 +182,7 @@ function NoteChip({ note, onOpen }) {
 }
 
 // Races are priority-coloured flag chips (A red, B orange, C grey); click opens the dialog.
-function RaceChip({ race, onOpen }) {
+function RaceChip({ race, onOpen, form }) {
   const time = raceTimeLabel(race)
   return (
     <button
@@ -198,6 +199,11 @@ function RaceChip({ race, onOpen }) {
         name={race.name}
         stats={[time, race.activity_id ? 'ridden' : null]}
       />
+      {form && (
+        <span className="block text-[10px] opacity-80" data-testid="calendar-race-form" data-status={form.status.key}>
+          Projected form {form.form} · {form.status.label.split(' - ')[0].toLowerCase()}
+        </span>
+      )}
     </button>
   )
 }
@@ -361,6 +367,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => ({ ...plannedToEvent(w, today), pushState: pushState(w, pushRows.get(w.id)) }))], { anchor, notes, races })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchor, events, notes, races, planned, pushRows, todayKey])
+  const raceForms = useRaceForms(riderId, races, { coach: Boolean(riderIdProp && riderIdProp !== sessionUserId) })
   const raceByActivity = useMemo(() => racesByActivity(races), [races])
 
   // Intervals.icu push status of the visible workouts (RLS: rider + active coach; empty for everyone else).
@@ -552,7 +559,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                     </span>
                   </div>
                   {cell.notes.map((n) => <NoteChip key={n.id} note={n} onOpen={(note) => setDialog({ day: cell.date, note })} />)}
-                  {cell.races.map((r) => <RaceChip key={r.id} race={r} onOpen={(race) => setRdialog({ day: cell.date, race })} />)}
+                  {cell.races.map((r) => <RaceChip key={r.id} race={r} form={raceForms.get(r.id)} onOpen={(race) => setRdialog({ day: cell.date, race })} />)}
                   {cell.events.map((e) => (e.kind === 'planned'
                     ? <PlannedChip key={`planned-${e.id}`} event={e} onOpen={(id) => openPlanned(cell.date, id)} />
                     : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} returnTo={returnTo} />))}
