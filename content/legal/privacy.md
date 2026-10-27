@@ -1,7 +1,7 @@
 ---
 title: Privacy Policy
 description: How VelocityStack collects, uses, shares and protects your data, including activity, location and health-related data, and your rights.
-updated: 2027-01-10
+updated: 2027-01-23
 ---
 This Privacy Policy explains what personal data VelocityStack ("we", "us", "the Service", at velocity-stack.app) collects, why, who sees it, and what rights you have. Please also read our [Terms of Service](/terms).
 
@@ -66,8 +66,9 @@ We use the following providers to run the Service. They process data on our beha
 - **Map tile providers (MapTiler, or OpenStreetMap)** – when you view a map, your browser requests map images from the provider, which therefore receives your IP address and the map area you view. Your activity data is not sent to them.
 - **Email delivery provider (Resend)** – if email notifications are switched on, we send notification emails (for example about coaching or follow requests) to your account email address through this provider. You can turn this off in your settings.
 - **Google Analytics** – only if the operator has enabled it on the deployment; the Service works without it. If enabled, it measures page usage and may use cookies.
+- **Reddit Pixel (Reddit, Inc.)** – only if the operator has enabled it on the deployment; the Service works without it. If enabled, it loads a script from Reddit that receives your IP address, browser details and the pages you visit, plus a sign-up event when you register, to measure the performance of Reddit advertising. It may set cookies. We do not send Reddit your activity or health data.
 
-We do not sell your personal data and we do not use it for advertising.
+We do not sell your personal data and we do not use your activity data for advertising. The optional Reddit Pixel above only measures visits and sign-ups from our own Reddit campaigns.
 
 ## 8. Google user data and Limited Use
 If you sign in with Google, we request only your basic profile (name and email address) and use it solely to create and authenticate your account. We do not access your Google Drive, Gmail, Calendar, contacts or any other Google data.
@@ -85,10 +86,10 @@ Our providers may process data outside your country, including outside the Europ
 - We may keep limited data longer only where the law requires or to establish or defend legal claims.
 
 ## 11. Cookies and local storage
-We use only what is strictly necessary and do not use advertising or tracking cookies.
+We use only what is strictly necessary, and set no advertising or tracking cookies ourselves.
 - Your **sign-in session** is stored in your browser's local storage so that you stay signed in. It is removed when you sign out.
 - **Preferences** such as theme and display options are stored in your browser.
-- If the operator enables Google Analytics (section 7), it may set analytics cookies; otherwise none are set by us.
+- If the operator enables Google Analytics (section 7), it may set analytics cookies, and if it enables the Reddit Pixel (section 7), Reddit may set advertising-measurement cookies; otherwise none are set by us.
 
 Because these items are essential to provide the service you request, no consent banner is needed for them.
 
