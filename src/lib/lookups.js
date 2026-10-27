@@ -53,6 +53,22 @@ export async function fetchSurfaces(client) {
   return error || !data ? [] : data.map((s) => s.name)
 }
 
+export const FALLBACK_SURFACES = ['Wood', 'Concrete', 'Asphalt', 'Aluminium']
+
+/** Lookup surfaces (or the fallback), plus any surface already used by a track, deduplicated case-insensitively. */
+export function mergeSurfaces(lookup, tracks = []) {
+  const base = lookup && lookup.length > 0 ? lookup : FALLBACK_SURFACES
+  const seen = new Set()
+  const out = []
+  for (const name of [...base, ...tracks.map((t) => t.surface)]) {
+    const key = String(name || '').trim()
+    if (!key || seen.has(key.toLowerCase())) continue
+    seen.add(key.toLowerCase())
+    out.push(key)
+  }
+  return out
+}
+
 /** The single velodrome data source: every picker/list loads tracks through this. */
 export function fetchTracks(supabase) {
   return supabase.from('tracks').select('*').order('name', { ascending: true })
