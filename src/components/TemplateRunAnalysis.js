@@ -20,6 +20,8 @@ import {
   verdict as computeVerdict,
 } from '../lib/templateComparison'
 
+import ChartTooltip from '@/components/ChartTooltip'
+import { TOOLTIP_CURSOR_LINE } from '@/lib/chartTooltip'
 const VERDICT_STYLE = {
   better: { text: 'Better', cls: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', icon: 'chevronUp' },
   similar: { text: 'Similar', cls: 'bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-500/20', icon: null },
@@ -108,7 +110,7 @@ function RepChart({ analysis, reference, match, mode }) {
           <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
           <XAxis dataKey="rep" tick={{ fontSize: 10 }} label={{ value: 'Rep', position: 'insideBottomRight', offset: -2, fontSize: 9 }} />
           <YAxis width={44} tick={{ fontSize: 10 }} domain={['auto', 'auto']} reversed={mode !== 'pct' && metric.lowerBetter} tickFormatter={(v) => (mode === 'pct' ? `${v}%` : metric.id === 'time' ? formatHeadline(metric, v) : v)} />
-          <Tooltip formatter={(v, name) => [fmt(v), name]} labelFormatter={(l) => `Rep ${l}`} />
+          <Tooltip cursor={TOOLTIP_CURSOR_LINE} content={<ChartTooltip valueFormatter={(v, name) => [fmt(v), name]} labelFormatter={(l) => `Rep ${l}`} />} />
           <Legend wrapperStyle={{ fontSize: 10 }} />
           {mode === 'pct' && <ReferenceLine y={100} stroke={GHOST} strokeOpacity={0.4} />}
           {reference && match.common.length > 0 && <Line type="monotone" dataKey="ghost" name={reference.label} stroke={GHOST} strokeDasharray="5 4" strokeWidth={2} dot={{ r: 2 }} connectNulls={false} />}
@@ -130,7 +132,7 @@ function TrendChart({ history, metric, currentId }) {
           <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
           <XAxis dataKey="label" tick={{ fontSize: 9 }} />
           <YAxis width={44} tick={{ fontSize: 10 }} domain={['auto', 'auto']} reversed={metric.lowerBetter} tickFormatter={(v) => (metric.id === 'time' ? formatHeadline(metric, v) : v)} />
-          <Tooltip formatter={(v, name) => [formatHeadline(metric, v), name]} />
+          <Tooltip cursor={TOOLTIP_CURSOR_LINE} content={<ChartTooltip valueFormatter={(v, name) => [formatHeadline(metric, v), name]} />} />
           <Legend wrapperStyle={{ fontSize: 10 }} />
           <Line type="monotone" dataKey="best" name="Best so far" stroke={GHOST} strokeDasharray="5 4" dot={false} />
           <Line type="monotone" dataKey="value" name={metric.label} stroke={ORANGE} strokeWidth={2} dot={{ r: 3 }} />

@@ -18,6 +18,8 @@ import {
 import AeroTestForm from '../../components/AeroTestForm'
 import Icon from '../../components/Icon'
 
+import ChartTooltip from '@/components/ChartTooltip'
+import { TOOLTIP_CURSOR_BAR } from '@/lib/chartTooltip'
 // Color scale for the CdA comparison chart: lower CdA (better) is greener, higher (worse) is
 // redder - approximates v1's plotly "Reds_r" continuous color scale with a small fixed palette.
 const CDA_BAR_COLORS = ['#10b981', '#f59e0b', '#ef4444']
@@ -206,7 +208,7 @@ export default function AeroLabPage() {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                     <XAxis type="number" tick={{ fontSize: 11 }} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={120} />
-                    <Tooltip formatter={(value) => `${Number(value).toFixed(3)} m²`} />
+                    <Tooltip cursor={TOOLTIP_CURSOR_BAR} content={<ChartTooltip valueFormatter={(value) => `${Number(value).toFixed(3)} m²`} />} />
                     <Bar dataKey="cda" radius={[0, 6, 6, 0]}>
                       {chartData.map((entry, index) => (
                         <Cell key={entry.name} fill={cdaBarColor(index, chartData.length)} />

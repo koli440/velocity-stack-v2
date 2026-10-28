@@ -16,6 +16,8 @@ import {
 } from 'recharts'
 import { wattsPerKg } from '../lib/wkg'
 import { BASELINE_PERIOD_LABELS, BASELINE_PERIODS } from '../lib/baselineCurves'
+import ChartTooltip from '@/components/ChartTooltip'
+import { TOOLTIP_CURSOR_LINE } from '@/lib/chartTooltip'
 
 const DURATION_ORDER = [
   '1s', '5s', '10s', '15s', '30s',
@@ -253,45 +255,45 @@ export default function DurationalCurvesChart({
                 domain={['auto', 'auto']}
               />
               <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const dataPoint = payload[0].payload
-                    return (
-                      <div className="bg-slate-900 text-white text-xs py-2 px-3 rounded-xl shadow-lg border border-slate-800 space-y-1">
-                        <div className="font-bold text-slate-400 border-b border-slate-800 pb-1">
-                          Interval: {dataPoint.duration}
-                        </div>
+                cursor={TOOLTIP_CURSOR_LINE}
+                content={
+                  <ChartTooltip
+                    labelFormatter={(_, pl) => `Interval: ${pl[0].payload.duration}`}
+                    render={({ payload }) => {
+                      const dataPoint = payload[0].payload
+                      return (
+                        <>
                         {dataPoint.current != null && (
                           <div className="flex items-center justify-between gap-4">
-                            <span className="text-slate-300">This ride:</span>
+                            <span className="text-slate-600 dark:text-slate-300">This ride:</span>
                             <span className="font-black" style={{ color: currentMetricConfig.color }}>
                               {dataPoint.current} {currentMetricConfig.unit}
                             </span>
                           </div>
                         )}
                         {showBaseline && dataPoint.baseline != null && (
-                          <div className="flex items-center justify-between gap-4 text-slate-400">
+                          <div className="flex items-center justify-between gap-4 text-slate-500 dark:text-slate-400">
                             <span>{baselineLabel}:</span>
-                            <span className="font-bold text-slate-200">
+                            <span className="font-bold text-slate-800 dark:text-slate-200">
                               {dataPoint.baseline} {currentMetricConfig.unit}
                             </span>
                           </div>
                         )}
                         {showBaseline && dataPoint.baseline != null && dataPoint.baselineActivityId && (
-                          <div className="pt-1 border-t border-slate-800">
+                          <div className="pt-1 border-t border-slate-200 dark:border-slate-700">
                             <Link
                               href={contextHref(`/activities/${dataPoint.baselineActivityId}`)}
-                              className="text-[10px] font-bold text-orange-400 hover:text-orange-300 underline"
+                              className="text-[10px] font-bold text-orange-600 dark:text-orange-400 hover:text-orange-500 underline"
                             >
                               View activity{dataPoint.baselineActivityTitle ? `: ${dataPoint.baselineActivityTitle}` : ''}
                             </Link>
                           </div>
                         )}
-                      </div>
-                    )
-                  }
-                  return null
-                }}
+                        </>
+                      )
+                    }}
+                  />
+                }
               />
 
               {/* Reference line: selected baseline period (dashed) */}

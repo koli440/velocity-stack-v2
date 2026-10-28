@@ -19,6 +19,8 @@ import { canSendRunToPbVault, coachRunnableTemplates, compareOptions, filterRuns
 import { collapsedSummary, isRunOpen, readSectionCollapsed, writeSectionCollapsed } from '../lib/templateRunsCollapse'
 import { EFFORT_RESULT_KEYS, formatRaceTime, formatResultValue, isLowerBetterKey } from '../lib/effortMetrics'
 
+import ChartTooltip from '@/components/ChartTooltip'
+import { TOOLTIP_CURSOR_BAR } from '@/lib/chartTooltip'
 const RUN_COLORS = ['#f59e0b', '#38bdf8', '#d946ef', '#34d399', '#f87171', '#a78bfa']
 
 function formatMetric(value, suffix = '', key = null) {
@@ -589,7 +591,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                         <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                           <XAxis dataKey="label" tick={{ fontSize: 9 }} />
                           <YAxis width={36} tick={{ fontSize: 9 }} domain={['auto', 'auto']} tickFormatter={(v) => (EFFORT_RESULT_KEYS.includes(metric) ? formatResultValue(metric, v) : v)} />
-                          <Tooltip formatter={(v) => (EFFORT_RESULT_KEYS.includes(metric) ? formatResultValue(metric, v) : v)} />
+                          <Tooltip cursor={TOOLTIP_CURSOR_BAR} content={<ChartTooltip valueFormatter={(v) => (EFFORT_RESULT_KEYS.includes(metric) ? formatResultValue(metric, v) : v)} />} />
                           <Bar dataKey="value" name={metric.replace(/_/g, ' ')} radius={[4, 4, 0, 0]}>
                             {chartData.map((d, i) => <Cell key={i} fill={d.current ? '#f97316' : '#94a3b8'} />)}
                           </Bar>

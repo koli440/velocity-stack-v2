@@ -26,6 +26,7 @@ import Icon from './Icon'
 import Portal from './Portal'
 import useModalA11y from './useModalA11y'
 import { STREAM_METRICS, buildStreamSeries, formatAxisTick, formatElapsed } from '../lib/activityStreams'
+import ChartTooltip from '@/components/ChartTooltip'
 
 // Lactate threshold lines (issue #121) drawn on the power and heart-rate lanes.
 function thresholdLines(metric, lt) {
@@ -107,19 +108,20 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones, z
             ))}
             <Tooltip
               cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '3 3' }}
-              content={({ active, payload, label }) => {
-                if (!active || !payload || !payload.length) return null
-                const value = payload[0]?.value
-                if (value == null) return null
-                return (
-                  <div className="bg-slate-900 text-white text-[10px] py-1.5 px-2.5 rounded-lg shadow-lg border border-slate-800 whitespace-nowrap">
-                    <span className="text-slate-400">{formatAxisTick(label, mode)} · </span>
-                    <span className="font-black" style={{ color: metric.color }}>
-                      {metric.decimals > 0 ? value.toFixed(metric.decimals) : Math.round(value)} {metric.unit}
-                    </span>
-                  </div>
-                )
-              }}
+              content={
+                <ChartTooltip
+                  labelFormatter={(label) => formatAxisTick(label, mode)}
+                  render={({ payload }) => {
+                    const value = payload[0]?.value
+                    if (value == null) return null
+                    return (
+                      <div className="font-bold tabular-nums" style={{ color: metric.color }}>
+                        {metric.decimals > 0 ? value.toFixed(metric.decimals) : Math.round(value)} {metric.unit}
+                      </div>
+                    )
+                  }}
+                />
+              }
             />
             <Area
               type="monotone"

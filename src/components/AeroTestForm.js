@@ -21,6 +21,8 @@ import {
 import VelodromePicker from './VelodromePicker'
 import Icon from './Icon'
 
+import ChartTooltip from '@/components/ChartTooltip'
+import { TOOLTIP_CURSOR_BAR } from '@/lib/chartTooltip'
 const CRR_OPTIONS = [0.0015, 0.002, 0.0025, 0.0033]
 
 const inputClass =
@@ -363,7 +365,7 @@ export default function AeroTestForm({ tracks = [], onSaved }) {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                 <XAxis dataKey="loss" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} label={{ value: 'Watts', angle: -90, position: 'insideLeft', fontSize: 11 }} />
-                <Tooltip />
+                <Tooltip cursor={TOOLTIP_CURSOR_BAR} content={<ChartTooltip />} />
                 <Bar dataKey="watts" fill="#FF4B4B" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

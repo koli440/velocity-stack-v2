@@ -8,6 +8,7 @@ import { fetchWeightHistory, weightAt } from '../lib/weightHistory'
 import SegmentedTabs from './SegmentedTabs'
 import { allTimeStyle, buildRadarData, hasProfileData, mapCurvesToProfile, RECENT_COLOR } from '../lib/powerProfile'
 
+import ChartTooltip from '@/components/ChartTooltip'
 async function fetchPeriodCurves(userId, period) {
   const { data, error } = await supabase.rpc('get_athlete_baseline_curves', { p_user_id: userId, p_period: period })
   if (error) throw error
@@ -112,7 +113,7 @@ export default function PowerProfileCard({ userId }) {
                   fillOpacity={0}
                   dot={false}
                 />
-                <Tooltip formatter={(v) => (v == null ? '—' : `${fmt(v)} ${unitLabel}`)} />
+                <Tooltip content={<ChartTooltip valueFormatter={(v) => `${fmt(v)} ${unitLabel}`} />} />
                 <Legend
                   wrapperStyle={{ fontSize: 11 }}
                   content={() => (

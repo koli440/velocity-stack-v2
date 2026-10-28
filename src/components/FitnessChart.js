@@ -11,40 +11,43 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts'
+import ChartTooltip from '@/components/ChartTooltip'
+import { TOOLTIP_CURSOR_LINE } from '@/lib/chartTooltip'
 
 export const FITNESS_COLORS = { fitness: '#3b82f6', fatigue: '#f43f5e', form: '#10b981' }
 
 const shortDay = (d) => new Date(`${d}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
 
-function FitnessTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null
-  const p = payload[0].payload
+function FitnessTooltip(props) {
+  return <ChartTooltip {...props} render={({ payload }) => renderFitness(payload[0].payload)} />
+}
+
+function renderFitness(p) {
   return (
-    <div className="bg-slate-900 text-white text-xs py-2 px-3 rounded-xl shadow-lg border border-slate-800 space-y-1">
-      <div className="font-bold text-slate-400 border-b border-slate-800 pb-1">{shortDay(p.day)}</div>
+    <>
       <div style={{ color: FITNESS_COLORS.fitness }}>Fitness{p.projected ? ' (forecast)' : ''}: <b>{p.projected ? p.fitnessF : p.fitness}</b></div>
       <div style={{ color: FITNESS_COLORS.fatigue }}>Fatigue{p.projected ? ' (forecast)' : ''}: <b>{p.projected ? p.fatigueF : p.fatigue}</b></div>
       <div style={{ color: FITNESS_COLORS.form }}>Form{p.projected ? ' (forecast)' : ''}: <b>{p.projected ? p.formF : p.form}</b></div>
       {p.projected ? (
         <>
-          <div className="text-slate-400 italic">Forecast (estimate)</div>
-          <div className="text-slate-300">Planned load: <b>{p.plannedLoad}</b></div>
+          <div className="text-slate-500 dark:text-slate-400 italic">Forecast (estimate)</div>
+          <div className="text-slate-600 dark:text-slate-300">Planned load: <b>{p.plannedLoad}</b></div>
           {p.workouts?.map((w) => (
-            <div key={w.id} className="text-slate-300">
+            <div key={w.id} className="text-slate-600 dark:text-slate-300">
               {w.title}: <b>{w.load === null ? 'no load estimate' : `~${Math.round(w.load)} TL`}</b>
             </div>
           ))}
         </>
       ) : (
-        <div className="text-slate-300">
+        <div className="text-slate-600 dark:text-slate-300">
           Load: <b>{p.load}</b>
-          {p.estimatedLoad > 0 && <span className="text-slate-400"> ({p.estimatedLoad} estimated from heart rate)</span>}
+          {p.estimatedLoad > 0 && <span className="text-slate-500 dark:text-slate-400"> ({p.estimatedLoad} estimated from heart rate)</span>}
         </div>
       )}
       {p.races?.map((r) => (
-        <div key={r.id} className="text-amber-300">Race: {r.name}</div>
+        <div key={r.id} className="text-amber-600 dark:text-amber-300">Race: {r.name}</div>
       ))}
-    </div>
+    </>
   )
 }
 
@@ -104,7 +107,7 @@ export default function FitnessChart({ series, races = [], projection = [], comp
             minTickGap={32}
           />
           <YAxis hide={compact} tickLine={false} axisLine={false} tick={axis} domain={['auto', 'auto']} width={40} />
-          <Tooltip content={<FitnessTooltip />} />
+          <Tooltip cursor={TOOLTIP_CURSOR_LINE} content={<FitnessTooltip labelFormatter={(_, pl) => shortDay(pl[0].payload.day)} />} />
           {!compact && <ReferenceLine y={0} stroke="#94a3b8" opacity={0.5} />}
           {!compact && (
             <Bar dataKey="measuredLoad" stackId="load" fill="#94a3b8" fillOpacity={0.35} isAnimationActive={false} name="Load" />

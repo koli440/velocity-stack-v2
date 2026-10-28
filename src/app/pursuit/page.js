@@ -26,6 +26,8 @@ import GearPicker, { useGearState } from '../../components/GearPicker'
 import { LockedExtra, LockedHint, SignupBanner } from '../../components/SignupCatch'
 import { parseGear, PURSUIT_GEAR_START } from '../../lib/gear'
 
+import ChartTooltip from '@/components/ChartTooltip'
+import { TOOLTIP_CURSOR_LINE } from '@/lib/chartTooltip'
 const STRATEGY_BANNER = {
   negative: {
     className:
@@ -446,7 +448,7 @@ export default function PursuitPage() {
                     tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
                     domain={['auto', 'auto']}
                   />
-                  <Tooltip />
+                  <Tooltip cursor={TOOLTIP_CURSOR_LINE} content={<ChartTooltip />} />
                   <Line
                     type="monotone"
                     dataKey="speedKmh"
@@ -478,7 +480,7 @@ export default function PursuitPage() {
                     tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
                     domain={['auto', 'auto']}
                   />
-                  <Tooltip />
+                  <Tooltip cursor={TOOLTIP_CURSOR_LINE} content={<ChartTooltip />} />
                   <Line
                     type="monotone"
                     dataKey="cadenceRpm"
