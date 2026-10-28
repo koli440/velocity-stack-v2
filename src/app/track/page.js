@@ -48,6 +48,27 @@ const TEMPLATE_POINTS = [
   ['Custom pick', 'Choose any past run as the reference.'],
 ]
 
+const TEMPLATE_ANGLES = [
+  ['Power', 'Targets in % of FTP, watts, W/kg, %LT1/%LT2 or zones Z1-Z6.'],
+  ['Heart rate, cadence, speed', 'Bands in bpm, % of max HR, %LT1/%LT2 heart rate, rpm or speed.'],
+  ['Time or distance', 'Size steps by minutes or by metres, e.g. your best 4km or your best 200m.'],
+  ['Any structure', 'Repeats, sets, over-unders, pyramids, ramps, warm-up and cool-down, lap splits.'],
+]
+
+const DETECT_POINTS = [
+  'It scans the ride\u2019s power, heart rate, speed and distance for a work effort, then the recovery after it, repeated.',
+  'Length must fit within your tolerance and the value inside your band.',
+  'Back-to-back reps are preferred; otherwise each rep is placed on its own.',
+  'You don\u2019t need every rep: 3 of 4 reps is a valid result.',
+  'Targets in % of FTP or lactate threshold use the values that were valid on the day of the ride, never your current ones.',
+]
+
+const WHO_POINTS = [
+  ['For riders', 'Run a template on a ride by hand (up to 50 rides at once) or automatically when a ride is imported. Time-trial and sprint results go straight to your PB Vault.'],
+  ['For coaches', 'Run your own or system templates on a rider\u2019s ride. The rider sees the result and the template name, not the code behind it.'],
+  ['Planned workouts', 'A planned workout takes a copy of a template, which drives the structure chart, duration and load estimate. It can be pushed to Intervals.icu.'],
+]
+
 const FAQ = [
   ['Who can see my rides?', 'You decide. Rides can be shared with other riders, and a privacy zone around home masks the map for everyone but you. Your raw GPS file and connection keys are never shared.'],
   ['How does coach approval work?', 'A coaching relationship only starts when the rider accepts the invite (or asks for a coach themselves). A rider has one active coach at a time and can end coaching whenever they like; access stops immediately.'],
@@ -80,7 +101,7 @@ export default function TrackLandingPage() {
             Track Cycling Analysis App
           </h1>
           <p className="max-w-2xl mx-auto text-lg sm:text-xl text-slate-100">
-            Built for track cycling: know what gear you really rode, and analyse every interval.
+            Describe any session once as a template, find every rep on every ride, and compare them all. Plus the gear you really rode, races and velodromes that Strava and TrainingPeaks don&apos;t understand.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <CarryLink href="/register" className={btnPrimary}>Sign up</CarryLink>
@@ -89,6 +110,60 @@ export default function TrackLandingPage() {
           <p className="text-sm text-slate-200">A free account is required. It powers your personalised analysis.</p>
         </div>
       </header>
+
+      {/* 2a. Template approach */}
+      <section aria-labelledby="template-approach" className="space-y-6">
+        <div className="space-y-3">
+          <h2 id="template-approach" className={h2}><Icon name="clipboard" /> Analyse Any Session With Templates</h2>
+          <p className={muted}>
+            Write the session in a few plain lines. Velocity Stack searches your ride for it, measures every rep and stores the
+            result, so you can evaluate training from many angles and compare every template run with any other.
+          </p>
+        </div>
+        <div className={split}>
+          <div className="space-y-3">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white">Describe it once</h3>
+            <p className={muted}>Four threshold reps of 3 minutes with 2 minutes easy between:</p>
+            <pre className="overflow-x-auto rounded-2xl bg-slate-900 p-4 text-sm font-mono leading-relaxed text-emerald-300"><code>{`4x
+work 3min ±30% @ 90-110%FTP
+recovery 2min ±50% @ <55%FTP`}</code></pre>
+            <p className={muted}>Need a pursuit? <span className="font-mono">work 4km @ best power</span> finds your best 4km.</p>
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white">How it finds your reps</h3>
+            <ul className={`list-disc pl-5 space-y-1 ${muted}`}>
+              {DETECT_POINTS.map((d) => <li key={d}>{d}</li>)}
+            </ul>
+          </div>
+        </div>
+        <ul className="grid gap-4 sm:grid-cols-2">
+          {TEMPLATE_ANGLES.map(([t, d]) => (
+            <li key={t} className={card}>
+              <h3 className="font-bold text-slate-900 dark:text-white">{t}</h3>
+              <p className={muted}>{d}</p>
+            </li>
+          ))}
+        </ul>
+        <div className={card}>
+          <h3 className="font-bold text-slate-900 dark:text-white"><Icon name="trend" /> Results you can compare</h3>
+          <p className={muted}>
+            Every run is stored with each effort (rep number, average power, normalised power, % of your best rep) and a summary:
+            first half vs second half, slope and consistency. Compare against your previous run, personal best, the median of your
+            last 5 or any past run; the choice is remembered per template.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {WHO_POINTS.map(([t, d]) => (
+            <div key={t} className={card}>
+              <h3 className="font-bold text-slate-900 dark:text-white">{t}</h3>
+              <p className={muted}>{d}</p>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <CarryLink href="/register" className={btnPrimary}>Sign up and run your first template</CarryLink>
+        </div>
+      </section>
 
       {/* 2. Gear Architect */}
       <section aria-labelledby="gear" className="space-y-6">
@@ -124,7 +199,7 @@ export default function TrackLandingPage() {
         <p className={muted}>Racing a pursuit? The <CarryLink href="/pursuit" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Pursuit Strategist</CarryLink> turns a target time into lap-by-lap splits. Both calculators work without an account; a free account unlocks your saved gear, home track and records.</p>
       </section>
 
-      {/* 3. Analysis templates */}
+      {/* 3. Template reference comparison */}
       <section aria-labelledby="templates" className="space-y-6">
         <div className={split}>
           <div className="space-y-4">
@@ -252,7 +327,7 @@ export default function TrackLandingPage() {
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/70 to-slate-950/80" aria-hidden="true" />
         <div className="px-5 py-14 sm:py-20 space-y-5 text-white">
-          <h2 className="text-2xl sm:text-3xl font-black">Know your gear. Analyse every interval.</h2>
+          <h2 className="text-2xl sm:text-3xl font-black">Analyse every interval. Know your gear.</h2>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <CarryLink href="/register" className={btnPrimary}>Sign up</CarryLink>
             <CarryLink href="/login" className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-white/60 font-bold text-base text-white hover:bg-white/10">Sign in with Google</CarryLink>

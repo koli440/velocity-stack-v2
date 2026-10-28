@@ -17,7 +17,7 @@ export function carryQuery(href, search) {
 
 export const TRACK_TITLE = 'Track Cycling Analysis App'
 export const TRACK_DESCRIPTION =
-  'Built for track cycling: know the gear you really rode and analyse every interval. Gear Architect, template analysis, race tagging and coaching.'
+  'Track cycling analysis: describe any session as a template, compare every rep, and know the gear you really rode. Gear, PB Vault, velodromes, coaching.'
 
 export function trackJsonLd() {
   return {
@@ -28,6 +28,13 @@ export function trackJsonLd() {
     description: TRACK_DESCRIPTION,
     applicationCategory: 'SportsApplication',
     operatingSystem: 'Any',
+    featureList: [
+      'Analysis templates: describe a session once, detect every rep and compare runs',
+      'Gear Architect for track gearing',
+      'PB Vault for personal bests',
+      'Velodromes directory and race tagging',
+      'Coaching with rider consent',
+    ],
     audience: { '@type': 'Audience', audienceType: 'Track cyclists and cycling coaches' },
   }
 }
