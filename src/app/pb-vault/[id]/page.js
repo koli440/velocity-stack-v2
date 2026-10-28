@@ -24,6 +24,8 @@ import {
   totalSecondsToMinutesSeconds,
 } from '../../../lib/pbVault'
 
+import ChartTooltip from '@/components/ChartTooltip'
+import { TOOLTIP_CURSOR_LINE } from '@/lib/chartTooltip'
 // "PB Detail Analysis" - migrated from v1's pages/31_PB_detail.py: a single record's metrics,
 // its lap/split breakdown (if any), in-place editing and deletion. Requires an authenticated
 // account (v1's check_access("PB Detail Analysis") gate), same as the vault list page.
@@ -216,7 +218,7 @@ export default function PbDetailPage() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                 <XAxis dataKey="segment" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
+                <Tooltip cursor={TOOLTIP_CURSOR_LINE} content={<ChartTooltip />} />
                 <Legend />
                 <Line type="monotone" dataKey="time" name="Split Time (s)" stroke="#ef4444" strokeWidth={3} />
                 <Line type="monotone" dataKey="speedKmh" name="Speed (km/h)" stroke="#38bdf8" strokeDasharray="4 4" />

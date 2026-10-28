@@ -19,6 +19,8 @@ import { timeDomain, formatTimeTick } from '../../lib/pbChartDomain'
 import AddPbModal from '../../components/AddPbModal'
 import Icon from '../../components/Icon'
 
+import ChartTooltip from '@/components/ChartTooltip'
+import { TOOLTIP_CURSOR_LINE } from '@/lib/chartTooltip'
 // "PB Vault" - migrated from v1's pages/30_PB_vault.py. Requires an authenticated account
 // (v1's check_access("PB Vault") gate); unauthenticated visitors are redirected to /login, same
 // as the rest of the account-gated flows in this app.
@@ -184,7 +186,7 @@ export default function PbVaultPage() {
                     <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                     <YAxis domain={timeDomain(chartData.map((d) => d.timeSeconds)) || ['auto', 'auto']} tickFormatter={formatTimeTick} tick={{ fontSize: 11 }} label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fontSize: 11 }} />
-                    <Tooltip />
+                    <Tooltip cursor={TOOLTIP_CURSOR_LINE} content={<ChartTooltip />} />
                     <Line
                       type="monotone"
                       dataKey="timeSeconds"
