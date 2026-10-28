@@ -151,6 +151,10 @@ recovery 2min ±50% @ <55%FTP`}</code></pre>
             first half vs second half, slope and consistency. Compare against your previous run, personal best, the median of your
             last 5 or any past run; the choice is remembered per template.
           </p>
+          <div className="mt-4 mx-auto max-w-3xl space-y-2">
+            <Shot src="/landing/template-run-compare-results.webp" width={1200} height={1052} alt="Template run result compared with the previous run: 3 of 3 reps detected, per-rep times against the reference, and a fade curve" />
+            <p className="text-center text-sm text-slate-600 dark:text-slate-300">A stored run compared with the previous one: per-rep deltas and fade curve.</p>
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           {WHO_POINTS.map(([t, d]) => (
