@@ -22,6 +22,7 @@ import {
   plannedStatus,
   parseStructure,
   summarizeStructure,
+  loadContextAt,
   validatePlanned,
 } from '../lib/plannedWorkouts'
 import { dayKey, formatDuration, formatKm } from '../lib/calendar'
@@ -58,7 +59,7 @@ function RunResult({ run }) {
  * The rider and the rider's active coach may do everything here (the database decides).
  */
 export default function PlannedWorkoutDialog({
-  workout, day, names, viewerId, activities, workouts, countByDay, suggestedActivityId, run, actions, onClose, ftpHistory = [],
+  workout, day, names, viewerId, activities, workouts, countByDay, suggestedActivityId, run, actions, onClose, ftpHistory = [], loadContext = null,
 }) {
   const creating = !workout
   const [title, setTitle] = useState(workout?.title || '')
@@ -83,7 +84,7 @@ export default function PlannedWorkoutDialog({
     else if (parsed.empty) setLastManifest(null)
   }, [parsed])
   const shownManifest = parsed.manifest || (parsed.empty ? null : lastManifest)
-  const summary = useMemo(() => (shownManifest ? summarizeStructure(shownManifest) : null), [shownManifest])
+  const summary = useMemo(() => (shownManifest ? summarizeStructure(shownManifest, loadContextAt(loadContext, targetDay)) : null), [shownManifest, loadContext, targetDay])
   const ftp = useMemo(() => ftpAt(ftpHistory, targetDay), [ftpHistory, targetDay])
   const linkable = useMemo(() => (workout ? linkableActivities(workout, workouts, activities) : []), [workout, workouts, activities])
   const linked = workout?.activity_id ? (activities || []).find((a) => a.id === workout.activity_id) : null
@@ -227,8 +228,9 @@ export default function PlannedWorkoutDialog({
             <pre className="whitespace-pre-wrap font-sans text-slate-600 dark:text-slate-300">{summary.lines.join('\n')}</pre>
             <div className="text-slate-500 dark:text-slate-400">
               {summary.durationS ? `~${formatDuration(summary.durationS)} h${summary.partial ? '+' : ''}` : ''}
-              {summary.load ? `${summary.durationS ? ' · ' : ''}load ~${summary.load}` : ''}
+              {summary.load ? `${summary.durationS ? ' · ' : ''}load ~${summary.load}${summary.loadAssumed ? '*' : ''}` : ''}
               {summary.partial ? ' (distance-based steps not counted)' : ''}
+              {summary.load && summary.loadAssumed ? ' * assumes LT1 = 75% and LT2 = 100% of FTP (no lactate thresholds set)' : ''}
             </div>
           </div>
         )}

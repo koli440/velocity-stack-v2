@@ -47,7 +47,7 @@ import {
   RACE_PRIORITY_LABELS,
   RACE_DISCIPLINE_LABELS,
 } from '../lib/calendarRaces'
-import { fetchFtpHistory } from '../lib/ftpHistory'
+import { useRiderLoadContext } from './useRiderLoadContext'
 import { fetchProfilesByIds } from '../lib/social'
 import { isShownOnMobile, isEmptyDay } from '../lib/calendarMobileDays'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
@@ -148,7 +148,7 @@ function PlannedChip({ event, onOpen }) {
       onClick={() => onOpen(event.plannedId)}
       data-testid="calendar-planned"
       data-status={event.status}
-      title={`${event.title} · ${PLANNED_STATUS_LABELS[event.status]}${event.pushState && event.pushState !== 'not_pushed' ? ` · ${PUSH_STATE_LABELS[event.pushState]}` : ''}`}
+      title={`${event.title} · ${PLANNED_STATUS_LABELS[event.status]}${event.pushState && event.pushState !== 'not_pushed' ? ` · ${PUSH_STATE_LABELS[event.pushState]}` : ''}${event.metric?.title ? ` · ${event.metric.title}` : ''}`}
       className={`block w-full text-left rounded-lg px-1.5 py-1 text-[11px] leading-tight border cursor-grab hover:border-emerald-500 transition ${STATUS_STYLES[event.status]}`}
     >
       <ChipBody
@@ -275,6 +275,8 @@ function WeekSummary({ summary }) {
  * @param {Function} [fetchRaces]  same for races (RLS: only the rider and the rider's active coach get rows)
  * @param {Function} [fetchPlanned]  same for planned workouts (RLS: only the rider and the rider's active coach get rows)
  */
+const EMPTY = []
+
 export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = defaultFetchEvents, fetchNotes = defaultFetchNotes, fetchPlanned = defaultFetchPlanned, fetchRaces = defaultFetchRaces }) {
   const [sessionUserId, setSessionUserId] = useState(null)
   const riderId = riderIdProp || sessionUserId
@@ -362,12 +364,14 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     const id = setInterval(() => setTodayKey((k) => { const n = dayKey(new Date()); return n === k ? k : n }), 60000)
     return () => clearInterval(id)
   }, [])
+  const loadContext = useRiderLoadContext(riderId)
+  const ftpHistory = loadContext?.ftpHistory || EMPTY
   const rows = useMemo(() => {
     const today = new Date()
-    return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => ({ ...plannedToEvent(w, today), pushState: pushState(w, pushRows.get(w.id)) }))], { anchor, notes, races })
+    return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => ({ ...plannedToEvent(w, today, loadContext), pushState: pushState(w, pushRows.get(w.id)) }))], { anchor, notes, races })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchor, events, notes, races, planned, pushRows, todayKey])
-  const raceForms = useRaceForms(riderId, races, { coach: Boolean(riderIdProp && riderIdProp !== sessionUserId) })
+  }, [anchor, events, notes, races, planned, pushRows, todayKey, loadContext])
+  const raceForms = useRaceForms(riderId, races, { coach: Boolean(riderIdProp && riderIdProp !== sessionUserId), loadContext })
   const raceByActivity = useMemo(() => racesByActivity(races), [races])
 
   // Intervals.icu push status of the visible workouts (RLS: rider + active coach; empty for everyone else).
@@ -438,16 +442,6 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   }
 
   const openPlanned = (day, id) => setPdialog({ day, id })
-
-  const [ftpHistory, setFtpHistory] = useState([])
-  useEffect(() => {
-    if (!riderId) return undefined
-    let cancelled = false
-    fetchFtpHistory(supabase, riderId).then(({ history }) => !cancelled && setFtpHistory(history || [])).catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [riderId])
 
   const refresh = async (fn) => {
     const { error: err } = await fn()
@@ -613,6 +607,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
             suggestedActivityId={w ? suggestions.get(w.id) : null}
             run={w ? runForPlanned(w, runs) : null}
             ftpHistory={ftpHistory}
+            loadContext={loadContext}
             actions={plannedActions(pdialog.id)}
             onClose={() => setPdialog(null)}
           />

@@ -13,7 +13,7 @@ import { addDays, daysBetween, localDayKey } from '../lib/fitnessForm'
  * owner filter; coach: coach-gated RPC), same `today`, same projection (default 4-week plan horizon
  * stretched to the furthest race).
  */
-export function useRaceForms(riderId, races, { coach = false } = {}) {
+export function useRaceForms(riderId, races, { coach = false, loadContext = null } = {}) {
   const probe = useMemo(() => localDayKey(new Date()), [])
   const upcoming = useMemo(
     () => (races || []).filter((r) => r.race_date > probe && daysBetween(probe, r.race_date) <= PROJECTION_MAX_DAYS),
@@ -30,7 +30,7 @@ export function useRaceForms(riderId, races, { coach = false } = {}) {
   return useMemo(() => {
     if (loading || error || !upcoming.length) return new Map()
     const farthest = Math.max(...upcoming.map((r) => daysBetween(today, r.race_date)))
-    const p = projectFitness(daily, { today, planned, races: upcoming, horizonDays: farthest })
+    const p = projectFitness(daily, { today, planned, races: upcoming, horizonDays: farthest, loadContext })
     return new Map(p.raceForms.map((f) => [f.race.id, f]))
-  }, [loading, error, upcoming, daily, today, planned])
+  }, [loading, error, upcoming, daily, today, planned, loadContext])
 }

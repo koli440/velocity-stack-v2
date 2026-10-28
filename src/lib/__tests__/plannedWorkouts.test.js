@@ -320,3 +320,56 @@ test('#286 week summary flags partial when a workout has no computable duration'
   assert.equal(sum([timed, noStructure]).plannedDurationS, 1200)
   assert.equal(sum([timed, distance]).plannedPartial, true)
 })
+
+const EXAMPLE = 'warmup 20min\n4x\nwork 10min @ 95-100%LT1\nrecovery 15min @ Z2\ncooldown 15min'
+const hours = (min) => min / 60
+
+test('load: LT1 / zone workout has no estimate without rider context', () => {
+  assert.equal(summarizeStructure(manifestOf(EXAMPLE)).load, null)
+})
+
+test('load: %LT1 and zone bands fall back to LT1 = 75% FTP (marked assumed)', () => {
+  const s = summarizeStructure(manifestOf(EXAMPLE), { ftp: 271, lt: null, zonePcts: null })
+  const lt1 = 271 * 0.75
+  const z2 = (Math.round(lt1 * 0.75) + Math.round(lt1)) / 2 / 271
+  const work = 0.975 * 0.75
+  const expected = Math.round(4 * (hours(10) * work * work + hours(15) * z2 * z2) * 100)
+  assert.equal(s.load, expected)
+  assert.equal(s.loadAssumed, true)
+})
+
+test('load: uses the rider LT1 / LT2 power when known', () => {
+  const lt = { lt1Power: 220, lt2Power: 260 }
+  const s = summarizeStructure(manifestOf('work 10min @ 90-110%LT1\nrecovery 10min @ 90-110%LT2'), { ftp: 271, lt, zonePcts: null })
+  assert.equal(s.load, Math.round(hours(10) * (220 / 271) ** 2 * 100 + hours(10) * (260 / 271) ** 2 * 100))
+  assert.equal(s.loadAssumed, false)
+})
+
+test('load: absolute watts, open bands and zone ranges', () => {
+  const ctx = { ftp: 250, lt: null, zonePcts: null }
+  assert.equal(summarizeStructure(manifestOf('work 1h @ 250W'), ctx).load, 100)
+  assert.equal(summarizeStructure(manifestOf('work 1h @ >200W'), ctx).load, Math.round(0.8 * 0.8 * 100))
+  assert.equal(summarizeStructure(manifestOf('work 1h @ 250W'), null).load, null)
+  const z = summarizeStructure(manifestOf('work 1h @ Z3-Z4'), ctx)
+  assert.ok(z.load > 70 && z.load < 110)
+})
+
+test('load: HR / rpm / best bands and targetless steps are still skipped; %FTP unchanged with context', () => {
+  const ctx = { ftp: 250, lt: null, zonePcts: null }
+  assert.equal(summarizeStructure(manifestOf('work 10min @ 140-150bpm'), ctx).load, null)
+  assert.equal(summarizeStructure(manifestOf('work 10min @ 90-100rpm'), ctx).load, null)
+  const m = manifestOf('4x\nwork 5min ±10% @ 90-110%FTP\nrecovery 3min ±20% @ <55%FTP')
+  assert.equal(summarizeStructure(m, ctx).load, summarizeStructure(m).load)
+  assert.equal(summarizeStructure(m, ctx).loadAssumed, false)
+})
+
+test('load: workoutSummary resolves the rider histories at the workout day', () => {
+  const w = { workout_date: '2027-02-10', structure_dsl: 'work 1h @ 90-110%LT1' }
+  const bundle = {
+    ftpHistory: [{ effective_from: '2027-01-01', ftp_w: 300 }],
+    ltHistory: [{ effective_from: '2027-01-01', lt1_power_w: 240 }, { effective_from: '2027-03-01', lt1_power_w: 280 }],
+    zoneHistory: [],
+  }
+  assert.equal(workoutSummary(w, bundle).load, Math.round((240 / 300) ** 2 * 100))
+  assert.equal(workoutSummary(w).load, null)
+})

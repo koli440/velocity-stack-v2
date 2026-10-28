@@ -9,6 +9,7 @@ import { useFitnessData } from './useFitnessData'
 import { FITNESS_RANGES, fitnessSummary, addDays } from '../lib/fitnessForm'
 import { fetchRacesInRange, RACE_PRIORITY_STYLES } from '../lib/calendarRaces'
 import { fetchPlannedInRange } from '../lib/plannedWorkouts'
+import { useRiderLoadContext } from './useRiderLoadContext'
 import { projectFitness, partialForecastNote, PROJECTION_HORIZONS, PROJECTION_MAX_DAYS } from '../lib/fitnessProjection'
 
 // Full Fitness / Fatigue / Form view of ONE rider: the own page (`userId` = signed-in rider) and the coach's
@@ -34,10 +35,11 @@ export default function FitnessView({ userId, coach = false }) {
     )
   }, [userId, range.days, today])
 
+  const loadContext = useRiderLoadContext(userId)
   const horizon = PROJECTION_HORIZONS.find((h) => h.key === horizonKey)
   const projection = useMemo(
-    () => (horizon ? projectFitness(daily, { today, planned, races, horizonDays: horizon.days }) : null),
-    [daily, today, planned, races, horizon]
+    () => (horizon ? projectFitness(daily, { today, planned, races, horizonDays: horizon.days, loadContext }) : null),
+    [daily, today, planned, races, horizon, loadContext]
   )
   const forecast = projection && !projection.empty ? projection : null
   const forecastEnd = forecast ? forecast.series[forecast.series.length - 1].day : today
