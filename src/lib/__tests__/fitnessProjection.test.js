@@ -80,3 +80,13 @@ test('no history is empty; horizon is clamped to 2-8 weeks', () => {
   assert.equal(projectFitness(daily, { today, horizonDays: 500 }).series.length, 56)
   assert.equal(projectFitness(daily, { today, horizonDays: 1 }).series.length, 14)
 })
+
+test('projectFitness: LT1 / zone workouts are no longer counted as having no estimate with rider context', () => {
+  const planned = [{ id: 'a', workout_date: '2026-03-03', title: 'Endurance with LT1 intervals', structure_dsl: 'warmup 20min\n4x\nwork 10min @ 95-100%LT1\nrecovery 15min @ Z2\ncooldown 15min' }]
+  const daily = { '2026-03-01': { load: 50, estimatedLoad: 0 } }
+  const loadContext = { ftpHistory: [{ effective_from: '2026-01-01', ftp_w: 271 }], ltHistory: [], zoneHistory: [] }
+  assert.equal(projectFitness(daily, { today: '2026-03-02', planned }).noEstimate, 1)
+  const p = projectFitness(daily, { today: '2026-03-02', planned, loadContext })
+  assert.equal(p.noEstimate, 0)
+  assert.ok(plannedLoad(planned[0], loadContext) > 0)
+})

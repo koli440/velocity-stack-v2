@@ -17,8 +17,8 @@ export const PROJECTION_MIN_DAYS = 14
 export const PROJECTION_MAX_DAYS = 56
 
 /** Estimated load of one planned workout: number >= 0, or null when it has no estimate. */
-export function plannedLoad(workout) {
-  const load = workoutSummary(workout)?.load
+export function plannedLoad(workout, loadContext = null) {
+  const load = workoutSummary(workout, loadContext)?.load
   return Number.isFinite(load) && load >= 0 ? load : null
 }
 
@@ -31,7 +31,7 @@ export function plannedLoad(workout) {
  *    { projected: true, plannedLoad, workouts: [{ id, title, load|null }] }
  *  noEstimate: planned (not skipped) future workouts in the horizon without a load estimate
  */
-export function projectFitness(daily, { today, planned = [], races = [], horizonDays = 28 } = {}) {
+export function projectFitness(daily, { today, planned = [], races = [], horizonDays = 28, loadContext = null } = {}) {
   const horizon = Math.min(PROJECTION_MAX_DAYS, Math.max(PROJECTION_MIN_DAYS, Math.round(horizonDays) || 28))
   if (!today || !Object.keys(daily || {}).length) return { empty: true, series: [], noEstimate: 0, planned: 0, raceForms: [] }
   const endDay = addDays(today, horizon)
@@ -42,7 +42,7 @@ export function projectFitness(daily, { today, planned = [], races = [], horizon
     const day = w?.workout_date
     if (!day || day <= today || day > endDay) continue
     if (w.activity_id || w.status === 'skipped') continue
-    const load = plannedLoad(w)
+    const load = plannedLoad(w, loadContext)
     const d = (byDay[day] ||= { load: 0, workouts: [] })
     d.workouts.push({ id: w.id, title: w.title || 'Workout', load })
     plannedCount += 1
@@ -75,9 +75,9 @@ export function partialForecastNote(noEstimate) {
 }
 
 /** Projected form on a race day from today's real data; null when out of horizon or no data. */
-export function raceDayForm(daily, race, { today, planned = [] } = {}) {
+export function raceDayForm(daily, race, { today, planned = [], loadContext = null } = {}) {
   if (!race?.race_date || !today) return null
   const horizonDays = daysBetween(today, race.race_date)
   if (horizonDays < 1 || horizonDays > PROJECTION_MAX_DAYS) return null
-  return projectFitness(daily, { today, planned, races: [race], horizonDays }).raceForms[0] || null
+  return projectFitness(daily, { today, planned, races: [race], horizonDays, loadContext }).raceForms[0] || null
 }

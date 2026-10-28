@@ -5,6 +5,9 @@
 
 import { addDays, dayKey, parseDayKey } from './calendar.js'
 import { isGymActivity } from './activityType.js'
+import { ftpAt } from './ftpHistory.js'
+import { ltFromHistoryEntry, resolveLtAt } from './lactateThresholds.js'
+import { FTP_LT1_FRACTION, FTP_LT2_FRACTION, computeZones, resolveZonesAt, zonePctsFromEntry } from './powerZones.js'
 import { BAND_SUFFIXES, buildIntervalManifest, parseIntervalDsl } from './intervalDsl.js'
 
 export const PLANNED_TITLE_MAX = 80
@@ -120,19 +123,61 @@ function stepText(step) {
   return `${step.role === 'recovery' ? 'Recovery' : 'Work'} ${stepSize(step)}${target ? ` @ ${target}` : ''}`.trim()
 }
 
-/** Summary of a workout, computed from its parsed DSL (falls back to the stored manifest). */
-export function workoutSummary(workout) {
+/**
+ * Summary of a workout, computed from its parsed DSL (falls back to the stored manifest).
+ * `loadContext` ({ ftpHistory, ltHistory, zoneHistory } of the RIDER, not the viewer) is resolved at the
+ * workout's day to estimate load from %LT1/%LT2, zone and watt bands; without it only %FTP bands count.
+ */
+export function workoutSummary(workout, loadContext = null) {
   if (!workout) return null
   const parsed = workout.structure_dsl ? parseStructure(workout.structure_dsl) : null
-  return summarizeStructure(parsed?.manifest || workout.structure_manifest)
+  return summarizeStructure(parsed?.manifest || workout.structure_manifest, loadContextAt(loadContext, workout.workout_date))
 }
 
-/** Mid-point intensity (fraction of FTP) of a %FTP band, or null when it has no usable numbers. */
-function ftpFraction(step) {
-  if (step.bandType !== 'pct_ftp') return null
-  const { powerMin: lo, powerMax: hi } = step
-  const pct = lo != null && hi != null ? (lo + hi) / 2 : hi ?? lo
-  return pct == null ? null : pct / 100
+/**
+ * Rider thresholds valid on `day`: { ftp, lt: { lt1Power, lt2Power }|null, zonePcts: number[]|null }.
+ * Returns null when nothing is known (then only %FTP bands give a load).
+ */
+export function loadContextAt(bundle, day) {
+  if (!bundle || !day) return null
+  const ftp = ftpAt(bundle.ftpHistory, day)
+  const lt = ltFromHistoryEntry(resolveLtAt(bundle.ltHistory, day))
+  const zonePcts = zonePctsFromEntry(resolveZonesAt(bundle.zoneHistory, day))
+  return ftp || lt ? { ftp, lt, zonePcts } : null
+}
+
+// Open "Z6" has no upper edge; its mid-point is taken as 15% above the Z5 upper bound.
+const Z6_MID_FACTOR = 1.15
+
+/**
+ * Intensity (fraction of FTP) of a step for the load estimate, or null when unknown / not a power band.
+ * Open bands (<x, >x) use their bound, like the %FTP mid-point does. `ctx` is resolved by loadContextAt.
+ * Sets `used.assumed` when a threshold was not the rider's own (LT1 = 75% FTP, LT2 = 100% FTP fallback).
+ */
+function ftpFraction(step, ctx, used) {
+  const { bandType, powerMin: lo, powerMax: hi } = step
+  const mid = lo != null && hi != null ? (lo + hi) / 2 : hi ?? lo
+  if (bandType === 'pct_ftp') return mid == null ? null : mid / 100
+  const ftp = ctx?.ftp > 0 ? ctx.ftp : null
+  if (!ftp || (mid == null && bandType !== 'zone')) return null
+  if (bandType === 'watts') return mid / ftp
+  if (bandType === 'pct_lt1' || bandType === 'pct_lt2') {
+    const own = Number(bandType === 'pct_lt1' ? ctx.lt?.lt1Power : ctx.lt?.lt2Power)
+    const known = own > 0
+    if (!known) used.assumed = true
+    const w = known ? own : ftp * (bandType === 'pct_lt1' ? FTP_LT1_FRACTION : FTP_LT2_FRACTION)
+    return ((mid / 100) * w) / ftp
+  }
+  if (bandType === 'zone') {
+    const zones = computeZones({ lt: ctx.lt, ftp, pcts: ctx.zonePcts })
+    if (!zones || (lo == null && hi == null)) return null
+    const lower = (z) => (z <= 1 ? 0 : zones.bounds[Math.min(z, 6) - 2])
+    const upper = (z) => (z >= 6 ? zones.bounds[4] * Z6_MID_FACTOR : zones.bounds[z - 1])
+    const watts = lo != null && hi != null ? (lower(lo) + upper(hi)) / 2 : hi != null ? lower(hi) || upper(hi) : upper(lo)
+    if (zones.estimated) used.assumed = true
+    return watts > 0 ? watts / ftp : null
+  }
+  return null
 }
 
 /**
@@ -140,14 +185,15 @@ function ftpFraction(step) {
  *   { lines, durationS, load, partial }
  * lines: human lines ("4x", "Work 5min @ 90-110%FTP", ...). durationS: total estimate from duration-keyed
  * steps incl. warm-up / cool-down (null when unknown); `partial` when distance-keyed steps were left out.
- * load: rough training-load estimate (TSS-like, 100 = one hour at FTP) from %FTP bands, else null.
+ * load: rough training-load estimate (TSS-like, 100 = one hour at FTP) from %FTP bands and, with `ctx`
+ * (loadContextAt), also %LT1/%LT2, zone and watt bands; else null. `loadAssumed` when a fallback threshold was used.
  * Legacy fixed patterns (no steps) give just their pattern name.
  */
-export function summarizeStructure(manifest) {
+export function summarizeStructure(manifest, ctx = null) {
   if (!manifest || typeof manifest !== 'object') return null
   const steps = Array.isArray(manifest.steps) ? manifest.steps : []
   if (!steps.length) {
-    return manifest.pattern ? { lines: [`Pattern: ${String(manifest.pattern).replace(/_/g, ' ')}`], durationS: null, load: null, partial: false } : null
+    return manifest.pattern ? { lines: [`Pattern: ${String(manifest.pattern).replace(/_/g, ' ')}`], durationS: null, load: null, loadAssumed: false, partial: false } : null
   }
   const reps = Math.max(1, Number(manifest.repeat_count) || 1)
   const sets = Math.max(1, Number(manifest.set_count) || 1)
@@ -173,13 +219,14 @@ export function summarizeStructure(manifest) {
   let seconds = (manifest.warmup_sec || 0) + (manifest.cooldown_sec || 0)
   let loadSum = 0
   let loadKnown = false
+  const used = { assumed: false }
   let partial = false
   const perRep = steps.reduce((a, s) => a + (s.keyBy !== 'distance' ? s.targetDurationSec || 0 : 0), 0)
   if (steps.some((s) => s.keyBy === 'distance')) partial = true
   seconds += perRep * reps * sets
   if (sets > 1 && manifest.set_recovery?.targetDurationSec) seconds += manifest.set_recovery.targetDurationSec * (sets - 1)
   for (const s of steps) {
-    const f = s.keyBy !== 'distance' ? ftpFraction(s) : null
+    const f = s.keyBy !== 'distance' ? ftpFraction(s, ctx, used) : null
     if (f != null) {
       loadKnown = true
       loadSum += (s.targetDurationSec / 3600) * f * f * 100 * reps * sets
@@ -189,6 +236,7 @@ export function summarizeStructure(manifest) {
     lines,
     durationS: seconds > 0 ? seconds : null,
     load: loadKnown ? Math.round(loadSum) : null,
+    loadAssumed: loadKnown && used.assumed,
     partial,
   }
 }
@@ -381,8 +429,8 @@ export function defaultDuplicateDay(workout) {
  * Calendar event for a planned workout (see calendar.js event model). `activityDay` is where the day cell
  * puts it; planned events carry their status for styling and open the detail dialog (no href).
  */
-export function plannedToEvent(workout, today = new Date()) {
-  const summary = workoutSummary(workout)
+export function plannedToEvent(workout, today = new Date(), loadContext = null) {
+  const summary = workoutSummary(workout, loadContext)
   return {
     id: workout.id,
     kind: 'planned',
@@ -392,7 +440,7 @@ export function plannedToEvent(workout, today = new Date()) {
     distanceM: 0,
     durationS: summary?.durationS || 0,
     durationPartial: !!summary?.partial,
-    metric: summary?.load ? { label: 'TL', value: `~TL ${summary.load}` } : null,
+    metric: summary?.load ? { label: 'TL', value: `~TL ${summary.load}`, ...(summary.loadAssumed ? { title: 'Estimate assumes LT1 = 75% and LT2 = 100% of FTP (no lactate thresholds set)' } : {}) } : null,
     status: plannedStatus(workout, today),
     plannedId: workout.id,
     activityId: workout.activity_id || null,
