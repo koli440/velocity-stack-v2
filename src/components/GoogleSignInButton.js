@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { oauthRedirectTo } from '../lib/authRedirect'
+import { rememberOAuthStart } from '../lib/signupTracking'
 
 // Google's official "G" mark (multi-colour, unmodified) as required by the Google sign-in branding guidelines.
 function GoogleMark({ size = 18 }) {
@@ -23,6 +24,7 @@ export default function GoogleSignInButton({ next, onError, disabled }) {
   const handleClick = async () => {
     setLoading(true)
     onError?.(null)
+    rememberOAuthStart(window.location.search)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: oauthRedirectTo(window.location.origin, next) },

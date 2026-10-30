@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { supabase } from '../lib/supabase'
+import { trackOAuthSignUpOnce } from '../lib/signupTracking'
 import { fetchTracks } from '../lib/lookups'
 import Sidebar from './Sidebar'
 import TopNav from './TopNav'
@@ -97,6 +98,7 @@ export default function AppShell({ children }) {
         return
       }
       const currentUser = session?.user ?? null
+      if (event === 'SIGNED_IN' && currentUser) trackOAuthSignUpOnce(currentUser)
       setUser(currentUser)
       if (!currentUser && !isAuthPage && !isPublicPage && !isLegalPage) {
         router.push('/login')

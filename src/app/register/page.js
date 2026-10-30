@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase'
 import AuthBackground from '../../components/AuthBackground'
 import GoogleSignInButton from '../../components/GoogleSignInButton'
 import { nextOrDefault } from '../../lib/authRedirect'
-import { trackRedditEvent } from '../../lib/redditPixel'
+import { trackSignUp, parseAttribution } from '../../lib/signupTracking'
 import { loginHref } from '../../lib/signupCatch'
 
 export default function RegisterPage() {
@@ -49,7 +49,7 @@ export default function RegisterPage() {
 
       if (error) throw error
 
-      if (data?.user) trackRedditEvent('SignUp')
+      if (data?.user) trackSignUp('email', parseAttribution(window.location.search))
 
       // With "Confirm email" on, no session exists until the link is clicked.
       if (data?.user && !data.session) {
