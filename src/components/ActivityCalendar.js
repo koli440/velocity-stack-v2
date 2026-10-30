@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { contextualHref, parseCoachPath } from '../lib/coachContext'
@@ -49,6 +49,7 @@ import {
 } from '../lib/calendarRaces'
 import { useRiderLoadContext } from './useRiderLoadContext'
 import { fetchProfilesByIds } from '../lib/social'
+import { shouldAutoScrollToToday, todayScrollBehavior } from '../lib/calendarScroll'
 import { isShownOnMobile, isEmptyDay } from '../lib/calendarMobileDays'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
 import {
@@ -293,6 +294,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     if (m) setAnchor(m)
   }, [])
   const monthKey = monthParam(anchor)
+  const pendingTodayScroll = useRef(true)
   const isCurrentMonth = monthKey === monthParam(new Date())
   const returnTo = `${pathname}${isCurrentMonth ? '' : `?month=${monthKey}`}`
   useEffect(() => {
@@ -475,6 +477,21 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     else await load()
   }
 
+  // One-shot: runs after the month finishes loading, never on later re-renders (edits, drag-and-drop).
+  useEffect(() => {
+    if (loading || !pendingTodayScroll.current || !shouldAutoScrollToToday(anchor, new Date())) return
+    pendingTodayScroll.current = false
+    const el = document.querySelector('[data-today="true"]')
+    if (!el) return
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ block: 'center', behavior: todayScrollBehavior(reduced) })
+  }, [loading, anchor])
+
+  const goToMonth = (a, scrollToToday) => {
+    pendingTodayScroll.current = scrollToToday
+    setAnchor(a)
+  }
+
   const title = formatDate(anchor, { month: 'long', year: 'numeric' })
 
   const weekdayLabels = rows[0]?.cells.map((c) => formatDate(c.date, { weekday: 'short' })) || []
@@ -484,9 +501,9 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     <div className="glass-card bg-white dark:bg-surface-darkCard p-3 sm:p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <button aria-label="Previous" className={btn} onClick={() => setAnchor(shiftMonth(anchor, -1))}>‹</button>
-          <button className={btn} onClick={() => setAnchor(startOfDay(new Date()))}>Today</button>
-          <button aria-label="Next" className={btn} onClick={() => setAnchor(shiftMonth(anchor, 1))}>›</button>
+          <button aria-label="Previous" className={btn} onClick={() => goToMonth(shiftMonth(anchor, -1), false)}>‹</button>
+          <button className={btn} onClick={() => goToMonth(startOfDay(new Date()), true)}>Today</button>
+          <button aria-label="Next" className={btn} onClick={() => goToMonth(shiftMonth(anchor, 1), false)}>›</button>
         </div>
         <h2 className="text-base font-extrabold text-slate-900 dark:text-white capitalize">{title}</h2>
         <span className="hidden sm:block w-[7.5rem]" aria-hidden />
@@ -509,9 +526,10 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
               return (
                 <div
                   key={cell.key}
+                  data-today={cell.isToday ? 'true' : undefined}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => dropOnDay(e, cell.date)}
-                  className={`rounded-xl border p-1.5 ${slimOnMobile ? 'min-h-[1.75rem] py-0.5 opacity-80 lg:py-1.5 lg:opacity-100' : 'min-h-[3rem]'} lg:min-h-[6.5rem] space-y-1 ${hideOnMobile ? 'hidden lg:block' : ''} ${
+                  className={`scroll-mt-24 rounded-xl border p-1.5 ${slimOnMobile ? 'min-h-[1.75rem] py-0.5 opacity-80 lg:py-1.5 lg:opacity-100' : 'min-h-[3rem]'} lg:min-h-[6.5rem] space-y-1 ${hideOnMobile ? 'hidden lg:block' : ''} ${
                     cell.isToday
                       ? 'border-emerald-500 bg-emerald-500/5'
                       : 'border-slate-200 dark:border-slate-800'
