@@ -1,3 +1,2 @@
 fitparse==1.2.0
-pandas==2.2.2
 numpy==1.26.4
