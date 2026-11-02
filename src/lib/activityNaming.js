@@ -447,3 +447,31 @@ export function resolveImportTitle({ title, lockedTitle = null, ...naming }) {
   if (!isGenericActivityName(title)) return { title: String(title).trim(), generated: false }
   return { title: generateActivityName(naming), generated: true }
 }
+
+/**
+ * A fresh name for an existing activity (the "Reroll name" button). Always differs from the current title
+ * and from `recentNames`; `nonce` makes each press give another pick. The caller persists it with title_locked.
+ */
+export function rerollActivityTitle({ activity, ftpWatts = null, recentNames = [], nonce = 0 }) {
+  const a = activity || {}
+  const current = String(a.title ?? '').trim()
+  const summary = {
+    elapsed_time_s: a.elapsed_time_s, distance_m: a.distance_m, normalized_power_w: a.normalized_power_w,
+    max_power_w: a.max_power_w, avg_hr: a.avg_hr, max_hr: a.max_hr, elevation_gain_m: a.elevation_gain_m,
+    avg_speed_kmh: a.avg_speed_kmh, max_speed_kmh: a.max_speed_kmh,
+  }
+  const rt = a.ride_type
+  const sport = ['run', 'trail_run', 'treadmill_run'].includes(rt) ? rt : RIDE_FLAVOUR_POOL[rt] ? rt : null
+  const args = {
+    activityType: a.activity_type || 'ride', sport, rideType: rt || null, summary, ftpWatts,
+    timeSeries: a.time_series || null,
+    localHour: a.start_time ? localHourOfInstant(a.start_time) : null,
+  }
+  const avoid = [current, ...recentNames]
+  const hash = hashSeed(`${a.id}|${a.start_time}`)
+  for (let i = 0; i < 12; i++) {
+    const name = generateActivityName({ ...args, seed: `${hash}|${nonce}|${i}`, recentNames: avoid })
+    if (name.toLowerCase() !== current.toLowerCase()) return name
+  }
+  return generateActivityName({ ...args, seed: `${hash}|${nonce}|x` })
+}

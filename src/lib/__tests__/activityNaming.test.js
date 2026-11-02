@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   TITLE_POOLS, TIME_FLAVOURS, isGenericActivityName, timeOfDay, localHourFromStamp, generateActivityName,
-  resolveImportTitle, chooseCategory, rideCharacter, runCharacter, gymCharacter, countPowerBlocks,
+  resolveImportTitle, rerollActivityTitle, chooseCategory, rideCharacter, runCharacter, gymCharacter, countPowerBlocks,
 } from '../activityNaming.js'
 import { buildActivityUpdates } from '../activityEdit.js'
 import { importActivity } from '../server/importActivity.js'
@@ -190,4 +190,20 @@ test('importActivity avoids the rider recent names', async () => {
   const again = fake({ recent: [name] })
   await importActivity({ supabase: again, userId: 'u1', provider: provider('Garmin Sync'), externalId: '1', profile: {} })
   assert.notEqual(again.calls.inserts[0].rows[0].title.split(': ')[1], name.split(': ')[1])
+})
+
+test('rerollActivityTitle always changes the name and fits the activity', () => {
+  const activity = { id: 'a1', title: 'My own name', title_locked: true, activity_type: 'run', ride_type: 'trail_run', start_time: '2026-11-02T06:00:00', elapsed_time_s: 3000, distance_m: 8000 }
+  const seen = new Set()
+  for (let n = 0; n < 15; n++) {
+    const name = rerollActivityTitle({ activity, nonce: n })
+    assert.notEqual(name, activity.title)
+    const title = name.includes(': ') ? name.split(': ')[1] : name
+    assert.ok(TITLE_POOLS.run_trail.includes(title), name)
+    seen.add(name)
+  }
+  assert.ok(seen.size > 1)
+  const current = rerollActivityTitle({ activity, nonce: 1 })
+  assert.notEqual(rerollActivityTitle({ activity: { ...activity, title: current }, nonce: 1 }), current)
+  assert.ok(rerollActivityTitle({ activity: { id: 'g', activity_type: 'gym', title: 'x' } }).length > 0)
 })

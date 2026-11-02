@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import Portal from '../../../components/Portal'
 import { fullDateTime } from '../../../lib/dateFormat'
 import { fetchProfilesByIds, authorName } from '../../../lib/social'
@@ -35,6 +35,7 @@ import CoachBadge, { useCoachNames } from '../../../components/CoachBadge'
 import { gearLabel } from '../../../lib/gear'
 import { effectiveRideType, rideTypeHasGear, rideTypeLabel } from '../../../lib/rideType'
 import { gearsToForm, resolveGears, resolveSegments, withSegmentSpeed } from '../../../lib/gearSegments'
+import { rerollActivityTitle, RECENT_NAMES_WINDOW } from '../../../lib/activityNaming'
 import { buildActivityUpdates } from '../../../lib/activityEdit'
 import { updateActivityGear } from '../../../lib/coaching'
 import { computeDurationalCurve } from '../../../lib/streamAnalysis'
@@ -95,6 +96,8 @@ function ActivityDetail() {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [rerolling, setRerolling] = useState(false)
+  const rerollCount = useRef(0)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   // true when another rider's activity is opened through the restricted shared_activities view
   const [sharedView, setSharedView] = useState(false)
@@ -294,6 +297,26 @@ function ActivityDetail() {
     setTimeout(() => setSaveSuccess(false), 2500)
   }
 
+  // Reroll name: a new funny name, saved and locked so re-syncs never overwrite it.
+  const handleReroll = async () => {
+    setRerolling(true)
+    const [recent, prof] = await Promise.all([
+      supabase.from('activities').select('title').eq('user_id', activity.user_id).order('created_at', { ascending: false }).limit(RECENT_NAMES_WINDOW),
+      supabase.from('profiles').select('ftp_w').eq('id', activity.user_id).maybeSingle(),
+    ])
+    rerollCount.current += 1
+    const title = rerollActivityTitle({
+      activity,
+      ftpWatts: prof?.data?.ftp_w ?? null,
+      recentNames: (recent?.data || []).map((r) => r.title),
+      nonce: `${Date.now()}|${rerollCount.current}`,
+    })
+    const { error } = await supabase.from('activities').update({ title, title_locked: true }).eq('id', activity.id).eq('user_id', activity.user_id)
+    setRerolling(false)
+    if (error) alert(`Could not rename: ${error.message}`)
+    else setActivity((prev) => ({ ...prev, title, title_locked: true }))
+  }
+
   // Permanent deletion of the activity (issue #18): deletes the DB record (cascading curves/analysis)
   // and any archived .fit file, then returns the user to the Cockpit.
   const handleDeleteActivity = async () => {
@@ -422,6 +445,14 @@ function ActivityDetail() {
               className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wider transition"
             >
               <Icon name="edit" /> Edit
+            </button>
+            <button
+              type="button"
+              onClick={handleReroll}
+              disabled={rerolling}
+              className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
+            >
+              🎲 Reroll name
             </button>
             <button
               type="button"
