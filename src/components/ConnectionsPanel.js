@@ -12,7 +12,7 @@ import {
   isConnected,
   syncHealth,
 } from '../lib/connections'
-import { describeSyncResult, backfillProgressText } from '../lib/syncPlan'
+import { describeSyncResult, describePlannedPush, backfillProgressText } from '../lib/syncPlan'
 import PlannedPushSetting from './PlannedPushSetting'
 
 const BACKFILL_OPTIONS = [
@@ -168,7 +168,8 @@ function OAuthProviderCard({ userId, provider }) {
       })
       const data = await parseJsonResponse(res)
       if (res.status === 429) {
-        setSyncMsg(data.error)
+        const sent = describePlannedPush(data.planned)
+        setSyncMsg(sent ? `${data.error} ${sent}` : data.error)
         return
       }
       if (!res.ok && !data.error) throw new Error('Sync failed')
@@ -336,7 +337,8 @@ export function IntervalsCard({ userId }) {
       })
       const data = await parseJsonResponse(res)
       if (res.status === 429) {
-        setSyncMsg(data.error)
+        const sent = describePlannedPush(data.planned)
+        setSyncMsg(sent ? `${data.error} ${sent}` : data.error)
         return
       }
       if (!res.ok && !data.error) throw new Error('Sync failed')
