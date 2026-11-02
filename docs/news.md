@@ -23,7 +23,7 @@ One or two short paragraphs about what the rider can do now.
 
 Rules:
 - English only. Everyone gets every entry (no targeting).
-- The `id` must equal the file name and start with `date`; ids sort chronologically, and "unseen" means `id > news_seen_through`.
+- The `id` must equal the file name and start with `date`; ids sort chronologically, and "unseen" means `id > news_seen_through`. Because ids compare as strings, a new entry added on a day that already has entries must have a slug that sorts after the existing ones of that day (check `ls content/news`), otherwise users whose marker is already past it never see it.
 - Use the REAL current date (today); never a future date, and never "latest entry + 1". If an id with that date already exists, just use a distinct slug. A unit test fails for entries dated in the future. Entries dated before a user's "seen up to" marker are never shown to that user in the login modal (they stay on the page).
 - Malformed files fail `npm test` and the build (`src/lib/__tests__/news.test.js` loads every file).
 
