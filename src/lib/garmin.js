@@ -182,3 +182,17 @@ export function isGarminHost(url) {
     return false
   }
 }
+
+/** Webhook auth: the secret comes as path segment (portal strips queries) or legacy ?token=. Logs rejections, never the secret. */
+export function authorizeGarminWebhook({ pathToken = null, queryToken = null, expected, warn = console.warn }) {
+  if (!expected) {
+    warn('Garmin webhook: GARMIN_WEBHOOK_TOKEN is not configured')
+    return { ok: false, status: 503 }
+  }
+  const given = pathToken ?? queryToken
+  if (!matchesWebhookToken(given, expected)) {
+    warn(`Garmin webhook rejected: ${given ? 'token mismatch' : 'no token'} (via ${pathToken != null ? 'path' : 'query'})`)
+    return { ok: false, status: 403 }
+  }
+  return { ok: true, status: 200 }
+}
