@@ -10,10 +10,12 @@ export function fakeSupabase(tables) {
     let lim = Infinity
     const q = {
       select() { return q },
+      upsert(row, opts = {}) { op = 'upsert'; patch = row; q._opts = opts; return q },
       insert(row) { op = 'insert'; patch = row; return q },
       update(p) { op = 'update'; patch = p; return q },
       delete() { op = 'delete'; return q },
       eq: (c, v) => (filters.push((r) => r[c] === v), q),
+      neq: (c, v) => (filters.push((r) => r[c] !== v), q),
       is: (c, v) => (filters.push((r) => (r[c] ?? null) === v), q),
       not: (c, o, v) => (filters.push((r) => (r[c] ?? null) !== v), q),
       in: (c, vs) => (filters.push((r) => vs.includes(r[c])), q),
@@ -36,9 +38,15 @@ export function fakeSupabase(tables) {
     function run() {
       const rows = db[name]
       if (op === 'insert') {
-        const key = (name === 'planned_workout_pushes' || name === 'planned_workout_wahoo_pushes') ? 'workout_id' : 'id'
+        const key = (name === 'planned_workout_pushes' || name === 'planned_workout_wahoo_pushes' || name === 'planned_workout_garmin_pushes') ? 'workout_id' : 'id'
         if (rows.some((r) => r[key] === patch[key])) return { data: null, error: { message: 'duplicate key' } }
         rows.push({ ...patch })
+        return { data: [patch], error: null }
+      }
+      if (op === 'upsert') {
+        const keys = String(q._opts.onConflict || 'id').split(',').map((k) => k.trim())
+        const found = rows.find((r) => keys.every((k) => r[k] === patch[k]))
+        if (found) { if (!q._opts.ignoreDuplicates) Object.assign(found, patch) } else rows.push({ ...patch })
         return { data: [patch], error: null }
       }
       let hit = rows.filter((r) => filters.every((f) => f(r)))
@@ -85,5 +93,23 @@ export function fakeWahooClient(over = {}) {
     createWorkout: wrap('createWorkout', () => String(n++)),
     updateWorkout: wrap('updateWorkout', (id) => id),
     deleteWorkout: wrap('deleteWorkout', () => undefined),
+  }
+}
+
+export function fakeGarminClient(over = {}) {
+  const calls = []
+  let n = 100
+  const wrap = (name, fallback) => async (...args) => {
+    calls.push([name, ...args])
+    return over[name] ? over[name](...args) : fallback(...args)
+  }
+  return {
+    calls,
+    createWorkout: wrap('createWorkout', () => String(n++)),
+    updateWorkout: wrap('updateWorkout', (id) => id),
+    deleteWorkout: wrap('deleteWorkout', () => undefined),
+    createSchedule: wrap('createSchedule', () => String(n++)),
+    updateSchedule: wrap('updateSchedule', (id) => id),
+    deleteSchedule: wrap('deleteSchedule', () => undefined),
   }
 }

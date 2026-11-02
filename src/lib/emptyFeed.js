@@ -32,6 +32,20 @@ export function wahooFlagMessage(flag) {
   return { text, isError }
 }
 
+/** Result of the Garmin OAuth round trip (?garmin=<flag>) as [message, isError]. */
+export const GARMIN_FLAGS = {
+  connected: ['Garmin connected. New activities will be imported automatically.', false],
+  denied: ['Garmin authorization was cancelled.', true],
+  invalid_state: ['The Garmin connection request expired. Please try again.', true],
+  not_configured: ['Garmin is not configured on this deployment.', true],
+  error: ['Could not connect Garmin. Please try again.', true],
+}
+
+export function garminFlagMessage(flag) {
+  const [text, isError] = GARMIN_FLAGS[flag] || GARMIN_FLAGS.error
+  return { text, isError }
+}
+
 /** Result of the OAuth round trip (?intervals=<flag>). */
 export const INTERVALS_FLAGS = {
   connected: ['Intervals.icu connected. Importing your rides…', false],

@@ -61,7 +61,8 @@ export default function ImportHelpPage() {
         <p>
           Any <code className={CODE}>.fit</code> file works, including ones you downloaded or exported yourself from
           Garmin, Wahoo or another device. Import single files, several at once, or a <code className={CODE}>.zip</code>{' '}
-          export.
+          export. You can also connect Garmin under Settings → Connections to receive new rides and gym sessions
+          automatically (Garmin only sends activities recorded after you connect, so import older ones from files).
         </p>
         <p className="mt-2">
           On the velodrome there is usually no GPS. Pick the velodrome and your gear in the import dialog so speed and

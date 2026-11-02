@@ -67,3 +67,35 @@ export async function setWahooAutoPush(client, enabled) {
   const { error } = await client.rpc('set_wahoo_push_enabled', { p_enabled: !!enabled })
   return error ? new Error(error.message) : null
 }
+
+// Garmin Connect (#310): same flow, own mapping table and RPCs.
+const GARMIN_PUSH_COLUMNS = 'workout_id, garmin_workout_id, garmin_schedule_id, pushed_hash, pushed_at, push_status, last_error, warnings'
+
+export async function fetchGarminPushRows(client, workoutIds) {
+  if (!workoutIds?.length) return new Map()
+  const { data } = await client.from('planned_workout_garmin_pushes').select(GARMIN_PUSH_COLUMNS).in('workout_id', workoutIds)
+  return new Map((data || []).map((r) => [r.workout_id, r]))
+}
+
+export async function fetchGarminPushContext(client, riderId) {
+  const { data, error } = await client.rpc('garmin_push_context', { p_rider: riderId })
+  return error ? null : data
+}
+
+async function callGarmin(id, method) {
+  const res = await fetch(`/api/planned-workouts/${encodeURIComponent(id)}/garmin`, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
+  })
+  const data = await parseJsonResponse(res)
+  if (!res.ok) throw new Error(data.error || 'Request failed')
+  return data
+}
+
+export const pushToGarmin = (id) => callGarmin(id, 'POST')
+export const removeFromGarmin = (id) => callGarmin(id, 'DELETE')
+
+export async function setGarminAutoPush(client, enabled) {
+  const { error } = await client.rpc('set_garmin_push_enabled', { p_enabled: !!enabled })
+  return error ? new Error(error.message) : null
+}

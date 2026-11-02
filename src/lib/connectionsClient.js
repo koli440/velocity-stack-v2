@@ -17,6 +17,7 @@ async function call(url, method, body) {
 export const callIntervals = (method, body) => call('/api/connections/intervals', method, body)
 export const callStrava = (method, body) => call('/api/connections/strava', method, body)
 export const callWahoo = (method, body) => call('/api/connections/wahoo', method, body)
+export const callGarmin = (method, body) => call('/api/connections/garmin', method, body)
 
 /** Starts the Strava OAuth round trip; `returnTo: 'home'` brings the rider back to the dashboard. */
 export async function startStravaAuthorize({ returnTo } = {}) {
@@ -48,7 +49,17 @@ export async function startWahooAuthorize({ returnTo } = {}) {
   window.location.href = data.url
 }
 
-/** Triggers a sync for 'strava' | 'intervals' | 'wahoo'. Returns { status, data }. */
+/** Starts the Garmin OAuth round trip; `returnTo: 'home'` brings the rider back to the dashboard. */
+export async function startGarminAuthorize({ returnTo } = {}) {
+  const res = await fetch(`/api/connections/garmin/authorize${returnTo === 'home' ? '?return=home' : ''}`, {
+    headers: await getAuthHeader(),
+  })
+  const data = await parseJsonResponse(res)
+  if (!res.ok || !data.url) throw new Error(data.error || 'Could not start Garmin authorization')
+  window.location.href = data.url
+}
+
+/** Triggers a sync for 'strava' | 'intervals' | 'wahoo' | 'garmin'. Returns { status, data }. */
 export async function runProviderSync(provider) {
   const res = await fetch(`/api/sync/${provider}/run`, {
     method: 'POST',

@@ -48,7 +48,7 @@ default `manual`), `external_source` and `external_id` (platform activity id; bo
 `external_id IS NOT NULL`. The `BEFORE INSERT` trigger `guard_activity_duplicate()` rejects (SQLSTATE `23505`) a new
 activity whose `file_sha256` matches, or whose `start_time` and `elapsed_time_s` are both within 5s, of an existing
 activity of the same user - unless the new source outranks an existing **Strava** copy (`activity_source_priority()`:
-intervals 3 = wahoo 3 > strava 2 > other 1), so an Intervals.icu import can replace a Strava copy. Manual and bot activities are
+intervals 3 = wahoo 3 = garmin 3 > strava 2 > other 1), so an Intervals.icu import can replace a Strava copy. Manual and bot activities are
 never replaced (deleting them would cascade to kudos/comments/photos), so a matching import is skipped instead.
 `20261029000000_activity_guard_replace_strava_only.sql` tightened the guard to this rule (the first version let imports
 outrank manual rows). Existing rows are never checked.
@@ -73,8 +73,12 @@ settings only, never committed): see `.env.example`.
 `wahoo_workout_id`, `pushed_hash`, `push_status` pending|pushed|error|pending_delete, claim and error columns, `warnings`): mapping of planned
 workouts to Wahoo plans/workouts (rider/coach read via RLS, written by the service role). Migration `20270111000000_wahoo_planned_push.sql`.
 
-`public.connections` (unique `(user_id, provider)`, provider `intervals`|`strava`|`wahoo`): `external_athlete_id`, secrets
-`api_key` (Intervals), `access_token`/`refresh_token`/`token_expires_at` (Strava, Wahoo), `status`
+`public.planned_workout_garmin_pushes` (same shape, `garmin_workout_id` + `garmin_schedule_id`): mapping of planned workouts to Garmin Training API workouts and
+schedule entries. `public.garmin_activity_events` (`user_id`, `summary_id`, `callback_url`, `start_time_s`, `start_offset_s`, `status` pending|imported|skipped|error,
+`attempts`; unique `(user_id, summary_id)`; service role only): queue of activity files pushed by Garmin and not yet imported. Migration `20270119000000_garmin.sql`.
+
+`public.connections` (unique `(user_id, provider)`, provider `intervals`|`strava`|`wahoo`|`garmin`): `external_athlete_id`, secrets
+`api_key` (Intervals), `access_token`/`refresh_token`/`token_expires_at` (Strava, Wahoo, Garmin), `status`
 (`active`|`error`|`disconnected`), `last_error`, `last_synced_at`, `backfill_days` (default 30, NULL = full history),
 `created_at`, `updated_at`. RLS: own rows; clients have `SELECT` only on the non-secret columns (column grants), so
 secrets are readable only with the service role. Existing `profile_secrets` Intervals credentials are copied in

@@ -67,6 +67,8 @@ export async function importActivity({
     gearing: { chainring, cog, isFixedGear },
     analyzeFit,
   })
+  // Providers can decline an activity (e.g. a Garmin run): nothing is imported.
+  if (fetched?.skip) return { status: 'skipped', activity: null }
   // Gym sessions keep only duration / heart rate / calories; rides pass through untouched.
   const { activityType, summary, curves, time_series, gym } = prepareAnalysis(fetched, fetched.activityType)
   const isGym = activityType === 'gym'
@@ -167,7 +169,7 @@ export async function insertCurves(supabase, activityId, curves) {
 }
 
 function providerLabel(source) {
-  return source === 'strava' ? 'Strava' : source === 'intervals' ? 'Intervals.icu' : source === 'wahoo' ? 'Wahoo' : 'Import'
+  return source === 'strava' ? 'Strava' : source === 'intervals' ? 'Intervals.icu' : source === 'wahoo' ? 'Wahoo' : source === 'garmin' ? 'Garmin' : 'Import'
 }
 
 export async function loadImportProfile(supabase, userId) {
