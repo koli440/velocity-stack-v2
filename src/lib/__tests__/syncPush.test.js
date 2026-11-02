@@ -50,3 +50,16 @@ test('sync summary includes the push result', () => {
   assert.equal(describeSyncResult({ planned: { pushed: 0, failed: 1, message: 'Reconnect Garmin.' } }), 'Up to date. Reconnect Garmin.')
   assert.equal(describeSyncResult({ imported: 1 }), '1 imported')
 })
+
+test('Intervals reset trigger ignores the i-prefix of the athlete id (OAuth reconnect keeps auto-push)', async () => {
+  const fs = await import('node:fs')
+  const sql = fs.readFileSync(new URL('../../../supabase/migrations/20270121000000_intervals_push_keep_on_reconnect.sql', import.meta.url), 'utf8')
+  assert.match(sql, /regexp_replace\(COALESCE\(NEW\.external_athlete_id/)
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.connections_reset_planned_push/)
+})
+
+test('cooldown/in-progress sync responses still carry the push result', async () => {
+  const fs = await import('node:fs')
+  const src = fs.readFileSync(new URL('../server/syncRoute.js', import.meta.url), 'utf8')
+  assert.equal((src.match(/pushPlannedForSync\(/g) || []).length, 3)
+})

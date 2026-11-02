@@ -159,7 +159,9 @@ export async function handleSyncRequest(req, provider) {
     }
     const wait = manualCooldownRemaining(row.last_attempt_at)
     if (wait > 0) {
-      return NextResponse.json({ error: `Please wait ${wait}s before syncing again.`, retryAfter: wait }, { status: 429 })
+      // The import is rate limited, the planned-workout push is not: the 15-minute cron keeps the cooldown busy.
+      const planned = await pushPlannedForSync({ service, provider, userId: user.id, until: Date.now() + 20000 })
+      return NextResponse.json({ error: `Please wait ${wait}s before syncing again.`, retryAfter: wait, ...(planned ? { planned } : {}) }, { status: 429 })
     }
     const budget = provider === 'strava' ? await loadStravaBudget(service) : null
     if (budget && !budget.canSpend('live', 2)) {
@@ -171,7 +173,8 @@ export async function handleSyncRequest(req, provider) {
     deps.budget = budget
     const [claimed] = await claim(service, [row])
     if (!claimed) {
-      return NextResponse.json({ error: 'A sync is already running.' }, { status: 429 })
+      const planned = await pushPlannedForSync({ service, provider, userId: user.id, until: Date.now() + 20000 })
+      return NextResponse.json({ error: 'A sync is already running.', ...(planned ? { planned } : {}) }, { status: 429 })
     }
     const results = await runIntervalsSync(service, [claimed], deps)
     const [result] = results

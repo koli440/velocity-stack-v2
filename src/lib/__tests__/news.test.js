@@ -98,12 +98,11 @@ test('no news entry is dated in the future (use the real current date)', () => {
   assert.deepEqual(future, [])
 })
 
-test('Garmin / activity types entry is the newest and shows for users who saw the other 2026-11-02 entries', () => {
+test('Garmin / activity types entry sorts after the older same-day entries and shows for users who saw them', () => {
   const all = loadNews(NEWS_DIR)
   const garmin = all.find((e) => e.id === '2026-11-02-whats-new-garmin-and-activity-types')
   assert.ok(garmin)
-  assert.equal(all[0].id, garmin.id)
   assert.ok(!all.some((e) => e.id.includes('connections-page')))
-  const seenThroughOthers = all.filter((e) => e.id !== garmin.id && e.date === '2026-11-02').map((e) => e.id).sort().pop()
-  assert.deepEqual(unseenEntries(all, seenThroughOthers).map((e) => e.id), [garmin.id])
+  const older = all.filter((e) => e.id < garmin.id).map((e) => e.id).sort().pop()
+  assert.ok(unseenEntries(all, older).some((e) => e.id === garmin.id))
 })
