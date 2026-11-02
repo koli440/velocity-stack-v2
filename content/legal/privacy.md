@@ -1,7 +1,7 @@
 ---
 title: Privacy Policy
 description: How VelocityStack collects, uses, shares and protects your data, including activity, location and health-related data, and your rights.
-updated: 2027-01-23
+updated: 2026-11-02
 ---
 This Privacy Policy explains what personal data VelocityStack ("we", "us", "the Service", at velocity-stack.app) collects, why, who sees it, and what rights you have. Please also read our [Terms of Service](/terms).
 
@@ -17,7 +17,7 @@ The controller of your personal data is **Jan Kolář**, an individual based in 
 - Optional profile details you add: a profile photo you upload yourself, home velodrome, default gearing, crank length, ride type and display preferences.
 
 **Training data**
-- Activity files you upload (FIT files) and rides imported from Strava or Intervals.icu, with the metrics we derive from them: power, speed, cadence, heart rate and other sensor streams, distance, time, curves, training load and similar telemetry.
+- Activity files you upload (FIT files) and rides imported from Strava, Intervals.icu, Wahoo or Garmin, with the metrics we derive from them: power, speed, cadence, heart rate and other sensor streams, distance, time, curves, training load and similar telemetry.
 - **Location data:** activities may contain GPS coordinates and routes. They are shown on maps in the app. You can set a privacy zone around your home so that other riders see the route masked inside that zone.
 - **Health-related data:** heart rate and other physiological measurements, weight, FTP and other threshold values (for example lactate thresholds) and the power zones derived from them.
 - Gear, templates and run results, personal bests, aero tests, planned workouts, calendar notes and races, comments, photos you attach to rides, and the feedback or bug reports you send us.
@@ -50,11 +50,13 @@ Coaching works only with your consent.
 - You can end coaching or block a coach at any time and access stops immediately. A coach can also leave. Data that a coach created for you (for example planned workouts) stays in your account.
 - If you are a coach, you are responsible for handling the athlete's data you can see confidentially and only for coaching that athlete.
 
-## 6. Integrations (Strava and Intervals.icu)
+## 6. Integrations (Strava, Intervals.icu, Wahoo and Garmin)
 Integrations start only when you connect them under Settings, Connections.
 - **Strava:** you authorise us through Strava's own login (permission to read your activities). We import your rides and activity data (streams such as power, heart rate and GPS, and basic ride details) and store the access tokens on our servers. Strava notifies us of new rides so we can import them.
 - **Intervals.icu:** you give us your athlete ID and API key. We import your rides and, if you use the feature, push planned workouts to your Intervals.icu calendar. The key is stored write-only and is not readable from your browser. It is never visible to other riders or coaches.
-- **Disconnecting:** you can disconnect either integration in Settings at any time. This deletes the stored tokens or key, stops syncing and, for Strava, revokes our access at Strava. You can also revoke access in your Strava or Intervals.icu account. Rides that were already imported stay in your account until you delete them or ask us to delete your account.
+- **Wahoo:** you authorise us through Wahoo's own login. We import your rides recorded on Wahoo devices (with their .fit files) and, if you use the feature, push planned workouts to your Wahoo calendar. Wahoo notifies us of new rides so we can import them. We store the access tokens on our servers.
+- **Garmin:** you authorise us through Garmin Connect's own login (Garmin Connect Developer Program). We use your Garmin data only to provide the features you switch on: (1) importing activities you record after connecting (the activity file with its sensor data, such as power, heart rate, cadence, speed, time and, where recorded, GPS and strength-training sets) so they appear in your training log and analysis, and (2) sending your planned workouts to your Garmin calendar. Garmin sends us new activities and notifies us when you change permissions or remove our access; earlier activities are not imported from Garmin. We store the Garmin user ID and access tokens on our servers. Garmin data is shown only to you and to people you have allowed to see your training (for example your coach), exactly like rides from other sources. **We do not sell Garmin data, do not share it with anyone other than the service providers in section 7 that run the Service, and do not use it for advertising. We do not use Garmin data to train, fine-tune or evaluate artificial intelligence or machine learning models, and the Service does not use AI on it.**
+- **Disconnecting:** you can disconnect any integration in Settings at any time. This deletes the stored tokens or key, stops syncing and, for Strava, Wahoo and Garmin, revokes our access at the provider. If you remove our access in your Garmin Connect account, Garmin tells us and we disconnect automatically and stop receiving your data. You can also revoke access in your Strava, Intervals.icu, Wahoo or Garmin account. Rides that were already imported stay in your account until you delete them or ask us to delete your account.
 - Your use of those services is governed by their own terms and privacy policies. We receive data from them only as you authorise.
 
 ## 7. Service providers and third parties
@@ -62,7 +64,7 @@ We use the following providers to run the Service. They process data on our beha
 - **Supabase** – database, authentication and file storage (profile photos).
 - **Vercel** – hosting of the website and its server functions.
 - **Google** – "Continue with Google" sign-in, only if you choose it. Google acts as an independent controller for your Google account.
-- **Strava and Intervals.icu** – only if you connect them, as described in section 6.
+- **Strava, Intervals.icu, Wahoo and Garmin** – only if you connect them, as described in section 6. Data from Garmin is processed on our behalf only by Supabase (storage and database) and Vercel (hosting and server functions), and is not passed to any other party.
 - **Map tile providers (MapTiler, or OpenStreetMap)** – when you view a map, your browser requests map images from the provider, which therefore receives your IP address and the map area you view. Your activity data is not sent to them.
 - **Email delivery provider (Resend)** – if email notifications are switched on, we send notification emails (for example about coaching or follow requests) to your account email address through this provider. You can turn this off in your settings.
 - **Google Analytics** – only if the operator has enabled it on the deployment; the Service works without it. If enabled, it measures page usage and may use cookies.
@@ -80,7 +82,7 @@ Our providers may process data outside your country, including outside the Europ
 
 ## 10. How long we keep data and how to delete it
 - We keep your data for as long as your account exists.
-- **Disconnecting an integration** deletes its tokens or key immediately. **Individual items** such as rides, templates, notes, races and your profile photo can be deleted by you in the app.
+- **Disconnecting an integration** deletes its tokens or key immediately (for Garmin it also removes our registration at Garmin and any queued, not yet imported activity notifications). Activities already imported from Garmin remain in your account until you delete them in the app or ask us to delete your account; you can access and download them in the app, correct them where editable, or ask us by email for a copy. **Individual items** such as rides, templates, notes, races and your profile photo can be deleted by you in the app.
 - **Deleting your account:** the app does not currently have a self-service "delete account" button. To delete your account and the associated data (activities, files, settings and relationships), email **koli440@gmail.com** from your account address. We will delete the account and its data within 30 days and confirm to you. Backups held by our providers are overwritten in their normal cycle.
 - Server logs at our providers are kept for a short period set by those providers.
 - We may keep limited data longer only where the law requires or to establish or defend legal claims.

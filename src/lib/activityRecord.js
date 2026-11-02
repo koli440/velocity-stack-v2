@@ -26,7 +26,7 @@ import { normalizeActivityType } from './activityType.js'
  * @param {object} [meta.curvesData]
  * @param {string|null} [meta.rawFileUrl]
  * @param {string|null} [meta.fileSha256]
- * @param {string} [meta.source] - 'manual' | 'intervals' | 'strava' | 'wahoo'
+ * @param {string} [meta.source] - 'manual' | 'intervals' | 'strava' | 'wahoo' | 'garmin'
  * @param {string|null} [meta.externalSource]
  * @param {string|number|null} [meta.externalId]
  * @param {string} [meta.processingStatus]

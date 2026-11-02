@@ -2,7 +2,7 @@
 //
 // Gym sessions (issue #326) have no cycling power: power/cadence/speed curves, normalized power, TSS and
 // route data are meaningless. Every ingestion path (manual upload, bulk import, Intervals.icu, Strava,
-// Wahoo) passes its analysis through `prepareAnalysis`, so rides are returned untouched and gym sessions
+// Wahoo, Garmin) passes its analysis through `prepareAnalysis`, so rides are returned untouched and gym sessions
 // keep only what applies: duration, heart rate (summary, curve, series) and calories.
 
 import { normalizeActivityType } from './activityType.js'

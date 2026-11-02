@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Icon from './Icon'
 import { supabase } from '../lib/supabase'
-import { fetchPushContext, fetchPushRows, pushToIntervals, removeFromIntervals, fetchWahooPushContext, fetchWahooPushRows, pushToWahoo, removeFromWahoo } from '../lib/plannedPushClient'
+import { fetchPushContext, fetchPushRows, pushToIntervals, removeFromIntervals, fetchWahooPushContext, fetchWahooPushRows, pushToWahoo, removeFromWahoo, fetchGarminPushContext, fetchGarminPushRows, pushToGarmin, removeFromGarmin } from '../lib/plannedPushClient'
 import { pushState, PUSH_STATE_LABELS } from '../lib/intervalsWorkout'
 import { wahooPushState, WAHOO_PUSH_STATE_LABELS } from '../lib/wahooPlan'
+import { garminPushState, GARMIN_PUSH_STATE_LABELS } from '../lib/garminPlan'
 import { plannedStatus } from '../lib/plannedWorkouts'
 
 const PROVIDERS = {
@@ -17,6 +18,10 @@ const PROVIDERS = {
   wahoo: {
     name: 'Wahoo', short: 'Wahoo', fetchContext: fetchWahooPushContext, fetchRows: fetchWahooPushRows, push: pushToWahoo, remove: removeFromWahoo,
     state: wahooPushState, labels: WAHOO_PUSH_STATE_LABELS, remoteId: 'wahoo_workout_id', removedHint: 'removed in Wahoo', skippedNote: 'Skipped workouts are removed from Wahoo.',
+  },
+  garmin: {
+    name: 'Garmin', short: 'Garmin', fetchContext: fetchGarminPushContext, fetchRows: fetchGarminPushRows, push: pushToGarmin, remove: removeFromGarmin,
+    state: garminPushState, labels: GARMIN_PUSH_STATE_LABELS, remoteId: 'garmin_workout_id', removedHint: 'removed in Garmin', skippedNote: 'Skipped workouts are removed from Garmin.',
   },
 }
 
@@ -42,8 +47,8 @@ export default function PlannedPushControls({ workout, onChanged, provider = 'in
   }, [workout.id, workout.updated_at])
 
   if (ctx === undefined || ctx === null) return null
-  // Wahoo is optional: stay out of the way unless the rider connected it.
-  if (provider === 'wahoo' && (!ctx.connected || !['ride', 'track'].includes(workout.discipline || 'ride'))) return null
+  // Wahoo and Garmin are optional: stay out of the way unless the rider connected them.
+  if (provider !== 'intervals' && (!ctx.connected || !['ride', 'track'].includes(workout.discipline || 'ride'))) return null
   const state = P.state(workout, row)
   const status = plannedStatus(workout)
   const skipped = status === 'skipped'
@@ -66,7 +71,7 @@ export default function PlannedPushControls({ workout, onChanged, provider = 'in
   const who = ctx.is_self ? 'your' : "the rider's"
 
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-xs space-y-2" data-testid={`planned-push${provider === 'wahoo' ? '-wahoo' : ''}`}>
+    <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-xs space-y-2" data-testid={`planned-push${provider === 'intervals' ? '' : `-${provider}`}`}>
       <div className="flex items-center justify-between gap-2">
         <div className="font-bold text-slate-900 dark:text-white">{P.name}</div>
         <span data-testid="planned-push-state" data-state={state} className="text-slate-500 dark:text-slate-400">{P.labels[state]}</span>

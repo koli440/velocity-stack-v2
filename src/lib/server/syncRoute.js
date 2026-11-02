@@ -1,5 +1,5 @@
 // src/lib/server/syncRoute.js
-// Shared handler for POST /api/sync/{intervals,strava,wahoo}/run: cron mode (x-sync-token) syncs all due
+// Shared handler for POST /api/sync/{intervals,strava,wahoo,garmin}/run: cron mode (x-sync-token) syncs all due
 // connections of the provider, manual mode syncs the signed-in caller's own connection.
 
 import { NextResponse } from 'next/server'
@@ -24,7 +24,7 @@ export const TIME_BUDGET_MS = 45000
 const CRON_BATCH = 10
 const COLUMNS =
   'id, provider, user_id, external_athlete_id, api_key, access_token, refresh_token, token_expires_at, backfill_days, status, last_synced_at, last_attempt_at, backfill_cursor, backfill_complete, backfill_imported'
-const CREDENTIAL_COLUMN = { intervals: 'api_key,access_token', strava: 'refresh_token', wahoo: 'refresh_token' }
+const CREDENTIAL_COLUMN = { intervals: 'api_key,access_token', strava: 'refresh_token', wahoo: 'refresh_token', garmin: 'refresh_token' }
 
 // Absolute /api/analyze URL on this deployment (a background job has no browser origin).
 export function makeAnalyzeFit(req) {
@@ -101,6 +101,9 @@ export async function handleSyncRequest(req, provider) {
     }
     if (provider === 'wahoo' && !(process.env.WAHOO_CLIENT_ID && process.env.WAHOO_CLIENT_SECRET)) {
       return NextResponse.json({ error: 'Wahoo is not configured on this deployment.' }, { status: 503 })
+    }
+    if (provider === 'garmin' && !(process.env.GARMIN_CLIENT_ID && process.env.GARMIN_CLIENT_SECRET)) {
+      return NextResponse.json({ error: 'Garmin is not configured on this deployment.' }, { status: 503 })
     }
     const credentialColumn = CREDENTIAL_COLUMN[provider]
     const deadline = Date.now() + TIME_BUDGET_MS
