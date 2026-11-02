@@ -13,3 +13,5 @@
 - Never edit already-applied migrations; add new, idempotent ones.
 - User-visible features (and notable fixes) add a "What's new" entry: a markdown file in
   `content/news/` (see `docs/news.md`) in the same PR.
+  Use the real current date (today) for the file name/`date`/`id`; never a future date or "latest entry + 1"
+  (distinct slug if the id exists). A unit test enforces this.

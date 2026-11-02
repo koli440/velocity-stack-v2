@@ -1,0 +1,10 @@
+---
+id: 2026-10-22-race-badge-in-feeds
+date: 2026-10-22
+title: Race badge in activity feeds
+link: /riders
+linkLabel: Browse riders
+---
+Race activities now show the **🏆 Race** badge in activity feeds too, including rider telemetry pages, the dashboard and coach athlete lists.
+
+On narrow screens the week / fitness / power column now sits above the feed in a compact layout (smaller cards, no mini chart on phones) instead of being stuck below the endless feed.
