@@ -52,24 +52,32 @@ async function handlePermissions(service, conns, permissions) {
  * Process one parsed push body. `triggerSync(userId)` starts a Garmin sync for that rider (see the webhook route).
  * @returns {Promise<{ activities: number, deregistrations: number, permissions: number, ignored: number }>}
  */
-export async function handleGarminPush(service, body, { triggerSync } = {}) {
+export async function handleGarminPush(service, body, { triggerSync, log = console.info } = {}) {
   const out = { activities: 0, deregistrations: 0, permissions: 0, ignored: 0 }
   const toSync = new Set()
-  for (const event of parseGarminPush(body)) {
+  const events = parseGarminPush(body)
+  const keys = body && typeof body === 'object' ? Object.keys(body) : []
+  const raw = Array.isArray(body?.activityFiles) ? body.activityFiles.length : 0
+  log(`Garmin push: types=[${keys.join(',')}] parsed=${events.length} activityFiles=${raw}`)
+  for (const event of events) {
     const conns = await activeConnections(service, event.userId)
     if (!conns.length) {
+      log(`Garmin push: ignored ${event.kind} (no active connection for this Garmin user)`)
       out.ignored++
       continue
     }
     if (event.kind === 'deregistration') {
       await handleDeregistration(service, conns)
+      log('Garmin push: processed deregistration')
       out.deregistrations++
     } else if (event.kind === 'permissions') {
       await handlePermissions(service, conns, event.permissions)
+      log('Garmin push: processed permission change')
       out.permissions++
     } else if (event.kind === 'activity_file') {
       // The push names the sport, so sports we never import are not queued: the file URL is single-use.
       if (!isGarminHost(event.callbackUrl) || classifyGarminActivityType(event.activityType) === 'skip') {
+        log(`Garmin push: ignored activity ${event.summaryId} (${isGarminHost(event.callbackUrl) ? `type ${event.activityType} is not imported` : 'unexpected callback host'})`)
         out.ignored++
         continue
       }
@@ -91,9 +99,11 @@ export async function handleGarminPush(service, body, { triggerSync } = {}) {
         // Make the connection due (sync claims it by last_attempt_at).
         await service.from('connections').update({ last_attempt_at: null }).eq('id', conn.id)
       }
+      log(`Garmin push: queued activity ${event.summaryId} type=${event.activityType ?? 'unknown'} for ${conns.length} connection(s)`)
       out.activities++
     }
   }
   for (const userId of toSync) await triggerSync?.(userId)
+  log(`Garmin push: done activities=${out.activities} deregistrations=${out.deregistrations} permissions=${out.permissions} ignored=${out.ignored}`)
   return out
 }
