@@ -18,7 +18,7 @@ export const MAX_DESCRIPTION_LENGTH = 2000
  * column out of the payload (an unset ride type is road, whose stored gear stays hidden).
  * @returns {{ updates: object|null, error: string|null }}
  */
-export function buildActivityUpdates({ title, trackId, visibility, chainring, cog, description, rideType, gears, gearSegments, keepGear = false, activityType }) {
+export function buildActivityUpdates({ title, trackId, visibility, chainring, cog, description, rideType, gears, gearSegments, keepGear = false, activityType, lockTitle = false }) {
   const cleanTitle = String(title ?? '').trim()
   if (!cleanTitle) return { updates: null, error: 'Activity name is required' }
   if (cleanTitle.length > MAX_TITLE_LENGTH) {
@@ -29,11 +29,13 @@ export function buildActivityUpdates({ title, trackId, visibility, chainring, co
   if (cleanDescription.length > MAX_DESCRIPTION_LENGTH) {
     return { updates: null, error: `Description must be at most ${MAX_DESCRIPTION_LENGTH} characters` }
   }
+  // A rider-edited name is locked: imports and upgrades never rename it again.
+  const lock = lockTitle ? { title_locked: true } : {}
   if (activityType != null && !ACTIVITY_TYPES.includes(activityType)) return { updates: null, error: 'Invalid activity type' }
   if (activityType === 'gym') {
     // A gym session has no velodrome, ride type or gear; stored ride data is kept (hidden), analytics skip gym.
     return {
-      updates: { title: cleanTitle, track_id: null, visibility, description: cleanDescription || null, activity_type: 'gym' },
+      updates: { title: cleanTitle, track_id: null, visibility, description: cleanDescription || null, activity_type: 'gym', ...lock },
       error: null,
     }
   }
@@ -43,6 +45,7 @@ export function buildActivityUpdates({ title, trackId, visibility, chainring, co
     track_id: trackId || null,
     visibility,
     description: cleanDescription || null,
+    ...lock,
   }
   if (activityType === 'ride') updates.activity_type = 'ride'
   if (rideType != null) updates.ride_type = rideType

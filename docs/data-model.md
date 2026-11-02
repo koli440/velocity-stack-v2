@@ -42,6 +42,8 @@ Backfilling nicknames from e-mail local-parts makes that part publicly visible a
 and copies `intervals_*` into `profile_secrets` **before** dropping the old columns; it is idempotent.
 
 ## Activity provenance and duplicates
+`20270122000000_activity_title_lock.sql` adds `activities.title_locked boolean not null default false`, set when the rider edits the activity name so imports and source upgrades never overwrite it (see Activity names in `docs/integrations.md`).
+
 `20261025000000_activity_sources.sql` adds to `public.activities`: `source` (`manual`|`intervals`|`strava`|`bot`,
 default `manual`), `external_source` and `external_id` (platform activity id; both set or both null).
 `uq_activities_user_external` is a unique partial index on `(user_id, external_source, external_id)` where

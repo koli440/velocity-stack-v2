@@ -12,6 +12,7 @@ import { effectiveRideType, rideTypeHasGear, isKnownRideType } from '../rideType
 import { prepareAnalysis } from '../gymAnalysis.js'
 import { resolveRideType } from '../sportType.js'
 import { saveGymDetail } from '../gymDetail.js'
+import { resolveImportTitle, localHourFromStamp, isGenericActivityName, RECENT_NAMES_WINDOW } from '../activityNaming.js'
 
 /**
  * Pure: decides what to do given the candidate and the user's existing activities.
@@ -89,8 +90,26 @@ export async function importActivity({
   )
   if (plan.action === 'skip') return { status: 'skipped', activity: null }
 
+  const sourceTitle = options.title || fetched.title || `${providerLabel(provider.source)} ${isGym ? 'Gym Session' : 'Sync'}`
+  const naming = await loadNamingContext(supabase, userId, plan.action === 'upgrade' ? plan.existing.id : null)
+  // A rider-edited name on the replaced copy is locked; a name it already got (generated) carries over.
+  const keepTitle = naming.replaced?.title_locked ? naming.replaced.title : isGenericActivityName(sourceTitle) && !isGenericActivityName(naming.replaced?.title) ? naming.replaced.title : null
+  const { title: finalTitle } = resolveImportTitle({
+    title: sourceTitle,
+    lockedTitle: keepTitle,
+    seed: `${userId}|${summary.start_time || fetched.startDateLocal || externalId}`,
+    activityType,
+    sport: prepared.sport,
+    rideType: storedRideType,
+    summary,
+    ftpWatts: prof.ftp_w ?? null,
+    timeSeries: time_series,
+    localHour: localHourFromStamp(fetched.startDateLocal),
+    recentNames: naming.recentNames,
+  })
+
   const record = buildActivityInsert(summary, {
-    title: options.title || fetched.title || `${providerLabel(provider.source)} ${isGym ? 'Gym Session' : 'Sync'}`,
+    title: finalTitle,
     userId,
     trackId: isGym ? null : options.trackId || null,
     activityType,
@@ -109,6 +128,9 @@ export async function importActivity({
     weightHistory: prof.weight_history ?? null,
     fallbackActivityDate: fetched.startDateLocal || undefined,
   })
+
+  // Only written when set, so inserts never depend on the title_locked migration.
+  if (naming.replaced?.title_locked) record.title_locked = true
 
   // Sets were looked for in this very file: the repair must not fetch it again.
   if (isGym) record.gym_detail_checked_at = new Date().toISOString()
@@ -170,6 +192,22 @@ export async function insertCurves(supabase, activityId, curves) {
   if (rows.length === 0) return null
   const { error } = await supabase.from('activity_curves').insert(rows)
   return error || null
+}
+
+/** Recent titles (to avoid repeats) and the replaced copy's title/lock. Best effort: naming never blocks an import. */
+async function loadNamingContext(supabase, userId, replacedId) {
+  const out = { recentNames: [], replaced: null }
+  try {
+    const recent = await supabase.from('activities').select('title').eq('user_id', userId).order('created_at', { ascending: false }).limit(RECENT_NAMES_WINDOW)
+    out.recentNames = (recent?.data || []).map((r) => r.title).filter(Boolean)
+    if (replacedId) {
+      const { data, error } = await supabase.from('activities').select('title, title_locked').eq('id', replacedId).maybeSingle()
+      if (!error && data) out.replaced = data
+    }
+  } catch {
+    // keep defaults
+  }
+  return out
 }
 
 function providerLabel(source) {

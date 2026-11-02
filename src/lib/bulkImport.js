@@ -13,6 +13,7 @@ import { buildActivityInsert } from './activityRecord.js'
 import { prepareAnalysis } from './gymAnalysis.js'
 import { resolveRideType } from './sportType.js'
 import { saveGymDetail } from './gymDetail.js'
+import { resolveImportTitle, localHourOfInstant } from './activityNaming.js'
 import { autoLinkActivity, localDayOf } from './plannedWorkouts.js'
 import { findDuplicate } from './activityDuplicates.js'
 
@@ -188,14 +189,30 @@ export async function importSingleFitFile({
     const fallbackActivityDate =
       meta.fallbackActivityDate || (file.lastModified ? new Date(file.lastModified).toISOString() : undefined)
 
+    const rideType = resolveRideType(prepared.sport, meta.rideType)
+    const { title: finalTitle } = resolveImportTitle({
+      title: meta.title || fileName.replace(/\.[^/.]+$/, ''),
+      seed: `${userId}|${startTime || fileSha256}`,
+      activityType: prepared.activityType,
+      sport: prepared.sport,
+      rideType,
+      summary: prepared.summary,
+      ftpWatts: meta.ftpWatts ?? null,
+      timeSeries: prepared.time_series,
+      localHour: startTime ? localHourOfInstant(startTime) : null,
+      recentNames: meta.recentNames || [],
+    })
+    // Later files of the same batch avoid names already handed out.
+    if (Array.isArray(meta.recentNames)) meta.recentNames.unshift(finalTitle)
+
     const activityInsert = buildActivityInsert(prepared.summary, {
       ...meta,
-      title: meta.title || fileName.replace(/\.[^/.]+$/, ''),
+      title: finalTitle,
       userId,
       timeSeries: prepared.time_series,
       curvesData: prepared.curves,
       activityType: prepared.activityType,
-      rideType: resolveRideType(prepared.sport, meta.rideType),
+      rideType,
       rawFileUrl,
       fileSha256,
       fallbackActivityDate,

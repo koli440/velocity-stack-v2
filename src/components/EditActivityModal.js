@@ -55,6 +55,7 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     const untouchedRoad = !isGym && !hasGear && activity.ride_type == null
     const { updates, error: err } = await updateActivity(client, activity.id, {
       title,
+      lockTitle: title.trim() !== String(activity.title || '').trim(),
       trackId,
       visibility,
       description,
