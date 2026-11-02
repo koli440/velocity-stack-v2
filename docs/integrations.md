@@ -1,6 +1,14 @@
 # Activity integrations (Strava, Wahoo, Garmin, Intervals.icu)
 
-Riders connect a platform once under **Settings → Connections**; new rides then arrive without further action.
+Riders connect a platform once on the stand-alone **Connections** page (`/connections`, linked from Settings); new rides then arrive without further action.
+
+## Source order (presentation)
+Sources are presented in priority order: **1 Garmin, 2 Wahoo, 3 SRM, 4 Intervals.icu, 5 Strava**. The order lives in one registry,
+`src/lib/rideSources.js` (`RIDE_SOURCES`); `ConnectionsPage` renders the cards from it and onboarding/docs copy follows it.
+- A new connect source needs a card in `CARDS` in `src/components/ConnectionsPage.js`; a registry entry with `status: 'coming-soon'` renders a placeholder.
+- SRM (PC8/PC7/PC6/PC5) has no cloud API: it is a file-import card linking to `/import-help` and the bulk import, not a connect/disconnect integration.
+- Intervals.icu is the bridge for Zwift, MyWhoosh and others; Strava is secondary because its API reads are capped.
+- OAuth callbacks return to `/connections` (or `/` when started from the dashboard).
 Data model details: [data-model.md](data-model.md).
 
 ## Connect / disconnect

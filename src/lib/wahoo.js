@@ -33,9 +33,9 @@ export function buildAuthorizeUrl({ clientId, redirectUri, state }) {
   return `${WAHOO_API}/oauth/authorize?${qs}`
 }
 
-/** Where the OAuth callback sends the browser: the dashboard when the flow started there, else Settings. */
+/** Where the OAuth callback sends the browser: the dashboard when the flow started there, else the Connections page. */
 export function wahooReturnPath(returnTo) {
-  return returnTo === 'home' ? '/' : '/settings'
+  return returnTo === 'home' ? '/' : '/connections'
 }
 
 // ---- Tokens ----

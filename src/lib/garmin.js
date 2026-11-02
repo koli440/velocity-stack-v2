@@ -50,7 +50,7 @@ export function buildAuthorizeUrl({ clientId, redirectUri, state, codeChallenge,
 }
 
 /** Where the OAuth callback sends the browser: the dashboard when the flow started there, else Settings. */
-export const garminReturnPath = (returnTo) => (returnTo === 'home' ? '/' : '/settings')
+export const garminReturnPath = (returnTo) => (returnTo === 'home' ? '/' : '/connections')
 
 // ---- Tokens ----
 

@@ -51,6 +51,7 @@ export const PRIVATE_PATHS = [
   '/api/',
   '/admin/',
   '/settings',
+  '/connections',
   '/auth/',
   '/login',
   '/register',

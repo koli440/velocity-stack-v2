@@ -38,7 +38,7 @@ export function buildIntervalsAuthorizeUrl({ clientId, redirectUri, state, codeC
 }
 
 export function intervalsReturnPath(returnTo) {
-  return returnTo === 'home' ? '/' : '/settings'
+  return returnTo === 'home' ? '/' : '/connections'
 }
 
 /** Token response -> connections columns. Null when the response lacks a token or athlete id. */

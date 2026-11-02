@@ -39,5 +39,5 @@ test('strava state carries the dashboard return target', () => {
   assert.equal(stravaReturnPath(home.returnTo), '/')
   const plain = verifyState({ state: signState({ userId: 'u', secret }), secret })
   assert.deepEqual(plain, { ok: true, userId: 'u' })
-  assert.equal(stravaReturnPath(plain.returnTo), '/settings')
+  assert.equal(stravaReturnPath(plain.returnTo), '/connections')
 })

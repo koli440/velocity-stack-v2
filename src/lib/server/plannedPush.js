@@ -18,7 +18,7 @@ export const RIDERS_PER_RUN = 10
 export const PUSHES_PER_RIDER = 25
 export const RIDER_CLAIM_MS = 5 * 60 * 1000
 
-export const SETTINGS_PATH = '/settings'
+export const SETTINGS_PATH = '/connections'
 const NOT_CONNECTED_MESSAGE = 'Connect Intervals.icu in Settings → Connections to send workouts to it.'
 
 const PUSH_COLUMNS =

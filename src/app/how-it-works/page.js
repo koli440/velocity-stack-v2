@@ -73,7 +73,7 @@ export default function HowItWorksPage() {
             </tbody>
           </table>
         </div>
-        <p className="mt-3">Connect Strava or Intervals.icu to sync rides; VelocityStack adds the track-specific analysis and coaching on top.</p>
+        <p className="mt-3">Connect Garmin, Wahoo, SRM (via .fit import), Intervals.icu or Strava to bring rides in; VelocityStack adds the track-specific analysis and coaching on top.</p>
       </section>
 
       <section>

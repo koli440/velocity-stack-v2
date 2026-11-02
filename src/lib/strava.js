@@ -52,9 +52,9 @@ export function verifyState({ state, secret, now = Date.now() }) {
   return data.r === 'home' ? { ok: true, userId: data.u, returnTo: 'home' } : { ok: true, userId: data.u }
 }
 
-/** Where the OAuth callback sends the browser: the dashboard when the flow started there, else Settings. */
+/** Where the OAuth callback sends the browser: the dashboard when the flow started there, else the Connections page. */
 export function stravaReturnPath(returnTo) {
-  return returnTo === 'home' ? '/' : '/settings'
+  return returnTo === 'home' ? '/' : '/connections'
 }
 
 export function buildAuthorizeUrl({ clientId, redirectUri, state }) {

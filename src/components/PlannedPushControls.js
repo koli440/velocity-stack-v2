@@ -79,7 +79,7 @@ export default function PlannedPushControls({ workout, onChanged, provider = 'in
       {!ctx.connected ? (
         <p className="text-slate-500 dark:text-slate-400">
           {ctx.is_self ? (
-            <>Connect {P.name} in <Link href="/settings" className="underline text-emerald-600">Settings → Connections</Link> to send planned workouts to your calendar there.</>
+            <>Connect {P.name} in <Link href="/connections" className="underline text-emerald-600">Connections</Link> to send planned workouts to your calendar there.</>
           ) : (
             <>The rider has not connected {P.name}, so workouts cannot be sent. They can connect it in Settings → Connections.</>
           )}

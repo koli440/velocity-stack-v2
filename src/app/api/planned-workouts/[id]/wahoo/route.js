@@ -12,7 +12,7 @@ const COLUMNS = 'id, rider_id, workout_date, discipline, title, description, str
 
 function fail(err) {
   if (err instanceof PushError) {
-    return NextResponse.json({ error: err.message, code: err.code, settingsUrl: err.code === 'not_connected' || err.fatal ? '/settings' : undefined }, { status: err.status })
+    return NextResponse.json({ error: err.message, code: err.code, settingsUrl: err.code === 'not_connected' || err.fatal ? '/connections' : undefined }, { status: err.status })
   }
   return NextResponse.json({ error: 'Could not reach Wahoo right now.' }, { status: 500 })
 }

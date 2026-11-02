@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Icon from '../../components/Icon'
 
 export const metadata = {
@@ -20,6 +21,11 @@ export default function ImportHelpPage() {
           Copy your rides off the head unit and bring them in with <strong>Import History</strong>.
         </p>
       </div>
+
+      <p>
+        SRM is one of your ride sources, ahead of Intervals.icu and Strava. It has no cloud sync, so files are
+        imported by hand. See all sources on <Link className={LINK} href="/connections">Connections</Link>.
+      </p>
 
       <div className={CARD}>
         <h2 className={H2}>SRM PowerControl 8</h2>
@@ -61,7 +67,7 @@ export default function ImportHelpPage() {
         <p>
           Any <code className={CODE}>.fit</code> file works, including ones you downloaded or exported yourself from
           Garmin, Wahoo or another device. Import single files, several at once, or a <code className={CODE}>.zip</code>{' '}
-          export. You can also connect Garmin under Settings → Connections to receive new rides and gym sessions
+          export. You can also connect Garmin on the Connections page to receive new rides and gym sessions
           automatically (Garmin only sends activities recorded after you connect, so import older ones from files).
         </p>
         <p className="mt-2">

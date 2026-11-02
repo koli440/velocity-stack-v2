@@ -12,7 +12,6 @@ import LactateThresholdPanel from '../../components/LactateThresholdPanel'
 import PowerZonesPanel from '../../components/PowerZonesPanel'
 import FtpHistoryPanel from '../../components/FtpHistoryPanel'
 import WeightHistoryPanel from '../../components/WeightHistoryPanel'
-import ConnectionsPanel from '../../components/ConnectionsPanel'
 import CoachingPanel from '../../components/CoachingPanel'
 import CoachBadge, { useCoachNames } from '../../components/CoachBadge'
 import CoachEditsList from '../../components/CoachEditsList'
@@ -375,7 +374,13 @@ export default function SettingsPage() {
         </div>
 
         <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6">
-          <ConnectionsPanel userId={user?.id} />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Connections</h3>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Garmin, Wahoo, SRM, Intervals.icu and Strava: choose where your rides come from.
+          </p>
+          <Link href="/connections" className="mt-3 inline-block px-3 py-2 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider">
+            Manage connections
+          </Link>
         </section>
 
         <PrivacyZonePanel userId={user?.id} />
