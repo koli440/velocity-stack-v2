@@ -12,6 +12,7 @@
 import { createIntervalsProvider } from './intervalsProvider.js'
 import { createStravaProviderForConnection } from './stravaProvider.js'
 import { createWahooProviderForConnection } from './wahooProvider.js'
+import { createGarminProviderForConnection } from './garminProvider.js'
 import { importActivity, loadImportProfile } from './importActivity.js'
 import { repairStravaActivities, STRAVA_REPAIR_PER_RUN } from './stravaRepair.js'
 import { repairGymDetail, GYM_REPAIR_PER_RUN } from './gymRepair.js'
@@ -39,6 +40,7 @@ export const MAX_BACKFILL_LISTINGS = 5
 function defaultCreateProvider(args, conn, service, deps = {}) {
   if (conn.provider === 'strava') return createStravaProviderForConnection(service, conn, { budget: deps.budget })
   if (conn.provider === 'wahoo') return createWahooProviderForConnection(service, conn)
+  if (conn.provider === 'garmin') return createGarminProviderForConnection(service, conn)
   return createIntervalsProvider(args)
 }
 
@@ -134,7 +136,7 @@ export async function syncConnection(service, conn, deps = {}) {
     const isStrava = provider.source === 'strava'
     const existing = await loadExistingActivityFingerprints(service, conn.user_id)
     const profile = await loadImportProfile(service, conn.user_id)
-    const concurrency = deps.concurrency ?? (isStrava ? 1 : provider.source === 'wahoo' ? WAHOO_CONCURRENCY : INTERVALS_CONCURRENCY)
+    const concurrency = deps.concurrency ?? (isStrava ? 1 : provider.source === 'wahoo' || provider.source === 'garmin' ? WAHOO_CONCURRENCY : INTERVALS_CONCURRENCY)
 
     const run = async (todo, limit) => {
       const outcome = await processRides(todo, {

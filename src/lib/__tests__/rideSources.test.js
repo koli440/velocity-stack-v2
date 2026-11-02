@@ -9,8 +9,8 @@ test('ride sources are in priority order', () => {
   assert.equal(rideSourceNames(), 'Garmin, Wahoo, SRM, Intervals.icu or Strava')
 })
 
-test('garmin is a placeholder and SRM is a file import', () => {
-  assert.equal(rideSourceById('garmin').status, 'coming-soon')
+test('garmin is available and SRM is a file import', () => {
+  assert.equal(rideSourceById('garmin').status, 'available')
   const srm = rideSourceById('srm')
   assert.equal(srm.kind, 'import')
   assert.equal(srm.href, '/import-help')

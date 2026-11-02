@@ -1,12 +1,11 @@
-# Activity integrations (Strava, Wahoo, Intervals.icu)
+# Activity integrations (Strava, Wahoo, Garmin, Intervals.icu)
 
 Riders connect a platform once on the stand-alone **Connections** page (`/connections`, linked from Settings); new rides then arrive without further action.
 
 ## Source order (presentation)
 Sources are presented in priority order: **1 Garmin, 2 Wahoo, 3 SRM, 4 Intervals.icu, 5 Strava**. The order lives in one registry,
 `src/lib/rideSources.js` (`RIDE_SOURCES`); `ConnectionsPage` renders the cards from it and onboarding/docs copy follows it.
-- Garmin is a "coming soon" placeholder until its card exists: add the card to `CARDS` in `src/components/ConnectionsPage.js` and set
-  `status: 'available'` on the Garmin entry.
+- A new connect source needs a card in `CARDS` in `src/components/ConnectionsPage.js`; a registry entry with `status: 'coming-soon'` renders a placeholder.
 - SRM (PC8/PC7/PC6/PC5) has no cloud API: it is a file-import card linking to `/import-help` and the bulk import, not a connect/disconnect integration.
 - Intervals.icu is the bridge for Zwift, MyWhoosh and others; Strava is secondary because its API reads are capped.
 - OAuth callbacks return to `/connections` (or `/` when started from the dashboard).
@@ -42,6 +41,22 @@ Data model details: [data-model.md](data-model.md).
   if a response was lost. Steps Wahoo cannot express (HR %, W/kg, LT1/LT2, zones) are converted with a warning or kept as duration-only steps; workouts
   without steps are scheduled without a plan. Wahoo only shows a plan on the ELEMNT within 6 days before the workout; the portal's deauthorisation
   flags can delete upcoming workouts/plans. Rate limits (200/5 min) surface as `rate_limited`. Gym/other disciplines are not sent.
+
+- **Garmin** (Garmin Connect Developer Program, **Starter**: Activity API + Training API; migration `20270119000000_garmin.sql`, #310): OAuth2 with PKCE
+  (S256; verifier in an httpOnly cookie, signed state as for Strava; `/api/connections/garmin[/authorize|/callback]`). Starter is push-only with no history, so
+  connecting sets `backfill_complete = true` and there is no backfill setting: the card says only new activities are imported (Intervals.icu / `.fit` upload cover
+  history). Garmin pushes activity-file notifications to `POST /api/webhooks/garmin?token=GARMIN_WEBHOOK_TOKEN` (one URL for activity files, deregistrations and
+  user-permission changes; Garmin signs nothing, so the token is the shared secret, compared in constant time). The webhook only queues a pointer in
+  `garmin_activity_events` (Garmin user id must match an active connection, `callbackURL` must be on `*.garmin.com`), kicks the rider's sync and returns 200; the
+  sync (`garminProvider.js`) downloads the `.fit` with the rider's token, runs the same analyzer (rides and gym sessions incl. sets) and marks the event
+  imported/skipped/error (runs, swims etc. are skipped; events expire after 24 h; the file URL is single-use, so a 410/412 or an analysis failure settles the event as an error instead of retrying; pushes of other sports are not queued, using the Activity API appendix A `activityType`). A deregistration callback disconnects like Disconnect; a
+  permission-change callback sets/clears the sync and push warnings. Disconnect calls `DELETE /partner-gateway/rest/user/registration` best effort. pg_cron `garmin-sync` (15 min)
+  is the safety net. Duplicate priority: Intervals.icu = Wahoo = Garmin > Strava.
+- **Planned workout upload to Garmin** (Training API, `src/lib/garminPlan.js`, `server/garminPlans.js`, `server/garminPush.js`): a planned ride/track workout with
+  steps becomes a Garmin workout (`POST /workoutportal/workout/v2`, `PUT/DELETE /training-api/workout/v2/{id}`; updates read the workout's `ownerId` first) plus a schedule entry (`/training-api/schedule/`); `workoutProvider` = `workoutSourceId` = `VelocityStack`, at most 100 steps; %FTP/zone targets are converted to watts
+  from `profiles.ftp_w`; workouts without steps are not sent. Manual push in the workout dialog (`/api/planned-workouts/:id/garmin`), opt-in auto push on the Garmin
+  card, mapping in `planned_workout_garmin_pushes`; the existing push cron runs `runGarminPushCycle`. Needs the rider's workout-import permission.
+  Starter limits: 100 calls/min per app and 200 calls/day per rider. Endpoint URLs are configured at https://apis.garmin.com/tools/endpoints; the URLs are env-overridable (`GARMIN_TOKEN_URL`, `GARMIN_AUTHORIZE_URL`, `GARMIN_API_BASE`). Historical backfill is not available on Starter.
 - **Disconnect** clears all credentials/tokens (Strava access is also deauthorized at Strava) and stops syncing; imported
   rides stay. Revoking the app at Strava is detected via webhook and disconnects automatically.
 - Secrets are never selectable by clients (column grants on `connections` expose only non-secret columns).
@@ -74,7 +89,7 @@ Each card shows a health line (Syncing normally / Sync looks delayed after 60 mi
 - Not configured on this deployment (missing env vars): the Strava card says so; the run endpoints answer 503.
 
 ## Gym sessions (#326)
-- Imported by every source, tagged `activity_type = 'gym'`; rides are unchanged. Intervals.icu: `WeightTraining`, `Workout`, `Crossfit`, `HighIntensityIntervalTraining`; Strava: the same `sport_type`s; Wahoo: workout types 42 (WORKOUT) and 43 (CARDIO_CLASS); .fit upload (single and bulk): session `sport = training` or `sub_sport` `strength_training` / `hiit` (`api/analyze.py`).
+- Imported by every source, tagged `activity_type = 'gym'`; rides are unchanged. Intervals.icu: `WeightTraining`, `Workout`, `Crossfit`, `HighIntensityIntervalTraining`; Strava: the same `sport_type`s; Garmin: `.fit` session sport; Wahoo: workout types 42 (WORKOUT) and 43 (CARDIO_CLASS); .fit upload (single and bulk): session `sport = training` or `sub_sport` `strength_training` / `hiit` (`api/analyze.py`).
 - Sets: `.fit` files with `set` / `exercise_title` messages (upload, bulk, Intervals.icu file, Wahoo file) store exercises and sets (`gym_exercises`, `gym_sets`); the activity page shows them next to the HR series. Strava sessions and any summary-only import keep summary + HR only. History: a one-time backfill re-open (migration `20270114000000`) imports earlier gym sessions within the usual quotas and the Strava budget, and a repair of 3 sessions per run adds sets to file-backed sessions imported earlier (no Strava requests).
 - Gym sessions without a file or streams (e.g. manual Strava workouts) are imported summary-only from the list fields (duration, avg/max HR, calories). Heart-rate series come from the file or streams when available.
 - Not imported yet: exercises, sets, reps, weights (layer 2).
@@ -82,7 +97,7 @@ Each card shows a health line (Syncing normally / Sync looks delayed after 60 mi
 ## De-duplication and priority
 - Same external id from the same provider is imported once (unique index).
 - A ride matching an existing one (same user, start time and duration within 5 s, or same `.fit` hash) is not imported again.
-- Priority Intervals.icu = Wahoo > Strava (a tie keeps the first copy; a Wahoo copy replaces a Strava copy): when both deliver a ride, the Intervals.icu copy is kept (it replaces a Strava copy).
+- Priority Intervals.icu = Wahoo = Garmin > Strava (a tie keeps the first copy; a Wahoo copy replaces a Strava copy): when both deliver a ride, the Intervals.icu copy is kept (it replaces a Strava copy).
   Manual uploads and bot rides are never replaced or deleted by an import.
 - Deleting a ride on Strava does not delete it in the app.
 
@@ -105,6 +120,7 @@ Strava costs about one read per ride (list item data is reused; only the streams
 | `INTERVALS_CLIENT_ID`, `INTERVALS_CLIENT_SECRET` | Intervals.icu OAuth app (not a public client; PKCE S256 is sent, "Require PKCE" not yet enabled). The secret also signs the OAuth state. Redirect URI `https://www.velocity-stack.app/api/connections/intervals/callback` (exact match). Without them the API-key form is the only option. |
 | `INTERVALS_WEBHOOK_TOKEN` | Shared secret for `/api/webhooks/intervals`; set the same value as the app's *Webhook Authorization Header* on Intervals.icu. Without it the endpoint answers 503. |
 | `WAHOO_CLIENT_ID`, `WAHOO_CLIENT_SECRET`, `WAHOO_WEBHOOK_TOKEN` | Wahoo API app. The secret also signs the OAuth state; the webhook token authenticates events. Redirect URI `https://www.velocity-stack.app/api/connections/wahoo/callback`, webhook `https://www.velocity-stack.app/api/webhooks/wahoo`. |
+| `GARMIN_CLIENT_ID`, `GARMIN_CLIENT_SECRET`, `GARMIN_WEBHOOK_TOKEN` | Garmin Connect Developer Program app. The secret also signs the OAuth state; the webhook token is appended as `?token=` to the push endpoint URL registered in the Garmin API Configuration Tool. Redirect URI `https://www.velocity-stack.app/api/connections/garmin/callback`, push endpoint `https://www.velocity-stack.app/api/webhooks/garmin?token=<GARMIN_WEBHOOK_TOKEN>`. Optional overrides: `GARMIN_AUTHORIZE_URL`, `GARMIN_TOKEN_URL`, `GARMIN_API_BASE`, `GARMIN_REDIRECT_URI`. |
 
 Strava app settings: **Authorization Callback Domain** = `www.velocity-stack.app` (the canonical host; the apex `velocity-stack.app` 308-redirects to it).
 The OAuth `redirect_uri` is built from the request host (`src/lib/server/appUrl.js`), so riders should connect via the canonical host. Reaching the app via the `vercel.app` alias still works, but Strava rejects the callback there because the domain does not match.

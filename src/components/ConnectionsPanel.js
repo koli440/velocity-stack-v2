@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { parseJsonResponse } from '../lib/httpJson'
 import { getAuthHeader } from '../lib/supabase'
-import { callIntervals, callStrava, callWahoo, startStravaAuthorize, startWahooAuthorize, startIntervalsAuthorize, fetchConnection } from '../lib/connectionsClient'
-import { stravaFlagMessage, wahooFlagMessage, intervalsFlagMessage } from '../lib/emptyFeed'
+import { callIntervals, callStrava, callWahoo, callGarmin, startStravaAuthorize, startWahooAuthorize, startGarminAuthorize, startIntervalsAuthorize, fetchConnection } from '../lib/connectionsClient'
+import { stravaFlagMessage, wahooFlagMessage, garminFlagMessage, intervalsFlagMessage } from '../lib/emptyFeed'
+import { NO_HISTORY_NOTE } from '../lib/garminCopy'
 import {
   DEFAULT_BACKFILL_DAYS,
   connectionStatusLabel,
@@ -73,6 +74,18 @@ const OAUTH_PROVIDERS = {
       'Import rides recorded on your Wahoo devices (with their .fit files) directly from Wahoo Cloud. A ride that is already here from Intervals.icu is kept once; a Wahoo ride replaces a Strava copy.',
     notice: 'New rides arrive within moments, with a check about every 15 minutes.',
     setup: 'an administrator needs to add the Wahoo app credentials',
+  },
+  garmin: {
+    label: 'Garmin',
+    call: callGarmin,
+    start: startGarminAuthorize,
+    flagMessage: garminFlagMessage,
+    buttonCls: 'bg-[#007cc3]',
+    noBackfill: true,
+    description:
+      'Import rides and gym sessions recorded on your Garmin devices (with their .fit files) directly from Garmin Connect, and send planned workouts to your Garmin calendar. A ride that is already here from Intervals.icu is kept once; a Garmin ride replaces a Strava copy.',
+    notice: NO_HISTORY_NOTE,
+    setup: 'an administrator needs to add the Garmin app credentials',
   },
 }
 
@@ -198,6 +211,7 @@ function OAuthProviderCard({ userId, provider }) {
               {conn.status === 'error' ? ' Use Reconnect below to continue syncing.' : ' It will retry automatically.'}
             </p>
           )}
+          {!cfg.noBackfill && (
           <div>
             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Import history</label>
             <select
@@ -217,8 +231,10 @@ function OAuthProviderCard({ userId, provider }) {
               ))}
             </select>
           </div>
+          )}
           <p className="text-[11px] text-slate-400">{cfg.notice}</p>
           {provider === 'wahoo' && <PlannedPushSetting userId={userId} provider="wahoo" />}
+          {provider === 'garmin' && <PlannedPushSetting userId={userId} provider="garmin" />}
           {syncMsg && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
           <div className="flex items-center gap-4">
             {conn.status === 'error' ? (
@@ -255,6 +271,8 @@ function OAuthProviderCard({ userId, provider }) {
           {cfg.label} is not set up on this deployment yet ({cfg.setup}).
         </p>
       ) : (
+        <>
+        {cfg.noBackfill && <p className="text-[11px] text-amber-500">{cfg.notice}</p>}
         <button
           type="button"
           disabled={busy || configured === null}
@@ -263,6 +281,7 @@ function OAuthProviderCard({ userId, provider }) {
         >
           {busy ? 'Redirecting...' : `Connect with ${cfg.label}`}
         </button>
+        </>
       )}
       {syncMsg && !connected && <p className="text-[11px] text-slate-500 dark:text-slate-300">{syncMsg}</p>}
       {error && <p className="text-[11px] text-red-500">{error}</p>}
@@ -522,6 +541,10 @@ export function IntervalsCard({ userId }) {
         {error && <p className="text-[11px] text-red-500">{error}</p>}
       </div>
   )
+}
+
+export function GarminCard({ userId }) {
+  return <OAuthProviderCard userId={userId} provider="garmin" />
 }
 
 export function StravaCard({ userId }) {

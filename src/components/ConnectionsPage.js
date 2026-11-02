@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { RIDE_SOURCES } from '../lib/rideSources'
-import { IntervalsCard, StravaCard, WahooCard } from './ConnectionsPanel'
+import { GarminCard, IntervalsCard, StravaCard, WahooCard } from './ConnectionsPanel'
 
 const CARD = 'rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 space-y-2'
 const BADGE = 'text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-500/15 text-slate-400'
@@ -40,8 +40,8 @@ function ImportCard({ source }) {
   )
 }
 
-// To ship Garmin: add `garmin: GarminCard` here and set its status to 'available' in rideSources.js.
 const CARDS = {
+  garmin: GarminCard,
   wahoo: WahooCard,
   intervals: IntervalsCard,
   strava: StravaCard,

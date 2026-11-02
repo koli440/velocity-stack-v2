@@ -137,7 +137,7 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
             </Link>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Garmin, Wahoo and SRM come first: Wahoo connects directly, SRM and others import .fit files. Zwift or MyWhoosh? Use Intervals.icu as the bridge.
+            Garmin, Wahoo and SRM come first: Garmin and Wahoo connect directly, SRM and others import .fit files. Zwift or MyWhoosh? Use Intervals.icu as the bridge.
           </p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <button type="button" disabled={busy} onClick={connectIntervalsOAuth} className={linkBtn}>

@@ -2,8 +2,7 @@
 // Garmin, Wahoo, SRM, Intervals.icu, Strava. Cards on /connections, onboarding and docs follow it.
 //
 // `kind`: 'connect' = OAuth/API integration card, 'import' = file import (no cloud API).
-// `status: 'coming-soon'` renders a placeholder card. To ship Garmin, build the card component,
-// map it in ConnectionsPage and flip the Garmin entry below to `status: 'available'`.
+// `status: 'coming-soon'` renders a placeholder card; new connect sources need a card in ConnectionsPage.
 export const CONNECTIONS_PATH = '/connections'
 
 export const RIDE_SOURCES = [
@@ -11,8 +10,8 @@ export const RIDE_SOURCES = [
     id: 'garmin',
     name: 'Garmin',
     kind: 'connect',
-    status: 'coming-soon',
-    blurb: 'Direct connection to Garmin Connect. Coming soon; until then, import .fit files or use Intervals.icu.',
+    status: 'available',
+    blurb: 'Rides from your Garmin devices, directly from Garmin Connect.',
   },
   {
     id: 'wahoo',
