@@ -5,7 +5,7 @@ import Portal from './Portal'
 import VelodromePicker from './VelodromePicker'
 import RideGearEditor from './RideGearEditor'
 import { gearsToForm, resolveSegments } from '../lib/gearSegments'
-import { effectiveRideType, rideTypeHasGear } from '../lib/rideType'
+import { effectiveRideType, rideTypeHasGear, rideTypeLabel } from '../lib/rideType'
 import { saveActivityRace } from '../lib/raceTag'
 import { VISIBILITY_OPTIONS } from '../lib/social'
 import {
@@ -48,7 +48,8 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     e.preventDefault()
     setSaving(true)
     setError('')
-    const isGym = rideType === 'gym'
+    const isRun = activity.activity_type === 'run'
+    const isGym = !isRun && rideType === 'gym'
     const hasGear = rideTypeHasGear(rideType)
     // An unset ride type is road: leave it (and the hidden gear) alone unless the user picks a type.
     const untouchedRoad = !isGym && !hasGear && activity.ride_type == null
@@ -57,8 +58,8 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
       trackId,
       visibility,
       description,
-      activityType: isGym ? 'gym' : activity.activity_type === 'gym' ? 'ride' : undefined,
-      rideType: untouchedRoad || isGym ? undefined : rideType,
+      activityType: isRun ? undefined : isGym ? 'gym' : activity.activity_type === 'gym' ? 'ride' : undefined,
+      rideType: untouchedRoad || isGym || isRun ? undefined : rideType,
       keepGear: untouchedRoad,
       gears: hasGear ? gears : undefined,
       gearSegments: hasGear ? segments : undefined,
@@ -127,6 +128,9 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
           Race
         </label>
 
+        {activity.activity_type === 'run' ? (
+          <p className="text-[11px] text-slate-400" data-testid="edit-run-type">{rideTypeLabel(activity.ride_type)} · imported run (gear does not apply)</p>
+        ) : (
         <RideGearEditor
           allowGym
           rideType={rideType}
@@ -137,6 +141,7 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
           onSegmentsChange={setSegments}
           timeSeries={activity.time_series}
         />
+        )}
 
         <div>
           <label className={label} htmlFor="edit-activity-description">Description (optional)</label>

@@ -90,6 +90,7 @@ export async function handleGarminPush(service, body, { triggerSync, log = conso
             callback_url: event.callbackUrl,
             start_time_s: event.startSeconds,
             start_offset_s: event.offsetSeconds,
+            activity_type: event.activityType ?? null,
             status: 'pending',
           },
           { onConflict: 'user_id,summary_id', ignoreDuplicates: true }

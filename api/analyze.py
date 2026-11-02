@@ -101,11 +101,13 @@ def derive_speed_and_distance_from_gps(gps_points):
     return speed_kmh, round(distance_m, 1)
 
 def classify_activity(sport, sub_sport):
-    """'gym' for strength / training sessions, 'ride' for everything else (existing behaviour)."""
+    """'gym' for strength / training sessions, 'run' for running, 'ride' for everything else (existing behaviour)."""
     sport = str(sport or '').lower()
     sub_sport = str(sub_sport or '').lower()
     if sport == 'training' or sub_sport in ('strength_training', 'hiit'):
         return 'gym'
+    if sport == 'running':
+        return 'run'
     return 'ride'
 
 def read_session_info(fitfile):

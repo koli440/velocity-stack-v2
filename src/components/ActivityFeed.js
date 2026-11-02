@@ -20,7 +20,8 @@ import { currentReturnTo, withReturnTo } from '../lib/returnTo'
 import { supabase } from '../lib/supabase'
 import { fetchCommentInfo, fetchUnreadCounts, commentCountLabel } from '../lib/activityComments'
 import { rideTypeHasGear } from '../lib/rideType'
-import { isTrackActivity } from '../lib/activityType'
+import { isTrackActivity, isRunActivity } from '../lib/activityType'
+import { activitySport, isSportFlavour, SPORT_TAG_CLASS } from '../lib/sportType'
 
 // Intensity bar fill width (0-100%) driven by intensity_factor (IF ~1.0+ = full).
 function intensityPct(intensityFactor) {
@@ -309,12 +310,19 @@ export default function ActivityFeed({
                   href={withReturnTo(activityHref(act), returnTo)}
                   className="mt-2 block text-base font-black text-slate-900 dark:text-white group-hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"
                 >
-                  {act.title || (act.activity_type === 'gym' ? 'Gym Session' : 'Velodrome Session')}
+                  {act.title || (act.activity_type === 'gym' ? 'Gym Session' : isRunActivity(act) ? activitySport(act).label : 'Velodrome Session')}
                 </Link>
                 {act.activity_type === 'gym' && (
                   <div className="mt-1" data-testid="feed-gym-tag">
                     <span className="inline-block px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[10px] font-black uppercase tracking-wider">
                       Gym{act.calories ? ` · ${Math.round(act.calories)} kcal` : ''}
+                    </span>
+                  </div>
+                )}
+                {isSportFlavour(act) && (
+                  <div className="mt-1" data-testid="feed-sport-tag">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${SPORT_TAG_CLASS[activitySport(act).tone]}`}>
+                      <Icon name={activitySport(act).icon} size={11} />{activitySport(act).label}
                     </span>
                   </div>
                 )}

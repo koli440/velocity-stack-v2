@@ -269,7 +269,7 @@ export function createWahooProvider({ accessToken, fetchImpl = fetch }) {
         if (res.status === 404) throw new ImportError(`Wahoo workout ${id} was not found.`, 404)
         if (!res.ok) throw new ImportError(`Wahoo API error (${res.status})`, res.status)
         const workout = await res.json()
-        if (!isImportableWorkout(workout)) throw new ImportError(`Wahoo workout ${id} is not a recorded ride with a file.`, 422)
+        if (!isImportableWorkout(workout)) throw new ImportError(`Wahoo workout ${id} is not a recorded ride or run with a file.`, 422)
         ride = mapWahooWorkout(workout)
       }
 
@@ -329,6 +329,7 @@ export function createWahooProvider({ accessToken, fetchImpl = fetch }) {
         elapsed_time_s: parsed.summary?.elapsed_time_s ?? ride.elapsed_time_s,
       }
       return {
+        ...(ride.sport ? { sport: ride.sport } : {}),
         title: ride.name,
         startDateLocal: ride.start_date_local,
         summary,

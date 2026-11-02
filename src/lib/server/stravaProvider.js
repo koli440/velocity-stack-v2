@@ -13,6 +13,7 @@ import {
   afterEpoch,
   filterStravaActivities,
   isStravaGym,
+  stravaSport,
   isRateLimitNear,
   isRevokedGrant,
   parseRateLimit,
@@ -264,6 +265,7 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
           max_heartrate: item.max_heartrate,
           calories: item.calories,
           gym: item.activity_type === 'gym',
+          sport: item.sport,
         }
       } else {
         // Not seen in a list (single-ride import): one extra read for the same fields.
@@ -272,8 +274,9 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
         if (!detailRes.ok) throw new ImportError(`Strava API error (${detailRes.status})`, detailRes.status)
         detail = await detailRes.json()
         detail.gym = isStravaGym(detail)
+        detail.sport = stravaSport(detail)
         if (!detail.gym && !isStravaRide(detail)) {
-          throw new ImportError(`Strava activity ${id} is not a ride or gym session.`, 422)
+          throw new ImportError(`Strava activity ${id} is not a ride, run or gym session.`, 422)
         }
       }
 
@@ -313,6 +316,7 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
       }
       if (detail.moving_time && analyzed.summary.moving_time_s == null) summary.moving_time_s = detail.moving_time
       return {
+        ...(detail.sport ? { sport: detail.sport } : {}),
         title: detail.name || null,
         startDateLocal: detail.start_date_local ? String(detail.start_date_local).replace(/Z$/, '') : null,
         summary,

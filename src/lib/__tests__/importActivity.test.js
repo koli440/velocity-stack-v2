@@ -139,7 +139,7 @@ test('analyzeStreams derives speed from cadence for fixed gear, else unavailable
 })
 
 test('filterRides keeps only rides', () => {
-  const out = filterRides([{ id: 1, type: 'Ride' }, { id: 2, type: 'Run' }, { id: 3, type: 'VirtualRide' }])
+  const out = filterRides([{ id: 1, type: 'Ride' }, { id: 2, type: 'Swim' }, { id: 3, type: 'VirtualRide' }])
   assert.deepEqual(out.map((r) => r.id), [1, 3])
 })
 

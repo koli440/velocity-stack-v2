@@ -5,7 +5,7 @@ import Icon from './Icon'
 import GearPicker from './GearPicker'
 import GearSegmentEditor from './GearSegmentEditor'
 import { GEAR_COLORS } from './GearSegmentEditor'
-import { RIDE_TYPES, effectiveRideType, rideTypeHasGear } from '../lib/rideType'
+import { RIDE_TYPES, effectiveRideType, rideTypeHasGear, rideTypeLabel } from '../lib/rideType'
 import { MAX_GEARS, MAX_NOTE_LENGTH, moveGear, nextGearId, removeGear, toGearPayload } from '../lib/gearSegments'
 
 const inputClass =
@@ -69,7 +69,7 @@ export default function RideGearEditor({
             <option key={t.key} value={t.key}>{t.label}</option>
           ))}
           {allowGym && <option value="gym">Gym</option>}
-          {!known && <option value={type}>{type}</option>}
+          {!known && <option value={type}>{rideTypeLabel(type)}</option>}
         </select>
         {!hasGear && gears.length > 0 && (
           <p className="mt-1 text-[11px] text-slate-400">Stored gear is kept and shown again if you switch back to Track.</p>

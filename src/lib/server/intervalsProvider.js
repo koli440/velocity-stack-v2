@@ -13,6 +13,7 @@
 import { analyzeStreams } from '../streamAnalysis.js'
 import { ImportError } from './importErrors.js'
 import { isGymSportType } from '../activityType.js'
+import { sportFromIntervals } from '../sportType.js'
 import { gymSummaryFromMeta } from '../gymAnalysis.js'
 import { newestFirst, rideTimeMs } from '../syncPlan.js'
 
@@ -66,7 +67,10 @@ export async function revokeIntervalsToken(accessToken, fetchImpl = fetch) {
 
 export function filterRides(activities) {
   return (Array.isArray(activities) ? activities : [])
-    .filter((a) => a.type === 'Ride' || a.type === 'VirtualRide')
+    .filter((a) => {
+      const sport = sportFromIntervals(a.type)
+      return sport && sport !== 'gym'
+    })
     .map((a) => ({
       id: a.id,
       name: a.name,
@@ -76,6 +80,7 @@ export function filterRides(activities) {
       average_watts: a.average_watts,
       max_watts: a.max_watts,
       average_cadence: a.average_cadence,
+      sport: sportFromIntervals(a.type),
     }))
 }
 
@@ -84,7 +89,7 @@ export function filterActivities(activities) {
   const list = Array.isArray(activities) ? activities : []
   const gymIds = new Set(list.filter((a) => isGymSportType(a?.type)).map((a) => a.id))
   return list
-    .filter((a) => a.type === 'Ride' || a.type === 'VirtualRide' || gymIds.has(a.id))
+    .filter((a) => sportFromIntervals(a.type) || gymIds.has(a.id))
     .map((a) => {
       const base = filterRides([a])[0] || {
         id: a.id,
@@ -92,6 +97,7 @@ export function filterActivities(activities) {
         start_date_local: a.start_date_local,
         distance_m: a.distance,
         moving_time_s: a.moving_time,
+        sport: sportFromIntervals(a.type),
       }
       return gymIds.has(a.id) ? { ...base, activity_type: 'gym' } : base
     })
@@ -177,7 +183,11 @@ export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchI
         // metadata is cosmetic; fall back to defaults
       }
       const activityType = isGymSportType(meta?.type) ? 'gym' : 'ride'
-      const typeField = activityType === 'gym' ? { activityType } : {}
+      const sport = sportFromIntervals(meta?.type)
+      const typeField = {
+        ...(activityType === 'gym' ? { activityType } : {}),
+        ...(sport ? { sport } : {}),
+      }
       // Summary-only fallback for gym sessions without a file or streams (manual entries).
       const gymFallback = () => {
         const m = gymSummaryFromMeta({

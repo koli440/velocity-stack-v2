@@ -7,6 +7,7 @@ import Icon from './Icon'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/dateFormat'
 import { isTrackActivity } from '../lib/activityType'
+import { activitySport, isSportFlavour } from '../lib/sportType'
 import {
   SESSION_SEARCH_DEBOUNCE_MS,
   isSearchable,
@@ -137,7 +138,7 @@ export default function SessionSearch({ userId, tracks = [] }) {
               >
                 <div className="font-semibold text-slate-900 dark:text-white truncate">{r.title || 'Untitled session'}</div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  {[r.activity_type === 'gym' ? 'Gym' : isTrackActivity(r) ? `Track · ${trackName(r) || ''}`.replace(/ · $/, '') : trackName(r), formatDate(r.activity_date)].filter(Boolean).join(' · ')}
+                  {[r.activity_type === 'gym' ? 'Gym' : isSportFlavour(r) ? activitySport(r).label : isTrackActivity(r) ? `Track · ${trackName(r) || ''}`.replace(/ · $/, '') : trackName(r), formatDate(r.activity_date)].filter(Boolean).join(' · ')}
                 </div>
               </li>
             ))}

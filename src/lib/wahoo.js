@@ -3,6 +3,7 @@
 // No network or DB access here. OAuth state signing is shared with Strava (src/lib/strava.js).
 
 import { timingSafeEqual } from 'node:crypto'
+import { sportFromWahoo } from './sportType.js'
 
 export const WAHOO_API = 'https://api.wahooligan.com'
 export const WAHOO_SCOPES = ['user_read', 'workouts_read', 'workouts_write', 'plans_write', 'offline_data']
@@ -13,6 +14,8 @@ export const WAHOO_REDIRECT_URI = 'https://www.velocity-stack.app/api/connection
 export const WAHOO_TOKEN_REFRESH_SKEW_S = 60
 // Wahoo workout_type_id values of the BIKING family (indoor and outdoor), excluding motorcycling.
 export const WAHOO_CYCLING_TYPE_IDS = [0, 11, 12, 13, 14, 15, 16, 49, 61, 64, 68, 70]
+// RUNNING, RUNNING_TRACK, RUNNING_TRAIL, RUNNING_TREADMILL, RUNNING_RACE, RUNNING_INDOOR_VIRTUAL
+export const WAHOO_RUN_TYPE_IDS = [1, 3, 4, 5, 67, 71]
 
 export function isWahooConfigured(env = process.env) {
   return !!(env.WAHOO_CLIENT_ID && env.WAHOO_CLIENT_SECRET)
@@ -72,6 +75,10 @@ export function isWahooCyclingWorkout(w) {
   return WAHOO_CYCLING_TYPE_IDS.includes(Number(w?.workout_type_id))
 }
 
+export function isWahooRunWorkout(w) {
+  return WAHOO_RUN_TYPE_IDS.includes(Number(w?.workout_type_id))
+}
+
 /** Strength / gym-class workouts (issue #326): WORKOUT (42) and CARDIO_CLASS (43). */
 export const WAHOO_GYM_TYPE_IDS = [42, 43]
 
@@ -116,7 +123,7 @@ export function localStamp(startsIso, timeZone) {
 export function isImportableWorkout(w) {
   const s = w?.workout_summary
   if (isWahooGymWorkout(w)) return s?.manual !== true
-  return isWahooCyclingWorkout(w) && !!s?.file?.url && s.manual !== true
+  return (isWahooCyclingWorkout(w) || isWahooRunWorkout(w)) && !!s?.file?.url && s.manual !== true
 }
 
 /** Wahoo workout (with embedded workout_summary) -> the shared "ride" shape used by selectNewRides. */
@@ -133,6 +140,7 @@ export function mapWahooWorkout(w) {
     distance_m: num(s.distance_accum),
     average_watts: num(s.power_avg),
     file_url: s.file?.url || null,
+    sport: sportFromWahoo(w.workout_type_id),
     ...(isWahooGymWorkout(w)
       ? {
           activity_type: 'gym',

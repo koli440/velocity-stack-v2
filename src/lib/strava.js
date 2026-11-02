@@ -2,13 +2,16 @@
 // Pure Strava helpers (#109 step 5): OAuth state signing, token decisions, stream mapping, webhook
 // event parsing, rate-limit parsing. No network or DB access here.
 
+import { sportFromStrava } from './sportType.js'
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import { isGymSportType } from './activityType.js'
 
 export const STRAVA_SCOPE = 'activity:read_all'
 export const STATE_TTL_S = 600
 export const TOKEN_REFRESH_SKEW_S = 300
-export const STRAVA_RIDE_TYPES = ['Ride', 'VirtualRide', 'EBikeRide', 'GravelRide', 'MountainBikeRide', 'Handcycle']
+// Cycling and running types we import (mapped to canonical sports in sportType.js); gym types are GYM_SPORT_TYPES.
+export const STRAVA_RIDE_TYPES = ['Ride', 'VirtualRide', 'EBikeRide', 'EMountainBikeRide', 'GravelRide', 'MountainBikeRide', 'Handcycle']
+export const STRAVA_RUN_TYPES = ['Run', 'TrailRun', 'VirtualRun']
 export const STRAVA_STREAM_KEYS = 'time,watts,cadence,heartrate,velocity_smooth,latlng,altitude,distance'
 
 export function isStravaConfigured(env = process.env) {
@@ -105,8 +108,11 @@ export function isRevokedGrant(status, body) {
 
 export function isStravaRide(a) {
   const type = a?.sport_type || a?.type
-  return STRAVA_RIDE_TYPES.includes(type)
+  return STRAVA_RIDE_TYPES.includes(type) || STRAVA_RUN_TYPES.includes(type)
 }
+
+/** Canonical sport (sportType.js) of a Strava activity; null for sports we do not import. */
+export const stravaSport = (a) => sportFromStrava(a?.sport_type || a?.type)
 
 /** Gym / strength sessions (issue #326): WeightTraining, Workout, Crossfit, HIIT. */
 export function isStravaGym(a) {
@@ -124,6 +130,7 @@ export function mapStravaListItem(a) {
     distance_m: a.distance,
     moving_time_s: a.moving_time,
     average_watts: a.average_watts,
+    sport: stravaSport(a),
   }
 }
 
