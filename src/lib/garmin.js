@@ -143,7 +143,7 @@ const str = (v) => (v == null || v === '' ? null : String(v))
  *  { kind: 'activity_file', userId, summaryId, callbackUrl, activityType, startSeconds, offsetSeconds }
  *  { kind: 'deregistration', userId }
  *  { kind: 'permissions', userId, permissions }
- * Manual activities and non-FIT files carry no file we can analyse and are dropped.
+ * Non-FIT files are dropped. Manual (uploaded) activities carry a normal FIT file and are kept.
  */
 export function parseGarminPush(body) {
   if (!body || typeof body !== 'object') return []
@@ -152,7 +152,7 @@ export function parseGarminPush(body) {
     const userId = str(f.userId)
     const callbackUrl = str(f.callbackURL)
     const summaryId = str(f.summaryId) || str(f.activityId)
-    if (!userId || !callbackUrl || !summaryId || f.manual === true) continue
+    if (!userId || !callbackUrl || !summaryId) continue
     if (f.fileType && String(f.fileType).toUpperCase() !== 'FIT') continue
     events.push({
       kind: 'activity_file',

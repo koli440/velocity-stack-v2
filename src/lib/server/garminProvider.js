@@ -219,14 +219,17 @@ export function createGarminProvider({ service, userId, accessToken, fetchImpl =
       if (!ev) throw new ImportError(`Garmin activity ${id} was not received from Garmin.`, 404)
       if (!analyzeFit) throw new ImportError('Garmin import needs the .fit analyzer.', 500)
       if (!isGarminHost(ev.callback_url)) {
+        console.info(`Garmin import: activity ${id} skipped, unexpected download address`)
         await setStatus(id, { status: 'error', last_error: 'Unexpected download address.' })
         return { skip: true }
       }
       await setStatus(id, { attempts: (Number(ev.attempts) || 0) + 1 })
+      console.info(`Garmin import: downloading file for activity ${id} (attempt ${(Number(ev.attempts) || 0) + 1})`)
 
       let blob
       try {
         const res = await fetchImpl(ev.callback_url, { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' })
+        console.info(`Garmin import: file download for activity ${id} answered ${res.status}`)
         if (res.status === 401) throw new GarminAuthError()
         if (res.status === 410) {
           await setStatus(id, { status: 'error', last_error: 'Garmin file was already downloaded or has expired.' })
@@ -252,6 +255,7 @@ export function createGarminProvider({ service, userId, accessToken, fetchImpl =
       if (!parsed?.success) await fail(`The Garmin file of activity ${id} could not be analysed.`)
 
       const kind = classifyGarminSport(parsed.summary)
+      console.info(`Garmin import: activity ${id} analysed as ${kind} (sport=${parsed.summary?.sport ?? 'unknown'}, ${blob.size} bytes)${kind === 'skip' ? ': skipped, not a ride or gym session' : ''}`)
       // Settled either way: a file that is neither cycling nor strength is never imported, and one that was
       // analysed is not downloaded again (the import itself skips duplicates).
       await setStatus(id, { status: kind === 'skip' ? 'skipped' : 'imported', last_error: null })

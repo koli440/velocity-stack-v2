@@ -54,7 +54,7 @@ test('webhook token comparison', () => {
   assert.equal(matchesWebhookToken('abc', ''), false)
 })
 
-test('parseGarminPush normalises the three push types and drops manual / non-FIT files', () => {
+test('parseGarminPush normalises the three push types and drops non-FIT files, keeps manual uploads', () => {
   const ev = parseGarminPush({
     activityFiles: [
       { userId: 'g1', summaryId: 's1', fileType: 'FIT', callbackURL: 'https://apis.garmin.com/f/1', startTimeInSeconds: 1000, startTimeOffsetInSeconds: 3600 },
@@ -64,8 +64,9 @@ test('parseGarminPush normalises the three push types and drops manual / non-FIT
     deregistrations: [{ userId: 'g2' }],
     userPermissionsChange: [{ userId: 'g3', permissions: ['ACTIVITY_EXPORT'] }],
   })
-  assert.deepEqual(ev.map((e) => e.kind), ['activity_file', 'deregistration', 'permissions'])
+  assert.deepEqual(ev.map((e) => e.kind), ['activity_file', 'activity_file', 'deregistration', 'permissions'])
   assert.equal(ev[0].offsetSeconds, 3600)
+  assert.equal(ev[1].summaryId, 's3')
   assert.deepEqual(parseGarminPush(null), [])
 })
 
@@ -236,4 +237,15 @@ test('garmin workout provider fields fit the 20 character limit', () => {
   const r = buildGarminWorkout({ id: 'a-very-long-uuid-0000-0000-0000-000000', workout_date: '2026-11-04', title: 't', structure_manifest: { steps: [{ role: 'work', keyBy: 'distance', targetDistanceM: 1000, bandType: 'none' }] } })
   assert.ok(r.workout.workoutProvider.length <= 20 && r.workout.workoutSourceId === r.workout.workoutProvider)
   assert.equal(r.workout.segments[0].steps[0].durationValueType, 'METER')
+})
+
+test('a manual virtual cycling file is queued, and pushes are logged without callback URLs', async () => {
+  const sb = fakeSupabase({ connections: [gconn()], garmin_activity_events: [] })
+  const logs = []
+  const body = { activityFiles: [{ userId: 'g1', summaryId: '24941444197-file', activityId: 24941444197, fileType: 'FIT', manual: true, activityType: 'VIRTUAL_RIDE', callbackURL: 'https://apis.garmin.com/f/secret-cb' }] }
+  const r = await handleGarminPush(sb, body, { log: (m) => logs.push(m) })
+  assert.equal(r.activities, 1)
+  assert.equal(sb.db.garmin_activity_events.length, 1)
+  assert.ok(logs.some((m) => m.includes('queued activity 24941444197-file')))
+  assert.ok(logs.every((m) => !m.includes('secret-cb')))
 })
