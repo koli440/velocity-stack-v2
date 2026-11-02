@@ -9,6 +9,7 @@ import { saveGymDetail, buildGymDetail, gymTotals } from '../lib/gymDetail'
 import { isGymActivity } from '../lib/activityType'
 import { fetchWeightHistory } from '../lib/weightHistory'
 import { fetchFtpHistory } from '../lib/ftpHistory'
+import { resolveImportTitle, localHourOfInstant, RECENT_NAMES_WINDOW } from '../lib/activityNaming'
 import { findDuplicate, loadExistingActivityFingerprints } from '../lib/activityDuplicates'
 import VelodromePicker from './VelodromePicker'
 import GearPicker, { useGearState } from './GearPicker'
@@ -172,11 +173,30 @@ export default function FitUploader({
       const { history: weightHistory } = await fetchWeightHistory(supabase, currentUser.id)
 
       const prepared = prepareAnalysis(analysis)
-      const activityRecord = buildActivityInsert(prepared.summary, {
+      const flavourRideType = resolveRideType(prepared.sport, rideType)
+      const { data: recentRows } = await supabase
+        .from('activities')
+        .select('title')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(RECENT_NAMES_WINDOW)
+      const { title: finalTitle } = resolveImportTitle({
         title,
+        seed: `${currentUser.id}|${prepared.summary.start_time || title}`,
+        activityType: prepared.activityType,
+        sport: prepared.sport,
+        rideType: flavourRideType,
+        summary: prepared.summary,
+        ftpWatts: profile?.ftp_w ?? null,
+        timeSeries: prepared.time_series,
+        localHour: prepared.summary.start_time ? localHourOfInstant(prepared.summary.start_time) : null,
+        recentNames: (recentRows || []).map((r) => r.title),
+      })
+      const activityRecord = buildActivityInsert(prepared.summary, {
+        title: finalTitle,
         userId: currentUser.id,
         trackId: prepared.activityType === 'run' ? null : selectedTrack,
-        rideType: resolveRideType(prepared.sport, rideType),
+        rideType: flavourRideType,
         chainring: parseGear(chainring, cog).chainring,
         cog: parseGear(chainring, cog).cog,
         crankLengthMm: 165.0,
