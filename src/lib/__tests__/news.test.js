@@ -91,3 +91,9 @@ test('markdownLite: paragraphs, lists, fences, inline and unsafe links', () => {
   assert.ok(!inline.some((n) => n.href?.startsWith('javascript')))
   assert.equal(parseInline('<script>x</script>')[0].text, '<script>x</script>')
 })
+
+test('no news entry is dated in the future (use the real current date)', () => {
+  const limit = new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 10) // +1 day for timezones
+  const future = loadNews().filter((e) => e.date > limit).map((e) => e.id)
+  assert.deepEqual(future, [])
+})

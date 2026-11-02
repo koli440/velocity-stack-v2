@@ -24,7 +24,7 @@ One or two short paragraphs about what the rider can do now.
 Rules:
 - English only. Everyone gets every entry (no targeting).
 - The `id` must equal the file name and start with `date`; ids sort chronologically, and "unseen" means `id > news_seen_through`.
-- Use today's date or later. Entries dated before a user's "seen up to" marker are never shown to that user in the login modal (they stay on the page).
+- Use the REAL current date (today); never a future date, and never "latest entry + 1". If an id with that date already exists, just use a distinct slug. A unit test fails for entries dated in the future. Entries dated before a user's "seen up to" marker are never shown to that user in the login modal (they stay on the page).
 - Malformed files fail `npm test` and the build (`src/lib/__tests__/news.test.js` loads every file).
 
 ## How it shows up
@@ -43,7 +43,7 @@ Rules:
 `user_onboarding_state(user_id PK -> profiles ON DELETE CASCADE, welcome_seen_at, onboarding_dismissed_at, news_seen_through TEXT, created_at, updated_at)`.
 - RLS: SELECT and UPDATE of the own row only (`user_id = auth.uid()`). No coach or admin policy (personal UI state), no client INSERT/DELETE. Column-level UPDATE grant on the three state columns.
 - Rows are created by trigger on new profiles (tour pending, news seen up to now) or by `ensure_my_onboarding_state()` (caller's own row only). The migration backfills existing profiles once (`ON CONFLICT DO NOTHING`).
-- `news_seen_through` only moves forward (trigger). Existing/new accounts start at `<today>~` (floor: the migration date), which sorts after every id of that day.
+- `news_seen_through` only moves forward (trigger). Existing/new accounts start at `<today>~` (floor `2026-10-30`, set by `20270118000000_redate_news_reset_marker.sql`, which also repaired markers that pointed at future-dated ids), which sorts after every id of that day.
 - The client always uses the signed-in user's id from the session, also inside coach/athlete-context routes, where the welcome/news modals and the checklist are disabled (`OnboardingProvider enabled`) so nothing is ever shown as the athlete's state.
 
 ## Verification of the migration (scratch Postgres)
