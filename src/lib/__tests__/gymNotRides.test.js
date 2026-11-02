@@ -13,13 +13,13 @@ const ride = { id: 'r', kind: 'activity', date: at(8), discipline: 'ride', durat
 const track = { id: 't', kind: 'activity', date: at(9), discipline: 'track', durationS: 3600 }
 const gym = { id: 'g', kind: 'activity', date: at(18), discipline: 'gym', durationS: 3600 }
 
-test('calendar labels: gym sessions are Gym, rides and track sessions stay Ride', () => {
+test('calendar labels: gym sessions are Gym, track sessions are Track, rides stay Ride', () => {
   const e = (row) => activityToEvent({ id: 1, activity_date: '2027-01-05T10:00:00Z', ...row })
   assert.equal(activityChipLabel(e({ activity_type: 'gym' })), 'Gym')
   assert.equal(activityChipLabel(e({ activity_type: 'gym', track_id: 'x' })), 'Gym')
   assert.equal(activityChipLabel(e({ activity_type: 'ride' })), 'Ride')
   assert.equal(activityChipLabel(e({})), 'Ride')
-  assert.equal(activityChipLabel(e({ track_id: 'x' })), 'Ride')
+  assert.equal(activityChipLabel(e({ track_id: 'x' })), 'Track')
   assert.equal(e({ track_id: 'x' }).discipline, 'track')
 })
 
