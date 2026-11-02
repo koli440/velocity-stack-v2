@@ -13,11 +13,16 @@ import {
   tokensToColumns,
   tokenNeedsRefresh,
   garminRedirectUri,
+  garminUserApiBase,
+  classifyGarminActivityType,
+  GARMIN_TOKEN_REFRESH_SKEW_S,
   NO_ACTIVITY_PERMISSION_MESSAGE,
   NO_WORKOUT_PERMISSION_MESSAGE,
 } from '../garmin.js'
 import { handleGarminPush } from '../server/garminWebhook.js'
 import { buildGarminWorkout, garminPushState, garminPushHash } from '../garminPlan.js'
+import { createGarminPlanClient } from '../server/garminPlans.js'
+import { createGarminProvider } from '../server/garminProvider.js'
 import { sourcePriority } from '../activityDuplicates.js'
 
 test('redirect URI matches the registered Garmin callback', () => {
@@ -172,4 +177,63 @@ test('garmin push state', () => {
   assert.equal(garminPushState(w, { garmin_workout_id: '1', pushed_hash: garminPushHash(w), push_status: 'pushed' }), 'pushed')
   assert.equal(garminPushState(w, { garmin_workout_id: '1', pushed_hash: 'x', push_status: 'pushed' }), 'out_of_date')
   assert.equal(garminPushState(w, { push_status: 'error', last_error: 'boom' }), 'error')
+})
+
+test('user endpoints use the partner gateway and tokens refresh 600 s early', () => {
+  assert.equal(garminUserApiBase({}), 'https://apis.garmin.com/partner-gateway/rest')
+  assert.equal(GARMIN_TOKEN_REFRESH_SKEW_S, 600)
+})
+
+test('activity types follow the Activity API appendix', () => {
+  for (const t of ['CYCLING', 'ROAD_BIKING', 'VIRTUAL_RIDE', 'E_BIKE_MOUNTAIN', 'GRAVEL_CYCLING', 'TRACK_CYCLING']) assert.equal(classifyGarminActivityType(t), 'ride', t)
+  assert.equal(classifyGarminActivityType('STRENGTH_TRAINING'), 'gym')
+  for (const t of ['RUNNING', 'LAP_SWIMMING', 'HANDCYCLING', 'BOATING_V2']) assert.equal(classifyGarminActivityType(t), 'skip', t)
+  assert.equal(classifyGarminActivityType(undefined), null)
+})
+
+test('webhook does not queue sports that are never imported', async () => {
+  const sb = fakeSupabase({ connections: [gconn()], garmin_activity_events: [] })
+  const f = (id, activityType) => ({ userId: 'g1', summaryId: id, fileType: 'FIT', callbackURL: `https://apis.garmin.com/f/${id}`, activityType })
+  const r = await handleGarminPush(sb, { activityFiles: [f('a', 'RUNNING'), f('b', 'ROAD_BIKING'), f('c', undefined)] })
+  assert.equal(r.activities, 2)
+  assert.deepEqual(sb.db.garmin_activity_events.map((e) => e.summary_id), ['b', 'c'])
+})
+
+test('provider settles single-use downloads that answer 410 or 412 instead of retrying', async () => {
+  for (const status of [410, 412]) {
+    const sb = fakeSupabase({ garmin_activity_events: [{ user_id: 'u1', summary_id: 's1', callback_url: 'https://apis.garmin.com/f/1', start_time_s: 1000, attempts: 0, status: 'pending' }] })
+    const p = createGarminProvider({ service: sb, userId: 'u1', accessToken: 't', fetchImpl: async () => ({ ok: false, status }) })
+    const r = await p.fetchActivity('s1', { analyzeFit: async () => ({ success: true }) })
+    assert.equal(r.skip, true)
+    assert.equal(sb.db.garmin_activity_events[0].status, 'error')
+  }
+})
+
+test('Training API client uses the V2 endpoints and sends owner and ids on update', async () => {
+  const calls = []
+  const fetchImpl = async (url, init) => {
+    calls.push([init.method, url, init.body ? JSON.parse(init.body) : null])
+    const body = init.method === 'GET' ? { workoutId: 5, ownerId: 99 } : init.method === 'POST' ? { workoutId: 5, scheduleId: 6 } : null
+    return { ok: true, status: 200, text: async () => (body ? JSON.stringify(body) : '') }
+  }
+  const c = createGarminPlanClient({ accessToken: 't', fetchImpl, base: 'https://apis.garmin.com' })
+  assert.equal(await c.createWorkout({ workoutName: 'x' }), '5')
+  await c.updateWorkout('5', { workoutName: 'y' })
+  assert.equal(await c.createSchedule('5', '2026-11-04'), '6')
+  await c.updateSchedule('6', '5', '2026-11-05')
+  await c.deleteSchedule('6')
+  await c.deleteWorkout('5')
+  assert.deepEqual(calls.map((x) => `${x[0]} ${x[1].replace('https://apis.garmin.com', '')}`), [
+    'POST /workoutportal/workout/v2', 'GET /training-api/workout/v2/5', 'PUT /training-api/workout/v2/5',
+    'POST /training-api/schedule/', 'PUT /training-api/schedule/6', 'DELETE /training-api/schedule/6', 'DELETE /training-api/workout/v2/5',
+  ])
+  assert.equal(calls[2][2].ownerId, 99)
+  assert.equal(calls[2][2].workoutId, 5)
+  assert.equal(calls[4][2].scheduleId, 6)
+})
+
+test('garmin workout provider fields fit the 20 character limit', () => {
+  const r = buildGarminWorkout({ id: 'a-very-long-uuid-0000-0000-0000-000000', workout_date: '2026-11-04', title: 't', structure_manifest: { steps: [{ role: 'work', keyBy: 'distance', targetDistanceM: 1000, bandType: 'none' }] } })
+  assert.ok(r.workout.workoutProvider.length <= 20 && r.workout.workoutSourceId === r.workout.workoutProvider)
+  assert.equal(r.workout.segments[0].steps[0].durationValueType, 'METER')
 })

@@ -15,13 +15,14 @@ import { parseStructure } from './plannedWorkouts.js'
 import { zoneBoundsPctFtp } from './intervalsWorkout.js'
 
 /** Bump when the output format changes so already pushed workouts are seen as out of date. */
-export const GARMIN_CONVERTER_VERSION = 1
+export const GARMIN_CONVERTER_VERSION = 2
+// Provider and source id: 20 characters at most, and the source id should equal the provider (Training API V2).
 export const GARMIN_PROVIDER_NAME = 'VelocityStack'
+const MAX_STEPS = 100 // single-sport workouts
 export const GARMIN_PUSH_DISCIPLINES = ['ride', 'track']
 const MAX_NAME = 80
 const MAX_DESCRIPTION = 1024
 
-export const garminSourceId = (workoutId) => String(workoutId)
 
 const bound = (lo, hi) => {
   const a = lo ?? hi
@@ -102,6 +103,7 @@ function workStep(step, ctx) {
     description: step.role === 'recovery' ? 'Recovery' : 'Work',
     durationType: byDistance ? 'DISTANCE' : 'TIME',
     durationValue: value,
+    ...(byDistance ? { durationValueType: 'METER' } : {}),
     targetType: t.target ? t.target.type : 'OPEN',
   }
   if (t.target) {
@@ -191,12 +193,18 @@ export function buildGarminWorkout(workout, { ftp = null } = {}) {
   const seconds = stepsSeconds(steps)
   const minutes = seconds > 0 ? Math.max(1, Math.round(seconds / 60)) : 0
   if (!steps.length) return { workout: null, minutes, warnings: [...warnings], structured: false }
+  const count = (list) => list.reduce((n, s) => n + 1 + (s.steps ? count(s.steps) : 0), 0)
+  if (count(steps) > MAX_STEPS) {
+    warnings.add(`Garmin accepts at most ${MAX_STEPS} steps in a workout; this one is too long to send.`)
+    return { workout: null, minutes, warnings: [...warnings], structured: false }
+  }
 
   const body = {
     workoutName: name,
     sport: 'CYCLING',
     workoutProvider: GARMIN_PROVIDER_NAME,
-    workoutSourceId: garminSourceId(workout.id),
+    workoutSourceId: GARMIN_PROVIDER_NAME,
+    isSessionTransitionEnabled: false,
     segments: [{ segmentOrder: 1, sport: 'CYCLING', steps }],
   }
   if (description) body.description = description

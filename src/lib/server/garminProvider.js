@@ -9,7 +9,7 @@
 import { ImportError } from './importErrors.js'
 import {
   classifyGarminSport,
-  garminApiBase,
+  garminUserApiBase,
   garminTokenUrl,
   isGarminHost,
   isRevokedGrant,
@@ -19,8 +19,8 @@ import {
 } from '../garmin.js'
 
 export const MAX_EVENT_ATTEMPTS = 5
-// Garmin callback URLs stop working after a while, so older events are not retried.
-export const EVENT_MAX_AGE_MS = 48 * 3600 * 1000
+// An activity file URL is valid for 24 hours and can be downloaded only once (a repeat gets HTTP 410).
+export const EVENT_MAX_AGE_MS = 24 * 3600 * 1000
 
 /** The user must reconnect (revoked/invalid grant or rejected token). */
 export class GarminAuthError extends ImportError {
@@ -122,7 +122,7 @@ export async function getFreshAccessToken(service, conn, { fetchImpl = fetch, no
 async function apiGet(path, accessToken, fetchImpl) {
   let res
   try {
-    res = await fetchImpl(`${garminApiBase()}${path}`, { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' }, cache: 'no-store' })
+    res = await fetchImpl(`${garminUserApiBase()}${path}`, { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' }, cache: 'no-store' })
   } catch {
     throw new ImportError('Could not reach Garmin. Try again in a moment.', 502)
   }
@@ -132,7 +132,7 @@ async function apiGet(path, accessToken, fetchImpl) {
 
 /** Garmin API user id of the token's owner: the id Garmin puts in every push. */
 export async function fetchGarminUserId(accessToken, { fetchImpl = fetch } = {}) {
-  const body = await apiGet('/wellness-api/rest/user/id', accessToken, fetchImpl)
+  const body = await apiGet('/user/id', accessToken, fetchImpl)
   if (body?.userId == null || body.userId === '') throw new ImportError('Garmin returned an unexpected user response.', 502)
   return String(body.userId)
 }
@@ -140,7 +140,7 @@ export async function fetchGarminUserId(accessToken, { fetchImpl = fetch } = {})
 /** Permissions the rider granted (e.g. ['ACTIVITY_EXPORT', 'WORKOUT_IMPORT']); null when they cannot be read. */
 export async function fetchGarminPermissions(accessToken, { fetchImpl = fetch } = {}) {
   try {
-    const body = await apiGet('/wellness-api/rest/user/permissions', accessToken, fetchImpl)
+    const body = await apiGet('/user/permissions', accessToken, fetchImpl)
     return Array.isArray(body) ? body : Array.isArray(body?.permissions) ? body.permissions : null
   } catch {
     return null
@@ -151,7 +151,7 @@ export async function fetchGarminPermissions(accessToken, { fetchImpl = fetch } 
 export async function deauthorize(accessToken, { fetchImpl = fetch } = {}) {
   if (!accessToken) return false
   try {
-    const res = await fetchImpl(`${garminApiBase()}/wellness-api/rest/user/registration`, {
+    const res = await fetchImpl(`${garminUserApiBase()}/user/registration`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: 'no-store',
@@ -228,15 +228,28 @@ export function createGarminProvider({ service, userId, accessToken, fetchImpl =
       try {
         const res = await fetchImpl(ev.callback_url, { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' })
         if (res.status === 401) throw new GarminAuthError()
+        if (res.status === 410) {
+          await setStatus(id, { status: 'error', last_error: 'Garmin file was already downloaded or has expired.' })
+          return { skip: true }
+        }
+        if (res.status === 412) {
+          await setStatus(id, { status: 'error', last_error: 'Activity sharing is not allowed at Garmin.' })
+          return { skip: true }
+        }
         if (!res.ok) throw new ImportError(`Garmin file download failed (${res.status})`, 502)
         blob = await res.blob()
       } catch (err) {
         if (err instanceof ImportError) throw err
         throw new ImportError('Could not download the Garmin activity file. Try again in a moment.', 502)
       }
-      if (!blob.size) throw new ImportError(`Garmin activity ${id} has an empty file.`, 422)
-      const parsed = await analyzeFit(blob, `${id}.fit`, gearing)
-      if (!parsed?.success) throw new ImportError(`The Garmin file of activity ${id} could not be analysed.`, 422)
+      // The URL is single-use, so a file that fails from here on cannot be fetched again: settle it as an error.
+      const fail = async (message) => {
+        await setStatus(id, { status: 'error', last_error: message })
+        throw new ImportError(message, 422)
+      }
+      if (!blob.size) await fail(`Garmin activity ${id} has an empty file.`)
+      const parsed = await analyzeFit(blob, `${id}.fit`, gearing).catch(() => null)
+      if (!parsed?.success) await fail(`The Garmin file of activity ${id} could not be analysed.`)
 
       const kind = classifyGarminSport(parsed.summary)
       // Settled either way: a file that is neither cycling nor strength is never imported, and one that was

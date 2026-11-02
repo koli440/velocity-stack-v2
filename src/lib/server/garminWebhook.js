@@ -3,7 +3,7 @@
 // payloads are only acted on for Garmin user ids that belong to one of our active connections, and an activity
 // event only queues the file for our own authenticated sync, so nothing in the payload is imported directly.
 
-import { isGarminHost, parseGarminPush, permissionFlags, NO_ACTIVITY_PERMISSION_MESSAGE, NO_WORKOUT_PERMISSION_MESSAGE } from '../garmin.js'
+import { classifyGarminActivityType, isGarminHost, parseGarminPush, permissionFlags, NO_ACTIVITY_PERMISSION_MESSAGE, NO_WORKOUT_PERMISSION_MESSAGE } from '../garmin.js'
 
 async function activeConnections(service, garminUserId) {
   const { data, error } = await service
@@ -68,7 +68,8 @@ export async function handleGarminPush(service, body, { triggerSync } = {}) {
       await handlePermissions(service, conns, event.permissions)
       out.permissions++
     } else if (event.kind === 'activity_file') {
-      if (!isGarminHost(event.callbackUrl)) {
+      // The push names the sport, so sports we never import are not queued: the file URL is single-use.
+      if (!isGarminHost(event.callbackUrl) || classifyGarminActivityType(event.activityType) === 'skip') {
         out.ignored++
         continue
       }

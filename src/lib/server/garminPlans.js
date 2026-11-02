@@ -1,7 +1,7 @@
 // src/lib/server/garminPlans.js
 // Garmin Connect Training API calls for pushing planned workouts: a workout (the steps) plus a schedule entry
 // (the day on the rider's Garmin calendar). Needs the rider's WORKOUT_IMPORT permission; without it Garmin answers
-// 403 and the rider gets an actionable "reconnect" error. Payloads follow the Training API as far as it is public;
+// 403 and the rider gets an actionable "reconnect" error. Endpoints and payloads follow the Training API V2 document;
 // responses are read tolerantly (workoutId / scheduleId, bare number or object).
 
 import { PushError } from './intervalsEvents.js'
@@ -28,7 +28,7 @@ export function createGarminPlanClient({ accessToken, fetchImpl = fetch, base = 
   async function request(method, path, body) {
     let res
     try {
-      res = await fetchImpl(`${base}/training-api${path}`, {
+      res = await fetchImpl(`${base}${path}`, {
         method,
         headers: { Authorization: `Bearer ${accessToken}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
         body: body ? JSON.stringify(body) : undefined,
@@ -47,7 +47,7 @@ export function createGarminPlanClient({ accessToken, fetchImpl = fetch, base = 
       }
     }
     if (res.status === 401) throw new PushError('auth', 'Garmin rejected the connection. Reconnect Garmin in Settings → Connections.', { status: 409, fatal: true })
-    if (res.status === 403) throw new PushError('scope', RECONNECT, { status: 409, fatal: true })
+    if (res.status === 403 || res.status === 412) throw new PushError('scope', RECONNECT, { status: 409, fatal: true })
     if (res.status === 404) throw new PushError('not_found', 'Not found at Garmin.', { status: 404 })
     if (res.status === 429) throw new PushError('rate_limited', 'Garmin rate limit reached. Try again in a few minutes.', { status: 429, retryAfterSec: 300 })
     const s = await snippet(res)
@@ -57,25 +57,28 @@ export function createGarminPlanClient({ accessToken, fetchImpl = fetch, base = 
   return {
     /** @returns {Promise<string>} Garmin workout id */
     async createWorkout(workout) {
-      return idOf(await request('POST', '/workout', workout), 'workoutId')
+      return idOf(await request('POST', '/workoutportal/workout/v2', workout), 'workoutId')
     },
+    // Garmin wants the full workout with its workoutId and ownerId on update, so read the owner first.
     async updateWorkout(id, workout) {
-      await request('PUT', `/workout/${encodeURIComponent(id)}`, workout)
+      const current = await request('GET', `/training-api/workout/v2/${encodeURIComponent(id)}`)
+      const body = { ...workout, workoutId: Number(id) || id, ...(current?.ownerId != null ? { ownerId: current.ownerId } : {}) }
+      await request('PUT', `/training-api/workout/v2/${encodeURIComponent(id)}`, body)
       return String(id)
     },
     async deleteWorkout(id) {
-      await request('DELETE', `/workout/${encodeURIComponent(id)}`)
+      await request('DELETE', `/training-api/workout/v2/${encodeURIComponent(id)}`)
     },
     /** @returns {Promise<string>} schedule id */
     async createSchedule(workoutId, date) {
-      return idOf(await request('POST', '/schedule', { workoutId: Number(workoutId) || workoutId, date }), 'scheduleId')
+      return idOf(await request('POST', '/training-api/schedule/', { workoutId: Number(workoutId) || workoutId, date }), 'scheduleId')
     },
     async updateSchedule(id, workoutId, date) {
-      await request('PUT', `/schedule/${encodeURIComponent(id)}`, { workoutId: Number(workoutId) || workoutId, date })
+      await request('PUT', `/training-api/schedule/${encodeURIComponent(id)}`, { scheduleId: Number(id) || id, workoutId: Number(workoutId) || workoutId, date })
       return String(id)
     },
     async deleteSchedule(id) {
-      await request('DELETE', `/schedule/${encodeURIComponent(id)}`)
+      await request('DELETE', `/training-api/schedule/${encodeURIComponent(id)}`)
     },
   }
 }

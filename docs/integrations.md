@@ -41,14 +41,14 @@ Data model details: [data-model.md](data-model.md).
   user-permission changes; Garmin signs nothing, so the token is the shared secret, compared in constant time). The webhook only queues a pointer in
   `garmin_activity_events` (Garmin user id must match an active connection, `callbackURL` must be on `*.garmin.com`), kicks the rider's sync and returns 200; the
   sync (`garminProvider.js`) downloads the `.fit` with the rider's token, runs the same analyzer (rides and gym sessions incl. sets) and marks the event
-  imported/skipped/error (runs, swims etc. are skipped; events expire after 48 h / 5 attempts). A deregistration callback disconnects like Disconnect; a
-  permission-change callback sets/clears the sync and push warnings. Disconnect calls `DELETE /rest/user/registration` best effort. pg_cron `garmin-sync` (15 min)
+  imported/skipped/error (runs, swims etc. are skipped; events expire after 24 h; the file URL is single-use, so a 410/412 or an analysis failure settles the event as an error instead of retrying; pushes of other sports are not queued, using the Activity API appendix A `activityType`). A deregistration callback disconnects like Disconnect; a
+  permission-change callback sets/clears the sync and push warnings. Disconnect calls `DELETE /partner-gateway/rest/user/registration` best effort. pg_cron `garmin-sync` (15 min)
   is the safety net. Duplicate priority: Intervals.icu = Wahoo = Garmin > Strava.
 - **Planned workout upload to Garmin** (Training API, `src/lib/garminPlan.js`, `server/garminPlans.js`, `server/garminPush.js`): a planned ride/track workout with
-  steps becomes a Garmin workout (`POST /training-api/workout`) plus a schedule entry (`POST /training-api/schedule`); %FTP/zone targets are converted to watts
+  steps becomes a Garmin workout (`POST /workoutportal/workout/v2`, `PUT/DELETE /training-api/workout/v2/{id}`; updates read the workout's `ownerId` first) plus a schedule entry (`/training-api/schedule/`); `workoutProvider` = `workoutSourceId` = `VelocityStack`, at most 100 steps; %FTP/zone targets are converted to watts
   from `profiles.ftp_w`; workouts without steps are not sent. Manual push in the workout dialog (`/api/planned-workouts/:id/garmin`), opt-in auto push on the Garmin
   card, mapping in `planned_workout_garmin_pushes`; the existing push cron runs `runGarminPushCycle`. Needs the rider's workout-import permission.
-  The Starter specs are partner-gated: token/API base URLs are env-overridable (`GARMIN_TOKEN_URL`, `GARMIN_AUTHORIZE_URL`, `GARMIN_API_BASE`).
+  Starter limits: 100 calls/min per app and 200 calls/day per rider. Endpoint URLs are configured at https://apis.garmin.com/tools/endpoints; the URLs are env-overridable (`GARMIN_TOKEN_URL`, `GARMIN_AUTHORIZE_URL`, `GARMIN_API_BASE`). Historical backfill is not available on Starter.
 - **Disconnect** clears all credentials/tokens (Strava access is also deauthorized at Strava) and stops syncing; imported
   rides stay. Revoking the app at Strava is detected via webhook and disconnects automatically.
 - Secrets are never selectable by clients (column grants on `connections` expose only non-secret columns).
