@@ -113,6 +113,12 @@ export function manualCooldownRemaining(lastAttemptAt, now = new Date(), cooldow
 /** Summary line for the UI after a manual sync (counts first, then why it stopped, if it did). */
 export function describeSyncResult(r) {
   if (!r) return ''
+  const push = describePlannedPush(r.planned)
+  const base = describeImport(r)
+  return push ? `${base}. ${push}` : base
+}
+
+function describeImport(r) {
   const parts = []
   if (r.imported) parts.push(`${r.imported} imported`)
   if (r.upgraded) parts.push(`${r.upgraded} upgraded`)
@@ -122,6 +128,18 @@ export function describeSyncResult(r) {
   if (r.error) return counts ? `${counts}. ${r.error}` : r.error
   if (!counts) return 'Up to date'
   return counts + (r.complete === false ? ' (more to come)' : '')
+}
+
+/** Short UI text for the push part of a sync ('' when nothing happened). */
+export function describePlannedPush(r) {
+  if (!r) return ''
+  const parts = []
+  if (r.pushed) parts.push(`${r.pushed} workout${r.pushed === 1 ? '' : 's'} sent`)
+  if (r.removed) parts.push(`${r.removed} removed`)
+  if (r.failed && !r.message) parts.push(`${r.failed} failed`)
+  const counts = parts.join(', ')
+  if (r.message) return counts ? `${counts}. ${r.message}` : r.message
+  return counts
 }
 
 /** Backfill window of a connection: lower date bound and the upper bound (the cursor) to resume from.

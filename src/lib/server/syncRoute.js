@@ -8,6 +8,7 @@ import { getRequestUser } from '../supabaseServer'
 import { getServiceClient } from './connections'
 import { runIntervalsSync } from './intervalsSync'
 import { loadStravaBudget } from './stravaBudget'
+import { pushPlannedForSync } from './syncPush'
 import { appOrigin } from './appUrl'
 import { getSetting } from './stravaSetup'
 import {
@@ -178,7 +179,9 @@ export async function handleSyncRequest(req, provider) {
     const cronToken = results[0]?.more ? await getSetting(service, 'cron_token') : null
     await finishRun({ req, service, provider, results, budget, depth: 0, token: cronToken, body: { userId: user.id } })
     const { userId, ...rest } = result
-    return NextResponse.json({ success: !rest.error, ...rest })
+    // Planned workouts go out right after the import; a push problem never fails the sync.
+    const planned = await pushPlannedForSync({ service, provider, userId: user.id, until: deadline + 12000 })
+    return NextResponse.json({ success: !rest.error, ...rest, ...(planned ? { planned } : {}) })
   } catch (err) {
     return NextResponse.json({ error: err?.message || 'Sync failed' }, { status: 500 })
   }

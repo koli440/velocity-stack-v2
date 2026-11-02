@@ -61,6 +61,9 @@ Data model details: [data-model.md](data-model.md).
   rides stay. Revoking the app at Strava is detected via webhook and disconnects automatically.
 - Secrets are never selectable by clients (column grants on `connections` expose only non-secret columns).
 
+## Sync now also pushes planned workouts
+The manual `POST /api/sync/{intervals,wahoo,garmin}/run` (the "Sync now" button) imports first, then runs the same per-rider push as the cron (`src/lib/server/syncPush.js`, reusing `pushRider`/`pushWahooRider`/`pushGarminRider` with `autoPush` forced on, so the opt-in switch is not needed): planned workouts from today to +60 days, unchanged ones skipped by hash, changed ones updated, deletions applied, max 25 calls per run (protects Garmin Starter's per-rider limits), rate limits/permission errors stop the run and are shown (and stored in `connections.planned_push_error`). Strava has no push. The response carries `planned: { pushed, removed, failed, message? }`, summarised by `describeSyncResult`. A push failure never fails the import.
+
 ## Sync cadence
 - pg_cron jobs `intervals-sync` and `strava-sync` run every 15 minutes and call `POST {app_base_url}/api/sync/<provider>/run`
   through pg_net with the shared token from `public.sync_settings` (generated in the database, never in the repo).
