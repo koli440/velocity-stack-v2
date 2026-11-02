@@ -54,7 +54,7 @@ test('token expiry decision and token mapping', () => {
 test('rides are filtered and mapped from the Strava list', () => {
   const rides = filterStravaRides([
     { id: 1, sport_type: 'Ride', name: 'A', start_date: '2026-10-01T08:00:00Z', start_date_local: '2026-10-01T10:00:00Z', elapsed_time: 3600 },
-    { id: 2, type: 'Run' },
+    { id: 2, type: 'Swim' },
     { id: 3, sport_type: 'VirtualRide' },
   ])
   assert.deepEqual(rides.map((r) => r.id), [1, 3])
@@ -183,7 +183,7 @@ test('Strava provider fetchActivity maps start/elapsed from the detail and rejec
   assert.equal(out.summary.start_time, '2026-10-01T08:00:00Z')
   assert.equal(out.summary.elapsed_time_s, 5)
   assert.equal(out.title, 'Morning')
-  const runFetch = async () => new Response(JSON.stringify({ ...detail, sport_type: 'Run' }))
+  const runFetch = async () => new Response(JSON.stringify({ ...detail, sport_type: 'Swim' }))
   await assert.rejects(createStravaProvider({ accessToken: 't', fetchImpl: runFetch }).fetchActivity(7, {}), { status: 422 })
 })
 

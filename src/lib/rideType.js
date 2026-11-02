@@ -9,6 +9,20 @@ export const RIDE_TYPES = Object.freeze([
   { key: 'track', label: 'Track', hasGear: true },
 ])
 
+// Flavours detected from providers / .fit files (src/lib/sportType.js). Listed separately so the settings and
+// edit selects keep offering only Road / Track; labels and gear rules still resolve for every stored key.
+export const DETECTED_RIDE_TYPES = Object.freeze([
+  { key: 'mtb', label: 'MTB', hasGear: false },
+  { key: 'gravel', label: 'Gravel', hasGear: false },
+  { key: 'ebike', label: 'E-bike', hasGear: false },
+  { key: 'indoor', label: 'Indoor ride', hasGear: false },
+  { key: 'virtual', label: 'Virtual ride', hasGear: false },
+  { key: 'run', label: 'Run', hasGear: false },
+  { key: 'trail_run', label: 'Trail run', hasGear: false },
+  { key: 'treadmill_run', label: 'Treadmill run', hasGear: false },
+])
+const ALL_RIDE_TYPES = [...RIDE_TYPES, ...DETECTED_RIDE_TYPES]
+
 /** Unset / unknown-empty values are treated as the application default (road). */
 export function effectiveRideType(value) {
   return typeof value === 'string' && value ? value : DEFAULT_RIDE_TYPE
@@ -16,16 +30,16 @@ export function effectiveRideType(value) {
 
 export function rideTypeLabel(value) {
   const key = effectiveRideType(value)
-  return RIDE_TYPES.find((t) => t.key === key)?.label ?? key
+  return ALL_RIDE_TYPES.find((t) => t.key === key)?.label ?? key
 }
 
 /** Gear UI and fixed-gear gear stats apply to track rides only. */
 export function rideTypeHasGear(value) {
-  return RIDE_TYPES.find((t) => t.key === effectiveRideType(value))?.hasGear === true
+  return ALL_RIDE_TYPES.find((t) => t.key === effectiveRideType(value))?.hasGear === true
 }
 
 export function isKnownRideType(value) {
-  return RIDE_TYPES.some((t) => t.key === value)
+  return ALL_RIDE_TYPES.some((t) => t.key === value)
 }
 
 /**

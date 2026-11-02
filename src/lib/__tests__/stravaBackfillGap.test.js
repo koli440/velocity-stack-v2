@@ -12,7 +12,7 @@ function makeActivities(n = 260) {
   const out = []
   for (let i = 0; i < n; i++) {
     const start = new Date(NOW.getTime() - (i + 1) * 1.4 * DAY)
-    out.push({ id: 1000 + i, type: i % 10 === 5 ? 'Run' : 'Ride', name: `Ride ${i}`, start_date: start.toISOString(), start_date_local: start.toISOString().replace('Z', ''), moving_time: 3600, elapsed_time: 3700, distance: 30000 })
+    out.push({ id: 1000 + i, type: i % 10 === 5 ? 'Swim' : 'Ride', name: `Ride ${i}`, start_date: start.toISOString(), start_date_local: start.toISOString().replace('Z', ''), moving_time: 3600, elapsed_time: 3700, distance: 30000 })
   }
   return out
 }

@@ -10,6 +10,7 @@
 
 import { groupNotesByDay } from './calendarNotes.js'
 import { groupRacesByDay } from './calendarRaces.js'
+import { activitySport } from './sportType.js'
 
 export const CALENDAR_ACTIVITY_COLUMNS = [
   'id',
@@ -23,6 +24,7 @@ export const CALENDAR_ACTIVITY_COLUMNS = [
   'training_load',
   'is_race',
   'activity_type',
+  'ride_type',
 ].join(', ')
 
 export function dayKey(date) {
@@ -95,6 +97,7 @@ export function parseMonthParam(value) {
 export function activityToEvent(row) {
   const date = new Date(row.activity_date)
   if (Number.isNaN(date.getTime())) return null
+  const sport = activitySport(row)
   let metric = null
   if (row.avg_power_w) metric = { label: 'W', value: `${Math.round(row.avg_power_w)} W` }
   else if (row.avg_speed_kmh) metric = { label: 'km/h', value: `${Number(row.avg_speed_kmh).toFixed(1)} km/h` }
@@ -105,7 +108,11 @@ export function activityToEvent(row) {
     kind: 'activity',
     date,
     title: row.title || 'Untitled session',
-    discipline: row.activity_type === 'gym' ? 'gym' : row.track_id ? 'track' : 'ride',
+    discipline: row.activity_type === 'gym' ? 'gym' : row.activity_type === 'run' ? 'run' : row.track_id ? 'track' : 'ride',
+    sport: sport.key,
+    sportLabel: sport.label,
+    sportIcon: sport.icon,
+    sportTone: sport.tone,
     distanceM: Number(row.distance_m) || 0,
     durationS: Number(row.moving_time_s) || 0,
     metric,
@@ -114,8 +121,12 @@ export function activityToEvent(row) {
   }
 }
 
-/** Chip label of a completed activity: "Gym", "Track" (velodrome session) or "Ride". Visual only, track counts as a ride. */
-export const activityChipLabel = (event) => (event?.discipline === 'gym' ? 'Gym' : event?.discipline === 'track' ? 'Track' : 'Ride')
+/**
+ * Chip label of a completed activity: the sport ("Ride", "MTB", "Gravel", "Run", "Trail run"...), "Gym" or "Track"
+ * (velodrome session). Visual only: every ride flavour counts as a ride.
+ */
+export const activityChipLabel = (event) =>
+  event?.sportLabel || (event?.discipline === 'gym' ? 'Gym' : event?.discipline === 'track' ? 'Track' : event?.discipline === 'run' ? 'Run' : 'Ride')
 
 /** Groups events by local day key, sorted by time within each day. */
 export function groupEventsByDay(events) {

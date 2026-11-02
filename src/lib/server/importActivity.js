@@ -10,6 +10,7 @@ import { ImportError, DUPLICATE_MESSAGE } from './importErrors.js'
 import { autoLinkActivity, dayOfLocalStamp } from '../plannedWorkouts.js'
 import { effectiveRideType, rideTypeHasGear, isKnownRideType } from '../rideType.js'
 import { prepareAnalysis } from '../gymAnalysis.js'
+import { resolveRideType } from '../sportType.js'
 import { saveGymDetail } from '../gymDetail.js'
 
 /**
@@ -67,11 +68,14 @@ export async function importActivity({
     gearing: { chainring, cog, isFixedGear },
     analyzeFit,
   })
-  // Providers can decline an activity (e.g. a Garmin run): nothing is imported.
+  // Providers can decline an activity (a sport we do not import): nothing is imported.
   if (fetched?.skip) return { status: 'skipped', activity: null }
   // Gym sessions keep only duration / heart rate / calories; rides pass through untouched.
-  const { activityType, summary, curves, time_series, gym } = prepareAnalysis(fetched, fetched.activityType)
+  const prepared = prepareAnalysis(fetched, fetched.activityType, fetched.sport)
+  const { activityType, summary, curves, time_series, gym } = prepared
   const isGym = activityType === 'gym'
+  // Detected flavour (MTB, gravel, trail run...) beats the rider's default; plain road keeps their choice.
+  const storedRideType = isGym ? null : resolveRideType(prepared.sport, rideType)
 
   const existing = await loadExistingActivityFingerprints(supabase, userId)
   const plan = planImport(
@@ -90,7 +94,7 @@ export async function importActivity({
     userId,
     trackId: isGym ? null : options.trackId || null,
     activityType,
-    rideType,
+    rideType: storedRideType,
     chainring,
     cog,
     crankLengthMm: prof.crank_length_mm || 165.0,

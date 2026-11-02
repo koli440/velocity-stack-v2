@@ -17,7 +17,7 @@ test('ride type: unset is road, only track has gear UI', () => {
   assert.equal(rideTypeHasGear('road'), false)
   assert.equal(rideTypeHasGear('track'), true)
   assert.equal(rideTypeLabel('track'), 'Track')
-  assert.equal(rideTypeLabel('gravel'), 'gravel')
+  assert.equal(rideTypeLabel('zzz'), 'zzz')
 })
 
 test('resolveGears falls back to the legacy chainring/cog as a virtual primary', () => {

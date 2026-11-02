@@ -40,7 +40,8 @@ import { updateActivityGear } from '../../../lib/coaching'
 import { computeDurationalCurve } from '../../../lib/streamAnalysis'
 import ActivityComments from '../../../components/ActivityComments'
 import GymSessionSection from '../../../components/GymSessionSection'
-import { isTrackActivity } from '../../../lib/activityType'
+import { isTrackActivity, isRunActivity } from '../../../lib/activityType'
+import { activitySport, isSportFlavour, SPORT_TEXT_CLASS } from '../../../lib/sportType'
 
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
   ssr: false,
@@ -369,11 +370,16 @@ function ActivityDetail() {
           ) : null}
           <div className="space-y-1 min-w-0">
             <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-              {activity.title || (activity.activity_type === 'gym' ? 'Gym Session' : 'Velodrome Session')}
+              {activity.title || (activity.activity_type === 'gym' ? 'Gym Session' : isRunActivity(activity) ? activitySport(activity).label : 'Velodrome Session')}
             </h1>
             {activity.activity_type === 'gym' && (
               <p className="mt-1 text-xs font-bold text-violet-600 dark:text-violet-400" data-testid="detail-gym-tag">
                 Gym session{activity.calories ? ` · ${Math.round(activity.calories)} kcal` : ''}
+              </p>
+            )}
+            {isSportFlavour(activity) && (
+              <p className={`mt-1 inline-flex items-center gap-1 text-xs font-bold ${SPORT_TEXT_CLASS[activitySport(activity).tone]}`} data-testid="detail-sport-tag">
+                <Icon name={activitySport(activity).icon} size={13} />{activitySport(activity).label}
               </p>
             )}
             {isTrackActivity(activity) && (

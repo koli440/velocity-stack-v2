@@ -65,7 +65,7 @@ test('Strava / Intervals / Wahoo listings: rides unchanged, gym tagged', () => {
   const strava = [
     { id: 1, sport_type: 'Ride', name: 'r', start_date: '2027-01-01T00:00:00Z' },
     { id: 2, sport_type: 'WeightTraining', name: 'g', start_date: '2027-01-01T00:00:00Z', average_heartrate: 110, calories: 200 },
-    { id: 3, sport_type: 'Run', name: 'x' },
+    { id: 3, sport_type: 'Swim', name: 'x' },
   ]
   assert.equal(filterStravaRides(strava).length, 1)
   const s = filterStravaActivities(strava)
@@ -77,7 +77,7 @@ test('Strava / Intervals / Wahoo listings: rides unchanged, gym tagged', () => {
   const icu = [
     { id: 'a', type: 'Ride', name: 'r' },
     { id: 'b', type: 'WeightTraining', name: 'g' },
-    { id: 'c', type: 'Run' },
+    { id: 'c', type: 'Swim' },
   ]
   assert.equal(filterRides(icu).length, 1)
   const i = filterActivities(icu)
@@ -87,7 +87,7 @@ test('Strava / Intervals / Wahoo listings: rides unchanged, gym tagged', () => {
   const wahoo = [
     { id: 1, workout_type_id: 0, workout_summary: { file: { url: 'u' } } },
     { id: 2, workout_type_id: 42, starts: '2027-01-01T10:00:00Z', workout_summary: { duration_total_accum: '1800', calories_accum: '210' } },
-    { id: 3, workout_type_id: 5, workout_summary: { file: { url: 'u' } } },
+    { id: 3, workout_type_id: 25, workout_summary: { file: { url: 'u' } } },
   ]
   assert.ok(isImportableWorkout(wahoo[1]))
   const w = filterWahooRides(wahoo)

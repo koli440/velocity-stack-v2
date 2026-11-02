@@ -4,7 +4,7 @@
 // friendly errors, derives status / labels, suggests activity matches and builds the readable structure summary.
 
 import { addDays, dayKey, parseDayKey } from './calendar.js'
-import { isGymActivity } from './activityType.js'
+import { isGymActivity, isRunActivity } from './activityType.js'
 import { ftpAt } from './ftpHistory.js'
 import { ltFromHistoryEntry, resolveLtAt } from './lactateThresholds.js'
 import { FTP_LT1_FRACTION, FTP_LT2_FRACTION, computeZones, resolveZonesAt, zonePctsFromEntry } from './powerZones.js'
@@ -277,7 +277,7 @@ export const AUTO_LINK_DURATION_TOLERANCE = 0.25
 export const AUTO_LINK_MARGIN = 0.1
 
 /** The calendar derives the discipline of an activity from its track. */
-export const activityDiscipline = (a) => (isGymActivity(a) ? 'gym' : a?.track_id || a?.trackId ? 'track' : 'ride')
+export const activityDiscipline = (a) => (isGymActivity(a) ? 'gym' : isRunActivity(a) ? 'run' : a?.track_id || a?.trackId ? 'track' : 'ride')
 
 /**
  * Picks the planned workout a NEW activity should be linked to automatically, or null (then the user still
@@ -291,7 +291,8 @@ export const activityDiscipline = (a) => (isGymActivity(a) ? 'gym' : a?.track_id
  *     that beats the runner-up by AUTO_LINK_MARGIN; an exact tie goes to the earliest created; else null.
  */
 export function pickAutoLinkCandidate(workouts, activity, localDay) {
-  if (!activity) return null
+  // Planned workouts are cycling / gym sessions: a run never completes one.
+  if (!activity || isRunActivity(activity)) return null
   const gymActivity = isGymActivity(activity)
   // Gym sessions only complete gym workouts and rides never complete a gym workout.
   const open = (workouts || []).filter(
@@ -374,7 +375,7 @@ export const dayOfLocalStamp = (stamp) => {
 export function linkableActivities(workout, workouts, activities) {
   const linkedElsewhere = new Set((workouts || []).filter((w) => w.activity_id && w.id !== workout.id).map((w) => w.activity_id))
   return (activities || [])
-    .filter((a) => a && a.kind !== 'planned' && dayKey(a.date) === workout.workout_date && !linkedElsewhere.has(a.id) && (a.discipline === 'gym') === (workout.discipline === 'gym'))
+    .filter((a) => a && a.kind !== 'planned' && dayKey(a.date) === workout.workout_date && a.discipline !== 'run' && !linkedElsewhere.has(a.id) && (a.discipline === 'gym') === (workout.discipline === 'gym'))
     .sort((a, b) => (b.discipline === workout.discipline) - (a.discipline === workout.discipline) || a.date - b.date || String(a.id).localeCompare(String(b.id)))
 }
 

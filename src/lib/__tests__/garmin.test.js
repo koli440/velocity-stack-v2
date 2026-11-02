@@ -80,7 +80,8 @@ test('only Garmin https hosts are fetched', () => {
 test('sport classification and local stamp', () => {
   assert.equal(classifyGarminSport({ sport: 'cycling' }), 'ride')
   assert.equal(classifyGarminSport({ activity_type: 'gym', sport: 'training' }), 'gym')
-  assert.equal(classifyGarminSport({ sport: 'running' }), 'skip')
+  assert.equal(classifyGarminSport({ sport: 'running' }), 'run')
+  assert.equal(classifyGarminSport({ sport: 'swimming' }), 'skip')
   assert.equal(localStampFromSeconds(0, 0), null)
   assert.equal(localStampFromSeconds(1767225600, 3600), '2026-01-01T01:00:00')
 })
@@ -188,16 +189,18 @@ test('user endpoints use the partner gateway and tokens refresh 600 s early', ()
 test('activity types follow the Activity API appendix', () => {
   for (const t of ['CYCLING', 'ROAD_BIKING', 'VIRTUAL_RIDE', 'E_BIKE_MOUNTAIN', 'GRAVEL_CYCLING', 'TRACK_CYCLING']) assert.equal(classifyGarminActivityType(t), 'ride', t)
   assert.equal(classifyGarminActivityType('STRENGTH_TRAINING'), 'gym')
-  for (const t of ['RUNNING', 'LAP_SWIMMING', 'HANDCYCLING', 'BOATING_V2']) assert.equal(classifyGarminActivityType(t), 'skip', t)
+  for (const t of ['MOUNTAIN_BIKING', 'E_BIKE_MOUNTAIN', 'INDOOR_CYCLING', 'HANDCYCLING', 'CYCLOCROSS']) assert.equal(classifyGarminActivityType(t), 'ride', t)
+  for (const t of ['RUNNING', 'TRAIL_RUNNING', 'TREADMILL_RUNNING', 'INDOOR_RUNNING', 'RUNNING_V2']) assert.equal(classifyGarminActivityType(t), 'run', t)
+  for (const t of ['LAP_SWIMMING', 'WALKING', 'BOATING_V2']) assert.equal(classifyGarminActivityType(t), 'skip', t)
   assert.equal(classifyGarminActivityType(undefined), null)
 })
 
 test('webhook does not queue sports that are never imported', async () => {
   const sb = fakeSupabase({ connections: [gconn()], garmin_activity_events: [] })
   const f = (id, activityType) => ({ userId: 'g1', summaryId: id, fileType: 'FIT', callbackURL: `https://apis.garmin.com/f/${id}`, activityType })
-  const r = await handleGarminPush(sb, { activityFiles: [f('a', 'RUNNING'), f('b', 'ROAD_BIKING'), f('c', undefined)] })
-  assert.equal(r.activities, 2)
-  assert.deepEqual(sb.db.garmin_activity_events.map((e) => e.summary_id), ['b', 'c'])
+  const r = await handleGarminPush(sb, { activityFiles: [f('a', 'LAP_SWIMMING'), f('b', 'MOUNTAIN_BIKING'), f('c', undefined), f('d', 'TRAIL_RUNNING')] })
+  assert.equal(r.activities, 3)
+  assert.deepEqual(sb.db.garmin_activity_events.map((e) => [e.summary_id, e.activity_type]), [['b', 'MOUNTAIN_BIKING'], ['c', null], ['d', 'TRAIL_RUNNING']])
 })
 
 test('provider settles single-use downloads that answer 410 or 412 instead of retrying', async () => {
@@ -248,4 +251,24 @@ test('a manual virtual cycling file is queued, and pushes are logged without cal
   assert.equal(sb.db.garmin_activity_events.length, 1)
   assert.ok(logs.some((m) => m.includes('queued activity 24941444197-file')))
   assert.ok(logs.every((m) => !m.includes('secret-cb')))
+})
+
+test('provider imports MTB and run files with the pushed type, and skips other sports', async () => {
+  const ev = (type) => ({ user_id: 'u1', summary_id: 's1', callback_url: 'https://apis.garmin.com/f/1', start_time_s: 1000, attempts: 0, status: 'pending', activity_type: type })
+  const run = async (type, fit) => {
+    const sb = fakeSupabase({ garmin_activity_events: [ev(type)] })
+    const p = createGarminProvider({ service: sb, userId: 'u1', accessToken: 't', fetchImpl: async () => ({ ok: true, status: 200, blob: async () => new Blob(['x']) }) })
+    const r = await p.fetchActivity('s1', { analyzeFit: async () => ({ success: true, summary: fit, curves: {}, time_series: {} }) })
+    return { r, status: sb.db.garmin_activity_events[0].status }
+  }
+  const mtb = await run('MOUNTAIN_BIKING', { sport: 'cycling' })
+  assert.equal(mtb.r.sport, 'mtb')
+  assert.equal(mtb.status, 'imported')
+  const trail = await run('TRAIL_RUNNING', { sport: 'running', activity_type: 'run' })
+  assert.equal(trail.r.sport, 'trail_run')
+  const fallback = await run(null, { sport: 'running', sub_sport: 'treadmill' })
+  assert.equal(fallback.r.sport, 'treadmill_run')
+  const swim = await run(null, { sport: 'swimming' })
+  assert.equal(swim.r.skip, true)
+  assert.equal(swim.status, 'skipped')
 })

@@ -165,6 +165,7 @@ test('fetch pages past the row cap, filters by owner and reads the first day', a
       const b = {
         select: () => b,
         eq: (c, v) => ((q.filters[c] = v), b),
+        in: (c, v) => ((q.filters[c] = v), b),
         gte: () => b,
         order: () => b,
         limit: (n) => ((q.limit = n), b),

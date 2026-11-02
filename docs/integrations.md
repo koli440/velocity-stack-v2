@@ -94,6 +94,9 @@ Each card shows a health line (Syncing normally / Sync looks delayed after 60 mi
 - Gym sessions without a file or streams (e.g. manual Strava workouts) are imported summary-only from the list fields (duration, avg/max HR, calories). Heart-rate series come from the file or streams when available.
 - Not imported yet: exercises, sets, reps, weights (layer 2).
 
+## Sport types (all sources)
+All sources share one mapping (`src/lib/sportType.js`). Imported: every cycling variant (road, MTB incl. enduro/downhill, gravel/cyclocross, e-bike, indoor/virtual) and running (run, trail/ultra, treadmill/indoor/virtual), plus gym sessions. Strava: `*Ride`/`*Run` sport types; Intervals.icu: activity `type`; Wahoo: workout_type_id (run 1, 3, 4, 5, 67, 71; cycling 0, 11-16, 49, 61, 64, 68, 70); Garmin: Appendix A types (`_V2` stripped), else the FIT sport; .fit upload/bulk: FIT sport/sub_sport. Walking, hiking, swimming and other sports are ignored. Run load is an hrTSS estimate (needs HR and LT2 HR); runs without HR are not counted.
+
 ## De-duplication and priority
 - Same external id from the same provider is imported once (unique index).
 - A ride matching an existing one (same user, start time and duration within 5 s, or same `.fit` hash) is not imported again.

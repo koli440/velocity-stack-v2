@@ -11,6 +11,7 @@
 
 import { buildActivityInsert } from './activityRecord.js'
 import { prepareAnalysis } from './gymAnalysis.js'
+import { resolveRideType } from './sportType.js'
 import { saveGymDetail } from './gymDetail.js'
 import { autoLinkActivity, localDayOf } from './plannedWorkouts.js'
 import { findDuplicate } from './activityDuplicates.js'
@@ -194,6 +195,7 @@ export async function importSingleFitFile({
       timeSeries: prepared.time_series,
       curvesData: prepared.curves,
       activityType: prepared.activityType,
+      rideType: resolveRideType(prepared.sport, meta.rideType),
       rawFileUrl,
       fileSha256,
       fallbackActivityDate,

@@ -5,6 +5,7 @@
 // Endpoints follow Garmin's "OAuth2 PKCE 2.0", "Activity API 2.1" and "Training API V2 2.0" documents; they stay
 // overridable by env (GARMIN_AUTHORIZE_URL, GARMIN_TOKEN_URL, GARMIN_API_BASE) for testing.
 
+import { sportFromFit, sportFromGarminType, sportInfo } from './sportType.js'
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 
 export const GARMIN_AUTHORIZE_URL = 'https://connect.garmin.com/oauth2Confirm'
@@ -92,12 +93,17 @@ export const NO_WORKOUT_PERMISSION_MESSAGE =
 
 // ---- Activities ----
 
-/** 'gym' | 'ride' | 'skip' for an analysed .fit summary: only cycling and strength sessions are imported. */
+/** 'gym' | 'ride' | 'run' | 'skip' for an analysed .fit summary; use garminSportFromSummary for the flavour. */
 export function classifyGarminSport(summary) {
-  if (summary?.activity_type === 'gym') return 'gym'
-  const sport = String(summary?.sport ?? '').toLowerCase()
-  if (!sport || sport.includes('cycling') || sport.includes('biking') || sport === 'e_biking') return 'ride'
-  return 'skip'
+  const sport = garminSportFromSummary(summary)
+  return sport ? sportInfo(sport).activityType : 'skip'
+}
+
+/** Canonical sport (src/lib/sportType.js) for an analysed .fit summary; a file without a sport is treated as a ride. */
+export function garminSportFromSummary(summary) {
+  const fit = sportFromFit(summary)
+  if (fit) return fit
+  return String(summary?.sport ?? '') ? null : 'road'
 }
 
 /** Local wall-clock "YYYY-MM-DDTHH:mm:ss" from epoch seconds plus Garmin's UTC offset in seconds; null without a start. */
@@ -108,21 +114,15 @@ export function localStampFromSeconds(startSeconds, offsetSeconds) {
   return new Date((s + (Number.isFinite(off) ? off : 0)) * 1000).toISOString().slice(0, 19)
 }
 
-const GARMIN_RIDE_TYPES = new Set([
-  'CYCLING', 'BMX', 'CYCLOCROSS', 'DOWNHILL_BIKING', 'E_BIKE_FITNESS', 'E_BIKE_MOUNTAIN', 'E_ENDURO_MTB', 'ENDURO_MTB',
-  'GRAVEL_CYCLING', 'INDOOR_CYCLING', 'MOUNTAIN_BIKING', 'RECUMBENT_CYCLING', 'ROAD_BIKING', 'TRACK_CYCLING', 'VIRTUAL_RIDE',
-])
-
 /**
- * Activity API appendix A name (activityType in the push) -> 'ride' | 'gym' | 'skip'; null when absent (decide from
- * the file). Hand cycling, running, swimming and the other sports are not imported.
+ * Activity API appendix A name (activityType in the push) -> 'ride' | 'run' | 'gym' | 'skip'; null when absent (decide
+ * from the file). Cycling and running variants are imported; swimming and the other sports are not.
  */
 export function classifyGarminActivityType(activityType) {
-  const t = String(activityType ?? '').trim().toUpperCase()
+  const t = String(activityType ?? '').trim()
   if (!t) return null
-  if (GARMIN_RIDE_TYPES.has(t)) return 'ride'
-  if (t === 'STRENGTH_TRAINING') return 'gym'
-  return 'skip'
+  const sport = sportFromGarminType(t)
+  return sport ? sportInfo(sport).activityType : 'skip'
 }
 
 // ---- Webhooks ----

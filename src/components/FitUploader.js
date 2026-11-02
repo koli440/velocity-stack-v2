@@ -15,6 +15,7 @@ import GearPicker, { useGearState } from './GearPicker'
 import RideTypeSelect, { useRideTypeState } from './RideTypeSelect'
 import { rideTypeHasGear } from '../lib/rideType'
 import { parseGear } from '../lib/gear'
+import { resolveRideType } from '../lib/sportType'
 import Icon from './Icon'
 
 export default function FitUploader({
@@ -174,8 +175,8 @@ export default function FitUploader({
       const activityRecord = buildActivityInsert(prepared.summary, {
         title,
         userId: currentUser.id,
-        trackId: selectedTrack,
-        rideType,
+        trackId: prepared.activityType === 'run' ? null : selectedTrack,
+        rideType: resolveRideType(prepared.sport, rideType),
         chainring: parseGear(chainring, cog).chainring,
         cog: parseGear(chainring, cog).cog,
         crankLengthMm: 165.0,

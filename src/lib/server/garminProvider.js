@@ -7,8 +7,9 @@
 // Env (hosting settings, never committed): GARMIN_CLIENT_ID, GARMIN_CLIENT_SECRET (+ GARMIN_WEBHOOK_TOKEN).
 
 import { ImportError } from './importErrors.js'
+import { sportFromGarminType, sportInfo } from '../sportType.js'
 import {
-  classifyGarminSport,
+  garminSportFromSummary,
   garminUserApiBase,
   garminTokenUrl,
   isGarminHost,
@@ -192,7 +193,7 @@ export function createGarminProvider({ service, userId, accessToken, fetchImpl =
       const since = new Date(now() - EVENT_MAX_AGE_MS).toISOString()
       const { data, error } = await service
         .from('garmin_activity_events')
-        .select('summary_id, callback_url, start_time_s, start_offset_s, attempts')
+        .select('summary_id, callback_url, start_time_s, start_offset_s, attempts, activity_type')
         .eq('user_id', userId)
         .eq('status', 'pending')
         .lt('attempts', MAX_EVENT_ATTEMPTS)
@@ -210,7 +211,7 @@ export function createGarminProvider({ service, userId, accessToken, fetchImpl =
       if (!ev) {
         const { data } = await service
           .from('garmin_activity_events')
-          .select('summary_id, callback_url, start_time_s, start_offset_s, attempts')
+          .select('summary_id, callback_url, start_time_s, start_offset_s, attempts, activity_type')
           .eq('user_id', userId)
           .eq('summary_id', id)
           .maybeSingle()
@@ -254,15 +255,18 @@ export function createGarminProvider({ service, userId, accessToken, fetchImpl =
       const parsed = await analyzeFit(blob, `${id}.fit`, gearing).catch(() => null)
       if (!parsed?.success) await fail(`The Garmin file of activity ${id} could not be analysed.`)
 
-      const kind = classifyGarminSport(parsed.summary)
-      console.info(`Garmin import: activity ${id} analysed as ${kind} (sport=${parsed.summary?.sport ?? 'unknown'}, ${blob.size} bytes)${kind === 'skip' ? ': skipped, not a ride or gym session' : ''}`)
-      // Settled either way: a file that is neither cycling nor strength is never imported, and one that was
+      // The pushed Appendix A type names the flavour (MTB, gravel, trail run...); the file's own sport is the fallback.
+      const sport = sportFromGarminType(ev.activity_type) || garminSportFromSummary(parsed.summary)
+      const kind = sport ? sportInfo(sport).activityType : 'skip'
+      console.info(`Garmin import: activity ${id} analysed as ${sport ?? 'skip'} (type=${ev.activity_type ?? 'unknown'}, sport=${parsed.summary?.sport ?? 'unknown'}, ${blob.size} bytes)${kind === 'skip' ? ': skipped, not a cycling, running or gym session' : ''}`)
+      // Settled either way: a file that is neither cycling, running nor strength is never imported, and one that was
       // analysed is not downloaded again (the import itself skips duplicates).
       await setStatus(id, { status: kind === 'skip' ? 'skipped' : 'imported', last_error: null })
       if (kind === 'skip') return { skip: true }
 
       const ride = eventToRide(ev)
       return {
+        sport,
         ...(kind === 'gym' ? { activityType: 'gym', strength: parsed.strength } : {}),
         title: null,
         startDateLocal: ride.start_date_local,
