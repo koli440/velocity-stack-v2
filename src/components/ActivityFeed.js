@@ -20,6 +20,7 @@ import { currentReturnTo, withReturnTo } from '../lib/returnTo'
 import { supabase } from '../lib/supabase'
 import { fetchCommentInfo, fetchUnreadCounts, commentCountLabel } from '../lib/activityComments'
 import { rideTypeHasGear } from '../lib/rideType'
+import { isTrackActivity } from '../lib/activityType'
 
 // Intensity bar fill width (0-100%) driven by intensity_factor (IF ~1.0+ = full).
 function intensityPct(intensityFactor) {
@@ -315,6 +316,11 @@ export default function ActivityFeed({
                     <span className="inline-block px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 text-[10px] font-black uppercase tracking-wider">
                       Gym{act.calories ? ` · ${Math.round(act.calories)} kcal` : ''}
                     </span>
+                  </div>
+                )}
+                {isTrackActivity(act) && (
+                  <div className="mt-1" data-testid="feed-track-tag">
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider">Track</span>
                   </div>
                 )}
                 {act.is_race === true && <div className="mt-1"><RaceBadge testId="feed-race-tag" /></div>}

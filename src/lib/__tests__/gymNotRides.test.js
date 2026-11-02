@@ -13,13 +13,13 @@ const ride = { id: 'r', kind: 'activity', date: at(8), discipline: 'ride', durat
 const track = { id: 't', kind: 'activity', date: at(9), discipline: 'track', durationS: 3600 }
 const gym = { id: 'g', kind: 'activity', date: at(18), discipline: 'gym', durationS: 3600 }
 
-test('calendar labels: gym sessions are Gym, rides and track sessions stay Ride', () => {
+test('calendar labels: gym sessions are Gym, track sessions are Track, rides stay Ride', () => {
   const e = (row) => activityToEvent({ id: 1, activity_date: '2027-01-05T10:00:00Z', ...row })
   assert.equal(activityChipLabel(e({ activity_type: 'gym' })), 'Gym')
   assert.equal(activityChipLabel(e({ activity_type: 'gym', track_id: 'x' })), 'Gym')
   assert.equal(activityChipLabel(e({ activity_type: 'ride' })), 'Ride')
   assert.equal(activityChipLabel(e({})), 'Ride')
-  assert.equal(activityChipLabel(e({ track_id: 'x' })), 'Ride')
+  assert.equal(activityChipLabel(e({ track_id: 'x' })), 'Track')
   assert.equal(e({ track_id: 'x' }).discipline, 'track')
 })
 
@@ -76,4 +76,15 @@ test('Strava repair only looks at rides, never gym sessions', async () => {
 
 test('session search still finds gym sessions by title', () => {
   assert.match(buildSessionSearch('legs').orFilter, /title\.ilike/)
+})
+
+test('track sessions get their own label but stay rides', async () => {
+  const { isTrackActivity, normalizeActivityType } = await import('../activityType.js')
+  assert.equal(isTrackActivity({ activity_type: 'ride', track_id: 'x' }), true)
+  assert.equal(isTrackActivity({ track_id: null }), false)
+  assert.equal(isTrackActivity({ activity_type: 'gym', track_id: 'x' }), false)
+  assert.equal(normalizeActivityType('ride'), 'ride')
+  const e = activityToEvent({ id: 1, activity_date: '2027-01-05T10:00:00Z', track_id: 'x' })
+  assert.equal(activityChipLabel(e), 'Track')
+  assert.equal(activityChipLabel({ discipline: 'ride' }), 'Ride')
 })
