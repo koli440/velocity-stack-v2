@@ -132,16 +132,19 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <button type="button" disabled={busy} onClick={connectStrava} className={`${primaryBtn} bg-[#fc4c02] hover:bg-[#e04400]`}>
-              {busy ? 'Redirecting…' : 'Connect Strava'}
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={connectIntervalsOAuth}
-              className={`${primaryBtn} bg-slate-900 dark:bg-emerald-500 dark:text-slate-950 hover:opacity-90`}
-            >
+            <Link href="/connections" className={`${primaryBtn} bg-slate-900 dark:bg-emerald-500 dark:text-slate-950 hover:opacity-90 text-center`}>
+              Choose your ride source
+            </Link>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Garmin, Wahoo and SRM come first: Wahoo connects directly, SRM and others import .fit files. Zwift or MyWhoosh? Use Intervals.icu as the bridge.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <button type="button" disabled={busy} onClick={connectIntervalsOAuth} className={linkBtn}>
               Connect Intervals.icu
+            </button>
+            <button type="button" disabled={busy} onClick={connectStrava} className={linkBtn}>
+              {busy ? 'Redirecting…' : 'Connect Strava (limited)'}
             </button>
           </div>
           <button
@@ -181,10 +184,10 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
           )}
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
+            <Link href="/import-help" className={linkBtn}>Using an SRM? Import .fit files</Link>
             <button type="button" onClick={openAdd} className={linkBtn}>Upload .fit</button>
             <button type="button" onClick={openAdd} className={linkBtn}>Import history</button>
-            <Link href="/import-help" className={linkBtn}>Using an SRM PC8?</Link>
-            <Link href="/settings" className={linkBtn}>More options in Settings</Link>
+            <Link href="/connections" className={linkBtn}>All connections</Link>
           </div>
         </>
       ) : (
@@ -211,7 +214,7 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
               {busy ? 'Syncing…' : state === 'importing' ? 'Sync now' : 'Retry sync'}
             </button>
             <button type="button" onClick={openAdd} className={linkBtn}>Upload .fit</button>
-            <Link href="/settings" className={linkBtn}>Connection settings</Link>
+            <Link href="/connections" className={linkBtn}>Connections</Link>
           </div>
         </>
       )}

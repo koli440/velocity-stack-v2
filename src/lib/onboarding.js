@@ -17,11 +17,11 @@ This short tour takes about a minute. You can skip it now and reopen it any time
   {
     id: 'data',
     title: 'Get your rides in',
-    body: `Connect **Intervals.icu** or **Strava** and your rides sync automatically, or upload FIT files by hand with **Add / Sync** at the top.
+    body: `Connect **Garmin**, **Wahoo**, **SRM**, **Intervals.icu** or **Strava**, in that order of preference, and your rides sync automatically, or upload FIT files by hand with **Add / Sync** at the top. SRM has no cloud sync: import its .fit files. Zwift and MyWhoosh rides arrive through Intervals.icu.
 
 - Pick how far back to import when you connect.
 - Rides you already have are not duplicated.`,
-    links: [{ label: 'Connect a data source', href: '/settings' }],
+    links: [{ label: 'Connect a data source', href: '/connections' }],
   },
   {
     id: 'physiology',
@@ -83,7 +83,7 @@ recovery 90sec @ <150W
 
 // Checklist: `done(facts)` reads facts derived from the database (see fetchOnboardingFacts).
 export const CHECKLIST_ITEMS = [
-  { id: 'source', label: 'Connect a data source', hint: 'Intervals.icu or Strava', href: '/settings', done: (f) => f.hasConnection },
+  { id: 'source', label: 'Connect a data source', hint: 'Garmin, Wahoo, SRM, Intervals.icu or Strava', href: '/connections', done: (f) => f.hasConnection },
   { id: 'ride', label: 'Import your first ride', hint: 'Sync, or upload a FIT file', href: '/', done: (f) => f.activityCount > 0 },
   { id: 'ftp', label: 'Set your FTP', hint: 'Drives zones and intensity', href: '/settings#physiology', done: (f) => f.hasFtp },
   { id: 'weight', label: 'Set your weight', hint: 'Drives every W/kg figure', href: '/settings#physiology', done: (f) => f.hasWeight },

@@ -12,7 +12,6 @@ import {
   syncHealth,
 } from '../lib/connections'
 import { describeSyncResult, backfillProgressText } from '../lib/syncPlan'
-import Icon from './Icon'
 import PlannedPushSetting from './PlannedPushSetting'
 
 const BACKFILL_OPTIONS = [
@@ -60,7 +59,7 @@ const OAUTH_PROVIDERS = {
     start: startStravaAuthorize,
     flagMessage: stravaFlagMessage,
     buttonCls: 'bg-[#fc4c02]',
-    description: 'Import rides from Strava automatically. Rides that also come from Intervals.icu are kept once, from Intervals.icu.',
+    description: 'Secondary source: Strava caps how much of its API can be read, so prefer a direct source above when you can. Imports rides from Strava automatically. Rides that also come from Intervals.icu are kept once, from Intervals.icu.',
     notice: 'New rides arrive within moments, with a check about every 15 minutes.',
     setup: 'an administrator needs to add the Strava app credentials',
   },
@@ -271,7 +270,7 @@ function OAuthProviderCard({ userId, provider }) {
   )
 }
 
-export default function ConnectionsPanel({ userId }) {
+export function IntervalsCard({ userId }) {
   const [conn, setConn] = useState(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -331,15 +330,6 @@ export default function ConnectionsPanel({ userId }) {
   const showSummary = connected && !reconnecting
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <span className="text-base"><Icon name="refresh" size={18} /></span>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-          Connections
-        </h3>
-      </div>
-
-      {/* Intervals.icu */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Intervals.icu</span>
@@ -356,7 +346,7 @@ export default function ConnectionsPanel({ userId }) {
           </span>
         </div>
         <p className="text-[11px] text-slate-400">
-          Import rides from Garmin & Wahoo devices via your Intervals.icu account.
+          The bridge for Zwift, MyWhoosh and other platforms: import their rides (and Garmin or Wahoo rides that reach Intervals.icu) via your Intervals.icu account.
         </p>
 
         {showSummary ? (
@@ -531,9 +521,13 @@ export default function ConnectionsPanel({ userId }) {
         )}
         {error && <p className="text-[11px] text-red-500">{error}</p>}
       </div>
-
-      <OAuthProviderCard userId={userId} provider="strava" />
-      <OAuthProviderCard userId={userId} provider="wahoo" />
-    </div>
   )
+}
+
+export function StravaCard({ userId }) {
+  return <OAuthProviderCard userId={userId} provider="strava" />
+}
+
+export function WahooCard({ userId }) {
+  return <OAuthProviderCard userId={userId} provider="wahoo" />
 }

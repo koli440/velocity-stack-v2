@@ -36,7 +36,7 @@ function Shot({ src, alt, width, height, priority = false }) {
 const split = 'grid gap-8 lg:grid-cols-2 lg:items-center'
 
 const STEPS = [
-  ['upload', 'Upload or import a ride', 'Upload FIT files or connect Intervals.icu, Strava or Wahoo and rides sync in.'],
+  ['upload', 'Upload or import a ride', 'Upload FIT files or connect Wahoo, Intervals.icu or Strava (Garmin is coming) and rides sync in.'],
   ['gears', 'Tag gear and race', 'Record the chainring and cog you rode, and mark the ride as a race.'],
   ['clipboard', 'Run a template', 'Run a template on the ride and compare every rep to your reference.'],
 ]
@@ -72,7 +72,7 @@ const WHO_POINTS = [
 const FAQ = [
   ['Who can see my rides?', 'You decide. Rides can be shared with other riders, and a privacy zone around home masks the map for everyone but you. Your raw GPS file and connection keys are never shared.'],
   ['How does coach approval work?', 'A coaching relationship only starts when the rider accepts the invite (or asks for a coach themselves). A rider has one active coach at a time and can end coaching whenever they like; access stops immediately.'],
-  ['Which files and integrations are supported?', 'You can upload FIT files (including bulk import, with a help page for SRM PowerControl files). Rides also sync from Intervals.icu, Strava and Wahoo once you connect them.'],
+  ['Which files and integrations are supported?', 'You can upload FIT files (including bulk import, with a help page for SRM PowerControl files). Rides also sync from Wahoo, Intervals.icu (the bridge for Zwift and MyWhoosh) and Strava once you connect them.'],
   ['Are Fitness, Fatigue and Form exact?', 'No. When a ride has no power data the load is estimated from heart rate, and the app labels it as an estimate.'],
   ['Does gear apply to road rides?', 'No. Gear tracking and gear records apply to track rides only.'],
 ]

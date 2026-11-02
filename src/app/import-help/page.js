@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Icon from '../../components/Icon'
 
 export const metadata = {
@@ -20,6 +21,11 @@ export default function ImportHelpPage() {
           Copy your rides off the head unit and bring them in with <strong>Import History</strong>.
         </p>
       </div>
+
+      <p>
+        SRM is one of your ride sources, ahead of Intervals.icu and Strava. It has no cloud sync, so files are
+        imported by hand. See all sources on <Link className={LINK} href="/connections">Connections</Link>.
+      </p>
 
       <div className={CARD}>
         <h2 className={H2}>SRM PowerControl 8</h2>

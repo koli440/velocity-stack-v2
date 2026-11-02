@@ -16,7 +16,7 @@ const GROUPS = [
     icon: 'refresh',
     title: 'Your rides',
     items: [
-      { name: 'Import and sync', text: 'Connect Intervals.icu or Strava and rides sync automatically, or upload FIT files by hand. Duplicates are skipped.', href: '/settings', cta: 'Connect a source' },
+      { name: 'Import and sync', text: 'Connect Garmin, Wahoo, SRM, Intervals.icu or Strava, in that order of preference: rides sync automatically, or upload FIT files by hand (SRM has no cloud sync). Duplicates are skipped.', href: '/connections', cta: 'Connect a source' },
       { name: 'Activity analysis', text: 'Power, heart rate and map for every ride, with power, heart rate and other curves, zones and load based on the FTP and weight valid on that day.' },
       { name: 'Comments', text: 'Talk about a ride with the riders who can see it.' },
     ],
