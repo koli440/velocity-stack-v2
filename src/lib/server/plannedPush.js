@@ -36,7 +36,7 @@ export async function defaultLoadConnection(args) {
 }
 
 /** Loads the rider's active Intervals connection or throws PushError('not_connected'). */
-async function requireConnection(service, riderId, loadConnection = defaultLoadConnection) {
+export async function requireConnection(service, riderId, loadConnection = defaultLoadConnection) {
   const conn = await loadConnection({ supabase: service, userId: riderId, serviceClient: service })
   if (!(conn.apiKey || conn.accessToken) || !conn.athleteId || conn.status !== 'active') {
     const message =
