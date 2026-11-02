@@ -452,7 +452,7 @@ function ActivityDetail() {
               disabled={rerolling}
               className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
             >
-              🎲 Reroll name
+              <Icon name="dice" /> Reroll name
             </button>
             <button
               type="button"

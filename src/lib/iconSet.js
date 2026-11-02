@@ -57,6 +57,7 @@ export const ICON_SET = {
   mountain: { group: 'domain', replaces: '⛰️', svg: '<path d="M3 20l6-11 4 6 3-4 5 9z"/>' },
   speed: { group: 'domain', replaces: '', svg: '<path d="M3 18a9 9 0 1 1 18 0"/><path d="M12 14l4-4"/>' },
   clock: { group: 'domain', replaces: '', svg: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>' },
+  dice: { group: 'domain', replaces: '🎲', svg: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 8h.01"/><path d="M16 8h.01"/><path d="M8 16h.01"/><path d="M16 16h.01"/>' },
   flag: { group: 'domain', replaces: '🏁', svg: '<path d="M5 21V4M5 4h14l-3 4 3 4H5"/>' },
   target: { group: 'domain', replaces: '🎯', svg: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>' },
   pin: { group: 'domain', replaces: '📍', svg: '<path d="M12 22s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>' },
