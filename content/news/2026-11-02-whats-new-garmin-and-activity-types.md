@@ -1,5 +1,5 @@
 ---
-id: 2026-11-02-garmin-and-new-activity-types
+id: 2026-11-02-whats-new-garmin-and-activity-types
 date: 2026-11-02
 title: Garmin integration and new activity types
 link: /connections
