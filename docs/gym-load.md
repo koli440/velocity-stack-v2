@@ -20,9 +20,12 @@ Intensity (%e1RM) source, in order:
    with >= 3 prior sessions of that exercise. Clamped 0.30-1.05.
 2. **reps** - rep-implied intensity `1/(1+reps/30)` (3 reps ~91%, 10 ~75%). A *ceiling*: the set may be far from failure.
    Exercises on this source get a `ceiling_intensity:<name>` flag.
-3. **velocity** - only when there is no history and `mean_velocity_ms` exists. Generic line `1 - (v - 0.25) x 0.65`
-   (0.25 m/s ~ 100%, 1.0 m/s ~ 51%). It can only *lower* the rep ceiling: half the gap, at most -0.15. Slow sets stay at the
-   ceiling. No per-exercise load-velocity profiles.
+3. **velocity** - only with a per-exercise profile (`constants.velocityProfiles[name_key] = { v0, slope }`, intensity =
+   `1 - (v - v0) x slope`), e.g. later derived from the rider's own data. It can only *lower* the rep ceiling: half the gap,
+   at most -0.15. There is deliberately **no generic velocity table** (leg press ~0.2 m/s and box squat ~0.55 m/s are both normal).
+   Without a profile, velocity is not used for intensity.
+
+Rep-implied intensity above 12 reps is unreliable, so it is floored at 0.6 (`high_rep_floor:<exercise>` flag).
 
 `velocity_loss_pct >= 20` -> `velocity_loss_high:<exercise>` **flag** (fatigue marker), never extra load.
 
@@ -39,6 +42,11 @@ gym sessions (needs >= 3). Skipped otherwise (`hr_skipped_no_reference`) or with
 All constants live in `GYM_LOAD_CONSTANTS` (override via `constants`). Calibration target: ~20 working sets x 6 reps at
 ~80% in 60 min ~ 55-60 (a test keeps a typical hard session within 45-75). Heavy low-volume sessions (5x3 at ~90%) score
 low (~10); that is intended by `reps x intensity^2` but is an open question below.
+
+## Real example (owner's GPath session 2026-11-03, 69 min, avg HR 121, no history)
+Box jump 3 sets (70-90 kg, dynamic, 0.50, stress 6.0, flag dynamic_with_weight); Box squat 3 sets (0.79 reps, 15.0);
+Barbell Lunges 3 sets of 16-22 reps (0.63 reps, 21.5); Legpress 4 sets (0.79 reps, 19.9). Density x0.865 (13 sets in 69 min);
+HR multiplier 1.0 (no typical-HR reference yet). **Load 37.8.** Fixture: `src/lib/__tests__/fixtures/gpath-2026-11-03.json`.
 
 ## Output
 `{ load, breakdown: [{ name, name_key, workingSets, intensity, source (history|reps|velocity|dynamic|mixed), sources, stress }],

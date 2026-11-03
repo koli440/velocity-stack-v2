@@ -1,0 +1,177 @@
+{
+ "activity": "3cea118d",
+ "date": "2026-11-03",
+ "durationS": 4162.2,
+ "avgHr": 121,
+ "exercises": [
+  {
+   "name": "Box jump",
+   "sets": [
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 70,
+     "metrics": {}
+    },
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 80,
+     "metrics": {}
+    },
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 90,
+     "metrics": {}
+    }
+   ]
+  },
+  {
+   "name": "Box squat",
+   "sets": [
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 60,
+     "metrics": {
+      "rom_cm": 55,
+      "mean_velocity_ms": 0.58,
+      "peak_velocity_ms": 0.65,
+      "velocity_loss_pct": 15
+     }
+    },
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 90,
+     "metrics": {
+      "rom_cm": 38,
+      "mean_velocity_ms": 0.53,
+      "peak_velocity_ms": 0.62,
+      "velocity_loss_pct": 27
+     }
+    },
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 100,
+     "metrics": {}
+    }
+   ]
+  },
+  {
+   "name": "Barbell Lunges",
+   "sets": [
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 16,
+     "weight_kg": 40,
+     "metrics": {
+      "rom_cm": 33,
+      "mean_velocity_ms": 0.4,
+      "peak_velocity_ms": 0.5,
+      "velocity_loss_pct": 16
+     }
+    },
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 16,
+     "weight_kg": 40,
+     "metrics": {
+      "rom_cm": 36,
+      "mean_velocity_ms": 0.41,
+      "peak_velocity_ms": 0.52,
+      "velocity_loss_pct": 17
+     }
+    },
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 22,
+     "weight_kg": 40,
+     "metrics": {
+      "rom_cm": 27,
+      "mean_velocity_ms": 0.33,
+      "peak_velocity_ms": 0.44,
+      "velocity_loss_pct": 34
+     }
+    }
+   ]
+  },
+  {
+   "name": "Legpress",
+   "sets": [
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 190,
+     "metrics": {
+      "rom_cm": 24,
+      "mean_velocity_ms": 0.21,
+      "peak_velocity_ms": 0.24,
+      "velocity_loss_pct": 17
+     }
+    },
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 190,
+     "metrics": {
+      "rom_cm": 24,
+      "mean_velocity_ms": 0.21,
+      "peak_velocity_ms": 0.24,
+      "velocity_loss_pct": 17
+     }
+    },
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 210,
+     "metrics": {
+      "rom_cm": 23,
+      "mean_velocity_ms": 0.16,
+      "peak_velocity_ms": 0.22,
+      "velocity_loss_pct": 32
+     }
+    },
+    {
+     "set_type": "active",
+     "kind": "working",
+     "load_mode": "weighted",
+     "reps": 8,
+     "weight_kg": 230,
+     "metrics": {
+      "rom_cm": 23,
+      "mean_velocity_ms": 0.17,
+      "peak_velocity_ms": 0.19,
+      "velocity_loss_pct": 21
+     }
+    }
+   ]
+  }
+ ]
+}

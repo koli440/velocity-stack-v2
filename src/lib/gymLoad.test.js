@@ -48,9 +48,24 @@ test('no history: light high-rep set is lower stress per rep than heavy triples'
   assert.ok(light.load > 0)
 })
 
+const PROFILE = { squat: { v0: 0.25, slope: 0.65 } }
+test('velocity only refines intensity with a per-exercise profile (never a generic table)', () => {
+  const sets = rep(5, { reps: 3, kg: 60 }, { metrics: { mean_velocity_ms: 0.9 } })
+  const generic = computeGymLoad({ exercises: [{ name: 'Squat', sets }] })
+  const plain = computeGymLoad({ exercises: [{ name: 'Squat', sets: rep(5, { reps: 3, kg: 60 }) }] })
+  assert.equal(generic.breakdown[0].source, 'reps')
+  assert.equal(generic.load, plain.load)
+})
+
+test('high-rep sets are floored instead of following Epley down', () => {
+  const r = computeGymLoad({ exercises: [{ name: 'Lunge', sets: rep(1, { reps: 30, kg: 20 }) }] })
+  assert.equal(r.breakdown[0].intensity, 0.6)
+  assert.ok(r.flags.includes('high_rep_floor:Lunge'))
+})
+
 test('fast sets lower the rep ceiling (velocity source); slow sets stay at the ceiling', () => {
-  const fast = computeGymLoad({ exercises: [{ name: 'Squat', sets: rep(5, { reps: 3, kg: 60 }, { metrics: { mean_velocity_ms: 0.9, velocity_loss_pct: 8 } }) }] })
-  const slow = computeGymLoad({ exercises: [{ name: 'Squat', sets: rep(5, { reps: 3, kg: 60 }, { metrics: { mean_velocity_ms: 0.3 } }) }] })
+  const fast = computeGymLoad({ constants: { velocityProfiles: PROFILE }, exercises: [{ name: 'Squat', sets: rep(5, { reps: 3, kg: 60 }, { metrics: { mean_velocity_ms: 0.9, velocity_loss_pct: 8 } }) }] })
+  const slow = computeGymLoad({ constants: { velocityProfiles: PROFILE }, exercises: [{ name: 'Squat', sets: rep(5, { reps: 3, kg: 60 }, { metrics: { mean_velocity_ms: 0.3 } }) }] })
   const plain = computeGymLoad({ exercises: [{ name: 'Squat', sets: rep(5, { reps: 3, kg: 60 }) }] })
   assert.equal(fast.breakdown[0].source, 'velocity')
   assert.ok(fast.breakdown[0].intensity < plain.breakdown[0].intensity)

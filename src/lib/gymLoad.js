@@ -8,7 +8,9 @@
 // Intensity source, in order:
 //   1. history  - weight / the rider's own best e1RM for the same name_key (needs >= MIN_HISTORY_SESSIONS prior sessions)
 //   2. reps     - rep-implied intensity (Epley inverse), a CEILING (a set of 10 may be far from failure)
-//   3. velocity - when mean_velocity_ms exists and there is no history, a fast set lowers the rep ceiling (never raises it)
+//   3. velocity - only with a per-exercise load-velocity profile (constants.velocityProfiles[name_key] = { v0, slope });
+//                 a fast set then lowers the rep ceiling (never raises it). No generic cross-exercise table: velocities
+//                 differ hugely by exercise (leg press ~0.2 m/s vs box squat ~0.55 m/s at similar effort).
 // Velocity loss % is a fatigue FLAG, not extra load. A small clamped HR multiplier and a work-density multiplier
 // are applied to the session total.
 
@@ -26,9 +28,9 @@ export const GYM_LOAD_CONSTANTS = Object.freeze({
   DYNAMIC_INTENSITY: 0.5,
   /** Reps-equivalent per second for timed sets without reps (planks...). */
   SECONDS_PER_REP_EQUIV: 4,
-  /** Generic velocity -> %1RM line: intensity = 1 - (v - V_AT_1RM) * V_SLOPE (conservative, not per exercise). */
-  V_AT_1RM: 0.25,
-  V_SLOPE: 0.65,
+  /** Rep-implied intensity is unreliable above this many reps: it is floored at HIGH_REP_FLOOR instead of following Epley down. */
+  HIGH_REP_THRESHOLD: 12,
+  HIGH_REP_FLOOR: 0.6,
   /** How far a velocity estimate may pull the rep ceiling DOWN, and the share of the gap that is used. */
   VELOCITY_MAX_DROP: 0.15,
   VELOCITY_SHARE: 0.5,
@@ -87,19 +89,19 @@ export function typicalGymHr(priorAvgHrs, c = GYM_LOAD_CONSTANTS) {
 /** Rep-implied %e1RM (inverse Epley): 1 rep ~ 97%, 3 ~ 91%, 10 ~ 75%. A ceiling, not a measurement. */
 export const repImpliedIntensity = (reps) => 1 / (1 + reps / 30)
 
-/** Generic mean-velocity -> %1RM estimate (0.25 m/s ~ 100%, 1.0 m/s ~ 51%). Only used to LOWER the rep ceiling. */
-export const velocityImpliedIntensity = (v, c = GYM_LOAD_CONSTANTS) => 1 - (v - c.V_AT_1RM) * c.V_SLOPE
+/** Per-exercise load-velocity line: intensity = 1 - (v - v0) * slope, v0 = mean velocity at 1RM. Only used to LOWER the rep ceiling. */
+export const velocityImpliedIntensity = (v, profile) => 1 - (v - profile.v0) * profile.slope
 
-function setIntensity(set, hist, c) {
+function setIntensity(set, hist, c, profile) {
   const reps = set.reps
   const kg = loadedKg(set)
   const v = set.metrics?.mean_velocity_ms
   if (hist && hist.sessions >= c.MIN_HISTORY_SESSIONS && hist.bestE1rm > 0 && kg > 0) {
     return { intensity: clamp(kg / hist.bestE1rm, c.INTENSITY_MIN, c.INTENSITY_MAX), source: 'history' }
   }
-  const ceiling = repImpliedIntensity(reps)
-  if (isNum(v) && v > 0) {
-    const drop = clamp(c.VELOCITY_SHARE * (velocityImpliedIntensity(v, c) - ceiling), -c.VELOCITY_MAX_DROP, 0)
+  const ceiling = reps > c.HIGH_REP_THRESHOLD ? Math.max(repImpliedIntensity(reps), c.HIGH_REP_FLOOR) : repImpliedIntensity(reps)
+  if (profile && isNum(v) && v > 0) {
+    const drop = clamp(c.VELOCITY_SHARE * (velocityImpliedIntensity(v, profile) - ceiling), -c.VELOCITY_MAX_DROP, 0)
     if (drop < -0.005) return { intensity: clamp(ceiling + drop, c.INTENSITY_MIN, c.INTENSITY_MAX), source: 'velocity' }
   }
   return { intensity: clamp(ceiling, c.INTENSITY_MIN, c.INTENSITY_MAX), source: 'reps' }
@@ -156,11 +158,13 @@ export function computeGymLoad({ exercises = [], durationS = null, avgHr = null,
       let intensity
       let source
       if (dynamic) {
+        if (dynamicByName && loadedKg(s) > 0) flags.push(`dynamic_with_weight:${ex.name}`)
         intensity = c.DYNAMIC_INTENSITY
         source = 'dynamic'
         used.dynamic = true
       } else {
-        ;({ intensity, source } = setIntensity(s, hist, c))
+        ;({ intensity, source } = setIntensity(s, hist, c, c.velocityProfiles?.[key]))
+        if (reps > c.HIGH_REP_THRESHOLD && source !== 'history') flags.push(`high_rep_floor:${ex.name}`)
         used[source === 'history' ? 'history' : source === 'velocity' ? 'velocity' : 'reps'] = true
       }
       sources.add(source)
