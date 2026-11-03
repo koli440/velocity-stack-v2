@@ -26,6 +26,15 @@ test('nothing without candidates; linked, skipped, suppressed, gym and other day
   assert.equal(pickAutoLinkCandidate([W()], null, DAY), null)
 })
 
+test('runs link only to run workouts and run workouts only to runs', () => {
+  const RUN = { ...ACT, activity_type: 'run' }
+  const rw = W({ discipline: 'run' })
+  assert.equal(pickAutoLinkCandidate([rw], RUN, DAY), rw)
+  assert.equal(pickAutoLinkCandidate([W({ discipline: 'other' })], RUN, DAY), null)
+  assert.equal(pickAutoLinkCandidate([W({ discipline: 'ride' })], RUN, DAY), null)
+  assert.equal(pickAutoLinkCandidate([rw], ACT, DAY), null)
+})
+
 test('a suppressed workout never counts, so the remaining one is the only candidate', () => {
   const sup = W({ auto_link_suppressed: true })
   const other = W()

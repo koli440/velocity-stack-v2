@@ -198,7 +198,7 @@ Single workouts planned on a rider's calendar (no recurrence, no multi-week plan
 - **Who**: the rider and the rider's ACTIVE coach (`is_coach_of`, block-aware, per statement -> revocation is immediate) can read, plan, edit, move, skip, link/unlink and delete
   ANY planned workout on that calendar (each other's too). Pending / declined / ended / blocked coaches, other riders' coaches, followers and strangers get nothing.
   Never in the feed, public profile or any follower-visible view. No notification, not in realtime.
-- **Definition**: date + discipline (`ride|track|gym|other`) + title + optional notes + an optional **snapshot** of the workout's DSL text. The planning dialog has an editable DSL box (parsed live with the template editor's
+- **Definition**: date + discipline (`ride|track|gym|run|other`) + title + optional notes + an optional **snapshot** of the workout's DSL text. The planning dialog has an editable DSL box (parsed live with the template editor's
   parser, link to `/dsl-guide`); choosing a template (the "Add template run" picker: search, favorites, recents, preview; own + system templates only) merely pre-fills it.
   The client sends DSL + parsed manifest + optional template name (display only) to `planned_workout_create` / `planned_workout_set_structure`, which check size and shape
   (DSL <= 4000 chars, no control characters, manifest object <= 20 kB, <= 50 steps, name <= 120). It is a copy, not a live reference. The RPCs never read `analysis_templates`,
@@ -208,7 +208,7 @@ Single workouts planned on a rider's calendar (no recurrence, no multi-week plan
   "planned by former coach" when the account is gone. Workouts survive the end of coaching and coach account deletion (FKs `SET NULL`).
 - **Status**: `planned | skipped` stored; completed = linked to an activity; **missed** = past + unlinked + not skipped, derived in the UI.
 - **Linking**: the app only *suggests* a match (`suggestMatches`: same day + discipline, one-to-one); a rider or coach confirms or links/unlinks manually
-  (`planned_workout_link` / `_unlink`). The activity must belong to the same rider; linking is **same day only** (enforced in the UI via `linkableActivities`, any discipline, matching discipline first; the server has no timezone and only checks ownership/uniqueness); an activity completes at most one workout and a workout has at most one activity (unique index).
+  (`planned_workout_link` / `_unlink`). The activity must belong to the same rider; linking is **same day only** (enforced in the UI via `linkableActivities`, gym sessions only to gym workouts and runs only to `run` workouts (and vice versa), matching discipline first; the server has no timezone and only checks ownership/uniqueness); an activity completes at most one workout and a workout has at most one activity (unique index).
   Deleting the activity only clears the link. Linking clears "skipped".
   **Unlink** (dialog, rider and active coach; `planned_workout_unlink` clears `activity_id`, stamps `updated_by` from `auth.uid()`) returns the workout to its derived state:
   `planned` (today/future) or `missed` (past, not skipped); `skipped` is untouched. Intervals.icu push rows are not modified by link/unlink; an unlinked workout is simply pushable again.
@@ -221,7 +221,7 @@ Single workouts planned on a rider's calendar (no recurrence, no multi-week plan
   The same-day rule uses the activity's own LOCAL day (browser time for uploads, `start_date_local` from the providers; no UTC): the caller passes it to
   `planned_workout_auto_link(workout, activity, local_date)` (rider or service role only; a coach cannot call it), which only checks it is within one day of the UTC date and
   that the activity is recent (<= 15 days old: no history rewrite, **no backfill of existing activities**). `pickAutoLinkCandidate` (pure, tested) chooses: one open candidate (unlinked, not skipped,
-  not suppressed, not gym) -> link; several -> same discipline required, then closest planned duration (<= 25 % off and clearly better than the runner-up; exact tie -> earliest created), otherwise
+  not suppressed; a run only completes a `run` workout, ride/track/other never a run or gym one) -> link; several -> same discipline required, then closest planned duration (<= 25 % off and clearly better than the runner-up; exact tie -> earliest created), otherwise
   nothing is linked and the suggestion stays. Never overrides a link or steals an already linked activity (row lock + unique index); idempotent. `link_source` = `auto | manual` (NULL = old manual link)
   is shown as "Linked automatically" with **Change** / **Unlink** in the dialog and on the activity page (`ActivityPlannedLink`). Any unlink sets `auto_link_suppressed` on the workout (trigger, so every path),
   so neither a new activity of that day nor a re-sync / re-import ever auto-links it again; a manual link sets `link_source = 'manual'`. Replacing an activity (relink on replace) keeps source and stamps.

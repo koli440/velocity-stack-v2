@@ -14,8 +14,8 @@ export const PLANNED_TITLE_MAX = 80
 export const PLANNED_DESCRIPTION_MAX = 2000
 export const PLANNED_PER_DAY_MAX = 20
 export const PLANNED_DSL_MAX = 4000
-export const PLANNED_DISCIPLINES = Object.freeze(['ride', 'track', 'gym', 'other'])
-export const PLANNED_DISCIPLINE_LABELS = Object.freeze({ ride: 'Ride', track: 'Track', gym: 'Gym', other: 'Other' })
+export const PLANNED_DISCIPLINES = Object.freeze(['ride', 'track', 'gym', 'run', 'other'])
+export const PLANNED_DISCIPLINE_LABELS = Object.freeze({ ride: 'Ride', track: 'Track', gym: 'Gym', run: 'Run', other: 'Other' })
 export const PLANNED_COLUMNS =
   'id, rider_id, workout_date, discipline, title, description, structure_dsl, structure_manifest, source_template_name, status, activity_id, link_source, auto_link_suppressed, created_by, updated_by, set_by_coach, created_at, updated_at'
 
@@ -291,17 +291,17 @@ export const activityDiscipline = (a) => (isGymActivity(a) ? 'gym' : isRunActivi
  *     that beats the runner-up by AUTO_LINK_MARGIN; an exact tie goes to the earliest created; else null.
  */
 export function pickAutoLinkCandidate(workouts, activity, localDay) {
-  // Planned workouts are cycling / gym sessions: a run never completes one.
-  if (!activity || isRunActivity(activity)) return null
+  if (!activity) return null
+  const runActivity = isRunActivity(activity)
   const gymActivity = isGymActivity(activity)
-  // Gym sessions only complete gym workouts and rides never complete a gym workout.
+  // Runs only complete run workouts, run workouts only runs; gym sessions only gym workouts and rides never complete a gym workout.
   const open = (workouts || []).filter(
     (w) =>
       w &&
       !w.activity_id &&
       w.status !== 'skipped' &&
       !w.auto_link_suppressed &&
-      (gymActivity ? w.discipline === 'gym' : w.discipline !== 'gym') &&
+      (runActivity ? w.discipline === 'run' : gymActivity ? w.discipline === 'gym' : w.discipline !== 'gym' && w.discipline !== 'run') &&
       (!localDay || w.workout_date === localDay)
   )
   if (open.length === 0) return null
@@ -369,13 +369,13 @@ export const dayOfLocalStamp = (stamp) => {
 /**
  * Activities the given workout can be linked to: those of the planned DAY only (local day, like the calendar
  * cell), not linked to another workout. Gym sessions only go with gym workouts and gym workouts only with gym
- * sessions; a ride and a track session are interchangeable (the calendar derives track from the track). Same-discipline
+ * sessions; runs only with run workouts and vice versa; a ride and a track session are interchangeable (the calendar derives track from the track). Same-discipline
  * ones first, then by time.
  */
 export function linkableActivities(workout, workouts, activities) {
   const linkedElsewhere = new Set((workouts || []).filter((w) => w.activity_id && w.id !== workout.id).map((w) => w.activity_id))
   return (activities || [])
-    .filter((a) => a && a.kind !== 'planned' && dayKey(a.date) === workout.workout_date && a.discipline !== 'run' && !linkedElsewhere.has(a.id) && (a.discipline === 'gym') === (workout.discipline === 'gym'))
+    .filter((a) => a && a.kind !== 'planned' && dayKey(a.date) === workout.workout_date && !linkedElsewhere.has(a.id) && (a.discipline === 'gym') === (workout.discipline === 'gym') && (a.discipline === 'run') === (workout.discipline === 'run'))
     .sort((a, b) => (b.discipline === workout.discipline) - (a.discipline === workout.discipline) || a.date - b.date || String(a.id).localeCompare(String(b.id)))
 }
 

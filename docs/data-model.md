@@ -234,7 +234,7 @@ from `auth.uid()`, pins `rider_id` and caps 10 races per rider and day. See *Cal
 
 ## Planned workouts (`20261206000000_planned_workouts.sql`)
 
-`planned_workouts(id, rider_id -> profiles ON DELETE CASCADE, workout_date DATE, discipline ride|track|gym|other, title 1-80, description <= 2000,
+`planned_workouts(id, rider_id -> profiles ON DELETE CASCADE, workout_date DATE, discipline ride|track|gym|run|other (CHECK widened by 20270123000000; run activities link only to run workouts, enforced client-side; run workouts have no load estimate and are not pushed to Wahoo/Garmin; Intervals.icu type `Run`), title 1-80, description <= 2000,
 structure_dsl TEXT <= 4000, structure_manifest JSONB <= 20 kB, source_template_name TEXT, status planned|skipped, activity_id -> activities ON DELETE SET NULL (unique where not null),
 created_by / updated_by -> profiles ON DELETE SET NULL, set_by_coach, created_at, updated_at)`, index `(rider_id, workout_date)`.
 - The structure is a **snapshot copy** of a template's `dsl_source` + `manifest` (no template id / FK; only the template name for display).

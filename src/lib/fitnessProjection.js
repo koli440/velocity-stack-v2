@@ -18,6 +18,8 @@ export const PROJECTION_MAX_DAYS = 56
 
 /** Estimated load of one planned workout: number >= 0, or null when it has no estimate. */
 export function plannedLoad(workout, loadContext = null) {
+  // Loads are cycling (FTP based) estimates: runs have none.
+  if (workout?.discipline === 'run') return null
   const load = workoutSummary(workout, loadContext)?.load
   return Number.isFinite(load) && load >= 0 ? load : null
 }

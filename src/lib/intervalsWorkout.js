@@ -38,7 +38,7 @@ export const CONVERTER_VERSION = 1
 export const EXTERNAL_ID_PREFIX = 'velocity-stack:'
 export const MAX_DESCRIPTION_CHARS = 8000
 
-const EVENT_TYPES = { ride: 'Ride', track: 'Ride', gym: 'WeightTraining', other: 'Workout' }
+const EVENT_TYPES = { ride: 'Ride', track: 'Ride', gym: 'WeightTraining', run: 'Run', other: 'Workout' }
 
 export const externalIdFor = (workoutId) => `${EXTERNAL_ID_PREFIX}${workoutId}`
 
