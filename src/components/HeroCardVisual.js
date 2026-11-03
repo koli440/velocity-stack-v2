@@ -1,12 +1,13 @@
 'use client'
 
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts'
+import Icon from './Icon'
 import { heroCardContent } from '../lib/heroCard'
 
 // Feed hero visual: the activity's own power over elapsed time as a rectangular area chart,
 // or a distance / time / speed summary when the activity has no power data.
-export default function HeroCardVisual({ activity, className = '' }) {
-  const content = heroCardContent(activity)
+export default function HeroCardVisual({ activity, gymSets = null, className = '' }) {
+  const content = heroCardContent(activity, gymSets)
 
   if (content.kind === 'power') {
     const last = content.data[content.data.length - 1]
@@ -36,6 +37,28 @@ export default function HeroCardVisual({ activity, className = '' }) {
             <Area type="monotone" dataKey="power" stroke="#a855f7" strokeWidth={2} fill="url(#heroPowerFill)" dot={false} isAnimationActive={false} />
           </AreaChart>
         </ResponsiveContainer>
+      </div>
+    )
+  }
+
+  if (content.kind === 'gym') {
+    if (!content.items.length) {
+      return (
+        <div className={`flex flex-col items-center justify-center gap-1 text-white ${className}`}>
+          <Icon name="dumbbell" size={28} />
+          <span className="text-[10px] uppercase tracking-widest font-bold text-slate-300">Gym session</span>
+        </div>
+      )
+    }
+    return (
+      <div className={`flex flex-wrap items-center justify-around gap-x-2 gap-y-1 text-white ${className}`} data-testid="hero-gym-summary">
+        {content.items.map((m) => (
+          <div key={m.key} className="text-center min-w-[3.5rem]">
+            <Icon name={m.icon} size={14} className="text-slate-300" />
+            <b className="block text-xl font-black tracking-tight">{m.value}</b>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-300">{m.unit}</span>
+          </div>
+        ))}
       </div>
     )
   }

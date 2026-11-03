@@ -75,4 +75,5 @@ export const ICON_SET = {
   chat: { group: 'domain', replaces: '💬', svg: '<path d="M4 5h16v11H10l-5 4v-4H4z"/>' },
   helmet: { group: 'domain', replaces: '🪖', svg: '<path d="M3 16a9 9 0 0 1 18 0z"/><path d="M3 16v2h18v-2M8 8l1 8M13 7l1 9"/>' },
   distance: { group: 'domain', replaces: '', svg: '<path d="M4 12h16M16 8l4 4-4 4M8 8l-4 4 4 4"/>' },
+  dumbbell: { group: 'domain', replaces: '', svg: '<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>' },
 }
