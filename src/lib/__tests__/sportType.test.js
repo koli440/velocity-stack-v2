@@ -109,6 +109,13 @@ test('runs never auto-link or hand-link to planned workouts', () => {
   assert.deepEqual(linkableActivities(workouts[0], workouts, events).map((e) => e.id), ['f'])
 })
 
+test('runs link to run planned workouts only', () => {
+  const rw = { id: 'r', discipline: 'run', workout_date: '2027-01-01', activity_id: null }
+  assert.equal(pickAutoLinkCandidate([rw], { activity_type: 'run', elapsed_time_s: 3600 }, '2027-01-01'), rw)
+  const events = [{ id: 'e', kind: 'activity', date: new Date(2027, 0, 1, 10), discipline: 'run' }, { id: 'f', kind: 'activity', date: new Date(2027, 0, 1, 11), discipline: 'ride' }]
+  assert.deepEqual(linkableActivities(rw, [rw], events).map((e) => e.id), ['e'])
+})
+
 test('listings tag the canonical sport and include runs and flavours', () => {
   const s = filterStravaActivities([{ id: 1, sport_type: 'MountainBikeRide' }, { id: 2, sport_type: 'TrailRun' }, { id: 3, sport_type: 'Swim' }, { id: 4, sport_type: 'EMountainBikeRide' }])
   assert.deepEqual(s.map((a) => [a.id, a.sport]), [[1, 'mtb'], [2, 'trail_run'], [4, 'ebike']])
