@@ -7,6 +7,7 @@
 
 import { prepareAnalysis } from '../gymAnalysis.js'
 import { replaceGymDetail } from '../gymDetail.js'
+import { computeAndStoreGymLoad } from './gymLoadStore.js'
 
 export const GYM_REPAIR_PER_RUN = 3
 
@@ -37,6 +38,7 @@ export async function repairGymDetail(service, { userId, provider, analyzeFit, m
       if (gym) {
         const err = await replaceGymDetail(service, gym, { activityId: row.id, userId })
         if (err) throw new Error(err.message)
+        await computeAndStoreGymLoad(service, row.id).catch((e) => console.warn(`Gym load for ${row.id} failed:`, e?.message || e))
         out.repaired++
       }
       await mark(row.id)

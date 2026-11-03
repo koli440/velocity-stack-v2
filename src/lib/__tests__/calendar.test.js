@@ -110,3 +110,9 @@ test('activityToEvent flags race-tagged activities and the week summary counts t
   assert.equal(s.raceActivityCount, 1)
   assert.match(CALENDAR_ACTIVITY_COLUMNS, /\bis_race\b/)
 })
+
+test('gym chip shows an estimated load only when the model scored it', async () => {
+  const { activityToEvent } = await import('../calendar.js')
+  const base = { id: 'g', activity_date: '2026-11-03T10:00:00Z', activity_type: 'gym', training_load: 49.2 }
+  assert.equal(activityToEvent({ ...base, gym_load_model: 1 }).metric.value, 'TL ~49')
+})

@@ -13,6 +13,7 @@ import { buildActivityInsert } from './activityRecord.js'
 import { prepareAnalysis } from './gymAnalysis.js'
 import { resolveRideType } from './sportType.js'
 import { saveGymDetail } from './gymDetail.js'
+import { requestGymLoad } from './gymLoadClient.js'
 import { resolveImportTitle, localHourOfInstant } from './activityNaming.js'
 import { autoLinkActivity, localDayOf } from './plannedWorkouts.js'
 import { findDuplicate } from './activityDuplicates.js'
@@ -243,6 +244,7 @@ export async function importSingleFitFile({
     if (prepared.gym) {
       const gymError = await saveGymDetail(supabase, prepared.gym, { activityId: activity.id, userId })
       if (gymError) console.warn(`Failed to persist exercises and sets for ${fileName}:`, gymError.message)
+      else await requestGymLoad(activity.id)
     }
 
     // Recent rides only (the database ignores older days): same-day planned workout, by the browser's local day.

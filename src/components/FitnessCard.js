@@ -27,7 +27,7 @@ export function FitnessNotes({ summary, skipped }) {
       )}
       {summary.estimateShare > 0 && (
         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-          {Math.round(summary.estimateShare * 100)}% of the last 6 weeks&rsquo; load is estimated from heart rate (hatched bars).
+          {Math.round(summary.estimateShare * 100)}% of the last 6 weeks&rsquo; load is estimated from heart rate or the gym model (hatched bars).
         </p>
       )}
       {skipped > 0 && (

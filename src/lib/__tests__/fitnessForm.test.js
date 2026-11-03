@@ -179,10 +179,46 @@ test('fetch pages past the row cap, filters by owner and reads the first day', a
       return b
     },
   }
-  const r = await fetchFitnessActivities(client, { userId: 'u1', now: new Date(2026, 9, 20) })
+  const r = await fetchFitnessActivities(client, { userId: 'u1', now: new Date(2026, 9, 20), includeGym: false })
   assert.equal(r.data.length, 2500)
   assert.equal(r.firstDay, '2025-01-05')
   assert.equal(calls.length, 4) // 3 pages + first-day lookup
   assert.ok(calls.every((c) => c.filters.user_id === 'u1'))
   assert.deepEqual(await fetchFitnessActivities(client, { userId: '' }), { data: [], firstDay: null, error: null })
+})
+
+// ---- Gym sessions (issue #336) ----
+import { activityLoad as gymActivityLoad, dailyLoads as gymDailyLoads, fetchFitnessActivities as gymFetch } from '../fitnessForm.js'
+
+test('gym: stored model estimate counts as an ESTIMATED load; unscored gym counts as nothing', () => {
+  assert.deepEqual(gymActivityLoad({ activity_type: 'gym', gym_load_model: 1, training_load: 49.2 }), { load: 49.2, estimated: true })
+  assert.equal(gymActivityLoad({ activity_type: 'gym', training_load: 49.2 }), null)
+  const { days, skipped } = gymDailyLoads([
+    { activity_date: '2026-11-03T10:00:00', activity_type: 'gym', gym_load_model: 1, training_load: 40 },
+    { activity_date: '2026-11-03T12:00:00', activity_type: 'gym' },
+    { activity_date: '2026-11-03T14:00:00', activity_type: 'ride', training_load: 60 },
+  ])
+  assert.equal(skipped, 0)
+  const d = days['2026-11-03']
+  assert.equal(d.load, 100)
+  assert.equal(d.estimatedLoad, 40)
+})
+
+test('gym: includeGym=false queries exactly the old types; default includes gym', async () => {
+  const typesSeen = []
+  const client = {
+    from: () => {
+      const q = {
+        select: () => q, eq: () => q, gte: () => q, order: () => q, not: () => q, limit: () => Promise.resolve({ data: [], error: null }),
+        in: (c, v) => { typesSeen.push(v); return q },
+        range: () => Promise.resolve({ data: [], error: null }),
+      }
+      return q
+    },
+  }
+  await gymFetch(client, { userId: 'u', includeGym: false })
+  assert.deepEqual(typesSeen.flat(), ['ride', 'run', 'ride', 'run'])
+  typesSeen.length = 0
+  await gymFetch(client, { userId: 'u' })
+  assert.deepEqual(typesSeen[0], ['ride', 'run', 'gym'])
 })

@@ -6,6 +6,7 @@ import { buildActivityInsert } from '../lib/activityRecord'
 import { autoLinkActivity, localDayOf } from '../lib/plannedWorkouts'
 import { prepareAnalysis } from '../lib/gymAnalysis'
 import { saveGymDetail, buildGymDetail, gymTotals } from '../lib/gymDetail'
+import { requestGymLoad } from '../lib/gymLoadClient'
 import { isGymActivity } from '../lib/activityType'
 import { fetchWeightHistory } from '../lib/weightHistory'
 import { fetchFtpHistory } from '../lib/ftpHistory'
@@ -239,6 +240,7 @@ export default function FitUploader({
       if (prepared.gym) {
         const gymError = await saveGymDetail(supabase, prepared.gym, { activityId: activity.id, userId: currentUser.id })
         if (gymError) console.warn('Saving exercises and sets failed:', gymError.message)
+        else await requestGymLoad(activity.id)
       }
 
       // Link to the same-day planned workout when the choice is clear (the browser knows the local day).

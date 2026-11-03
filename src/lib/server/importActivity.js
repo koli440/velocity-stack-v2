@@ -12,6 +12,7 @@ import { effectiveRideType, rideTypeHasGear, isKnownRideType } from '../rideType
 import { prepareAnalysis } from '../gymAnalysis.js'
 import { resolveRideType } from '../sportType.js'
 import { saveGymDetail } from '../gymDetail.js'
+import { scoreGymBestEffort } from './gymLoadStore.js'
 import { resolveImportTitle, localHourFromStamp, isGenericActivityName, RECENT_NAMES_WINDOW } from '../activityNaming.js'
 
 /**
@@ -161,6 +162,7 @@ export async function importActivity({
       if (rollbackErr) console.warn(`Rollback of activity ${activity.id} failed:`, rollbackErr.message)
       throw new ImportError(`Saving exercises and sets failed: ${gymErr.message}`, 500)
     }
+    await scoreGymBestEffort(activity.id)
   }
 
   if (plan.action === 'upgrade') {
