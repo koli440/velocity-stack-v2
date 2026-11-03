@@ -12,6 +12,7 @@ import {
   addDays,
   WARMUP_DAYS,
 } from '../lib/fitnessForm'
+import { requestGymLoadBackfill } from '../lib/gymLoadClient'
 import { fetchCoachFitnessRows, groupFitnessRows } from '../lib/coachFitness'
 
 /**
@@ -22,7 +23,7 @@ import { fetchCoachFitnessRows, groupFitnessRows } from '../lib/coachFitness'
  * which carries the athlete's own thresholds; the coach never queries the raw activities table.
  */
 export function useFitnessData(userId, days, { coach = false } = {}) {
-  const [state, setState] = useState({ loading: true, error: null, daily: {}, skipped: 0, firstDay: null })
+  const [state, setState] = useState({ loading: true, error: null, daily: {}, skipped: 0, firstDay: null, includeGym: true })
 
   const load = useCallback(async () => {
     if (!userId) return
@@ -34,11 +35,14 @@ export function useFitnessData(userId, days, { coach = false } = {}) {
       }
       const group = groupFitnessRows(rows).get(userId)
       const { days: daily, skipped } = dailyLoads(group?.rides || [])
-      setState({ loading: false, error: null, daily, skipped, firstDay: group?.firstActivityAt ? localDayKey(group.firstActivityAt) : null })
+      setState({ loading: false, error: null, daily, skipped, firstDay: group?.firstActivityAt ? localDayKey(group.firstActivityAt) : null, includeGym: group?.includeGym !== false })
       return
     }
+    // Missing column / no profile row: gym stays included (the default).
+    const { data: prof } = await supabase.from('profiles').select('include_gym_in_fitness').eq('id', userId).maybeSingle()
+    const includeGym = prof?.include_gym_in_fitness !== false
     const [acts, lt] = await Promise.all([
-      fetchFitnessActivities(supabase, { userId, days }),
+      fetchFitnessActivities(supabase, { userId, days, includeGym }),
       fetchLtHistory(supabase, userId),
     ])
     if (acts.error) {
@@ -46,8 +50,18 @@ export function useFitnessData(userId, days, { coach = false } = {}) {
       return
     }
     const { days: daily, skipped } = dailyLoads(acts.data, lt.error ? [] : lt.history)
-    setState({ loading: false, error: null, daily, skipped, firstDay: acts.firstDay })
+    setState({ loading: false, error: null, daily, skipped, firstDay: acts.firstDay, includeGym })
   }, [userId, days, coach])
+
+  // Own view only: score gym sessions that never were (older imports); the self-service route does a small batch.
+  useEffect(() => {
+    if (!userId || coach) return
+    let cancelled = false
+    requestGymLoadBackfill().then((r) => {
+      if (!cancelled && r?.stored > 0) window.dispatchEvent(new Event(ACTIVITIES_CHANGED_EVENT))
+    })
+    return () => { cancelled = true }
+  }, [userId, coach])
 
   useEffect(() => {
     setState((s) => ({ ...s, loading: true }))

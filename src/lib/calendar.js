@@ -22,6 +22,7 @@ export const CALENDAR_ACTIVITY_COLUMNS = [
   'avg_power_w',
   'avg_speed_kmh',
   'training_load',
+  'gym_load_model',
   'is_race',
   'activity_type',
   'ride_type',
@@ -99,7 +100,10 @@ export function activityToEvent(row) {
   if (Number.isNaN(date.getTime())) return null
   const sport = activitySport(row)
   let metric = null
-  if (row.avg_power_w) metric = { label: 'W', value: `${Math.round(row.avg_power_w)} W` }
+  if (row.activity_type === 'gym' && row.gym_load_model != null && Number(row.training_load) > 0) {
+    // Model estimate (docs/gym-load.md): marked with ~ like other estimates.
+    metric = { label: 'TL', value: `TL ~${Math.round(row.training_load)}` }
+  } else if (row.avg_power_w) metric = { label: 'W', value: `${Math.round(row.avg_power_w)} W` }
   else if (row.avg_speed_kmh) metric = { label: 'km/h', value: `${Number(row.avg_speed_kmh).toFixed(1)} km/h` }
   else if (row.training_load) metric = { label: 'TL', value: `TL ${Math.round(row.training_load)}` }
   else if (row.avg_hr) metric = { label: 'bpm', value: `${Math.round(row.avg_hr)} bpm` }

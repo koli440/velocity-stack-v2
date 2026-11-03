@@ -25,15 +25,19 @@ export async function fetchCoachFitnessRows(client, { riderIds = null, days = CO
   return { rows, error: null }
 }
 
-/** Groups RPC rows by athlete: Map(riderId -> { rides, firstActivityAt }). Rides use the shape activityLoad() reads. */
+/** Groups RPC rows by athlete: Map(riderId -> { rides, firstActivityAt, includeGym }). Rides use the shape activityLoad() reads. */
 export function groupFitnessRows(rows) {
   const byRider = new Map()
   for (const r of rows || []) {
     if (!r?.rider_id) continue
-    const g = byRider.get(r.rider_id) || { rides: [], firstActivityAt: r.first_activity_at || null }
+    const g = byRider.get(r.rider_id) || { rides: [], firstActivityAt: r.first_activity_at || null, includeGym: true }
+    // The rider's own setting (Settings > Include gym sessions in fitness); the RPC already left gym rows out when off.
+    if (r.include_gym === false) g.includeGym = false
     g.rides.push({
       id: r.id,
       activity_date: r.activity_date,
+      activity_type: r.activity_type || 'ride',
+      gym_load_model: r.gym_load_model ?? null,
       training_load: r.training_load,
       moving_time_s: r.moving_time_s,
       elapsed_time_s: r.elapsed_time_s,
@@ -55,7 +59,7 @@ export function fitnessFlags(summary) {
   else if (summary.rampLevel === 'high') flags.push({ key: 'ramp-high', level: 'warn', label: 'Ramp high' })
   if (summary.building) flags.push({ key: 'building', level: 'info', label: 'Building baseline' })
   if (summary.estimateShare !== null && summary.estimateShare > ESTIMATE_HEAVY_SHARE) {
-    flags.push({ key: 'estimated', level: 'info', label: 'Mostly HR estimates' })
+    flags.push({ key: 'estimated', level: 'info', label: 'Mostly estimated loads' })
   }
   return flags
 }

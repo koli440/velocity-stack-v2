@@ -9,13 +9,15 @@ import {
   VELOCITY_FIELDS, kgToUnit,
 } from '../lib/gymDetail'
 import { formatElapsed } from '../lib/activityStreams'
+import GymLoadBreakdown from './GymLoadBreakdown'
 import GymSessionEditor, { useWeightUnit } from './GymSessionEditor'
 
 const fmtW = (kg, unit) => (kg == null ? '–' : `${kgToUnit(kg, unit)} ${unit}`)
 const fmtSec = (v) => (v == null ? '–' : formatElapsed(Math.round(v)))
 
 // `ownerId`: the rider owning the session. `coachContext`: viewed from athlete context (an active coach may edit).
-export default function GymSessionSection({ client, activityId, ownerId, coachContext = false }) {
+export default function GymSessionSection({ client, activityId, ownerId, coachContext = false, onLoadChanged }) {
+  const [loadRev, setLoadRev] = useState(0)
   const [detail, setDetail] = useState(undefined)
   const [stamp, setStamp] = useState(null)
   const [viewerId, setViewerId] = useState(null)
@@ -54,6 +56,7 @@ export default function GymSessionSection({ client, activityId, ownerId, coachCo
         onSaved={async () => {
           setEditing(false)
           await load()
+          setLoadRev((n) => n + 1)
         }}
       />
     )
@@ -75,6 +78,8 @@ export default function GymSessionSection({ client, activityId, ownerId, coachCo
   const showVelocity = detail.exercises.some((ex) => ex.sets.some((s) => VELOCITY_FIELDS.some((f) => s.metrics?.[f.key] != null)))
 
   return (
+    <>
+    <GymLoadBreakdown client={client} activityId={activityId} refreshKey={loadRev} onLoad={onLoadChanged} autoScore={canEdit} />
     <section className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4" data-testid="gym-sets">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Exercises &amp; sets</h3>
@@ -153,5 +158,6 @@ export default function GymSessionSection({ client, activityId, ownerId, coachCo
         )
       })}
     </section>
+    </>
   )
 }

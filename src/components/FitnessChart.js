@@ -41,7 +41,7 @@ function renderFitness(p) {
       ) : (
         <div className="text-slate-600 dark:text-slate-300">
           Load: <b>{p.load}</b>
-          {p.estimatedLoad > 0 && <span className="text-slate-500 dark:text-slate-400"> ({p.estimatedLoad} estimated from heart rate)</span>}
+          {p.estimatedLoad > 0 && <span className="text-slate-500 dark:text-slate-400"> ({p.estimatedLoad} estimated: heart rate or gym model)</span>}
         </div>
       )}
       {p.races?.map((r) => (
@@ -53,7 +53,7 @@ function renderFitness(p) {
 
 /**
  * Fitness / Fatigue / Form chart. `compact` is the dashboard mini chart (no axes, no bars).
- * Daily load bars: solid = measured (power) load, hatched/lighter = estimated from heart rate.
+ * Daily load bars: solid = measured (power) load, hatched/lighter = estimated (heart rate or gym model).
  */
 export default function FitnessChart({ series, races = [], projection = [], compact = false, label }) {
   const raceDays = new Set(races.map((r) => r.race_date))

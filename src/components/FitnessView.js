@@ -20,7 +20,7 @@ export default function FitnessView({ userId, coach = false }) {
   const [planned, setPlanned] = useState([])
   const [horizonKey, setHorizonKey] = useState('4w')
   const range = FITNESS_RANGES.find((r) => r.key === rangeKey)
-  const { loading, error, daily, skipped, firstDay, series, today } = useFitnessData(userId, range.days, { coach })
+  const { loading, error, daily, skipped, firstDay, series, today, includeGym } = useFitnessData(userId, range.days, { coach })
   const summary = fitnessSummary(daily, today, firstDay)
 
   useEffect(() => {
@@ -119,10 +119,17 @@ export default function FitnessView({ userId, coach = false }) {
               <li><span style={{ color: FITNESS_COLORS.fatigue }}>●</span> Fatigue</li>
               <li><span style={{ color: FITNESS_COLORS.form }}>●</span> Form</li>
               <li><span className="text-slate-400">▮</span> Daily load</li>
-              <li><span className="text-slate-400">▨</span> Estimated from heart rate</li>
+              <li><span className="text-slate-400">▨</span> Estimated (heart rate or gym model)</li>
               <li><span className="text-amber-500">┆</span> Race</li>
               {forecast && <li><span className="text-slate-400">╌</span> Dashed = forecast (estimate from planned workouts)</li>}
             </ul>
+            <p className="text-xs text-slate-600 dark:text-slate-300" data-testid="gym-fitness-note">
+              {includeGym
+                ? 'Gym sessions are included as estimated loads.'
+                : coach
+                  ? 'Gym sessions are not included: the rider chose to exclude them from their fitness.'
+                  : 'Gym sessions are not included (Settings: Include gym sessions in fitness).'}
+            </p>
             {forecast && (
               <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1" data-testid="forecast-notes">
                 <p>

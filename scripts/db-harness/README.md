@@ -22,6 +22,8 @@ Planned workout auto-link: `MIG=<repo>/supabase/migrations/20261231000000_planne
 
 Google sign-in profiles: `MIG=<repo>/supabase/migrations/20270101000000_oauth_signup_profile.sql node harness.mjs <repo>/supabase/migrations ./oauth-signup-adversarial.mjs`
 
+Gym load (issue #336): `MIG=<repo>/supabase/migrations/20270124000000_gym_load.sql node harness.mjs <repo>/supabase/migrations ./gym-load-adversarial.mjs`
+
 Gym editing (issue #335): `MIG=<repo>/supabase/migrations/20270116000000_gym_editing.sql node harness.mjs <repo>/supabase/migrations ./gym-editing-adversarial.mjs`
 
 Velodrome is_indoor suggestion (approve applies it to tracks): `node harness.mjs <repo>/supabase/migrations ./velodrome-indoor-adversarial.mjs`

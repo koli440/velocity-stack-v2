@@ -20,7 +20,7 @@ export const FITNESS_RANGES = Object.freeze([
   { key: '1y', label: '1 year', days: 365 },
 ])
 export const FITNESS_ACTIVITY_COLUMNS =
-  'id, activity_date, training_load, moving_time_s, elapsed_time_s, duration_sec, avg_hr, lt2_hr_at_activity'
+  'id, activity_date, activity_type, gym_load_model, training_load, moving_time_s, elapsed_time_s, duration_sec, avg_hr, lt2_hr_at_activity'
 
 const DAY_MS = 86400000
 const num = (v) => {
@@ -61,6 +61,11 @@ function rideSeconds(a) {
  * or no average HR/duration -> skipped (no duration-only guess: it would ignore intensity entirely).
  */
 export function activityLoad(activity, ltHistory = []) {
+  if (activity?.activity_type === 'gym') {
+    // Model estimate stored at save time (docs/gym-load.md); never an HR guess, and unscored sessions count as nothing.
+    const g = num(activity.training_load)
+    return activity.gym_load_model != null && g !== null && g >= 0 ? { load: g, estimated: true } : null
+  }
   const stored = num(activity?.training_load)
   if (stored !== null && stored >= 0) return { load: stored, estimated: false }
   const secs = rideSeconds(activity || {})
@@ -75,7 +80,7 @@ export function activityLoad(activity, ltHistory = []) {
 /**
  * Daily totals keyed by local day: { [day]: { load, estimatedLoad, rides, estimatedRides } } where
  * `load` is the full day total and `estimatedLoad` the part that came from HR estimates.
- * `skipped` counts rides that had neither a stored load nor a usable estimate.
+ * `skipped` counts rides that had neither a stored load nor a usable estimate (unscored gym sessions are not counted).
  */
 export function dailyLoads(activities, ltHistory = []) {
   const days = {}
@@ -85,7 +90,7 @@ export function dailyLoads(activities, ltHistory = []) {
     if (!day) continue
     const r = activityLoad(a, ltHistory)
     if (!r) {
-      skipped += 1
+      if (a?.activity_type !== 'gym') skipped += 1
       continue
     }
     const d = (days[day] ||= { load: 0, estimatedLoad: 0, rides: 0, estimatedRides: 0 })
@@ -196,8 +201,9 @@ export function fitnessSummary(days, today, firstDay = null) {
 }
 
 /** Activity rows for the series, newest window only (`days` + warm-up), paginated past the 1000-row cap. */
-export async function fetchFitnessActivities(client, { userId, days = 365, now = new Date(), pageSize = 1000 } = {}) {
+export async function fetchFitnessActivities(client, { userId, days = 365, now = new Date(), pageSize = 1000, includeGym = true } = {}) {
   if (!userId) return { data: [], firstDay: null, error: null }
+  const types = includeGym ? ['ride', 'run', 'gym'] : ['ride', 'run']
   const since = new Date(now.getFullYear(), now.getMonth(), now.getDate() - days - WARMUP_DAYS).toISOString()
   const rows = []
   for (let from = 0; ; from += pageSize) {
@@ -205,7 +211,7 @@ export async function fetchFitnessActivities(client, { userId, days = 365, now =
       .from('activities')
       .select(FITNESS_ACTIVITY_COLUMNS)
       .eq('user_id', userId)
-      .in('activity_type', ['ride', 'run'])
+      .in('activity_type', types)
       .gte('activity_date', since)
       .order('activity_date', { ascending: true })
       .order('id', { ascending: true })
@@ -222,5 +228,20 @@ export async function fetchFitnessActivities(client, { userId, days = 365, now =
     .order('activity_date', { ascending: true })
     .limit(1)
   if (firstError) return { data: [], firstDay: null, error: firstError }
-  return { data: rows, firstDay: earliest?.[0] ? localDayKey(earliest[0].activity_date) : null, error: null }
+  let firstDay = earliest?.[0] ? localDayKey(earliest[0].activity_date) : null
+  if (includeGym) {
+    // Only scored sessions count, like the series itself.
+    const { data: g, error: gErr } = await client
+      .from('activities')
+      .select('activity_date')
+      .eq('user_id', userId)
+      .eq('activity_type', 'gym')
+      .not('gym_load_model', 'is', null)
+      .order('activity_date', { ascending: true })
+      .limit(1)
+    if (gErr) return { data: [], firstDay: null, error: gErr }
+    const gd = g?.[0] ? localDayKey(g[0].activity_date) : null
+    if (gd && (!firstDay || gd < firstDay)) firstDay = gd
+  }
+  return { data: rows, firstDay, error: null }
 }

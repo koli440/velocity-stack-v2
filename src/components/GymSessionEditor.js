@@ -4,6 +4,7 @@
 // the audited save_gym_session RPC. Weights are stored in kg; the display unit (kg / lb) is a per-device choice.
 
 import { useEffect, useRef, useState } from 'react'
+import { requestGymLoad } from '../lib/gymLoadClient'
 import {
   blankSet, buildSavePayload, copySet, estimate1RM, fetchExerciseNameHistory, fetchLastSessionSets, kgToUnit,
   LOAD_MODE_LABELS, LOAD_MODES, saveGymSession, SET_KIND_LABELS, SET_KINDS, SIDES, suggestExerciseNames, toEditable,
@@ -130,6 +131,7 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
     const { error: err } = await saveGymSession(client, activityId, rows)
     setSaving(false)
     if (err) return setError(err.message)
+    await requestGymLoad(activityId)
     onSaved?.()
   }
 

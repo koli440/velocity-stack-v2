@@ -1,8 +1,28 @@
 # Gym training load (prototype, issue #336)
 
-**Status: prototype.** `src/lib/gymLoad.js` is a pure calculation. Nothing calls it in the app: gym sessions are still
-not counted in fitness (CTL/ATL/TSB queries only include `ride`/`run`), nothing is stored, there is no UI and no migration.
-`scripts/gym-load.mjs` prints the breakdown for one session.
+**Status: live (model version 1).** `src/lib/gymLoad.js` is the pure calculation; the load is computed on the server when a
+session is saved, stored as an ESTIMATE and counted in fitness / fatigue / form by default (per-rider toggle). `scripts/gym-load.mjs`
+still prints the breakdown for one session without storing anything.
+
+## Storage and recompute rule
+- **Compute once at save time, store it.** `src/lib/server/gymLoadStore.js` `computeAndStoreGymLoad` reads the session, the rider's
+  PRIOR gym sessions (strictly earlier `activity_date`, same `name_key`, owner-filtered) and prior avg HRs, runs `computeGymLoad` and writes
+  `activities.training_load` plus `gym_load_model` (model version, NULL = no estimate), `gym_load_at`, `gym_load_stale`, and the
+  breakdown / flags / density into `gym_load_details` (jsonb, rider + active coach can read it through `can_view_gym_detail`).
+- **No silent rewrites.** Loads of earlier sessions are NOT recomputed when later data arrives (history can shift intensities, but the
+  stored number a rider already saw stays). A session is rescored only when (a) it was edited (trigger on `gym_session_edits` sets
+  `gym_load_stale`; the editor also calls `POST /api/activities/[id]/gym-load` right after saving, rider or active coach), (b) it is imported or
+  repaired (importer, browser import, bulk import, `gymRepair`), (c) it was never scored (self-service backfill below), or (d) an admin rescore after a model version bump.
+- **Backfill without manual steps.** `POST /api/gym-load` scores the signed-in rider's never-scored / stale sessions (25 per call, oldest first;
+  the Fitness page and the activity page trigger it). `POST /api/admin/gym-load-backfill { userId?, limit?, rescore? }` (admin only) does it for everyone;
+  call again while `remaining > 0`. Sessions without sets get no estimate but are marked scored (`gym_load_at`).
+- No secrets are added: the routes use the existing service-role key already configured for server jobs.
+
+## In fitness
+Gym loads count as ESTIMATED daily load (they feed the estimate share and the hatched bars). `profiles.include_gym_in_fitness`
+(default TRUE, Settings: "Include gym sessions in fitness") turns them off; the coach sees the rider's choice ("Gym sessions are not included: the rider chose ...").
+Toggle off = the previous ride/run-only queries exactly. Unscored gym sessions count as nothing. Planned gym workouts still have no
+load estimate (partial forecast note).
 
 ## Why this shape
 Riders (even sprinters) lift for strength/power, not to train near failure, so reps-to-failure, session RPE and HR are weak
@@ -70,7 +90,7 @@ Read-only, uses the rider's own token (RLS), no service-role key:
 ## Open questions
 - CTL vs ATL: same load into both (like TSS), or damp gym in CTL (neuromuscular fatigue is short-lived, little aerobic adaptation)?
 - TSS scaling: is ~60 for a hard hour right, or should strength be lower relative to riding?
-- A user setting to include/exclude gym in fitness (default?).
+- ~~A user setting to include/exclude gym in fitness~~ done: default ON, per rider.
 - Jumps/plyometrics: is 0.25 per rep sensible, and should the name heuristic become an explicit set flag?
 - Heavy low-volume (max strength / speed-power) sessions score low; add a floor or a higher K at >= 85%?
 - History window (all-time best vs. last N weeks) and detraining; min sessions (3) and HR reference (3 sessions).

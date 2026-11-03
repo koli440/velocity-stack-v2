@@ -398,6 +398,7 @@ function ActivityDetail() {
             {activity.activity_type === 'gym' && (
               <p className="mt-1 text-xs font-bold text-violet-600 dark:text-violet-400" data-testid="detail-gym-tag">
                 Gym session{activity.calories ? ` · ${Math.round(activity.calories)} kcal` : ''}
+                {activity.gym_load_model != null && activity.training_load != null ? ` · Load ~${Math.round(activity.training_load)} (estimate)` : ''}
               </p>
             )}
             {isSportFlavour(activity) && (
@@ -589,7 +590,7 @@ function ActivityDetail() {
       <ActivityStreamsChart timeSeries={segmentView.activity.time_series} activity={segmentView.activity} highlightWindows={highlightWindows} />
 
       {/* 3d. Gym sessions: exercises and sets (#326) */}
-      {isGym && <GymSessionSection client={supabase} activityId={activity.id} ownerId={activity.user_id} coachContext={inAthleteContext} />}
+      {isGym && <GymSessionSection client={supabase} activityId={activity.id} ownerId={activity.user_id} coachContext={inAthleteContext} onLoadChanged={(fresh) => setActivity((prev) => (prev.training_load === fresh.training_load && prev.gym_load_model === fresh.gym_load_model ? prev : { ...prev, ...fresh }))} />}
 
       {/* 4. Durational Curves Chart: current ride vs. a selectable baseline/"history
            curve" (all-time, last 30/90 days, this calendar year, last floating year,

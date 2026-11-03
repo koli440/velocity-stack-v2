@@ -119,3 +119,16 @@ test('fetchCoachFitnessRows surfaces errors', async () => {
   assert.equal(r.error.message, 'nope')
   assert.deepEqual(r.rows, [])
 })
+
+test('gym rows from the RPC count as estimated loads; the rider setting is carried', () => {
+  const rows = [
+    row('a', 1, 60, { activity_type: 'ride', include_gym: true }),
+    row('a', 2, 40, { activity_type: 'gym', gym_load_model: 1, include_gym: true }),
+  ]
+  const g = groupFitnessRows(rows).get('a')
+  assert.equal(g.includeGym, true)
+  const s = athleteFitnessSummary(g, TODAY)
+  assert.ok(s.estimateShare > 0.3 && s.estimateShare < 0.5)
+  const off = groupFitnessRows([row('b', 1, 60, { include_gym: false })]).get('b')
+  assert.equal(off.includeGym, false)
+})

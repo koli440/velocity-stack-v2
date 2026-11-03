@@ -49,6 +49,7 @@ export default function SettingsPage() {
   const [avatarBusy, setAvatarBusy] = useState(false)
   const [avatarError, setAvatarError] = useState('')
   const [emailNotifications, setEmailNotifications] = useState(true)
+  const [includeGym, setIncludeGym] = useState(true)
   const [requireApproval, setRequireApproval] = useState(false)
   const [glassEnabled, setGlassEnabled] = useState(true)
 
@@ -80,6 +81,7 @@ export default function SettingsPage() {
         setThemePref(data.theme_preference || 'dark')
         setDiscoverableByEmail(data.discoverable_by_email !== false)
         setEmailNotifications(data.email_notifications !== false)
+        setIncludeGym(data.include_gym_in_fitness !== false)
         setAvatarUrl(data.avatar_url || null)
       }
       const approval = await fetchRequireFollowApproval(supabase, user.id)
@@ -152,6 +154,7 @@ export default function SettingsPage() {
       theme_preference: themePref,
       discoverable_by_email: discoverableByEmail,
       email_notifications: emailNotifications,
+      include_gym_in_fitness: includeGym,
       updated_at: new Date().toISOString(),
     }
 
@@ -311,6 +314,16 @@ export default function SettingsPage() {
               onChange={(e) => setEmailNotifications(e.target.checked)}
             />
             <span>Email me about new notifications (followers, comments, mentions)</span>
+          </label>
+
+          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={includeGym}
+              onChange={(e) => setIncludeGym(e.target.checked)}
+              data-testid="include-gym-in-fitness"
+            />
+            <span>Include gym sessions in fitness (estimated loads in Fitness, Fatigue &amp; Form; your coach sees this choice)</span>
           </label>
 
         </section>

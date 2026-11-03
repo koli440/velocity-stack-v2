@@ -73,7 +73,7 @@ const FAQ = [
   ['Who can see my rides?', 'You decide. Rides can be shared with other riders, and a privacy zone around home masks the map for everyone but you. Your raw GPS file and connection keys are never shared.'],
   ['How does coach approval work?', 'A coaching relationship only starts when the rider accepts the invite (or asks for a coach themselves). A rider has one active coach at a time and can end coaching whenever they like; access stops immediately.'],
   ['Which files and integrations are supported?', 'You can upload FIT files (including bulk import, with a help page for SRM PowerControl files). Rides also sync from Garmin, Wahoo, Intervals.icu (the bridge for Zwift and MyWhoosh) and Strava once you connect them (Garmin only sends activities recorded after you connect).'],
-  ['Are Fitness, Fatigue and Form exact?', 'No. When a ride has no power data the load is estimated from heart rate, and the app labels it as an estimate.'],
+  ['Are Fitness, Fatigue and Form exact?', 'No. When a ride has no power data the load is estimated from heart rate; gym sessions use a model estimate (you can exclude them in Settings). The app labels it as an estimate.'],
   ['Does gear apply to road rides?', 'No. Gear tracking and gear records apply to track rides only.'],
 ]
 
@@ -288,7 +288,7 @@ recovery 2min ±50% @ <55%FTP`}</code></pre>
         </div>
         <div className={card}>
           <h3 className="font-bold text-slate-900 dark:text-white">Fitness, Fatigue and Form</h3>
-          <p className={muted}>Training load over time, from power where available and otherwise estimated from heart rate. Estimates are labelled as estimates.</p>
+          <p className={muted}>Training load over time, from power where available and otherwise estimated from heart rate; gym sessions are included as model estimates. Estimates are labelled as estimates.</p>
         </div>
       </section>
 
