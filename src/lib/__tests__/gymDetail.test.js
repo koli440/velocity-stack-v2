@@ -185,3 +185,15 @@ test('own-account name history / last session queries are owner-scoped', async (
   assert.equal(eqs.filter(([c]) => c === 'user_id').length, 2)
   await assert.rejects(async () => fetchExerciseNameHistory(client, null))
 })
+
+import { parseDecimal } from '../gymDetail.js'
+test('parseDecimal handles dot/comma decimals and errors', () => {
+  const o = { min: 0, max: 10 }
+  assert.equal(parseDecimal('0.19', o).value, 0.19)
+  assert.equal(parseDecimal('0,19', o).value, 0.19)
+  assert.equal(parseDecimal('0.', o).value, 0)
+  assert.deepEqual(parseDecimal('', o), { value: null, error: null })
+  assert.ok(parseDecimal('abc', o).error)
+  assert.ok(parseDecimal('11', o).error)
+  assert.ok(parseDecimal('-1', o).error)
+})
