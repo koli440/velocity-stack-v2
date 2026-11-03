@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   blankSet, buildSavePayload, copySet, estimate1RM, fetchExerciseNameHistory, fetchLastSessionSets, kgToUnit,
   LOAD_MODE_LABELS, LOAD_MODES, saveGymSession, SET_KIND_LABELS, SET_KINDS, SIDES, suggestExerciseNames, toEditable,
-  unitToKg, VELOCITY_FIELDS, MAX_EXERCISES,
+  unitToKg, VELOCITY_FIELDS, parseDecimal, MAX_EXERCISES,
 } from '../lib/gymDetail'
 
 const UNIT_KEY = 'vs.gymWeightUnit'
@@ -30,6 +30,28 @@ export function useWeightUnit() {
 
 const input = 'w-full min-w-[3.5rem] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-violet-500'
 const small = 'px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40'
+
+/** Uncontrolled decimal input: keeps the raw text while typing ("0." / "0,19"), commits a parsed number. */
+function DecimalInput({ onValue, min, max, className, ...rest }) {
+  const [err, setErr] = useState(null)
+  return (
+    <>
+      <input
+        {...rest}
+        className={`${className}${err ? ' !border-red-500' : ''}`}
+        inputMode="decimal"
+        aria-invalid={err ? true : undefined}
+        title={err || undefined}
+        onChange={(e) => {
+          const r = parseDecimal(e.target.value, { min, max })
+          setErr(r.error)
+          onValue(r.value)
+        }}
+      />
+      {err && <span role="alert" className="block text-[10px] text-red-500">{err}</span>}
+    </>
+  )
+}
 
 export default function GymSessionEditor({ client, activityId, ownerId, detail, unit, onUnit, onCancel, onSaved }) {
   const [rows, setRows] = useState(() => {
@@ -69,11 +91,11 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
 
   const setField = (i, j, key, value) => change((r) => { r[i].sets[j][key] = value; return r })
   const setWeight = (i, j, text) =>
-    setField(i, j, 'weight_kg', text === '' ? null : unitToKg(Number(text), unit))
-  const setMetric = (i, j, key, text) => change((r) => {
+    setField(i, j, 'weight_kg', unitToKg(parseDecimal(text, { min: 0 }).value, unit))
+  const setMetric = (i, j, key, value) => change((r) => {
     const m = r[i].sets[j].metrics || {}
-    if (text === '') delete m[key]
-    else m[key] = Number(text)
+    if (value == null) delete m[key]
+    else m[key] = value
     r[i].sets[j].metrics = m
     return r
   })
@@ -172,12 +194,12 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
                       </select>
                     </td>
                     <td className="px-1 py-1"><input className={input} inputMode="numeric" value={s.reps ?? ''} aria-label="Reps" onChange={(e) => setField(i, j, 'reps', e.target.value === '' ? null : Number(e.target.value))} /></td>
-                    <td className="px-1 py-1"><input className={input} inputMode="decimal" defaultValue={kgToUnit(s.weight_kg, unit) ?? ''} key={`${unit}-${j}-${ex.sets.length}-${rev}`} aria-label="Weight" onChange={(e) => setWeight(i, j, e.target.value)} /></td>
-                    <td className="px-1 py-1"><input className={input} inputMode="decimal" value={s.rpe ?? ''} aria-label="RPE" placeholder="1-10" onChange={(e) => setField(i, j, 'rpe', e.target.value === '' ? null : Number(e.target.value))} /></td>
+                    <td className="px-1 py-1"><DecimalInput className={input} defaultValue={kgToUnit(s.weight_kg, unit) ?? ''} key={`${unit}-${j}-${ex.sets.length}-${rev}`} aria-label="Weight" min={0} onValue={(v) => setWeight(i, j, v == null ? '' : String(v))} /></td>
+                    <td className="px-1 py-1"><DecimalInput className={input} defaultValue={s.rpe ?? ''} key={`rpe-${j}-${ex.sets.length}-${rev}`} aria-label="RPE" placeholder="1-10" min={1} max={10} onValue={(v) => setField(i, j, 'rpe', v)} /></td>
                     <td className="px-1 py-1"><input className={input} inputMode="numeric" value={s.rest_s ?? ''} aria-label="Rest seconds" onChange={(e) => setField(i, j, 'rest_s', e.target.value === '' ? null : Number(e.target.value))} /></td>
                     {more && (
                       <>
-                        <td className="px-1 py-1"><input className={input} inputMode="decimal" value={s.rir ?? ''} aria-label="RIR" onChange={(e) => setField(i, j, 'rir', e.target.value === '' ? null : Number(e.target.value))} /></td>
+                        <td className="px-1 py-1"><DecimalInput className={input} defaultValue={s.rir ?? ''} key={`rir-${j}-${ex.sets.length}-${rev}`} aria-label="RIR" min={0} max={10} onValue={(v) => setField(i, j, 'rir', v)} /></td>
                         <td className="px-1 py-1"><input className={input} value={s.tempo || ''} aria-label="Tempo" placeholder="3-1-1-0" onChange={(e) => setField(i, j, 'tempo', e.target.value)} /></td>
                         <td className="px-1 py-1">
                           <select className={input} value={s.side || ''} aria-label="Side" onChange={(e) => setField(i, j, 'side', e.target.value || null)}>
@@ -195,7 +217,7 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
                       </>
                     )}
                     {velocity && VELOCITY_FIELDS.map((f) => (
-                      <td key={f.key} className="px-1 py-1"><input className={input} inputMode="decimal" value={s.metrics?.[f.key] ?? ''} aria-label={f.label} onChange={(e) => setMetric(i, j, f.key, e.target.value)} /></td>
+                      <td key={f.key} className="px-1 py-1"><DecimalInput className={input} defaultValue={s.metrics?.[f.key] ?? ''} key={`${f.key}-${j}-${ex.sets.length}-${rev}`} aria-label={f.label} min={f.min} max={f.max} onValue={(v) => setMetric(i, j, f.key, v)} /></td>
                     ))}
                     <td className="px-1 py-1 text-slate-400 whitespace-nowrap" title="Estimated 1RM (Epley)">
                       {s.kind !== 'warmup' && s.load_mode === 'weighted' && estimate1RM(s.weight_kg, s.reps) != null ? `≈${kgToUnit(estimate1RM(s.weight_kg, s.reps), unit)}` : '–'}

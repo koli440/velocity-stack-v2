@@ -166,6 +166,16 @@ export const VELOCITY_FIELDS = Object.freeze([
   { key: 'rom_cm', label: 'ROM (cm)', min: 0, max: 500 },
 ])
 const TEMPO_RE = /^[0-9Xx]{1,2}(-[0-9Xx]{1,2}){2,3}$/
+/** Parse user-typed decimal text ('.' or ',' separator). Returns { value, error }; empty -> null. */
+export function parseDecimal(text, { min = -Infinity, max = Infinity } = {}) {
+  const t = String(text ?? '').trim().replace(',', '.')
+  if (t === '') return { value: null, error: null }
+  if (!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(t)) return { value: null, error: 'Enter a number, e.g. 0.19' }
+  const value = Number(t)
+  if (value < min || value > max) return { value: null, error: `Must be between ${min} and ${max}` }
+  return { value, error: null }
+}
+
 export const KG_PER_LB = 0.45359237
 
 export const kgToUnit = (kg, unit) => (kg == null ? null : unit === 'lb' ? Math.round((kg / KG_PER_LB) * 10) / 10 : kg)
