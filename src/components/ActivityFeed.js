@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { currentReturnTo, withReturnTo } from '../lib/returnTo'
 import { supabase } from '../lib/supabase'
+import { fetchGymSetsByActivity } from '../lib/gymHeroSets'
 import { fetchCommentInfo, fetchUnreadCounts, commentCountLabel } from '../lib/activityComments'
 import { rideTypeHasGear } from '../lib/rideType'
 import { isTrackActivity, isRunActivity } from '../lib/activityType'
@@ -119,6 +120,20 @@ export default function ActivityFeed({
   const [unread, setUnread] = useState(new Map())
   const [runsByActivity, setRunsByActivity] = useState(new Map())
   const idsKey = activities.map((a) => a.id).join(',')
+  const [gymSets, setGymSets] = useState(new Map())
+  const gymIdsKey = activities.filter((a) => a.activity_type === 'gym').map((a) => a.id).join(',')
+
+  // One batched query for the visible gym sessions; on failure the hero shows activity-level stats only.
+  useEffect(() => {
+    if (!gymIdsKey) return undefined
+    let cancelled = false
+    fetchGymSetsByActivity(supabase, gymIdsKey.split(',')).then(({ byActivity }) => {
+      if (!cancelled) setGymSets((prev) => new Map([...prev, ...byActivity]))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [gymIdsKey])
 
   // Comment counts come from one RPC per page of cards; a failure just hides the chip.
   useEffect(() => {
@@ -255,7 +270,7 @@ export default function ActivityFeed({
                 {cover?.url ? (
                   <CoverPhoto cover={cover} />
                 ) : (
-                  <HeroCardVisual activity={act} className="absolute inset-0 w-full h-full p-3" />
+                  <HeroCardVisual activity={act} gymSets={gymSets.get(act.id)} className="absolute inset-0 w-full h-full p-3" />
                 )}
                 <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-slate-950/75 to-transparent pointer-events-none" />
                 <CalendarTile date={when} className="absolute top-2.5 right-2.5 z-[2]" />
