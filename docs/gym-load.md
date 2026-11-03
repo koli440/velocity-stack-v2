@@ -25,7 +25,14 @@ Intensity (%e1RM) source, in order:
    at most -0.15. There is deliberately **no generic velocity table** (leg press ~0.2 m/s and box squat ~0.55 m/s are both normal).
    Without a profile, velocity is not used for intensity.
 
-Rep-implied intensity above 12 reps is unreliable, so it is floored at 0.6 (`high_rep_floor:<exercise>` flag).
+**Unilateral assumption.** GPath records the TOTAL reps over both sides (16 lunge reps = 8 per leg) and users must not be asked
+to edit reps. So when a working set has `reps > 10` **or** the exercise name matches
+`lunge|split squat|step-up|bulgarian|single-leg|one-leg|pistol`, the recorded reps are assumed to be the total: the
+intensity estimate (Epley etc.) uses `reps / 2` per side, while stress counts the **total** reps (both sides do the work).
+Flag `assumed_unilateral:<exercise>`, `assumedUnilateral: true` in the breakdown. The threshold (`UNILATERAL_REPS_ABOVE`) and the
+name list are tunable; a per-exercise "unilateral" attribute could later replace the heuristic. Known side effect: a genuine
+bilateral set of 11+ reps is also halved (intensity slightly higher than a true per-rep estimate would be).
+Only above 12 reps *per side* is rep-implied intensity considered unreliable and floored at 0.6 (`high_rep_floor:<exercise>`).
 
 `velocity_loss_pct >= 20` -> `velocity_loss_high:<exercise>` **flag** (fatigue marker), never extra load.
 
@@ -33,7 +40,7 @@ Rep-implied intensity above 12 reps is unreliable, so it is floored at 0.6 (`hig
 jump|hop|bound|plyo|skip|throw|slam|sprint|burpee): fixed intensity 0.5 -> 0.25 stress per rep. Timed sets without reps use
 duration/4 s as reps. Sets with neither are skipped (`set_skipped_no_reps`).
 
-**Density multiplier** = clamp(sqrt(workingSets per session minute / 0.25), 0.85, 1.15); needs session time >= 5 min.
+**Density multiplier** = clamp(sqrt(workingSets per session minute / 0.2), 0.85, 1.15); needs session time >= 5 min.
 Working/total/rest time are reported in `density`.
 
 **HR multiplier** = clamp(1 + 0.5 x (avgHr / typicalGymHr - 1), 0.88, 1.12). Typical = median avg HR of the rider's prior
@@ -45,8 +52,8 @@ low (~10); that is intended by `reps x intensity^2` but is an open question belo
 
 ## Real example (owner's GPath session 2026-11-03, 69 min, avg HR 121, no history)
 Box jump 3 sets (70-90 kg, dynamic, 0.50, stress 6.0, flag dynamic_with_weight); Box squat 3 sets (0.79 reps, 15.0);
-Barbell Lunges 3 sets of 16-22 reps (0.63 reps, 21.5); Legpress 4 sets (0.79 reps, 19.9). Density x0.865 (13 sets in 69 min);
-HR multiplier 1.0 (no typical-HR reference yet). **Load 37.8.** Fixture: `src/lib/__tests__/fixtures/gpath-2026-11-03.json`.
+Barbell Lunges 3 sets of 16/16/22 total reps = 8/8/11 per leg (0.77 reps, 31.7, assumed_unilateral); Legpress 4 sets (0.79 reps, 19.9).
+Density x0.967 (13 sets in 69 min vs 0.2/min); HR multiplier 1.0 (no typical-HR reference yet). **Load 49.2.** Fixture: `src/lib/__tests__/fixtures/gpath-2026-11-03.json`.
 
 ## Output
 `{ load, breakdown: [{ name, name_key, workingSets, intensity, source (history|reps|velocity|dynamic|mixed), sources, stress }],

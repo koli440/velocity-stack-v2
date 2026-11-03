@@ -28,7 +28,9 @@ export const GYM_LOAD_CONSTANTS = Object.freeze({
   DYNAMIC_INTENSITY: 0.5,
   /** Reps-equivalent per second for timed sets without reps (planks...). */
   SECONDS_PER_REP_EQUIV: 4,
-  /** Rep-implied intensity is unreliable above this many reps: it is floored at HIGH_REP_FLOOR instead of following Epley down. */
+  /** Unilateral assumption: recorded reps are the TOTAL over both sides when reps > UNILATERAL_REPS_ABOVE or the name matches UNILATERAL_NAME. */
+  UNILATERAL_REPS_ABOVE: 10,
+  /** Rep-implied intensity is unreliable above this many reps PER SIDE: it is floored at HIGH_REP_FLOOR instead of following Epley down. */
   HIGH_REP_THRESHOLD: 12,
   HIGH_REP_FLOOR: 0.6,
   /** How far a velocity estimate may pull the rep ceiling DOWN, and the share of the gap that is used. */
@@ -36,7 +38,7 @@ export const GYM_LOAD_CONSTANTS = Object.freeze({
   VELOCITY_SHARE: 0.5,
   VELOCITY_LOSS_FLAG_PCT: 20,
   /** Density: working sets per minute of session vs. a reference, square-rooted and clamped. */
-  DENSITY_REF_SETS_PER_MIN: 0.25,
+  DENSITY_REF_SETS_PER_MIN: 0.2,
   DENSITY_MIN: 0.85,
   DENSITY_MAX: 1.15,
   /** HR tie-breaker: 1 + HR_GAIN x (avgHr / typicalHr - 1), clamped. Needs >= MIN_HR_SESSIONS prior gym sessions with HR. */
@@ -46,6 +48,7 @@ export const GYM_LOAD_CONSTANTS = Object.freeze({
   MIN_HR_SESSIONS: 3,
 })
 
+const UNILATERAL_NAME = /lunge|split squat|step[- ]?up|bulgarian|single[- ]?leg|one[- ]?leg|pistol/i
 const DYNAMIC_NAME = /jump|hop|bound|plyo|skip|throw|slam|sprint|burpee/i
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0
 const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d
@@ -92,8 +95,7 @@ export const repImpliedIntensity = (reps) => 1 / (1 + reps / 30)
 /** Per-exercise load-velocity line: intensity = 1 - (v - v0) * slope, v0 = mean velocity at 1RM. Only used to LOWER the rep ceiling. */
 export const velocityImpliedIntensity = (v, profile) => 1 - (v - profile.v0) * profile.slope
 
-function setIntensity(set, hist, c, profile) {
-  const reps = set.reps
+function setIntensity(set, hist, c, profile, reps) {
   const kg = loadedKg(set)
   const v = set.metrics?.mean_velocity_ms
   if (hist && hist.sessions >= c.MIN_HISTORY_SESSIONS && hist.bestE1rm > 0 && kg > 0) {
@@ -163,8 +165,14 @@ export function computeGymLoad({ exercises = [], durationS = null, avgHr = null,
         source = 'dynamic'
         used.dynamic = true
       } else {
-        ;({ intensity, source } = setIntensity(s, hist, c, c.velocityProfiles?.[key]))
-        if (reps > c.HIGH_REP_THRESHOLD && source !== 'history') flags.push(`high_rep_floor:${ex.name}`)
+        const unilateral = reps > c.UNILATERAL_REPS_ABOVE || UNILATERAL_NAME.test(ex.name || '')
+        const perSide = unilateral ? reps / 2 : reps
+        ;({ intensity, source } = setIntensity(s, hist, c, c.velocityProfiles?.[key], perSide))
+        if (unilateral) {
+          flags.push(`assumed_unilateral:${ex.name}`)
+          row.assumedUnilateral = true
+        }
+        if (perSide > c.HIGH_REP_THRESHOLD && source !== 'history') flags.push(`high_rep_floor:${ex.name}`)
         used[source === 'history' ? 'history' : source === 'velocity' ? 'velocity' : 'reps'] = true
       }
       sources.add(source)

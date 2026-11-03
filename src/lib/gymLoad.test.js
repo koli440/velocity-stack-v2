@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { computeGymLoad, summarizeHistory, typicalGymHr, repImpliedIntensity, nameKey } from './gymLoad.js'
 
+const round2 = (v) => Math.round(v * 100) / 100
 const set = (reps, weight_kg, extra = {}) => ({ set_type: 'active', kind: 'working', load_mode: 'weighted', reps, weight_kg, metrics: {}, ...extra })
 const rep = (n, w, extra) => Array.from({ length: n }, () => set(w.reps, w.kg, extra))
 const priorSquat = (id, kg, reps) => ({ activity_id: id, name: 'Back Squat', sets: [set(reps, kg)] })
@@ -57,10 +58,23 @@ test('velocity only refines intensity with a per-exercise profile (never a gener
   assert.equal(generic.load, plain.load)
 })
 
-test('high-rep sets are floored instead of following Epley down', () => {
-  const r = computeGymLoad({ exercises: [{ name: 'Lunge', sets: rep(1, { reps: 30, kg: 20 }) }] })
+test('very high per-side reps are floored instead of following Epley down', () => {
+  const r = computeGymLoad({ exercises: [{ name: 'Curl', sets: rep(1, { reps: 60, kg: 10 }) }] })
   assert.equal(r.breakdown[0].intensity, 0.6)
-  assert.ok(r.flags.includes('high_rep_floor:Lunge'))
+  assert.ok(r.flags.includes('high_rep_floor:Curl'))
+})
+
+test('unilateral assumption: reps > 10 or a unilateral name = total over both sides; stress on total reps', () => {
+  const lunge = computeGymLoad({ exercises: [{ name: 'Barbell Lunges', sets: [set(16, 40)] }] })
+  assert.ok(lunge.flags.includes('assumed_unilateral:Barbell Lunges'))
+  assert.equal(lunge.breakdown[0].assumedUnilateral, true)
+  assert.equal(lunge.breakdown[0].intensity, round2(repImpliedIntensity(8)))
+  assert.equal(lunge.breakdown[0].stress, round2(16 * repImpliedIntensity(8) ** 2))
+  const named = computeGymLoad({ exercises: [{ name: 'Bulgarian split squat', sets: [set(8, 40)] }] })
+  assert.equal(named.breakdown[0].intensity, round2(repImpliedIntensity(4)))
+  const bilateral = computeGymLoad({ exercises: [{ name: 'Squat', sets: [set(8, 40)] }] })
+  assert.ok(!bilateral.flags.some((f) => f.startsWith('assumed_unilateral')))
+  assert.equal(bilateral.breakdown[0].intensity, round2(repImpliedIntensity(8)))
 })
 
 test('fast sets lower the rep ceiling (velocity source); slow sets stay at the ceiling', () => {
