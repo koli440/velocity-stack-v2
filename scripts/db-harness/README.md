@@ -27,3 +27,5 @@ Gym load (issue #336): `MIG=<repo>/supabase/migrations/20270124000000_gym_load.s
 Gym editing (issue #335): `MIG=<repo>/supabase/migrations/20270116000000_gym_editing.sql node harness.mjs <repo>/supabase/migrations ./gym-editing-adversarial.mjs`
 
 Velodrome is_indoor suggestion (approve applies it to tracks): `node harness.mjs <repo>/supabase/migrations ./velodrome-indoor-adversarial.mjs`
+
+Exercise catalogue: `MIG=<repo>/supabase/migrations/20270125000000_exercise_catalogue.sql node harness.mjs <repo>/supabase/migrations ./exercise-catalogue-adversarial.mjs`

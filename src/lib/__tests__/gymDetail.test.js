@@ -197,3 +197,19 @@ test('parseDecimal handles dot/comma decimals and errors', () => {
   assert.ok(parseDecimal('11', o).error)
   assert.ok(parseDecimal('-1', o).error)
 })
+
+test('buildSavePayload keeps catalogue_id and validates jump height (cm)', async () => {
+  const { buildSavePayload } = await import('../gymDetail.js')
+  const ok = buildSavePayload([{ name: 'Box jump', catalogue_id: 'c1', sets: [{ reps: 5, metrics: { height_cm: '60' } }, { reps: 5, metrics: { height_cm: '' } }] }])
+  assert.equal(ok.exercises[0].catalogue_id, 'c1')
+  assert.equal(ok.exercises[0].sets[0].metrics.height_cm, 60)
+  assert.ok(!('height_cm' in ok.exercises[0].sets[1].metrics))
+  assert.match(buildSavePayload([{ name: 'Box jump', sets: [{ reps: 1, metrics: { height_cm: 900 } }] }]).error, /jump height/)
+  assert.match(buildSavePayload([{ name: 'Box jump', sets: [{ reps: 1, metrics: { height_cm: 0 } }] }]).error, /jump height/)
+})
+
+test('toEditable carries the catalogue link', async () => {
+  const { toEditable } = await import('../gymDetail.js')
+  const [ex] = toEditable({ exercises: [{ name: 'Lunge', catalogue_id: 'c2', catalogue: { id: 'c2' }, sets: [] }] })
+  assert.equal(ex.catalogue_id, 'c2')
+})

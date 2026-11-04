@@ -96,3 +96,14 @@ Read-only, uses the rider's own token (RLS), no service-role key:
 - History window (all-time best vs. last N weeks) and detraining; min sessions (3) and HR reference (3 sessions).
 - Per-exercise velocity profiles from the rider's own data once enough sets with velocity exist.
 - Planned gym workouts need a separate estimate (same formula with planned reps/weights, no velocity/HR).
+
+## Exercise catalogue (model v2)
+
+Exercises can link to `exercise_catalogue` (`gym_exercises.catalogue_id`). When linked, the model uses the catalogue instead of guessing:
+
+- `unilateral` (reps recorded as total across both sides) replaces the name regex / `reps > 10` guess; no `assumed_unilateral` flag.
+- `movement_type` (`strength` | `dynamic` | `jump`) decides dynamic vs strength; non-strength is dynamic.
+- Jump height (`metrics.height_cm`, cm) scales dynamic intensity: `clamp(0.5 * (1 + 0.3 * (h/50 - 1)), 0.4, 0.65)`. Added kg on a catalogue jump does not raise `dynamic_with_weight`.
+- History is keyed by catalogue id (`c:<id>`), so aliases ("Legpress", "Leg press") share one history; unlinked exercises still use `name_key`.
+
+Unlinked (free text) exercises keep the old fallback. `GYM_LOAD_MODEL_VERSION` is 2; the migration marks newly linked scored sessions `gym_load_stale` and the self-service recompute refreshes them.

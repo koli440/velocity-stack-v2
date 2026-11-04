@@ -26,6 +26,11 @@ export const GYM_LOAD_CONSTANTS = Object.freeze({
   INTENSITY_MAX: 1.05,
   /** Fixed intensity for dynamic / jump / bodyweight / unloaded sets (stress per rep = DYNAMIC_INTENSITY^K). */
   DYNAMIC_INTENSITY: 0.5,
+  /** Jump height (catalogue exercises with metrics.height_cm): intensity = DYNAMIC_INTENSITY x (1 + SLOPE x (h / REF - 1)), clamped. */
+  HEIGHT_REF_CM: 50,
+  HEIGHT_SLOPE: 0.3,
+  HEIGHT_INTENSITY_MIN: 0.4,
+  HEIGHT_INTENSITY_MAX: 0.65,
   /** Reps-equivalent per second for timed sets without reps (planks...). */
   SECONDS_PER_REP_EQUIV: 4,
   /** Unilateral assumption: recorded reps are the TOTAL over both sides when reps > UNILATERAL_REPS_ABOVE or the name matches UNILATERAL_NAME. */
@@ -57,18 +62,20 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 /** Same normalisation as gym_exercises.name_key. */
 export const nameKey = (name) => String(name ?? '').replace(/\s+/g, ' ').trim().toLowerCase()
 const keyOf = (ex) => ex?.name_key || nameKey(ex?.name)
+/** History key: the catalogue link when present (aliases and typos collapse), else the normalised name. */
+const histKeyOf = (ex) => (ex?.catalogue_id || ex?.catalogue?.id ? `c:${ex.catalogue_id || ex.catalogue.id}` : keyOf(ex))
 
 const loadedKg = (s) => ((s.load_mode || 'weighted') === 'weighted' && isNum(s.weight_kg) ? s.weight_kg : 0)
 const isWorking = (s) => s.kind !== 'warmup'
 
 /**
- * Per-exercise summary of the rider's PRIOR sessions: { [name_key]: { sessions, bestE1rm } }.
+ * Per-exercise summary of the rider's PRIOR sessions: { ['c:<catalogue_id>' | name_key]: { sessions, bestE1rm } }.
  * @param {Array<{ activity_id: string, name?: string, name_key?: string, sets: object[] }>} priorExercises
  */
 export function summarizeHistory(priorExercises) {
   const acc = {}
   for (const ex of priorExercises || []) {
-    const key = keyOf(ex)
+    const key = histKeyOf(ex)
     if (!key) continue
     const entry = (acc[key] ||= { activities: new Set(), bestE1rm: null })
     entry.activities.add(ex.activity_id ?? Symbol())
@@ -127,13 +134,14 @@ export function computeGymLoad({ exercises = [], durationS = null, avgHr = null,
   let workingSets = 0
   let workingTimeS = 0
   let restS = 0
-  const used = { history: false, reps: false, velocity: false, dynamic: false, hr: false, density: false }
+  const used = { history: false, reps: false, velocity: false, dynamic: false, height: false, hr: false, density: false }
 
   for (const ex of exercises) {
     const key = keyOf(ex)
-    const hist = history[key]
-    const dynamicByName = DYNAMIC_NAME.test(ex.name || '')
-    const row = { name: ex.name, name_key: key, workingSets: 0, intensity: null, source: null, stress: 0 }
+    const cat = ex.catalogue || null
+    const hist = history[histKeyOf(ex)] ?? history[key]
+    const dynamicByName = cat ? cat.movement_type !== 'strength' : DYNAMIC_NAME.test(ex.name || '')
+    const row = { name: ex.name, name_key: key, catalogue_id: cat?.id ?? null, workingSets: 0, intensity: null, source: null, stress: 0 }
     let wReps = 0
     let wIntensity = 0
     const sources = new Set()
@@ -160,17 +168,23 @@ export function computeGymLoad({ exercises = [], durationS = null, avgHr = null,
       let intensity
       let source
       if (dynamic) {
-        if (dynamicByName && loadedKg(s) > 0) flags.push(`dynamic_with_weight:${ex.name}`)
+        if (dynamicByName && loadedKg(s) > 0 && cat?.movement_type !== 'jump') flags.push(`dynamic_with_weight:${ex.name}`)
         intensity = c.DYNAMIC_INTENSITY
+        const h = s.metrics?.height_cm
+        if (cat && isNum(h) && h > 0) {
+          intensity = clamp(c.DYNAMIC_INTENSITY * (1 + c.HEIGHT_SLOPE * (h / c.HEIGHT_REF_CM - 1)), c.HEIGHT_INTENSITY_MIN, c.HEIGHT_INTENSITY_MAX)
+          used.height = true
+        }
         source = 'dynamic'
         used.dynamic = true
       } else {
-        const unilateral = reps > c.UNILATERAL_REPS_ABOVE || UNILATERAL_NAME.test(ex.name || '')
+        const unilateral = cat ? !!cat.unilateral : reps > c.UNILATERAL_REPS_ABOVE || UNILATERAL_NAME.test(ex.name || '')
         const perSide = unilateral ? reps / 2 : reps
         ;({ intensity, source } = setIntensity(s, hist, c, c.velocityProfiles?.[key], perSide))
         if (unilateral) {
-          flags.push(`assumed_unilateral:${ex.name}`)
-          row.assumedUnilateral = true
+          if (!cat) flags.push(`assumed_unilateral:${ex.name}`)
+          row.assumedUnilateral = !cat
+          row.unilateral = true
         }
         if (perSide > c.HIGH_REP_THRESHOLD && source !== 'history') flags.push(`high_rep_floor:${ex.name}`)
         used[source === 'history' ? 'history' : source === 'velocity' ? 'velocity' : 'reps'] = true

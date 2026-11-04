@@ -148,3 +148,46 @@ test('empty or unusable sessions give zero load and a flag', () => {
   assert.equal(r.load, 0)
   assert.ok(r.flags.includes('no_working_sets'))
 })
+
+const catLunge = { id: 'c-lunge', movement_type: 'strength', unilateral: true, set_fields: ['reps', 'weight'] }
+const catBoxJump = { id: 'c-box', movement_type: 'jump', unilateral: false, set_fields: ['reps', 'height', 'weight'] }
+const catSquat = { id: 'c-squat', movement_type: 'strength', unilateral: false, set_fields: ['reps', 'weight'] }
+
+test('catalogue unilateral flag replaces the name / reps guess', () => {
+  const sets = [set(12, 20), set(12, 20)]
+  const guess = computeGymLoad({ exercises: [{ name: 'Zercher thing', sets }] })
+  const linked = computeGymLoad({ exercises: [{ name: 'Zercher thing', catalogue: catLunge, sets }] })
+  assert.ok(guess.flags.some((f) => f.startsWith('assumed_unilateral')))
+  assert.ok(!linked.flags.some((f) => f.startsWith('assumed_unilateral')))
+  assert.equal(linked.breakdown[0].unilateral, true)
+  assert.equal(linked.breakdown[0].catalogue_id, 'c-lunge')
+  // 12 reps with a bilateral exercise has a higher rep ceiling than 6 per side
+  const bilateral = computeGymLoad({ exercises: [{ name: 'Zercher thing', catalogue: catSquat, sets }] })
+  assert.ok(bilateral.breakdown[0].intensity < linked.breakdown[0].intensity)
+})
+
+test('a strength exercise with a jump-like name is not treated as dynamic when linked', () => {
+  const r = computeGymLoad({ exercises: [{ name: 'Jump squat hold', catalogue: catSquat, sets: [set(5, 100)] }] })
+  assert.notEqual(r.breakdown[0].source, 'dynamic')
+})
+
+test('box jump height scales the dynamic stress, added weight is not flagged as ignored', () => {
+  const run = (h) => computeGymLoad({ exercises: [{ name: 'Box jump', catalogue: catBoxJump, sets: [set(5, null, { metrics: h ? { height_cm: h } : {} })] }] })
+  const none = run(null), low = run(30), high = run(80)
+  assert.ok(low.breakdown[0].stress < none.breakdown[0].stress)
+  assert.ok(high.breakdown[0].stress > none.breakdown[0].stress)
+  assert.equal(high.inputsUsed.height, true)
+  const withKg = computeGymLoad({ exercises: [{ name: 'Box jump', catalogue: catBoxJump, sets: [set(5, 10, { metrics: { height_cm: 60 } })] }] })
+  assert.ok(!withKg.flags.some((f) => f.startsWith('dynamic_with_weight')))
+})
+
+test('history is shared across aliases through the catalogue id', () => {
+  const hist = summarizeHistory([
+    { activity_id: 'a', name: 'Legpress', catalogue_id: 'c-lp', sets: [set(5, 200)] },
+    { activity_id: 'b', name: 'Leg press', catalogue_id: 'c-lp', sets: [set(3, 220)] },
+    { activity_id: 'c', name: 'LP', catalogue_id: 'c-lp', sets: [set(3, 230)] },
+  ])
+  assert.equal(hist['c:c-lp'].sessions, 3)
+  const r = computeGymLoad({ exercises: [{ name: 'LEG  PRESS', catalogue_id: 'c-lp', catalogue: { id: 'c-lp', movement_type: 'strength', unilateral: false }, sets: [set(5, 200)] }], history: hist })
+  assert.equal(r.breakdown[0].source, 'history')
+})
