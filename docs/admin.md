@@ -21,3 +21,7 @@ Panels
 
 Pure helpers (trend, percentages, provider health/order) live in `src/lib/adminDashboard.js` with tests.
 DB test: `scripts/db-harness/admin-dashboard-adversarial.mjs` (see its README).
+
+## Third-party app stats
+
+The dashboard's "Third-party apps" panel is fed by `admin_partner_stats(p_days)` (`20270134000000_admin_partner_stats.sql`), a separate admin-only SECURITY DEFINER function (raises `Admin only`). It returns app counts by status, connected riders, a per-app table (riders, uploads 24h/7d/30d/all, imported/duplicate/failed, failure rate, activities, 429s, refreshes, refresh-reuse revocations, last upload), a daily upload series and recent failure texts. Aggregates only; no rider identities. Rows link to `/admin/partner-apps`.

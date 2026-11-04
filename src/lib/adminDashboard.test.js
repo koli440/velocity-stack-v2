@@ -39,3 +39,14 @@ test('labels', () => {
   assert.equal(providerLabel('polar'), 'Polar')
   assert.equal(dayLabel('2027-03-09'), '9/3')
 })
+
+import { failureRate, partnerAppHealth } from './adminDashboard.js'
+
+test('partner failure rate and health', () => {
+  assert.equal(failureRate({ imported: 6, duplicate: 2, failed: 2 }), 20)
+  assert.equal(failureRate({}), 0)
+  assert.equal(partnerAppHealth({ status: 'approved', imported: 10, failed: 0 }), 'ok')
+  assert.equal(partnerAppHealth({ status: 'approved', imported: 5, failed: 5 }), 'warn')
+  assert.equal(partnerAppHealth({ status: 'approved', imported: 5, failed: 0, reuse_revocations: 1 }), 'warn')
+  assert.equal(partnerAppHealth({ status: 'suspended' }), 'suspended')
+})
