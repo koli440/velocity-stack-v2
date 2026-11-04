@@ -1,7 +1,7 @@
 ---
 title: Privacy Policy
 description: How VelocityStack collects, uses, shares and protects your data, including activity, location and health-related data, and your rights.
-updated: 2026-11-02
+updated: 2026-11-04
 ---
 This Privacy Policy explains what personal data VelocityStack ("we", "us", "the Service", at velocity-stack.app) collects, why, who sees it, and what rights you have. Please also read our [Terms of Service](/terms).
 
@@ -68,7 +68,7 @@ We use the following providers to run the Service. They process data on our beha
 - **Map tile providers (MapTiler, or OpenStreetMap)** – when you view a map, your browser requests map images from the provider, which therefore receives your IP address and the map area you view. Your activity data is not sent to them.
 - **Email delivery provider (Resend)** – if email notifications are switched on, we send notification emails (for example about coaching or follow requests) to your account email address through this provider. You can turn this off in your settings.
 - **Google Analytics** – only if the operator has enabled it on the deployment; the Service works without it. If enabled, it measures page usage and may use cookies.
-- **Reddit Pixel (Reddit, Inc.)** – only if the operator has enabled it on the deployment; the Service works without it. If enabled, it loads a script from Reddit that receives your IP address, browser details and the pages you visit, plus a sign-up event when you register, to measure the performance of Reddit advertising. It may set cookies. We do not send Reddit your activity or health data.
+- **Reddit Pixel (Reddit, Inc.)** – only if the operator has enabled it on the deployment; the Service works without it. If enabled, it loads a script from Reddit that receives your IP address, browser details and the pages you visit, plus a sign-up event when you register, to measure the performance of Reddit advertising. It may set cookies, and only loads after you accept the Marketing category (section 11). We do not send Reddit your activity or health data.
 
 We do not sell your personal data and we do not use your activity data for advertising. The optional Reddit Pixel above only measures visits and sign-ups from our own Reddit campaigns.
 
@@ -88,12 +88,22 @@ Our providers may process data outside your country, including outside the Europ
 - We may keep limited data longer only where the law requires or to establish or defend legal claims.
 
 ## 11. Cookies and local storage
-We use only what is strictly necessary, and set no advertising or tracking cookies ourselves.
-- Your **sign-in session** is stored in your browser's local storage so that you stay signed in. It is removed when you sign out.
-- **Preferences** such as theme and display options are stored in your browser.
-- If the operator enables Google Analytics (section 7), it may set analytics cookies, and if it enables the Reddit Pixel (section 7), Reddit may set advertising-measurement cookies; otherwise none are set by us.
+When you first visit, a banner asks you to accept or reject optional cookies. Optional categories are off until you turn them on, the Service works fully if you reject them, and nothing optional loads or is stored before you choose. You can change or withdraw your choice at any time through **Cookie settings** in the footer or at the bottom of this page. We ask again if the categories change and at least every 12 months.
 
-Because these items are essential to provide the service you request, no consent banner is needed for them.
+**Strictly necessary (always on, no consent needed)**
+- **Sign-in session (Supabase)** – stored in your browser's local storage (key starting `sb-`) so that you stay signed in. Removed when you sign out.
+- **Cookie choice (`vs.consent`)** – local storage, records your choice, its version and date. Kept up to 12 months.
+- **Preferences** – such as theme and display options, stored in your browser.
+- **Sign-up attribution** – campaign parameters (utm_source, utm_medium, utm_campaign, gclid) are kept in session storage only while a Google sign-in is in progress, and a marker in local storage prevents counting a sign-up twice. These are used only if you accepted the matching category; otherwise they are not sent anywhere.
+
+**Analytics (only if you accept)**
+- **Google Analytics 4 (Google)** – sets `_ga` and `_ga_<container id>` cookies (up to 2 years) to measure page usage and sign-ups. Only loaded if the operator has enabled it on the deployment.
+
+**Marketing (only if you accept)**
+- **Google Ads signals (Google)** – consent for advertising storage, ad user data and ad personalisation is granted only in this category, via Google Consent Mode v2 (all denied by default); this may result in cookies such as `_gcl_au`.
+- **Reddit Pixel (Reddit, Inc.)** – loads a script from Reddit and may set cookies such as `_rdt_uuid` to measure Reddit advertising. Only loaded if the operator has enabled it on the deployment.
+
+If you withdraw consent, we stop the scripts and delete the cookies listed above that we can reach on this site; cookies on third-party domains are governed by those providers' policies.
 
 ## 12. Security
 Data is transmitted over HTTPS. Access is controlled by row-level security in the database so that each account reads its own rows, and coaches and riders see only what the rules in this policy allow. Passwords are hashed by the authentication provider, integration secrets are stored server-side and are not readable from the browser, and privileged operations run on the server. No system is perfectly secure; if a breach affects you we will notify you and the authorities as the law requires.
