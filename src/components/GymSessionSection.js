@@ -49,6 +49,7 @@ export default function GymSessionSection({ client, activityId, ownerId, coachCo
         client={client}
         activityId={activityId}
         ownerId={ownerId}
+        canSuggest={isOwner}
         detail={detail}
         unit={unit}
         onUnit={setUnit}
@@ -119,7 +120,7 @@ export default function GymSessionSection({ client, activityId, ownerId, coachCo
               <tr className="text-left text-[10px] uppercase tracking-wider text-slate-400">
                 <th className="px-4 py-1.5 font-bold">Set</th>
                 <th className="px-2 py-1.5 font-bold">Reps</th>
-                <th className="px-2 py-1.5 font-bold">Weight</th>
+                <th className="px-2 py-1.5 font-bold">Weight / height</th>
                 <th className="px-2 py-1.5 font-bold">RPE / RIR</th>
                 <th className="px-2 py-1.5 font-bold">Time</th>
                 <th className="px-2 py-1.5 font-bold">Rest</th>
@@ -137,7 +138,8 @@ export default function GymSessionSection({ client, activityId, ownerId, coachCo
                   </td>
                   <td className="px-2 py-1.5">{s.reps ?? '–'}</td>
                   <td className="px-2 py-1.5">
-                    {s.load_mode === 'bodyweight' && s.weight_kg == null ? 'BW' : fmtW(s.weight_kg, unit)}
+                    {s.metrics?.height_cm != null && <span data-testid="gym-height">{s.metrics.height_cm} cm{s.weight_kg != null ? ' + ' : ''}</span>}
+                    {s.metrics?.height_cm != null && s.weight_kg == null ? null : s.load_mode === 'bodyweight' && s.weight_kg == null ? 'BW' : fmtW(s.weight_kg, unit)}
                     {s.load_mode === 'assisted' && <span className="text-[9px] text-slate-400"> assist</span>}
                     {s.load_mode === 'bodyweight' && s.weight_kg != null && <span className="text-[9px] text-slate-400"> +BW</span>}
                   </td>

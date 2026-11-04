@@ -7,6 +7,7 @@
 
 export const MAX_EXERCISES = 100
 export const MAX_SETS = 1000
+export const MAX_HEIGHT_CM = 400
 
 const SET_COLUMNS = 'exercise_id, position, set_type, start_time, duration_s, reps, weight_kg, kind, rest_s, rpe, rir, tempo, side, load_mode, notes, metrics'
 
@@ -140,15 +141,23 @@ export async function replaceGymDetail(supabase, detail, ids) {
   return saveGymDetail(supabase, detail, ids)
 }
 
+export const CATALOGUE_COLUMNS = 'id, name, aliases, movement_type, unilateral, set_fields, category, owner_id'
+
 /** Loads exercises with their sets for the detail page (RLS decides visibility). */
 export async function fetchGymDetail(supabase, activityId) {
   const [ex, sets] = await Promise.all([
-    supabase.from('gym_exercises').select('id, position, name, category, subtype, notes').eq('activity_id', activityId).order('position'),
+    supabase.from('gym_exercises').select('id, position, name, category, subtype, notes, catalogue_id').eq('activity_id', activityId).order('position'),
     supabase.from('gym_sets').select(SET_COLUMNS).eq('activity_id', activityId).order('position'),
   ])
   if (ex.error || sets.error || !ex.data?.length) return null
   const byExercise = new Map(ex.data.map((e) => [e.id, { ...e, sets: [] }]))
   for (const s of sets.data || []) byExercise.get(s.exercise_id)?.sets.push(s)
+  const catIds = [...new Set(ex.data.map((e) => e.catalogue_id).filter(Boolean))]
+  if (catIds.length) {
+    const { data: cats } = await supabase.from('exercise_catalogue').select(CATALOGUE_COLUMNS).in('id', catIds)
+    const byId = new Map((cats || []).map((c) => [c.id, c]))
+    for (const e of byExercise.values()) e.catalogue = byId.get(e.catalogue_id) || null
+  }
   return { exercises: [...byExercise.values()] }
 }
 
@@ -243,6 +252,7 @@ export const copySet = (s) => blankSet({ ...s, notes: null, start_time: null, me
 export function toEditable(detail) {
   return (detail?.exercises || []).map((ex) => ({
     name: ex.name, category: ex.category ?? null, subtype: ex.subtype ?? null, notes: ex.notes ?? null,
+    catalogue_id: ex.catalogue_id ?? null, catalogue: ex.catalogue ?? null,
     sets: (ex.sets || []).flatMap((s, i) => s.set_type === 'rest' ? [] : [blankSet({
       kind: s.kind || 'working', reps: s.reps ?? null, weight_kg: s.weight_kg ?? null, duration_s: s.duration_s ?? null,
       rest_s: restAfter(ex, i), rpe: s.rpe ?? null, rir: s.rir ?? null, tempo: s.tempo ?? null, side: s.side ?? null,
@@ -288,6 +298,12 @@ export function buildSavePayload(editable) {
         else if (v < f.min || v > f.max) return { error: `${where}: ${f.label} is out of range` }
         else metrics[f.key] = v
       }
+      if ('height_cm' in metrics) {
+        const h = numOrNull(metrics.height_cm)
+        if (h == null) delete metrics.height_cm
+        else if (h <= 0 || h > MAX_HEIGHT_CM) return { error: `${where}: jump height must be between 1 and ${MAX_HEIGHT_CM} cm` }
+        else metrics.height_cm = h
+      }
       sets.push({
         kind: s.kind || 'working', reps, weight_kg: weight, duration_s: dur, rest_s: rest, rpe, rir, tempo,
         side: s.side || null, load_mode: s.load_mode || 'weighted', notes: String(s.notes || '').trim() || null,
@@ -296,7 +312,7 @@ export function buildSavePayload(editable) {
     }
     total += sets.length
     if (total > MAX_SETS) return { error: `At most ${MAX_SETS} sets` }
-    exercises.push({ name, category: ex.category || null, subtype: ex.subtype || null, notes: String(ex.notes || '').trim() || null, sets })
+    exercises.push({ name, catalogue_id: ex.catalogue_id || null, category: ex.category || null, subtype: ex.subtype || null, notes: String(ex.notes || '').trim() || null, sets })
   }
   return { exercises }
 }

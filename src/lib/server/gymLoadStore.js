@@ -14,7 +14,7 @@ import { computeGymLoad, summarizeHistory, typicalGymHr, nameKey } from '../gymL
 import { fetchGymDetail } from '../gymDetail.js'
 
 /** Bump when gymLoad.js changes the numbers; an admin rescore then recomputes older rows. */
-export const GYM_LOAD_MODEL_VERSION = 1
+export const GYM_LOAD_MODEL_VERSION = 2
 export const BACKFILL_BATCH = 25
 const PAGE = 1000
 const IN_CHUNK = 200
@@ -35,7 +35,7 @@ async function pageAll(buildQuery) {
 }
 
 /** The rider's PRIOR gym exercises (same name_keys only) and prior avg HRs, strictly before `before`. */
-async function loadHistory(client, { userId, activityId, before, nameKeys }) {
+async function loadHistory(client, { userId, activityId, before, nameKeys, catalogueIds = [] }) {
   const priorActs = await pageAll(() =>
     client
       .from('activities')
@@ -49,18 +49,22 @@ async function loadHistory(client, { userId, activityId, before, nameKeys }) {
   )
   const priorIds = new Set(priorActs.map((a) => a.id))
   const typicalHr = typicalGymHr(priorActs.map((a) => num(a.avg_hr)))
-  if (!priorIds.size || !nameKeys.length) return { history: {}, typicalHr }
+  if (!priorIds.size || (!nameKeys.length && !catalogueIds.length)) return { history: {}, typicalHr }
 
-  const exercises = (
-    await pageAll(() =>
-      client
-        .from('gym_exercises')
-        .select('id, activity_id, name_key')
-        .eq('user_id', userId)
-        .in('name_key', nameKeys)
-        .order('id', { ascending: true })
-    )
-  ).filter((e) => priorIds.has(e.activity_id))
+  const fetchBy = (column, values) =>
+    values.length
+      ? pageAll(() =>
+          client
+            .from('gym_exercises')
+            .select('id, activity_id, name_key, catalogue_id')
+            .eq('user_id', userId)
+            .in(column, values)
+            .order('id', { ascending: true })
+        )
+      : Promise.resolve([])
+  // Same name_key OR same catalogue exercise (aliases and typos collapse onto one history); two queries, deduped.
+  const found = [...(await fetchBy('name_key', nameKeys)), ...(await fetchBy('catalogue_id', catalogueIds))]
+  const exercises = [...new Map(found.map((e) => [e.id, e])).values()].filter((e) => priorIds.has(e.activity_id))
   const setsByExercise = new Map()
   for (let i = 0; i < exercises.length; i += IN_CHUNK) {
     const ids = exercises.slice(i, i + IN_CHUNK).map((e) => e.id)
@@ -76,7 +80,7 @@ async function loadHistory(client, { userId, activityId, before, nameKeys }) {
       setsByExercise.get(s.exercise_id).push(s)
     }
   }
-  const prior = exercises.map((e) => ({ activity_id: e.activity_id, name_key: e.name_key, sets: setsByExercise.get(e.id) || [] }))
+  const prior = exercises.map((e) => ({ activity_id: e.activity_id, name_key: e.name_key, catalogue_id: e.catalogue_id ?? null, sets: setsByExercise.get(e.id) || [] }))
   return { history: summarizeHistory(prior), typicalHr }
 }
 
@@ -104,7 +108,8 @@ export async function computeAndStoreGymLoad(client, activityId) {
   }
 
   const nameKeys = [...new Set(detail.exercises.map((e) => nameKey(e.name)).filter(Boolean))]
-  const { history, typicalHr } = await loadHistory(client, { userId: act.user_id, activityId, before: act.activity_date, nameKeys })
+  const catalogueIds = [...new Set(detail.exercises.map((e) => e.catalogue_id).filter(Boolean))]
+  const { history, typicalHr } = await loadHistory(client, { userId: act.user_id, activityId, before: act.activity_date, nameKeys, catalogueIds })
   const result = computeGymLoad({
     exercises: detail.exercises,
     durationS: num(act.elapsed_time_s) ?? num(act.moving_time_s) ?? num(act.duration_sec),

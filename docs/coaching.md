@@ -289,3 +289,5 @@ Coaches read an athlete's gym load only through coach-safe paths: `shared_activi
 - Tooltip shows each planned workout and its load; calendar races within the horizon get a marker with projected form and the usual status label. The calendar race chip shows a short "Projected form" line for races up to 8 weeks away (`useRaceForms`).
 - **Data access**: planned workouts are read with an explicit `rider_id` filter (a coach reads the athlete's through RLS); real load comes from the same paths as before (own page: owner-filtered `activities`; coach: the `coach_fitness_activities` RPC only). No migration.
 - Not included: the optional what-if ("add a hypothetical load") is a follow-up.
+
+Coaches read the catalogue through RLS (`is_coach_of(owner_id)`), so a rider's private exercises are visible to their coach; coach edits can pick catalogue exercises but only the owner can suggest new ones.

@@ -5,6 +5,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { requestGymLoad } from '../lib/gymLoadClient'
+import { fieldsFor, isJump, isUnilateral } from '../lib/exerciseCatalogue'
+import ExercisePickerModal from './ExercisePickerModal'
 import {
   blankSet, buildSavePayload, copySet, estimate1RM, fetchExerciseNameHistory, fetchLastSessionSets, kgToUnit,
   LOAD_MODE_LABELS, LOAD_MODES, saveGymSession, SET_KIND_LABELS, SET_KINDS, SIDES, suggestExerciseNames, toEditable,
@@ -54,10 +56,10 @@ function DecimalInput({ onValue, min, max, className, ...rest }) {
   )
 }
 
-export default function GymSessionEditor({ client, activityId, ownerId, detail, unit, onUnit, onCancel, onSaved }) {
+export default function GymSessionEditor({ client, activityId, ownerId, detail, unit, onUnit, onCancel, onSaved, canSuggest = true }) {
   const [rows, setRows] = useState(() => {
     const r = toEditable(detail)
-    return r.length ? r : [{ name: '', category: null, subtype: null, notes: null, sets: [blankSet()] }]
+    return r.length ? r : [{ name: '', category: null, subtype: null, notes: null, catalogue_id: null, catalogue: null, sets: [blankSet()] }]
   })
   const undoStack = useRef([])
   const [rev, setRev] = useState(0)
@@ -66,6 +68,7 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
   const [history, setHistory] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [picker, setPicker] = useState(null) // null | { mode: 'add' } | { mode: 'change', index }
 
   useEffect(() => {
     let cancelled = false
@@ -106,7 +109,19 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
     return r
   })
   const removeSet = (i, j) => change((r) => { r[i].sets.splice(j, 1); return r })
-  const addExercise = () => change((r) => { r.push({ name: '', category: null, subtype: null, notes: null, sets: [blankSet()] }); return r })
+  const fromCatalogue = (c) => ({ name: c.name, category: c.category ?? null, subtype: null, notes: null, catalogue_id: c.id, catalogue: c, sets: [blankSet()] })
+  const addPicked = (list) => {
+    change((r) => {
+      for (const c of list.slice(0, MAX_EXERCISES - r.length)) r.push(fromCatalogue(c))
+      return r
+    })
+    setPicker(null)
+  }
+  const changePicked = (i, c) => {
+    change((r) => { Object.assign(r[i], { name: c.name, category: c.category ?? r[i].category, catalogue_id: c.id, catalogue: c }); return r })
+    setPicker(null)
+  }
+  const addFreeText = () => change((r) => { r.push({ name: '', category: null, subtype: null, notes: null, catalogue_id: null, catalogue: null, sets: [blankSet()] }); return r })
   const removeExercise = (i) => change((r) => { r.splice(i, 1); return r })
   const move = (i, d) => change((r) => {
     const k = i + d
@@ -136,6 +151,10 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
   }
 
   const names = (q) => suggestExerciseNames(history, q)
+  const colsOf = (ex) => {
+    const f = ex.catalogue_id || ex.catalogue ? fieldsFor(ex) : ['reps', 'weight']
+    return { weight: f.includes('weight'), height: f.includes('height'), duration: f.includes('duration'), jump: isJump(ex) }
+  }
 
   return (
     <section className="bg-white dark:bg-surface-darkCard p-4 sm:p-6 rounded-3xl border border-violet-300 dark:border-violet-500/40 shadow-xs space-y-4" data-testid="gym-editor">
@@ -156,20 +175,32 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
       {rows.map((ex, i) => (
         <div key={i} className="rounded-2xl border border-slate-200 dark:border-slate-800 p-3 space-y-2" data-testid="gym-edit-exercise">
           <div className="flex flex-wrap items-center gap-2">
-            <input
-              className={`${input} flex-1 min-w-[10rem] text-sm font-black`}
-              list="gym-exercise-names"
-              value={ex.name}
-              maxLength={120}
-              placeholder="Exercise name"
-              aria-label={`Exercise ${i + 1} name`}
-              onChange={(e) => change((r) => { r[i].name = e.target.value; return r })}
-            />
+            {ex.catalogue_id ? (
+              <div className="flex-1 min-w-[10rem] text-sm font-black text-slate-900 dark:text-white" data-testid="gym-exercise-name">
+                {ex.name}
+                {ex.catalogue?.owner_id && <span className="ml-2 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-500">Private</span>}
+              </div>
+            ) : (
+              <input
+                className={`${input} flex-1 min-w-[10rem] text-sm font-black`}
+                list="gym-exercise-names"
+                value={ex.name}
+                maxLength={120}
+                placeholder="Exercise name (free text)"
+                aria-label={`Exercise ${i + 1} name`}
+                onChange={(e) => change((r) => { r[i].name = e.target.value; return r })}
+              />
+            )}
+            <button type="button" className={small} onClick={() => setPicker({ mode: 'change', index: i })}>{ex.catalogue_id ? 'Change' : 'Pick from list'}</button>
             <button type="button" className={small} onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move exercise up">↑</button>
             <button type="button" className={small} onClick={() => move(i, 1)} disabled={i === rows.length - 1} aria-label="Move exercise down">↓</button>
             <button type="button" className={small} onClick={() => repeatLast(i)} disabled={!ex.name.trim()}>Repeat last session</button>
             <button type="button" className={`${small} text-red-600`} onClick={() => removeExercise(i)}>Remove</button>
           </div>
+          {!ex.catalogue_id && ex.name.trim() && (
+            <p className="text-[10px] text-slate-400">Not matched to the exercise list yet. Names that match a known exercise or its other names are linked when you save; otherwise pick one from the list for better load estimates.</p>
+          )}
+          {isUnilateral(ex) && <p className="text-[10px] text-slate-400">One side at a time: record the total reps for both sides.</p>}
           {more && (
             <input className={input} value={ex.notes || ''} maxLength={1000} placeholder="Exercise notes" aria-label="Exercise notes"
               onChange={(e) => change((r) => { r[i].notes = e.target.value; return r })} />
@@ -179,7 +210,7 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-[10px] uppercase tracking-wider text-slate-400">
-                  <th className="px-1 py-1">#</th><th className="px-1">Type</th><th className="px-1">Reps</th><th className="px-1">Weight ({unit})</th>
+                  <th className="px-1 py-1">#</th><th className="px-1">Type</th>{colsOf(ex).duration && !more && <th className="px-1">Time (s)</th>}<th className="px-1">Reps</th>{colsOf(ex).height && <th className="px-1">Height (cm)</th>}{colsOf(ex).weight && <th className="px-1">{colsOf(ex).jump ? `Added (${unit})` : `Weight (${unit})`}</th>}
                   <th className="px-1">RPE</th><th className="px-1">Rest (s)</th>
                   {more && <><th className="px-1">RIR</th><th className="px-1">Tempo</th><th className="px-1">Side</th><th className="px-1">Load</th><th className="px-1">Time (s)</th><th className="px-1">Notes</th></>}
                   {velocity && VELOCITY_FIELDS.map((f) => <th key={f.key} className="px-1">{f.label}</th>)}
@@ -195,8 +226,10 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
                         {SET_KINDS.map((k) => <option key={k} value={k}>{SET_KIND_LABELS[k]}</option>)}
                       </select>
                     </td>
+                    {colsOf(ex).duration && !more && <td className="px-1 py-1"><input className={input} inputMode="numeric" value={s.duration_s ?? ''} aria-label="Duration seconds" onChange={(e) => setField(i, j, 'duration_s', e.target.value === '' ? null : Number(e.target.value))} /></td>}
                     <td className="px-1 py-1"><input className={input} inputMode="numeric" value={s.reps ?? ''} aria-label="Reps" onChange={(e) => setField(i, j, 'reps', e.target.value === '' ? null : Number(e.target.value))} /></td>
-                    <td className="px-1 py-1"><DecimalInput className={input} defaultValue={kgToUnit(s.weight_kg, unit) ?? ''} key={`${unit}-${j}-${ex.sets.length}-${rev}`} aria-label="Weight" min={0} onValue={(v) => setWeight(i, j, v == null ? '' : String(v))} /></td>
+                    {colsOf(ex).height && <td className="px-1 py-1"><DecimalInput className={input} defaultValue={s.metrics?.height_cm ?? ''} key={`h-${j}-${ex.sets.length}-${rev}`} aria-label="Jump height (cm)" placeholder="cm" min={1} max={400} onValue={(v) => setMetric(i, j, 'height_cm', v)} /></td>}
+                    {colsOf(ex).weight && <td className="px-1 py-1"><DecimalInput className={input} defaultValue={kgToUnit(s.weight_kg, unit) ?? ''} key={`${unit}-${j}-${ex.sets.length}-${rev}`} aria-label={colsOf(ex).jump ? 'Added weight' : 'Weight'} min={0} onValue={(v) => setWeight(i, j, v == null ? '' : String(v))} /></td>}
                     <td className="px-1 py-1"><DecimalInput className={input} defaultValue={s.rpe ?? ''} key={`rpe-${j}-${ex.sets.length}-${rev}`} aria-label="RPE" placeholder="1-10" min={1} max={10} onValue={(v) => setField(i, j, 'rpe', v)} /></td>
                     <td className="px-1 py-1"><input className={input} inputMode="numeric" value={s.rest_s ?? ''} aria-label="Rest seconds" onChange={(e) => setField(i, j, 'rest_s', e.target.value === '' ? null : Number(e.target.value))} /></td>
                     {more && (
@@ -235,7 +268,8 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
       ))}
 
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className={small} onClick={addExercise} disabled={rows.length >= MAX_EXERCISES} data-testid="gym-add-exercise">+ Exercise</button>
+        <button type="button" className={small} onClick={() => setPicker({ mode: 'add' })} disabled={rows.length >= MAX_EXERCISES} data-testid="gym-add-exercise">+ Exercise</button>
+        <button type="button" className={small} onClick={addFreeText} disabled={rows.length >= MAX_EXERCISES}>+ Free-text exercise</button>
         <div className="flex-1" />
         {error && <span className="text-[11px] font-bold text-red-600" role="alert" data-testid="gym-edit-error">{error}</span>}
         <button type="button" className={small} onClick={onCancel} disabled={saving}>Cancel</button>
@@ -244,7 +278,17 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
           {saving ? 'Saving…' : 'Save'}
         </button>
       </div>
-      <p className="text-[10px] text-slate-400">Weights are stored in kg. RPE 1-10 in steps of 0.5; RIR is optional. Estimated 1RM (Epley) is an estimate and ignores warm-ups.</p>
+      {picker && (
+        <ExercisePickerModal
+          client={client}
+          ownerId={ownerId}
+          canSuggest={canSuggest}
+          single={picker.mode === 'change'}
+          onClose={() => setPicker(null)}
+          onConfirm={(list) => (picker.mode === 'change' ? changePicked(picker.index, list[0]) : addPicked(list))}
+        />
+      )}
+      <p className="text-[10px] text-slate-400">Weights are stored in kg; jump heights in cm. RPE 1-10 in steps of 0.5; RIR is optional. Estimated 1RM (Epley) is an estimate and ignores warm-ups.</p>
     </section>
   )
 }
