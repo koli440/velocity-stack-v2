@@ -120,6 +120,7 @@
 
 import { ZONE_COUNT, isValidZone } from './powerZones.js'
 import { SUMMARY_METRIC_IDS } from './summaryMetrics.js'
+import { isEstimateMetric, protocolsFor } from './thresholdEstimates.js'
 import {
   LEGACY_PATTERN_NAMES,
   LEGACY_PATTERN_OPTIONS,
@@ -132,6 +133,8 @@ import {
 
 const METRICS_LINE_RE = /^metrics\b\s*:?\s*(.*)$/i
 const METRIC_TOKEN_RE = /^([a-z0-9_]+)(?:\s*\(\s*(\d+(?:\.\d+)?)\s*(min|sec|s)\s*\))?$/i
+// `estimated_ftp(ramp)`: a named protocol argument (issue #379).
+const METRIC_PROTOCOL_RE = /^([a-z0-9_]+)\s*\(\s*([a-z]+)\s*\)$/i
 const REPEAT_LINE_RE = /^(?:(\d+)\s*sets?\s*of\s*)?(\d+)\s*x$/i
 const STEP_LINE_RE = /^(then\s+|set\s+)?(work|recovery)\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|minutes?|mins?|seconds?|secs?|km|m|s)(?:\s*±\s*(\d+(?:\.\d+)?)\s*%)?\s*@\s*(.+)$/i
 const EXCLUDE_LINE_RE = /^(warm-?up|cool-?down)\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|min|sec)$/i
@@ -252,7 +255,7 @@ function parseBand(bandText) {
  *   setCount: number|null,                             // "S sets of Nx"; null otherwise
  *   setRecovery: step|null,                            // "set recovery ..." line (role 'recovery')
  *   warmupSec: number|null, cooldownSec: number|null,  // excluded head/tail of the activity
- *   metrics: Array<{id: string, windowSec: number|null}>,  // selected summary metrics (issue #127)
+ *   metrics: Array<{id: string, windowSec: number|null, protocol?: string}>,  // selected summary metrics (issue #127)
  *   lapLengthM: number|null,                           // "lap 250m" track context (issue #129)
  *   pattern: 'repeated_bursts'|'flying_sprint'|'sustained_tt'|'standing_start'|null,  // fixed pattern (issue #128)
  *   patternOptions: object,                            // its manifest option keys (target_count, distance_m, ...)
@@ -561,10 +564,26 @@ function parseMetricsList(listText, lineNo, errors) {
     return out
   }
   for (const token of tokens) {
-    const t = token.match(METRIC_TOKEN_RE)
+    const named = token.match(METRIC_PROTOCOL_RE)
+    const t = token.match(METRIC_TOKEN_RE) || (named && isEstimateMetric(named[1].toLowerCase()) ? [token, named[1], null, null] : null)
     const id = t ? t[1].toLowerCase() : null
     if (!t || !SUMMARY_METRIC_IDS.includes(id)) {
       errors.push({ line: lineNo, message: `Unknown metric "${token}". Available: ${SUMMARY_METRIC_IDS.join(', ')}.` })
+      continue
+    }
+    if (isEstimateMetric(id)) {
+      let protocol = null
+      if (named) protocol = named[2].toLowerCase()
+      else if (t[2] != null) protocol = `${parseFloat(t[2]) * (t[3].toLowerCase() === 'min' ? 1 : 1 / 60)}min`
+      if (protocol && !protocolsFor(id).includes(protocol)) {
+        errors.push({ line: lineNo, message: `Metric "${id}" does not support protocol "${protocol}". Use one of: ${protocolsFor(id).join(', ')}.` })
+        continue
+      }
+      if (out.some((m) => m.id === id)) {
+        errors.push({ line: lineNo, message: `Metric "${id}" is listed twice.` })
+        continue
+      }
+      out.push({ id, windowSec: null, protocol })
       continue
     }
     let windowSec = null
@@ -626,7 +645,7 @@ function formatBand({ bandType, bestMetric, powerMin, powerMax, keyBy }) {
 }
 
 function metricsLine(metrics) {
-  return `metrics ${metrics.map((m) => (m.windowSec ? `${m.id}(${formatDuration(m.windowSec)})` : m.id)).join(', ')}`
+  return `metrics ${metrics.map((m) => (m.protocol ? `${m.id}(${m.protocol})` : m.windowSec ? `${m.id}(${formatDuration(m.windowSec)})` : m.id)).join(', ')}`
 }
 
 /**
@@ -675,7 +694,7 @@ export function stringifyIntervalDsl({ repeatCount, steps = [], structure = null
 export function buildIntervalManifest({ repeatCount, steps, structure = null, warmupSec = null, cooldownSec = null, setCount = null, setRecovery = null, metrics = [], pattern = null, patternOptions = {}, lapLengthM = null }) {
   const summaryMetrics =
     metrics && metrics.length
-      ? { summary_metrics: metrics.map((m) => ({ id: m.id, ...(m.windowSec ? { window_sec: m.windowSec } : {}) })) }
+      ? { summary_metrics: metrics.map((m) => ({ id: m.id, ...(m.windowSec ? { window_sec: m.windowSec } : {}), ...(m.protocol ? { protocol: m.protocol } : {}) })) }
       : {}
   if (pattern) return { pattern, ...patternOptions, ...summaryMetrics }
   return {
@@ -697,7 +716,7 @@ export function manifestToDslInput(manifest = {}) {
   if (isLegacyPattern(manifest.pattern)) {
     // Seeded manifests list fixed output names under `metrics`; only decoupling changes what is computed.
     const legacyMetrics = Array.isArray(manifest.metrics) && manifest.metrics.includes('pw_hr_decoupling_pct') ? [{ id: 'decoupling', windowSec: null }] : []
-    const selected = (manifest.summary_metrics || []).map((m) => ({ id: m.id, windowSec: m.window_sec ?? null }))
+    const selected = (manifest.summary_metrics || []).map((m) => ({ id: m.id, windowSec: m.window_sec ?? null, ...(m.protocol ? { protocol: m.protocol } : {}) }))
     return {
       pattern: manifest.pattern,
       patternOptions: legacyOptionsFromManifest(manifest),
@@ -713,6 +732,6 @@ export function manifestToDslInput(manifest = {}) {
     setCount: manifest.set_count ?? null,
     setRecovery: manifest.set_recovery ?? null,
     lapLengthM: manifest.lap_length_m ?? null,
-    metrics: (manifest.summary_metrics || []).map((m) => ({ id: m.id, windowSec: m.window_sec ?? null })),
+    metrics: (manifest.summary_metrics || []).map((m) => ({ id: m.id, windowSec: m.window_sec ?? null, ...(m.protocol ? { protocol: m.protocol } : {}) })),
   }
 }

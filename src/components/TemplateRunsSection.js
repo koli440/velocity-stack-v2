@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import TemplatePickerModal from './TemplatePickerModal'
-import { selectedSummaryKeys, DEFAULT_RUN_KEYS, LEGACY_STATIC_KEYS } from '../lib/summaryMetrics'
+import { selectedSummaryKeys, DEFAULT_RUN_KEYS, LEGACY_STATIC_KEYS, THRESHOLD_ESTIMATES_KEY } from '../lib/summaryMetrics'
 import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -74,6 +74,11 @@ function EffortCards({ efforts, onSendToPbVault }) {
               <div>Lap splits{eff.lap_length_m ? ` (${eff.lap_length_m} m)` : ''}: <b className={val}>{eff.lap_splits_sec.map((t) => formatRaceTime(t, 2)).join(', ')}</b></div>
             )}
             {eff.pw_hr_decoupling_pct != null && <div>Pw:HR decoupling: <b className={val}>{eff.pw_hr_decoupling_pct}%</b></div>}
+            {eff.estimated_ftp_w != null && <div>Est. FTP: <b className={val}>{eff.estimated_ftp_w} W</b></div>}
+            {eff.estimated_lt2_power_w != null && <div>Est. LT2 power: <b className={val}>{eff.estimated_lt2_power_w} W</b></div>}
+            {eff.estimated_lt2_hr_bpm != null && <div>Est. LT2 HR: <b className={val}>{eff.estimated_lt2_hr_bpm} bpm</b></div>}
+            {eff.estimated_lt1_power_w != null && <div>Est. LT1 power: <b className={val}>{eff.estimated_lt1_power_w} W</b></div>}
+            {eff.estimated_lt1_hr_bpm != null && <div>Est. LT1 HR: <b className={val}>{eff.estimated_lt1_hr_bpm} bpm</b></div>}
             {eff.work_kj != null && <div>Work: <b className={val}>{eff.work_kj} kJ</b></div>}
             {eff.peak_torque != null && <div>Peak torque: <b className={val}>{eff.peak_torque} Nm</b></div>}
           </div>
@@ -565,7 +570,7 @@ export default function TemplateRunsSection({ activityId, activity = null, track
             const rows = [...(historyBySlug[compareTemplate.slug] || [])].sort(
               (a, b) => new Date(b.activities?.activity_date || b.created_at) - new Date(a.activities?.activity_date || a.created_at)
             )
-            const allKeys = [...new Set(rows.flatMap((r) => Object.keys(r.summary || {})))]
+            const allKeys = [...new Set(rows.flatMap((r) => Object.keys(r.summary || {})))].filter((k) => k !== THRESHOLD_ESTIMATES_KEY)
             // Time and distance results are always offered (older runs simply have none).
             const keys = [...allKeys.filter((k) => EFFORT_RESULT_KEYS.includes(k)), ...allKeys.filter((k) => !EFFORT_RESULT_KEYS.includes(k))].slice(0, 8)
             if (rows.length === 0) return <p className="text-[11px] text-slate-400">No runs of this template yet.</p>

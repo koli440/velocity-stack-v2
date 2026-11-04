@@ -11,6 +11,7 @@
 import { secondsInLtZone } from './lactateThresholds.js'
 import { wattsPerKg } from './wkg.js'
 import { ZONE_COUNT, ZONE_NAMES, zoneSeconds } from './powerZones.js'
+import { thresholdEstimate } from './thresholdEstimates.js'
 
 /** Default HR recovery window (seconds) when `hr_recovery` has no explicit `(<n>sec)`. */
 export const DEFAULT_HR_RECOVERY_WINDOW_SEC = 60
@@ -52,7 +53,16 @@ export const SUMMARY_METRICS = {
     ])
   ),
   hr_recovery: { key: 'hr_recovery', label: 'HR recovery (bpm dropped N seconds after the effort)', agg: 'mean' },
+  // Threshold-test estimates (issue #379); `(<protocol>)` picks the test, see thresholdEstimates.js.
+  estimated_ftp: { key: 'estimated_ftp_w', label: 'Estimated FTP (W; protocol selectable)', agg: 'max', estimate: true },
+  estimated_lt2_power: { key: 'estimated_lt2_power_w', label: 'Estimated LT2 power (W; ~ FTP estimate)', agg: 'max', estimate: true },
+  estimated_lt2_hr: { key: 'estimated_lt2_hr_bpm', label: 'Estimated LT2 heart rate (bpm)', agg: 'mean', estimate: true },
+  estimated_lt1_power: { key: 'estimated_lt1_power_w', label: 'Estimated LT1 power (W; steady-state test or labeled fallback)', agg: 'max', estimate: true },
+  estimated_lt1_hr: { key: 'estimated_lt1_hr_bpm', label: 'Estimated LT1 heart rate (bpm; steady-state test or labeled fallback)', agg: 'mean', estimate: true },
 }
+
+/** Summary field holding the estimate details (protocol, window, assumptions, warnings) of a run. */
+export const THRESHOLD_ESTIMATES_KEY = 'threshold_estimates'
 
 export const SUMMARY_METRIC_IDS = Object.keys(SUMMARY_METRICS)
 
@@ -151,6 +161,9 @@ function effortValue(metric, effort, streams, ftp, lt, weightKg = null, zones = 
   const { start_sec: s, end_sec: e } = effort
   const ltDef = SUMMARY_METRICS[metric.id]?.lt
   const zoneNo = SUMMARY_METRICS[metric.id]?.zone
+  if (SUMMARY_METRICS[metric.id]?.estimate) {
+    return thresholdEstimate(metric.id, metric.protocol || null, { watts, hr }, s, e)?.value ?? null
+  }
   if (zoneNo) {
     const secs = zoneSeconds(sliceStream(watts, s, e), zones)
     return secs ? secs[zoneNo - 1] : null
@@ -299,6 +312,18 @@ export function applySummaryMetrics(metrics, result, timeSeries = {}, ftp = null
     const agg = aggregate(def, values)
     if (!(metric._default && agg == null)) summaryExtras[key] = agg
   }
+
+  const details = []
+  for (const metric of selected) {
+    if (!SUMMARY_METRICS[metric.id].estimate) continue
+    const key = summaryMetricKey(metric)
+    const idx = workIdx.find((i) => extras.get(i)?.[key] != null && extras.get(i)[key] === summaryExtras[key]) ?? workIdx.find((i) => extras.get(i)?.[key] != null) ?? workIdx[0]
+    const e = result.efforts[idx]
+    if (!e) continue
+    const d = thresholdEstimate(metric.id, metric.protocol || null, { watts: streams.watts, hr: streams.hr }, e.start_sec, e.end_sec)
+    if (d) details.push({ ...d, summary_key: key, rep: e.rep ?? null })
+  }
+  if (details.length) summaryExtras[THRESHOLD_ESTIMATES_KEY] = details
 
   const efforts = result.efforts.map((e, i) => {
     const add = extras.get(i)

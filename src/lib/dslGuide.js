@@ -27,7 +27,7 @@ export const DSL_OPTIONS = [
   { syntax: 'set recovery 5min ±30% @ <55%FTP', meaning: 'Optional, only with sets: the rest searched for between sets (never after the last one). Same syntax as a step, but without then.' },
   { syntax: 'then work 1min ...', meaning: 'Prefix a step with "then" to make it start exactly where the previous step ended (over-unders, pyramids, ramps). Not allowed on the first step.' },
   { syntax: 'warmup 15min', meaning: 'Ignore the first 15 minutes of the activity (h, min or sec). At most once.' },
-  { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: `Template runs always report avg W/kg, avg power, NP, avg speed, avg cadence and avg HR where data exists. Choose extra summary metrics per work effort and for the run: ${METRIC_LIST}. hr_recovery takes an optional window (default 60sec); np_wkg, avg_wkg and max_wkg are power per kg of the activity weight; the time_below/lt1/above_* metrics are seconds in lactate zones (power, or heart rate with the _hr suffix); time_z1 to time_z6 are seconds in each power zone. At most once.` },
+  { syntax: 'metrics np, vi, hr_recovery(30sec), decoupling', meaning: `Template runs always report avg W/kg, avg power, NP, avg speed, avg cadence and avg HR where data exists. Choose extra summary metrics per work effort and for the run: ${METRIC_LIST}. hr_recovery takes an optional window (default 60sec); np_wkg, avg_wkg and max_wkg are power per kg of the activity weight; the time_below/lt1/above_* metrics are seconds in lactate zones (power, or heart rate with the _hr suffix); time_z1 to time_z6 are seconds in each power zone; the estimated_* metrics propose FTP / LT1 / LT2 from a threshold test, with the test protocol in brackets, e.g. estimated_ftp(20min), estimated_ftp(8min), estimated_ftp(ramp), estimated_lt2_hr(30min), estimated_lt1_power(steady). At most once.` },
   { syntax: 'pattern repeated_bursts', meaning: `Use instead of the repeat line to run a built-in detector: ${PATTERN_LIST}. Then add its option lines (${PATTERN_OPTION_LIST}). Only metrics is also allowed.` },
   { syntax: LAP_EXAMPLE, meaning: 'Track context: report per-lap split times (full laps only, from the speed stream) for every work effort, plus lap_count, best_lap_sec, slowest_lap_sec and avg_lap_sec for the run. At most once; also valid under pattern sustained_tt.' },
   { syntax: 'time & distance results', meaning: 'Automatic, no line needed. Duration steps (20min) report the distance covered plus average speed; distance steps (3km) and the legacy pursuit/flying/standing patterns report the exact elapsed time (interpolated, shown as a race time) plus average speed. Needs a speed stream; without one the run says so. Run summaries add best/avg/total time or distance, and a faster time counts as an improvement in comparisons.' },
@@ -144,6 +144,11 @@ export const DSL_GUIDE_EXAMPLES = [
     title: 'Power-to-weight blocks',
     description: 'Work at a W/kg target. Needs a body weight in your profile.',
     dsl: '2x\nwork 20min ±15% @ 3.5-4W/kg\nrecovery 5min ±40% @ <2W/kg\nmetrics avg_power, avg_wkg, np_wkg',
+  },
+  {
+    title: 'Threshold test: estimate FTP and LT2',
+    description: 'Find the best 20 minutes and propose FTP (x 0.95) and LT2 heart rate. Protocols: 20min, 8min, ramp, 30min, 60min; estimated_lt1_* use "steady" for a decoupling-based LT1 test. Proposals can be reviewed and applied to your profile from the run card.',
+    dsl: '1x\nwork 20min ±0% @ best\nmetrics avg_power, avg_hr, pacing, estimated_ftp(20min), estimated_lt2_hr(20min)',
   },
   {
     title: 'Cadence drills',
