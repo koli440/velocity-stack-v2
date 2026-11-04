@@ -102,10 +102,10 @@ export default function Sidebar({
             })}
             {signedIn && isAdmin && chrome.adminLink && (
               <button
-                onClick={() => handleNavigate('/admin/suggestions')}
-                className={navItemClass(pathname?.startsWith('/admin'))}
+                onClick={() => handleNavigate('/admin')}
+                className={navItemClass(pathname === '/admin' || pathname?.startsWith('/admin/'))}
               >
-                <Icon name="check" size={18} /> Suggestions
+                <Icon name="check" size={18} /> Admin
               </button>
             )}
           </nav>
