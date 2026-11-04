@@ -353,3 +353,5 @@ New function `coach_fitness_activities(p_riders uuid[] default null, p_days int 
 
 ## Partner apps / OAuth provider (`20270123000000_partner_oauth.sql`)
 `developer_apps` (client_id, optional hashed client secret, exact redirect URIs, scopes, `status` pending|approved|suspended, rate limits, `slug`), `oauth_authorization_codes` (hashed single-use codes, PKCE challenge, 10 min), `oauth_grants` (hashed access/refresh tokens, `family_id` for rotation + reuse detection, `revoked_at`) and `partner_audit_log`. Tokens and secrets are SHA-256 hashes; token columns are not readable by riders (column grants), all writes use the service role. Apps are approved manually (set `status = 'approved'`).
+
+`partner_uploads` (`20270124000000_partner_uploads.sql`): one row per upload (app, rider, external_id unique; status processing|completed|duplicate|failed; activity_id; kind json|fit|tcx|gpx). Service role only. `activities.source` also accepts `partner`; `activity_source_priority('partner') = 2` (same as Strava), mirrored in `sourcePriority()`.
