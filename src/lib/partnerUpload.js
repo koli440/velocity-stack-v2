@@ -119,7 +119,7 @@ export function parseJsonUpload(body, now = Date.now()) {
   }))
   return {
     externalId,
-    title: validateTitle(body.title),
+    title: validateTitle(body.title ?? body.name),
     sport: validateSport(body.sport),
     start,
     samples: n,

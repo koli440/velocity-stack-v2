@@ -237,7 +237,7 @@ export const TITLE_POOLS = Object.freeze({
 
 // ---- Generic-name detection ----------------------------------------------------------------
 
-const SOURCE_WORDS = 'garmin|strava|wahoo|intervals(?:\\.icu)?|srm|elemnt|zwift'
+const SOURCE_WORDS = 'garmin|strava|wahoo|intervals(?:\\.icu)?|srm|elemnt|zwift|app|partner'
 const DAYPART = 'morning|lunch|afternoon|evening|night|midday'
 const ACTIVITY_WORDS =
   'ride|run|workout|walk|weight training|strength training|strength|virtual ride|virtual run|e-?bike ride|ebike ride|mountain bike ride|gravel ride|trail run|cycling|running|indoor cycling|road cycling|gravel cycling|mountain biking|treadmill running|trail running|indoor running|track running|activity|session|gym session|track session'

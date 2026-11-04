@@ -10,6 +10,7 @@ import TemplateRunsBadge from './TemplateRunsBadge'
 import { fetchActivityRuns } from '../lib/activityTemplateRuns'
 import BadgePill from './BadgePill'
 import RaceBadge from './RaceBadge'
+import SourceBadge from './SourceBadge'
 import HeroCardVisual from './HeroCardVisual'
 import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
 import { authorName } from '../lib/social'
@@ -347,6 +348,7 @@ export default function ActivityFeed({
                   </div>
                 )}
                 {act.is_race === true && <div className="mt-1"><RaceBadge testId="feed-race-tag" /></div>}
+                <div className="mt-1"><SourceBadge act={act} testId="feed-source-tag" /></div>
 
                 {(act.tracks?.name || (rideTypeHasGear(act.ride_type) && act.chainring && act.cog)) && (
                   <div className="text-xs text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-3">
