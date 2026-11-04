@@ -17,3 +17,10 @@ Third-party apps without a .fit export (e.g. indoor-cycling games) connect a rid
 - `GET /api/v1/uploads/{id}` (scope `activities:write`): status of an upload made by this app.
 - `GET /api/v1/athlete` (scope `profile:read`): `{ ftp_w, weight_kg }`.
 - Uploads go through the normal import pipeline: workload/TSS, sport model, naming (generic titles get a funny name), planned-workout linking, duplicate check (same source id, or time overlap with Strava/Intervals/Garmin/Wahoo copies; first copy wins). Cycling only in v1. Activities carry `source = 'partner'`, `external_source = 'partner:<slug>'`.
+
+## Developer registration, approval and limits
+
+- Developers sign in and register an app at `/developers` (max 5 per owner). The app starts `pending`; the client secret is shown once and stored only as a SHA-256 hash. Owners can delete their apps (grants, uploads and codes cascade).
+- Admins approve or suspend apps at `/admin/partner-apps` (also shows the latest audit events). Suspending cuts off tokens immediately.
+- Rate limits per app (defaults 60 requests/min and 500 uploads/24 h, stored on `developer_apps`): exceeding returns `429` with `Retry-After`. Counted in `partner_rate_counters` via `partner_rate_hit()`.
+- Riders see their connected apps on the Connections page and can disconnect them (revokes the grants). Registration, approval, suspension, disconnects and rate-limit hits are written to `partner_audit_log`.

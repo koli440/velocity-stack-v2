@@ -109,6 +109,7 @@ export default function AdminDashboardPage() {
         <Link href="/admin/exercises" className="underline text-slate-500">Exercise mapping</Link>
         <Link href="/admin/comment-reports" className="underline text-slate-500">Reported comments</Link>
         <Link href="/admin/template-reruns" className="underline text-slate-500">Template re-run</Link>
+        <Link href="/admin/partner-apps" className="underline text-slate-500">Partner apps</Link>
       </nav>
       <p className="text-xs text-slate-400">Aggregates only: no names, e-mails or other personal data are shown here. Bots are excluded from users and rides.{d ? ` Updated ${formatDateTime(d.generated_at)}.` : ''}</p>
       {state.error && <p role="alert" className="text-sm text-red-500">{state.error}</p>}
