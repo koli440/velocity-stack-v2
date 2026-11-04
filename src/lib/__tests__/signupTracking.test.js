@@ -46,7 +46,7 @@ test('trackSignUp sends GA4 sign_up and Reddit SignUp, and is a no-op without th
 
 test('trackSignUp fires nothing without consent and only the granted category otherwise', () => {
   const calls = []
-  const mk = (localStorage) => ({ localStorage, gtag: (...a) => calls.push(a[2]), rdt: (...a) => calls.push(a[1]) })
+  const mk = (localStorage) => ({ localStorage, gtag: (...a) => calls.push(a[1]), rdt: (...a) => calls.push(a[2]) })
   globalThis.window = mk(mem())
   trackSignUp('email')
   globalThis.window = mk(granted({ analytics: false, marketing: false }))
