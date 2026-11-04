@@ -503,7 +503,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
 
   return (
     <div className="glass-card bg-white dark:bg-surface-darkCard p-3 sm:p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
-      <div data-testid="calendar-sticky-header" className="lg:sticky lg:top-[4.25rem] lg:z-20 lg:-mx-5 lg:-mt-5 lg:px-5 lg:pt-4 lg:pb-2 lg:rounded-t-2xl lg:glass-dense lg:bg-white dark:lg:bg-surface-darkCard lg:border-b lg:border-slate-200 dark:lg:border-surface-darkBorder lg:shadow-sm space-y-2">
+      <div data-testid="calendar-sticky-header" className="lg:sticky lg:top-[4.25rem] lg:z-20 lg:-mx-5 lg:-mt-5 lg:px-5 lg:pt-4 lg:pb-2 lg:rounded-t-2xl glass-dense lg:bg-white dark:lg:bg-surface-darkCard lg:border-b lg:border-slate-200 dark:lg:border-surface-darkBorder lg:shadow-sm space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <button aria-label="Previous" className={btn} onClick={() => goToMonth(shiftMonth(anchor, -1), false)}>‹</button>
