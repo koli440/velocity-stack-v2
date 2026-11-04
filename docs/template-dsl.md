@@ -459,6 +459,9 @@ metrics np, vi, hr_recovery(30sec), decoupling, dropoff, pacing
 | `time_below_lt1`, `time_lt1_lt2`, `time_above_lt2` | `time_below_lt1_s`, `time_lt1_lt2_s`, `time_above_lt2_s` | sum | Seconds of the effort's power below LT1 (`< LT1`), between (`LT1 <= p < LT2`) or above LT2 (`>= LT2`), using the activity's LT snapshot; `null` without the needed thresholds |
 | `time_below_lt1_hr`, `time_lt1_lt2_hr`, `time_above_lt2_hr` | `time_below_lt1_hr_s`, `time_lt1_lt2_hr_s`, `time_above_lt2_hr_s` | sum | Same, from the heart-rate stream and LT HR |
 | `time_z1`, `time_z2`, `time_z3`, `time_z4`, `time_z5`, `time_z6` | `time_z1_s`, `time_z2_s`, `time_z3_s`, `time_z4_s`, `time_z5_s`, `time_z6_s` | sum | Seconds of the effort's power inside power zone Z1…Z6 (issue #194), using the activity's zone snapshot (LT-based, or FTP-estimated); `null` without zones |
+| `estimated_ftp` / `estimated_ftp(<protocol>)` | `estimated_ftp_w` | max | Estimated FTP from a threshold test (issue #379), see *Threshold tests* below. Default protocol `20min` |
+| `estimated_lt2_power`, `estimated_lt2_hr` | `estimated_lt2_power_w`, `estimated_lt2_hr_bpm` | max, mean | LT2 power (~ the FTP estimate) and LT2 heart rate from the test window |
+| `estimated_lt1_power`, `estimated_lt1_hr` | `estimated_lt1_power_w`, `estimated_lt1_hr_bpm` | max, mean | LT1 from a `steady` test (aerobic decoupling), or a labeled fallback when given an FTP protocol |
 
 **Default run metrics (automatic).** Every template run reports real per-run performance metrics
 without a `metrics` line, per work effort and in the summary where the data exists: `avg_wkg`
@@ -470,6 +473,45 @@ added to summaries; stored runs that still contain `ftp_wkg`, `lt1_wkg` or `lt2_
 
 Metrics that need a stream the activity lacks are `null`. Fields the engine already
 computed for a pattern (e.g. `avg_power`, `pacing_index`) are never overwritten.
+
+### Threshold tests (`estimated_*` metrics)
+
+Five metrics propose FTP and lactate thresholds from the work window the template detects
+(issue #379). The optional argument picks the test protocol, e.g. `estimated_ftp(ramp)`; stored
+as `summary_metrics: [{ "id": "estimated_ftp", "protocol": "ramp" }]` (a bare metric keeps its
+default protocol). Existing templates and stored runs are unaffected.
+
+| Protocol | FTP | LT2 power | LT2 HR |
+| --- | --- | --- | --- |
+| `20min` (default) | best 20 min x 0.95 | = FTP estimate | average HR of the window |
+| `8min` | best 8 min x 0.90 | = FTP estimate | not estimated (too short) |
+| `ramp` | best 1 min x 0.75 | = FTP estimate | not estimated |
+| `30min` | best 30 min x 1.0 | = FTP estimate | average HR of the last 20 min (Friel style) |
+| `60min` | best 60 min x 1.0 | = FTP estimate | average HR of the window |
+
+- `estimated_ftp` / `estimated_lt2_power` accept `20min, 8min, ramp, 30min, 60min`; `estimated_lt2_hr`
+  accepts `20min, 30min, 60min`.
+- `estimated_lt1_power` / `estimated_lt1_hr` accept `steady` (default): over a steady effort of at
+  least 30 min (ideally 60-90) LT1 is the average power of the longest stretch whose aerobic
+  decoupling (Pw:HR) is below 5%, and LT1 HR its average heart rate. Given an FTP protocol instead
+  (e.g. `estimated_lt1_power(20min)`) they report a **fallback**: LT1 ~ 75% of the FTP estimate and
+  LT1 HR ~ 0.85 x LT2 HR, flagged `fallback` with low confidence.
+- The window is searched inside each detected work effort, so use exact durations
+  (`work 20min ±0% @ best`). Longer windows are fine: the best protocol-length stretch is used.
+- The run summary gets `threshold_estimates`: one object per selected metric with `value`, `unit`,
+  `protocol`, `window` (`start_sec`, `end_sec`), `assumptions`, `confidence` (`high`, `medium`, `low`),
+  `fallback` and `warnings` (`code`, `message`, `severity`: `warn`, `info`, `error`).
+- Sanity checks that warn: uneven pacing (second half not 90-110% of the first), coasting/power
+  dropouts, very low power, a window starting in the first 5 min or running to the end of the
+  recording, missing or partial heart rate, HR drift over 10%, a ramp whose best minute is not
+  near the end, steady tests with decoupling over 5% or uneven power. A window shorter than the
+  protocol needs, no power, or no heart rate for a heart-rate metric yields no value (`null`).
+- Estimates are proposals. The run card compares them with the current profile and, for each
+  value separately, lets the rider edit and apply it to the effective-dated FTP / lactate-threshold
+  history. Nothing is written without confirmation.
+
+System templates: `sys_test_ftp_20min`, `sys_test_ftp_8min`, `sys_test_ramp`, `sys_test_lt2_30min`,
+`sys_test_lt1_steady`.
 
 ## Legacy patterns (`pattern` line)
 

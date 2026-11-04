@@ -207,6 +207,48 @@ export const ZONE_SYSTEM_TEMPLATES = [
   },
 ]
 
+// Threshold-test templates (issue #379), seeded by 20270126000000_threshold_test_templates.sql.
+// Each detects the test window (exact duration, no tolerance) and proposes FTP / LT1 / LT2 through
+// the estimated_* metrics. Estimates are proposals: applying them to the profile is a separate,
+// confirmed step in the template run card.
+export const THRESHOLD_TEST_TEMPLATES = [
+  {
+    slug: 'sys_test_ftp_20min',
+    name: 'FTP test 20min',
+    description: 'Best 20 minutes: FTP = 95% of the average, LT2 HR = average HR of the window. Also shows a labeled LT1 fallback estimate.',
+    category: 'road',
+    dsl: '1x\nwork 20min ±0% @ best\nmetrics avg_power, avg_hr, pacing, estimated_ftp(20min), estimated_lt2_power(20min), estimated_lt2_hr(20min), estimated_lt1_power(20min), estimated_lt1_hr(20min)',
+  },
+  {
+    slug: 'sys_test_ftp_8min',
+    name: 'FTP test 8min',
+    description: 'Best of two 8 minute efforts: FTP = 90% of the best average.',
+    category: 'road',
+    dsl: '2x\nwork 8min ±0% @ best\nmetrics avg_power, avg_hr, pacing, estimated_ftp(8min), estimated_lt2_power(8min)',
+  },
+  {
+    slug: 'sys_test_ramp',
+    name: 'Ramp test',
+    description: 'Ramp to failure: FTP = 75% of the best 1 minute power.',
+    category: 'road',
+    dsl: '1x\nwork 10min ±0% @ best\nmetrics max_power, avg_hr, estimated_ftp(ramp), estimated_lt2_power(ramp)',
+  },
+  {
+    slug: 'sys_test_lt2_30min',
+    name: 'LT2 / LTHR test 30min',
+    description: '30 minute all-out test: FTP = average power, LT2 HR = average HR of the last 20 minutes (Friel style).',
+    category: 'road',
+    dsl: '1x\nwork 30min ±0% @ best\nmetrics avg_power, avg_hr, pacing, estimated_ftp(30min), estimated_lt2_power(30min), estimated_lt2_hr(30min)',
+  },
+  {
+    slug: 'sys_test_lt1_steady',
+    name: 'LT1 steady-state test',
+    description: 'Long steady endurance effort: LT1 = the highest steady power with aerobic decoupling below 5%, with its average heart rate.',
+    category: 'road',
+    dsl: '1x\nwork 60min ±0% @ best\nmetrics avg_power, avg_hr, decoupling, estimated_lt1_power(steady), estimated_lt1_hr(steady)',
+  },
+]
+
 export function buildLtManifest(dsl) {
   const parsed = parseIntervalDsl(dsl)
   if (parsed.errors.length) throw new Error(`Invalid DSL: ${JSON.stringify(parsed.errors)}`)
@@ -239,7 +281,7 @@ export const LEGACY_SEEDED_MANIFESTS = {
   tpl_road_z2_decoupling: { pattern: 'sustained_tt', min_duration_sec: 1200, metrics: ['pw_hr_decoupling_pct', 'avg_power', 'avg_heartrate'] },
 }
 
-export const ALL_SYSTEM_TEMPLATES = [...SYSTEM_TEMPLATES, ...LT_SYSTEM_TEMPLATES, ...WKG_SYSTEM_TEMPLATES, ...ZONE_SYSTEM_TEMPLATES]
+export const ALL_SYSTEM_TEMPLATES = [...SYSTEM_TEMPLATES, ...LT_SYSTEM_TEMPLATES, ...WKG_SYSTEM_TEMPLATES, ...ZONE_SYSTEM_TEMPLATES, ...THRESHOLD_TEST_TEMPLATES]
 
 /** One `analysis_templates` VALUES row, formatted exactly as in the seed migrations. */
 export function systemTemplateRowSql(t, manifest) {
