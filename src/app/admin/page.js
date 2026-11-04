@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import { reviewPath } from '../../lib/suggestions'
 import { formatDateTime } from '../../lib/dateFormat'
-import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders } from '../../lib/adminDashboard'
+import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth } from '../../lib/adminDashboard'
 
 const card = 'p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder space-y-3'
 const HEALTH = {
@@ -72,6 +72,7 @@ function Breakdown({ rows, labelOf }) {
 export default function AdminDashboardPage() {
   const [state, setState] = useState({ loading: true, admin: false, data: null, error: '' })
   const [days, setDays] = useState(30)
+  const [partner, setPartner] = useState(null)
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser()
@@ -79,6 +80,8 @@ export default function AdminDashboardPage() {
     const { data: prof } = uid ? await supabase.from('profiles').select('is_admin').eq('id', uid).maybeSingle() : { data: null }
     if (!prof?.is_admin) return setState({ loading: false, admin: false, data: null, error: '' })
     const { data, error } = await supabase.rpc('admin_dashboard_stats', { p_days: days })
+    const pr = await supabase.rpc('admin_partner_stats', { p_days: days })
+    setPartner(pr.data || null)
     setState({ loading: false, admin: true, data: data || null, error: error?.message || '' })
   }, [days])
 
@@ -178,6 +181,50 @@ export default function AdminDashboardPage() {
             </div>
           </Panel>
 
+          {partner && (
+            <div className="lg:col-span-2">
+              <Panel title="Third-party apps" id="p-partners" link={{ href: '/admin/partner-apps', label: 'Manage apps' }}>
+                <div className="flex flex-wrap gap-2">
+                  <Stat label="Pending" value={partner.apps_by_status.pending} tone={partner.apps_by_status.pending ? 'text-amber-500' : undefined} />
+                  <Stat label="Approved" value={partner.apps_by_status.approved} tone="text-emerald-500" />
+                  <Stat label="Suspended" value={partner.apps_by_status.suspended} />
+                  <Stat label="Connected riders" value={partner.connected_riders} />
+                </div>
+                <Bars series={partner.uploads_by_day} label="Uploads" tone="bg-emerald-500" />
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs" data-testid="partner-stats-table">
+                    <thead><tr className="text-left text-[10px] uppercase text-slate-400">
+                      <th className="pr-3">App</th><th className="pr-3">Riders</th><th className="pr-3">24h / 7d / 30d / all</th><th className="pr-3">Imported / dup / failed</th><th className="pr-3">Fail %</th><th className="pr-3">Activities</th><th className="pr-3">429 7d</th><th className="pr-3">Refresh 7d</th><th className="pr-3">Reuse</th><th>Last upload</th>
+                    </tr></thead>
+                    <tbody>
+                      {partner.apps.map((a) => (
+                        <tr key={a.id} className="border-t border-slate-100 dark:border-slate-800">
+                          <td className="pr-3 py-1"><Link href="/admin/partner-apps" className="underline font-bold">{a.name}</Link> <span className={`text-[10px] ${a.status === 'approved' ? (partnerAppHealth(a) === 'warn' ? 'text-amber-500' : 'text-emerald-500') : 'text-slate-400'}`}>{a.status === 'approved' && partnerAppHealth(a) === 'warn' ? 'check' : a.status}</span></td>
+                          <td className="pr-3">{a.riders}</td>
+                          <td className="pr-3 font-mono">{a.uploads_24h} / {a.uploads_7d} / {a.uploads_30d} / {a.uploads_total}</td>
+                          <td className="pr-3 font-mono">{a.imported} / {a.duplicate} / {a.failed}</td>
+                          <td className="pr-3">{failureRate(a)}%</td>
+                          <td className="pr-3">{a.activities}</td>
+                          <td className="pr-3">{a.rate_limited_7d}</td>
+                          <td className="pr-3">{a.refreshes_7d}</td>
+                          <td className={`pr-3 ${a.reuse_revocations ? 'text-red-500 font-bold' : ''}`}>{a.reuse_revocations}</td>
+                          <td>{a.last_upload_at ? formatDateTime(a.last_upload_at) : '—'}</td>
+                        </tr>
+                      ))}
+                      {partner.apps.length === 0 && <tr><td colSpan={10} className="text-slate-400 py-1">No apps registered yet.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+                <h3 className="text-[10px] uppercase font-bold text-slate-400">Recent upload failures</h3>
+                <ul className="space-y-1 text-xs">
+                  {partner.recent_failures.map((f, i) => (
+                    <li key={i} className="flex justify-between gap-3"><span className="min-w-0 break-words"><b>{f.app}</b> · {f.message}</span><span className="font-mono text-slate-400 shrink-0">{formatDateTime(f.created_at)}</span></li>
+                  ))}
+                  {partner.recent_failures.length === 0 && <li className="text-slate-400">No failed uploads.</li>}
+                </ul>
+              </Panel>
+            </div>
+          )}
           <Panel title="Templates" id="p-templates" link={{ href: '/admin/template-reruns', label: 'Re-run job' }}>
             <div className="flex flex-wrap gap-2">
               <Stat label="User private" value={t.user_private} />

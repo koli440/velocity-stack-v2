@@ -59,3 +59,16 @@ export function dayLabel(day) {
   const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(day || ''))
   return m ? `${Number(m[2])}/${Number(m[1])}` : ''
 }
+
+/** Failure share of the uploads that reached a final status (imported + duplicate + failed), in whole percent. */
+export function failureRate(app) {
+  const done = (Number(app?.imported) || 0) + (Number(app?.duplicate) || 0) + (Number(app?.failed) || 0)
+  return pct(app?.failed, done)
+}
+
+/** Health of a partner app row: suspended/pending > high failure rate or reuse revocations > ok. */
+export function partnerAppHealth(app) {
+  if (!app || app.status !== 'approved') return app?.status || 'pending'
+  if (Number(app.reuse_revocations) > 0 || (Number(app.failed) >= 3 && failureRate(app) >= 20)) return 'warn'
+  return 'ok'
+}
