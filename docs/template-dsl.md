@@ -513,6 +513,8 @@ default protocol). Existing templates and stored runs are unaffected.
 System templates: `sys_test_ftp_20min`, `sys_test_ftp_8min`, `sys_test_ramp`, `sys_test_lt2_30min`,
 `sys_test_lt1_steady`.
 
+Runs with estimates show a review card on the activity. Each value can be edited and applied to the effective-dated FTP / lactate threshold history (effective on the activity date). Applying is always an explicit, per-value action; an existing entry on that date needs confirmation before it is replaced. Not available when a coach views an athlete's activity.
+
 ## Legacy patterns (`pattern` line)
 
 The four built-in detectors can be written in the DSL by replacing the repeat line with

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import TemplatePickerModal from './TemplatePickerModal'
+import ThresholdEstimateCard from './ThresholdEstimateCard'
 import { selectedSummaryKeys, DEFAULT_RUN_KEYS, LEGACY_STATIC_KEYS, THRESHOLD_ESTIMATES_KEY } from '../lib/summaryMetrics'
 import { formatDate, formatDateTime } from '../lib/dateFormat'
 import { getAuthHeader, supabase } from '../lib/supabase'
@@ -528,6 +529,10 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                     </div>
                   ))}
                 </div>
+
+                {!athleteMode && activity && (
+                  <ThresholdEstimateCard summary={run.summary} activity={activity} userId={currentUserId} />
+                )}
 
                 {analysis.metric && hasEfforts && (
                   <TemplateRunAnalysis
