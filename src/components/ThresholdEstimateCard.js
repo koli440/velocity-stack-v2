@@ -6,14 +6,14 @@ import { applyThreshold, activityDay, buildProposals, planApply } from '../lib/a
 
 const LABEL = { ftp: 'FTP', lt2_power: 'LT2 power', lt2_hr: 'LT2 HR', lt1_power: 'LT1 power', lt1_hr: 'LT1 HR' }
 
-function Row({ p, userId, date, onSaved }) {
+function Row({ p, userId, actorId, date, source, onSaved }) {
   const [value, setValue] = useState(String(p.value))
   const [state, setState] = useState({ status: 'idle', message: '' })
   const edited = Number(value) !== p.value
 
   async function save(confirmOverwrite) {
     setState({ status: 'saving', message: '' })
-    const res = await applyThreshold(supabase, { userId, field: p.field, value, date, confirmOverwrite })
+    const res = await applyThreshold(supabase, { userId, actorId, source, field: p.field, value, date, confirmOverwrite })
     if (res.needsConfirm) return setState({ status: 'confirm', message: `An entry already exists on ${date} and will be replaced.` })
     if (res.error) return setState({ status: 'error', message: res.error })
     setState({ status: 'saved', message: `Saved, effective ${date}` })
@@ -49,7 +49,7 @@ function Row({ p, userId, date, onSaved }) {
         {edited && <span className="text-slate-400">(edited from {p.value})</span>}
         <button
           type="button"
-          disabled={!userId || !date || !!preview.error || state.status === 'saving' || state.status === 'confirm'}
+          disabled={!userId || !actorId || !date || !!preview.error || state.status === 'saving' || state.status === 'confirm'}
           onClick={() => save(false)}
           className="px-2 py-1 rounded bg-orange-500 text-white font-bold disabled:opacity-50"
         >
@@ -70,14 +70,14 @@ function Row({ p, userId, date, onSaved }) {
 
 // Review of threshold-test estimates (issue #379). Nothing is applied automatically: each value is
 // edited and confirmed individually and written as an effective-dated entry on the activity date.
-export default function ThresholdEstimateCard({ summary, activity, userId, onSaved }) {
+export default function ThresholdEstimateCard({ summary, activity, userId, actorId = userId, source = null, onSaved }) {
   const proposals = useMemo(() => buildProposals(summary, activity), [summary, activity])
   const date = activityDay(activity)
   if (!proposals.length) return null
   return (
     <div className="space-y-2">
-      <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Threshold estimates · review before applying</div>
-      {proposals.map((p) => <Row key={`${p.summary_key}-${p.field}-${p.rep ?? ''}`} p={p} userId={userId} date={date} onSaved={onSaved} />)}
+      <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Threshold estimates · review before applying{actorId && userId && actorId !== userId ? ' (to the rider’s profile)' : ''}</div>
+      {proposals.map((p) => <Row key={`${p.summary_key}-${p.field}-${p.rep ?? ''}`} p={p} userId={userId} actorId={actorId} source={source} date={date} onSaved={onSaved} />)}
     </div>
   )
 }

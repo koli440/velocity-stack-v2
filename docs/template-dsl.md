@@ -513,7 +513,7 @@ default protocol). Existing templates and stored runs are unaffected.
 System templates: `sys_test_ftp_20min`, `sys_test_ftp_8min`, `sys_test_ramp`, `sys_test_lt2_30min`,
 `sys_test_lt1_steady`.
 
-Runs with estimates show a review card on the activity. Each value can be edited and applied to the effective-dated FTP / lactate threshold history (effective on the activity date). Applying is always an explicit, per-value action; an existing entry on that date needs confirmation before it is replaced. Not available when a coach views an athlete's activity.
+Runs with estimates show a review card on the activity. Each value can be edited and applied to the effective-dated FTP / lactate threshold history (effective on the activity date). Applying is always an explicit, per-value action; an existing entry on that date needs confirmation before it is replaced. A rider's active coach can apply values to the **rider's** history from the athlete's activity (`/coach/<riderId>/activities/<id>`); the write is allowed only for the rider or their active coach (verified client-side and by the existing `is_coach_of` RLS policies; pending, ended or unrelated users and the rider's own coach cannot write). Entries applied this way record `source = 'template_estimate'` plus the source activity and run (`source_activity_id`, `source_run_id`, validated to belong to the rider) next to the trigger-stamped `changed_by` / `set_by_coach`, shown as a "From template estimate" badge in the FTP and lactate threshold history, and coach edits are audited in `coach_edits`.
 
 ## Legacy patterns (`pattern` line)
 
