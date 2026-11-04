@@ -107,6 +107,7 @@ All sources share one mapping (`src/lib/sportType.js`). Imported: every cycling 
 - Same external id from the same provider is imported once (unique index).
 - A ride matching an existing one (same user, start time and duration within 5 s, or same `.fit` hash) is not imported again.
 - Priority Intervals.icu = Wahoo = Garmin > Strava (a tie keeps the first copy; a Wahoo copy replaces a Strava copy): when both deliver a ride, the Intervals.icu copy is kept (it replaces a Strava copy).
+  Partner apps (`source = 'partner'`, see `docs/partner-api.md`) rank equal to Strava: first copy wins,.
   Manual uploads and bot rides are never replaced or deleted by an import.
 - Deleting a ride on Strava does not delete it in the app.
 

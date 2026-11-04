@@ -79,10 +79,12 @@ export async function importActivity({
   // Detected flavour (MTB, gravel, trail run...) beats the rider's default; plain road keeps their choice.
   const storedRideType = isGym ? null : resolveRideType(prepared.sport, rideType)
 
+  // Providers serving many apps (partner:<slug>) keep their ids apart per app; the rest use their source name.
+  const externalSource = provider.externalSource || provider.source
   const existing = await loadExistingActivityFingerprints(supabase, userId)
   const plan = planImport(
     {
-      source: provider.source,
+      source: externalSource,
       externalId,
       startTime: summary.start_time,
       elapsedTimeS: summary.elapsed_time_s,
@@ -121,7 +123,7 @@ export async function importActivity({
     timeSeries: time_series,
     curvesData: curves,
     source: provider.source,
-    externalSource: provider.source,
+    externalSource,
     externalId: String(externalId),
     processingStatus: 'baseline_completed',
     ftpWatts: prof.ftp_w ?? null,
@@ -213,7 +215,7 @@ async function loadNamingContext(supabase, userId, replacedId) {
 }
 
 function providerLabel(source) {
-  return source === 'strava' ? 'Strava' : source === 'intervals' ? 'Intervals.icu' : source === 'wahoo' ? 'Wahoo' : source === 'garmin' ? 'Garmin' : 'Import'
+  return source === 'strava' ? 'Strava' : source === 'intervals' ? 'Intervals.icu' : source === 'wahoo' ? 'Wahoo' : source === 'garmin' ? 'Garmin' : source === 'partner' ? 'App' : 'Import'
 }
 
 export async function loadImportProfile(supabase, userId) {

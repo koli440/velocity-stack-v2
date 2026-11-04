@@ -131,7 +131,7 @@ export async function authenticateBearer(store, token, { now = Date.now() } = {}
   const app = await store.getAppById(g.app_id)
   if (!app || app.status !== 'approved') return null
   await store.touchGrant(g.id)
-  return { userId: g.user_id, appId: g.app_id, scopes: g.scopes }
+  return { userId: g.user_id, appId: g.app_id, scopes: g.scopes, app }
 }
 
 export const bearerFromHeader = (h) => /^Bearer\s+(\S+)$/i.exec(h || '')?.[1] || null
