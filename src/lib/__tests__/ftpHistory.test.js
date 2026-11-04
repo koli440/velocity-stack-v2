@@ -105,7 +105,7 @@ test('fetch/save/delete use the ftp_history table scoped to the user', async () 
 
   const s2 = fakeSupabase()
   await saveFtpEntry(s2, { userId: 'u1', entry: { effective_from: '2026-01-01', ftp_w: 250 } })
-  assert.deepEqual(s2.calls[0].slice(0, 3), ['ftp_history', 'upsert', { effective_from: '2026-01-01', ftp_w: 250, user_id: 'u1' }])
+  assert.deepEqual(s2.calls[0].slice(0, 3), ['ftp_history', 'upsert', { effective_from: '2026-01-01', ftp_w: 250, user_id: 'u1', source: null, source_activity_id: null, source_run_id: null }])
   assert.equal(s2.calls[0][3].onConflict, 'user_id,effective_from')
 
   const s3 = fakeSupabase()

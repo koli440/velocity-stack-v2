@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAthlete } from './AthleteContext'
 import { coachEditAuthorIds, coachEditLabel } from '../lib/coaching'
 import { fetchProfilesByIds, authorName } from '../lib/social'
 import { coachRunCoachIds, coachRunLabel } from '../lib/coachRuns'
@@ -72,4 +73,15 @@ export function CoachRunBadge({ run, names }) {
       {label}
     </span>
   )
+}
+
+// "From template estimate" provenance of a threshold history entry (issue #379), linking to the run's activity.
+export function SourceBadge({ row }) {
+  const { riderId } = useAthlete()
+  if (row?.source !== 'template_estimate') return null
+  const href = row.source_activity_id
+    ? riderId ? `/coach/${riderId}/activities/${row.source_activity_id}` : `/activities/${row.source_activity_id}`
+    : null
+  const cls = 'inline-block px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] font-bold'
+  return href ? <a data-testid="source-badge" href={href} className={cls}>From template estimate</a> : <span data-testid="source-badge" className={cls}>From template estimate</span>
 }

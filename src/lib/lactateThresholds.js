@@ -99,14 +99,14 @@ function normalizeLt(lt) {
 export async function fetchLtHistory(supabase, userId) {
   const { data, error } = await supabase
     .from('lactate_threshold_history')
-    .select('id, effective_from, lt1_power_w, lt1_hr, lt2_power_w, lt2_hr, changed_by, changed_at, set_by_coach')
+    .select('id, effective_from, lt1_power_w, lt1_hr, lt2_power_w, lt2_hr, changed_by, changed_at, set_by_coach, source, source_activity_id, source_run_id')
     .eq('user_id', userId)
     .order('effective_from', { ascending: false })
   return { history: data || [], error }
 }
 
 export async function saveLtEntry(supabase, { userId, entry, id = null }) {
-  const row = { ...entry, user_id: userId }
+  const row = { source: null, source_activity_id: null, source_run_id: null, ...entry, user_id: userId }
   const q = id
     ? supabase.from('lactate_threshold_history').update(row).eq('id', id).eq('user_id', userId)
     : supabase.from('lactate_threshold_history').upsert(row, { onConflict: 'user_id,effective_from' })

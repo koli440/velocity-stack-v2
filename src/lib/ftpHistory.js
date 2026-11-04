@@ -48,14 +48,14 @@ export function ftpFromActivity(activity) {
 export async function fetchFtpHistory(supabase, userId) {
   const { data, error } = await supabase
     .from('ftp_history')
-    .select('id, effective_from, ftp_w, changed_by, changed_at, set_by_coach')
+    .select('id, effective_from, ftp_w, changed_by, changed_at, set_by_coach, source, source_activity_id, source_run_id')
     .eq('user_id', userId)
     .order('effective_from', { ascending: false })
   return { history: data || [], error }
 }
 
 export async function saveFtpEntry(supabase, { userId, entry, id = null }) {
-  const row = { ...entry, user_id: userId }
+  const row = { source: null, source_activity_id: null, source_run_id: null, ...entry, user_id: userId }
   const q = id
     ? supabase.from('ftp_history').update(row).eq('id', id).eq('user_id', userId)
     : supabase.from('ftp_history').upsert(row, { onConflict: 'user_id,effective_from' })

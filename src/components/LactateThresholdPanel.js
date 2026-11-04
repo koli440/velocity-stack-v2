@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import CoachBadge, { useCoachNames } from './CoachBadge'
+import CoachBadge, { SourceBadge, useCoachNames } from './CoachBadge'
 import { fetchLtHistory, saveLtEntry, deleteLtEntry, validateLtEntry, resolveLtAt } from '../lib/lactateThresholds'
 import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 
@@ -150,7 +150,7 @@ export default function LactateThresholdPanel({ userId }) {
               <span className="font-mono text-slate-600 dark:text-slate-300">
                 {h.effective_from} · LT1 {fmt(h.lt1_power_w, 'W')}/{fmt(h.lt1_hr, 'bpm')} · LT2{' '}
                 {fmt(h.lt2_power_w, 'W')}/{fmt(h.lt2_hr, 'bpm')}{' '}
-                <CoachBadge row={h} names={coachNames} />
+                <CoachBadge row={h} names={coachNames} /> <SourceBadge row={h} />
               </span>
               <span className="flex gap-2 shrink-0">
                 <button type="button" onClick={() => edit(h)} className="font-bold text-emerald-600">

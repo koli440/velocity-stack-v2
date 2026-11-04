@@ -530,8 +530,14 @@ export default function TemplateRunsSection({ activityId, activity = null, track
                   ))}
                 </div>
 
-                {!athleteMode && activity && (
-                  <ThresholdEstimateCard summary={run.summary} activity={activity} userId={currentUserId} />
+                {activity && currentUserId && (
+                  <ThresholdEstimateCard
+                    summary={run.summary}
+                    activity={activity}
+                    userId={athleteMode ? riderId : currentUserId}
+                    actorId={currentUserId}
+                    source={{ activityId: run.activity_id || activityId, runId: run.id }}
+                  />
                 )}
 
                 {analysis.metric && hasEfforts && (

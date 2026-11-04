@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import CoachBadge, { useCoachNames } from './CoachBadge'
+import CoachBadge, { SourceBadge, useCoachNames } from './CoachBadge'
 import { fetchFtpHistory, saveFtpEntry, deleteFtpEntry, validateFtpEntry, resolveFtpAt } from '../lib/ftpHistory'
 import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 
@@ -133,7 +133,7 @@ export default function FtpHistoryPanel({ userId }) {
             <li key={h.id} className="py-1.5 flex items-center justify-between gap-2 text-[11px]">
               <span className="font-mono text-slate-600 dark:text-slate-300">
                 {h.effective_from} · {h.ftp_w} W{' '}
-                <CoachBadge row={h} names={coachNames} />
+                <CoachBadge row={h} names={coachNames} /> <SourceBadge row={h} />
               </span>
               <span className="flex gap-2 shrink-0">
                 <button type="button" onClick={() => edit(h)} className="font-bold text-emerald-600">
