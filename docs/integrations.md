@@ -186,3 +186,7 @@ CI runs `npm test` (`.github/workflows/test.yml`).
 
 ## IndexNow
 The public key lives in `public/<key>.txt` (served at `https://velocity-stack.app/<key>.txt`; no secrets). After a deploy, run `npm run indexnow` to submit every URL from the live sitemap to `api.indexnow.org` in one request (`-- --dry-run` prints the payload; `-- --sitemap <url|file>` overrides the source). It is not run on build.
+
+## Partner apps
+
+Third-party apps (first: pedalmania.cc) connect through our own OAuth 2.0 provider and upload rides via `/api/v1`. They appear on the Connections page under Connected apps with a Disconnect button. Full reference: `docs/partner-api.md` and `public/openapi/v1.yaml`.

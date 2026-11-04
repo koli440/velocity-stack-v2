@@ -1,6 +1,13 @@
 # Partner API (OAuth 2.0)
 
-Third-party apps without a .fit export (e.g. indoor-cycling games) connect a rider's account through our own OAuth 2.0 provider and upload rides. The upload API is below.
+Third-party apps without a .fit export (e.g. indoor-cycling games) connect a rider's account through our own OAuth 2.0 provider and upload rides. The upload API is below. Machine-readable spec: [`public/openapi/v1.yaml`](../public/openapi/v1.yaml), served at `https://www.velocity-stack.app/openapi/v1.yaml`.
+
+## Quick start
+
+1. Register at `/developers`, wait for approval, keep the client secret safe (shown once).
+2. Send the rider to `/oauth/authorize` with PKCE S256 and `state`; exchange the returned `code` at `/api/oauth/token`.
+3. `POST /api/v1/activities` with `Authorization: Bearer <access token>`; refresh the token when it expires and store the NEW refresh token each time.
+4. Handle `429` by waiting `Retry-After` seconds.
 
 - Register: a `developer_apps` row (manually approved for now): `client_id`, redirect URIs (exact match, https or loopback http), scopes (`activities:write`, `profile:read`), optional secret (stored as SHA-256; omit for public PKCE-only clients).
 - `GET https://www.velocity-stack.app/oauth/authorize?client_id&redirect_uri&response_type=code&scope&state&code_challenge&code_challenge_method=S256` - consent page. `state` and PKCE S256 are mandatory.

@@ -1,0 +1,162 @@
+openapi: 3.1.0
+info:
+  title: Velocity Stack Partner API
+  version: "1.0"
+  description: |
+    Upload rides to a rider's Velocity Stack account on their behalf. Apps are registered at
+    https://www.velocity-stack.app/developers and approved manually. Authorization uses OAuth 2.0
+    authorization code + PKCE (S256); access tokens last 1 hour, refresh tokens rotate on every use.
+servers:
+  - url: https://www.velocity-stack.app
+security:
+  - oauth2: []
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://www.velocity-stack.app/oauth/authorize
+          tokenUrl: https://www.velocity-stack.app/api/oauth/token
+          refreshUrl: https://www.velocity-stack.app/api/oauth/token
+          scopes:
+            activities:write: Upload rides to the rider's account
+            profile:read: Read FTP, weight and units
+  headers:
+    RetryAfter:
+      description: Seconds until the limit resets.
+      schema: { type: integer }
+  responses:
+    RateLimited:
+      description: Per-app rate limit exceeded.
+      headers:
+        Retry-After: { $ref: "#/components/headers/RetryAfter" }
+    Unauthorized:
+      description: Missing, invalid or expired token, or app not approved.
+    Forbidden:
+      description: Token lacks the required scope.
+  schemas:
+    Upload:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        external_id: { type: string }
+        status: { type: string, enum: [imported, duplicate, failed] }
+        activity_id: { type: [string, "null"] }
+        error: { type: [string, "null"] }
+        created_at: { type: string, format: date-time }
+    Streams:
+      type: object
+      description: 1 Hz arrays of equal length, 60 to 50,000 samples; at least one of power, heart_rate, speed, distance.
+      properties:
+        power: { type: array, items: { type: number } }
+        heart_rate: { type: array, items: { type: number } }
+        cadence: { type: array, items: { type: number } }
+        speed: { type: array, items: { type: number }, description: m/s }
+        distance: { type: array, items: { type: number }, description: Cumulative metres }
+        altitude: { type: array, items: { type: number }, description: Metres }
+    JsonUpload:
+      type: object
+      required: [external_id, start_time, streams]
+      properties:
+        external_id: { type: string }
+        start_time: { type: string, format: date-time }
+        title: { type: string }
+        sport: { type: string, enum: [road, mtb, gravel, ebike, indoor, virtual], default: virtual }
+        streams: { $ref: "#/components/schemas/Streams" }
+paths:
+  /api/v1/activities:
+    post:
+      summary: Upload an activity (idempotent per app, rider and external_id)
+      security: [{ oauth2: [activities:write] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JsonUpload" }
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, external_id]
+              properties:
+                file: { type: string, format: binary, description: ".fit, .tcx or .gpx, max 10 MB" }
+                external_id: { type: string }
+                title: { type: string }
+                sport: { type: string }
+                start_time: { type: string, format: date-time }
+      responses:
+        "201": { description: Imported, content: { application/json: { schema: { $ref: "#/components/schemas/Upload" } } } }
+        "200": { description: Already uploaded or overlapping ride exists, content: { application/json: { schema: { $ref: "#/components/schemas/Upload" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { description: File too large }
+        "422": { description: Processing failed; the same external_id may be retried, content: { application/json: { schema: { $ref: "#/components/schemas/Upload" } } } }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/uploads/{id}:
+    get:
+      summary: Status of an upload made by this app
+      security: [{ oauth2: [activities:write] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Upload, content: { application/json: { schema: { $ref: "#/components/schemas/Upload" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { description: Not found }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/athlete:
+    get:
+      summary: Minimal rider profile
+      security: [{ oauth2: [profile:read] }]
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ftp_w: { type: [number, "null"] }
+                  weight_kg: { type: [number, "null"] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/oauth/token:
+    post:
+      summary: Exchange an authorization code or refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [grant_type]
+              properties:
+                grant_type: { type: string, enum: [authorization_code, refresh_token] }
+                code: { type: string }
+                redirect_uri: { type: string }
+                code_verifier: { type: string }
+                refresh_token: { type: string }
+                client_id: { type: string }
+                client_secret: { type: string }
+      responses:
+        "200": { description: Tokens (every refresh returns a NEW refresh_token) }
+        "400": { description: invalid_request / invalid_grant }
+        "401": { description: invalid_client }
+  /api/oauth/revoke:
+    post:
+      summary: Revoke an access or refresh token (RFC 7009)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+                client_id: { type: string }
+                client_secret: { type: string }
+      responses:
+        "200": { description: Revoked (also for unknown tokens) }
