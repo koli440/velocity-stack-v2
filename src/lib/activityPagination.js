@@ -36,6 +36,8 @@ const FEED_COLUMN_LIST = [
   'intensity_factor',
   'training_load',
   'raw_file_url',
+  'source',
+  'external_source',
   'visibility',
   'is_race',
   'route_preview',
@@ -49,7 +51,8 @@ export const FEED_ACTIVITY_COLUMNS = FEED_COLUMN_LIST.join(', ')
 
 // Same card data for activities of OTHER riders, read from the `shared_activities` view
 // (no raw_file_url; GPS stripped). `tracks` is a JSON column there, not an embed.
-export const SHARED_FEED_COLUMNS = FEED_COLUMN_LIST.filter((c) => c !== 'raw_file_url')
+// The view exposes one masked import_source column instead of source/external_source.
+export const SHARED_FEED_COLUMNS = [...FEED_COLUMN_LIST.filter((c) => !['raw_file_url', 'source', 'external_source'].includes(c)), 'import_source']
   .map((c) => (c.startsWith('tracks(') ? 'tracks' : c))
   .join(', ')
 

@@ -29,7 +29,7 @@ export async function readUploadRequest(req) {
     const start = startRaw ? validateStartTime(startRaw) : undefined
     const common = {
       externalId: validateExternalId(form.get('external_id')),
-      title: validateTitle(form.get('title')),
+      title: validateTitle(form.get('title') ?? form.get('name')),
       sport: form.get('sport') ? validateSport(form.get('sport')) : null,
     }
     if (ext === 'fit') return { ...common, kind: 'fit', input: { kind: 'fit', blob: file, filename: `${common.externalId}.fit`, start } }

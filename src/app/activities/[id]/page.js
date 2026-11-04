@@ -1,5 +1,6 @@
 'use client'
 
+import SourceBadge from '../../../components/SourceBadge'
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import Portal from '../../../components/Portal'
 import { fullDateTime } from '../../../lib/dateFormat'
@@ -406,6 +407,7 @@ function ActivityDetail() {
                 <Icon name={activitySport(activity).icon} size={13} />{activitySport(activity).label}
               </p>
             )}
+            <SourceBadge act={activity} testId="detail-source-tag" />
             {isTrackActivity(activity) && (
               <p className="mt-1 text-xs font-bold text-amber-600 dark:text-amber-400" data-testid="detail-track-tag">
                 Track session

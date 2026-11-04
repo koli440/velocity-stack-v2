@@ -18,7 +18,7 @@ Third-party apps without a .fit export (e.g. indoor-cycling games) connect a rid
 ## Upload API (`Authorization: Bearer <access token>`)
 
 - `POST /api/v1/activities` (scope `activities:write`), idempotent per `(app, rider, external_id)`. Either
-  - `application/json`: `{ "external_id", "start_time" (ISO 8601 with zone), "title"?, "sport"? (road|mtb|gravel|ebike|indoor|virtual, default virtual), "streams": { "power"?, "heart_rate"?, "cadence"?, "speed"? (m/s), "distance"? (m, cumulative), "altitude"? (m) } }` - 1 Hz arrays of equal length, 60 to 50,000 samples, at least one of power/heart_rate/speed/distance; or
+  - `application/json`: `{ "external_id", "start_time" (ISO 8601 with zone), "title"? (alias "name"; generic or missing titles get a funny generated name), "sport"? (road|mtb|gravel|ebike|indoor|virtual, default virtual), "streams": { "power"?, "heart_rate"?, "cadence"?, "speed"? (m/s), "distance"? (m, cumulative), "altitude"? (m) } }` - 1 Hz arrays of equal length, 60 to 50,000 samples, at least one of power/heart_rate/speed/distance; or
   - `multipart/form-data`: `file` (.fit/.tcx/.gpx, max 10 MB), `external_id`, optional `title`, `sport`, `start_time`.
   Responses: `201` imported, `200` already uploaded before (or an overlapping ride exists, `status: duplicate`), `422` failed (`error` says why; the same `external_id` may be retried), `413` too large, `401/403` token/scope. Body: `{ id, external_id, status, activity_id, error, created_at }`. Processing is synchronous, so the final status is in the response.
 - `GET /api/v1/uploads/{id}` (scope `activities:write`): status of an upload made by this app.
@@ -31,3 +31,5 @@ Third-party apps without a .fit export (e.g. indoor-cycling games) connect a rid
 - Admins approve or suspend apps at `/admin/partner-apps` (also shows the latest audit events). Suspending cuts off tokens immediately.
 - Rate limits per app (defaults 60 requests/min and 500 uploads/24 h, stored on `developer_apps`): exceeding returns `429` with `Retry-After`. Counted in `partner_rate_counters` via `partner_rate_hit()`.
 - Riders see their connected apps on the Connections page and can disconnect them (revokes the grants). Registration, approval, suspension, disconnects and rate-limit hits are written to `partner_audit_log`.
+
+- Partner activities show a "via <app name>" badge on feed cards and the activity detail (`activities.source = 'partner'`, `shared_activities.import_source = 'partner:<slug>'`; approved apps' names are readable by signed-in riders).
