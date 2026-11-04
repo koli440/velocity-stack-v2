@@ -35,6 +35,7 @@ export default function AdminSuggestionsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Suggestions</h1>
         <div className="flex gap-3">
+          <Link href="/admin" className="text-xs underline text-slate-500">Dashboard</Link>
           <Link href="/admin/exercises" className="text-xs underline text-slate-500">Exercise mapping</Link>
           <Link href="/admin/comment-reports" className="text-xs underline text-slate-500">Reported comments</Link>
           <Link href="/admin/template-reruns" className="text-xs underline text-slate-500">Template re-run</Link>

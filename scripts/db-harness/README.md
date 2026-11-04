@@ -31,3 +31,5 @@ Velodrome is_indoor suggestion (approve applies it to tracks): `node harness.mjs
 Exercise catalogue: `MIG=<repo>/supabase/migrations/20270125000000_exercise_catalogue.sql node harness.mjs <repo>/supabase/migrations ./exercise-catalogue-adversarial.mjs`
 
 Threshold apply permissions (issue #379): `MIG=<repo>/supabase/migrations/20270127000000_threshold_apply_source.sql node harness.mjs <repo>/supabase/migrations ./threshold-apply-adversarial.mjs`
+
+Admin dashboard RPC (admin-only, aggregate-only): `MIG=<repo>/supabase/migrations/20270128000000_admin_dashboard.sql node harness.mjs <repo>/supabase/migrations ./admin-dashboard-adversarial.mjs`
