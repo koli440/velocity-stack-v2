@@ -5,11 +5,8 @@
 
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 
-export const PARTNER_SCOPES = Object.freeze(['activities:write', 'profile:read'])
-export const SCOPE_LABELS = Object.freeze({
-  'activities:write': 'Upload rides and workouts to your account',
-  'profile:read': 'Read your FTP, weight and units',
-})
+export { PARTNER_SCOPES, SCOPE_LABELS } from './partnerScopes.js'
+import { PARTNER_SCOPES } from './partnerScopes.js'
 export const CODE_TTL_S = 600
 export const ACCESS_TTL_S = 3600
 export const REFRESH_TTL_S = 60 * 60 * 24 * 180

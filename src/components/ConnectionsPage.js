@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { RIDE_SOURCES } from '../lib/rideSources'
+import ConnectedAppsCard from './ConnectedAppsCard'
 import { GarminCard, IntervalsCard, StravaCard, WahooCard } from './ConnectionsPanel'
 
 const CARD = 'rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 space-y-2'
@@ -60,6 +61,7 @@ export default function ConnectionsPage({ userId }) {
       {RIDE_SOURCES.map((source) => (
         <SourceCard key={source.id} source={source} userId={userId} />
       ))}
+      {userId && <ConnectedAppsCard />}
     </div>
   )
 }

@@ -39,6 +39,7 @@ export default function AdminSuggestionsPage() {
           <Link href="/admin/exercises" className="text-xs underline text-slate-500">Exercise mapping</Link>
           <Link href="/admin/comment-reports" className="text-xs underline text-slate-500">Reported comments</Link>
           <Link href="/admin/template-reruns" className="text-xs underline text-slate-500">Template re-run</Link>
+          <Link href="/admin/partner-apps" className="text-xs underline text-slate-500">Partner apps</Link>
         </div>
       </div>
       {state.rows.length === 0 && <p className="text-sm text-slate-500">No suggestions yet.</p>}

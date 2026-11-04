@@ -1,4 +1,4 @@
-import { authenticatePartner, apiError, apiJson } from '../../../../lib/server/partnerApi'
+import { authenticatePartner, checkUploadQuota, apiError, apiJson } from '../../../../lib/server/partnerApi'
 import { readUploadRequest, processUpload } from '../../../../lib/server/partnerUploads'
 import { makeAnalyzeFit } from '../../../../lib/server/syncRoute'
 import { UploadValidationError, uploadView } from '../../../../lib/partnerUpload'
@@ -13,6 +13,8 @@ export async function POST(req) {
   if (response) return response
   try {
     const request = await readUploadRequest(req)
+    const limited = await checkUploadQuota(service, auth)
+    if (limited) return limited
     const { replay, row } = await processUpload({ service, auth, request, analyzeFit: makeAnalyzeFit(req) })
     const status = replay || row.status === 'duplicate' ? 200 : row.status === 'completed' ? 201 : row.status === 'failed' ? 422 : 202
     return apiJson(uploadView(row), status, { Location: `/api/v1/uploads/${row.id}` })
