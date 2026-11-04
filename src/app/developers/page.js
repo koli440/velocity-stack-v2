@@ -54,7 +54,7 @@ export default function DevelopersPage() {
       <div>
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Developers</h1>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Let your app send rides to Velocity Stack with OAuth 2.0 (authorization code + PKCE). New apps are reviewed manually before riders can connect.
+          Let your app send rides to Velocity Stack with OAuth 2.0 (authorization code + PKCE). New apps are reviewed manually before riders can connect. <Link href="/developers/docs" className="underline font-semibold">Read the API documentation</Link>.
         </p>
       </div>
 
