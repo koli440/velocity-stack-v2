@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { CONSENT_KEY, buildConsentRecord } from '../consent.js'
 import {
   parseAttribution, isNewGoogleUser, trackSignUp, rememberOAuthStart, trackOAuthSignUpOnce, OAUTH_PENDING_KEY,
 } from '../signupTracking.js'
@@ -12,6 +13,12 @@ const newUser = (over = {}) => ({
   id: 'u1', app_metadata: { provider: 'google' },
   created_at: new Date().toISOString(), last_sign_in_at: new Date().toISOString(), ...over,
 })
+
+const granted = (c = { analytics: true, marketing: true }) => {
+  const m = mem()
+  m.setItem(CONSENT_KEY, JSON.stringify(buildConsentRecord(c)))
+  return m
+}
 
 test.afterEach(() => { delete globalThis.window })
 
@@ -31,16 +38,33 @@ test('isNewGoogleUser distinguishes fresh accounts from returning ones', () => {
 test('trackSignUp sends GA4 sign_up and Reddit SignUp, and is a no-op without them', () => {
   assert.doesNotThrow(() => trackSignUp('email'))
   const calls = []
-  globalThis.window = { gtag: (...a) => calls.push(['gtag', ...a]), rdt: (...a) => calls.push(['rdt', ...a]) }
+  globalThis.window = { localStorage: granted(), gtag: (...a) => calls.push(['gtag', ...a]), rdt: (...a) => calls.push(['rdt', ...a]) }
   trackSignUp('google', { utm_source: 's', utm_campaign: 'c' })
   assert.deepEqual(calls[0], ['gtag', 'event', 'sign_up', { method: 'google', campaign_source: 's', campaign: 'c' }])
   assert.deepEqual(calls[1], ['rdt', 'track', 'SignUp'])
 })
 
+test('trackSignUp fires nothing without consent and only the granted category otherwise', () => {
+  const calls = []
+  const mk = (localStorage) => ({ localStorage, gtag: (...a) => calls.push(a[1]), rdt: (...a) => calls.push(a[1]) })
+  globalThis.window = mk(mem())
+  trackSignUp('email')
+  globalThis.window = mk(granted({ analytics: false, marketing: false }))
+  trackSignUp('email')
+  assert.deepEqual(calls, [])
+  globalThis.window = mk(granted({ analytics: true, marketing: false }))
+  trackSignUp('email')
+  assert.deepEqual(calls, ['sign_up'])
+  calls.length = 0
+  globalThis.window = mk(granted({ analytics: false, marketing: true }))
+  trackSignUp('email')
+  assert.deepEqual(calls, ['SignUp'])
+})
+
 test('Google sign-up fires once, only after our OAuth start and for a new user', () => {
   const calls = []
   globalThis.window = {
-    sessionStorage: mem(), localStorage: mem(),
+    sessionStorage: mem(), localStorage: granted(),
     gtag: (...a) => calls.push(a), rdt: (...a) => calls.push(a),
   }
   assert.equal(trackOAuthSignUpOnce(newUser()), false)

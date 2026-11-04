@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Icon from './Icon'
+import { OPEN_SETTINGS_EVENT } from '../lib/consent'
 import { parseCoachPath, chromeVisibility } from '../lib/coachContext'
 
 export default function Footer() {
@@ -53,6 +54,14 @@ export default function Footer() {
           <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white transition">
             Privacy
           </Link>
+
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT))}
+            className="hover:text-slate-900 dark:hover:text-white transition"
+          >
+            Cookie settings
+          </button>
 
           <span className="text-slate-400 font-mono text-[10px]">v0.4.2-beta</span>
         </div>

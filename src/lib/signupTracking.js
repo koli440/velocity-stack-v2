@@ -1,5 +1,6 @@
 // Sign-up conversion tracking: GA4 `sign_up` + Reddit `SignUp` (see docs/analytics.md).
 import { trackRedditEvent } from './redditPixel.js'
+import { hasConsent } from './consent.js'
 
 export const ATTRIBUTION_KEY = 'vs.attribution'
 export const OAUTH_PENDING_KEY = 'vs.oauthSignup'
@@ -28,17 +29,26 @@ export function isNewGoogleUser(user, now = Date.now()) {
   return Math.abs(last - created) <= NEW_USER_WINDOW_MS && now - created <= 10 * NEW_USER_WINDOW_MS
 }
 
-/** GA4 sign_up (no-op when gtag is not loaded) plus the Reddit SignUp event. */
+function consentStore() {
+  try {
+    return window.localStorage
+  } catch {
+    return null
+  }
+}
+
+/** GA4 sign_up (needs analytics consent) plus the Reddit SignUp event (needs marketing consent); each is a no-op otherwise. */
 export function trackSignUp(method, attribution = {}) {
   if (typeof window === 'undefined') return
-  if (typeof window.gtag === 'function') {
+  const storage = consentStore()
+  if (typeof window.gtag === 'function' && hasConsent('analytics', storage)) {
     const params = { method }
     if (attribution.utm_source) params.campaign_source = attribution.utm_source
     if (attribution.utm_medium) params.campaign_medium = attribution.utm_medium
     if (attribution.utm_campaign) params.campaign = attribution.utm_campaign
     window.gtag('event', 'sign_up', params)
   }
-  trackRedditEvent('SignUp')
+  if (hasConsent('marketing', storage)) trackRedditEvent('SignUp')
 }
 
 function store(kind) {

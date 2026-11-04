@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Inline } from './MarkdownBlocks'
+import CookieSettingsButton from './CookieSettingsButton'
 import { formatLegalDate } from '../lib/legal'
 
 const link = 'underline text-emerald-600 dark:text-brand-neon'
@@ -48,7 +49,7 @@ export default function LegalDocument({ doc }) {
       </div>
 
       <p className="mt-10 text-xs text-slate-500 dark:text-slate-400">
-        <Link href="/privacy" className={link}>Privacy Policy</Link> · <Link href="/terms" className={link}>Terms of Service</Link>
+        <Link href="/privacy" className={link}>Privacy Policy</Link> · <Link href="/terms" className={link}>Terms of Service</Link> · <CookieSettingsButton className={link} />
       </p>
     </article>
   )

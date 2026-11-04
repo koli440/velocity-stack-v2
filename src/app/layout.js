@@ -1,10 +1,9 @@
 import './globals.css'
-import Script from 'next/script'
 import { ThemeProvider } from '../components/ThemeProvider' // Your existing theme provider
 import ServiceWorkerRegister from '../components/ServiceWorkerRegister'
 import AppShell from '../components/AppShell'
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '../lib/seo'
-import { redditPixelSnippet } from '../lib/redditPixel'
+import ConsentManager from '../components/ConsentManager'
 import { organizationJsonLd, jsonLdString } from '../lib/geo'
 
 export const viewport = {
@@ -42,19 +41,7 @@ export default function RootLayout({ children }) {
       <body className="antialiased font-sans">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(organizationJsonLd()) }} />
         <ServiceWorkerRegister />
-        {GA_ID && (
-          <>
-            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
-            <Script id="ga4-init" strategy="afterInteractive">
-              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config',${JSON.stringify(GA_ID)});`}
-            </Script>
-          </>
-        )}
-        {REDDIT_PIXEL_ID && (
-          <Script id="reddit-pixel" strategy="afterInteractive">
-            {redditPixelSnippet(REDDIT_PIXEL_ID)}
-          </Script>
-        )}
+        <ConsentManager gaId={GA_ID} redditId={REDDIT_PIXEL_ID} />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <AppShell>{children}</AppShell>
         </ThemeProvider>
