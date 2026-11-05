@@ -1,0 +1,311 @@
+{
+ "seed": "velodrome-research-2026-11-05|relaxed",
+ "results": [
+  {
+   "batch": "pilot",
+   "name": "London - Herne Hill Velodrome",
+   "field": "pricing_url",
+   "url": "https://www.hernehillvelodrome.com/faq",
+   "http": 200,
+   "result": "pass",
+   "note": "Evidence is a descriptive note (not a verbatim quote); page re-fetched manually and the cited content/value is present."
+  },
+  {
+   "batch": "pilot",
+   "name": "Valley Preferred Cycling Center",
+   "field": "year_built",
+   "url": "https://thevelodrome.com/pages/history",
+   "http": 200,
+   "result": "pass",
+   "note": "Evidence is a descriptive note (not a verbatim quote); page re-fetched manually and the cited content/value is present."
+  },
+  {
+   "batch": "pilot",
+   "name": "Sydney - Dunc Gray Velodrome",
+   "field": "website_url",
+   "url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome",
+   "http": 200,
+   "result": "pass",
+   "note": "Evidence is a descriptive note (not a verbatim quote); page re-fetched manually and the cited content/value is present."
+  },
+  {
+   "batch": "pilot",
+   "name": "Valley Preferred Cycling Center",
+   "field": "pricing_url",
+   "url": "https://thevelodrome.com/pages/training",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "pilot",
+   "name": "Valley Preferred Cycling Center",
+   "field": "booking_url",
+   "url": "https://thevelodrome.com/pages/try-the-track",
+   "http": 200,
+   "result": "pass",
+   "note": "Evidence is a descriptive note (not a verbatim quote); page re-fetched manually and the cited content/value is present."
+  },
+  {
+   "batch": "pilot",
+   "name": "London - Lee Valley VeloPark",
+   "field": "price_range",
+   "url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/track-cycling/sessions",
+   "http": 200,
+   "result": "pass",
+   "note": "Evidence is a descriptive note (not a verbatim quote); page re-fetched manually and the cited content/value is present."
+  },
+  {
+   "batch": "batch-0",
+   "name": "Plovdiv - Kolodruma",
+   "field": "operator",
+   "url": "https://www.kolodrumplovdiv.com/bg/cenorazpis",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-0",
+   "name": "Lyon - Vélodrome du Parc de la Tête d'Or",
+   "field": "website_url",
+   "url": "https://www.lyon.fr/lieu/stade/velodrome-georges-preveral-du-parc-de-la-tete-dor",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-0",
+   "name": "Sylvan Adams Velodrome (Tel Aviv)",
+   "field": "operator",
+   "url": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-0",
+   "name": "Leipzig - Radrennbahn Leipzig",
+   "field": "operator",
+   "url": "http://www.skr-leipzig.de/kontakt",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-0",
+   "name": "Cambridge - Avantidrome",
+   "field": "booking_url",
+   "url": "https://avantidrome.co.nz/track/programmes/trackschedule/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-1",
+   "name": "Northeast Velodrome",
+   "field": "pricing_url",
+   "url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-1",
+   "name": "Portsmouth - Mountbatten Centre",
+   "field": "operator",
+   "url": "https://bhliveactive.org.uk/mountbatten",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-1",
+   "name": "Cardiff - Maindy Stadium",
+   "field": "operator",
+   "url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-1",
+   "name": "Tafalla - Velódromo Miguel Induráin",
+   "field": "operator",
+   "url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-1",
+   "name": "Bromont - Centre National de Cyclisme",
+   "field": "booking_url",
+   "url": "https://centrenationalbromont.com/acces-journalier/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Heusden-Zolder - Velodroom",
+   "field": "operator",
+   "url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/tickets-piste/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Frankfurt (Oder) - Oderlandhalle",
+   "field": "booking_url",
+   "url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Alkmaar - Sportpaleis",
+   "field": "opening_hours",
+   "url": "https://sportpaleis-alkmaar.nl/activiteiten/vrij-trainen/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Carson - Velo Sports Center",
+   "field": "operator",
+   "url": "https://www.dignityhealthsportspark.com/about/about-us",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Augsburg - Peter-Krauss-Velodrom",
+   "field": "opening_hours",
+   "url": "https://www.rsg-augsburg.de/radrennbahn/trainingszeiten/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-3",
+   "name": "Dick Lane Velodrome",
+   "field": "booking_url",
+   "url": "https://dicklanevelodrome.com/fees/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-3",
+   "name": "Galapagar - Velódromo Municipal",
+   "field": "website_url",
+   "url": "https://galapagar.es/areas-municipales/deportes/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-3",
+   "name": "Juan de Fuca Velodrome",
+   "field": "pricing_url",
+   "url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+   "http": 200,
+   "result": "pass",
+   "note": "Product page lists Drop-in Track Pass $20.00 (one day, one open session); current sale price $16 shown, list price matches the stored value."
+  },
+  {
+   "batch": "batch-3",
+   "name": "Bourges - Vélodrome de Bourges",
+   "field": "website_url",
+   "url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-3",
+   "name": "Paris - Vélodrome National (SQY)",
+   "field": "price_range",
+   "url": "https://www.ucpa.com/centres-sportifs/velodrome-national/tarifs-velodrome",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-4",
+   "name": "Penrose Park Velodrome",
+   "field": "website_url",
+   "url": "https://www.penroseparkvelodrome.com/",
+   "http": 200,
+   "result": "pass",
+   "note": "Evidence is a descriptive note (not a verbatim quote); page re-fetched manually and the cited content/value is present."
+  },
+  {
+   "batch": "batch-4",
+   "name": "Barcelona - Velòdrom d'Horta",
+   "field": "pricing_url",
+   "url": "https://velodrombcn.cat/pista",
+   "http": 200,
+   "result": "pass",
+   "note": "Evidence is a descriptive note (not a verbatim quote); page re-fetched manually and the cited content/value is present."
+  },
+  {
+   "batch": "batch-4",
+   "name": "Reading - Palmer Park",
+   "field": "pricing_url",
+   "url": "https://www.better.org.uk/leisure-centre/reading/palmer-park/prices",
+   "http": 200,
+   "result": "pass",
+   "note": "Evidence is a descriptive note (not a verbatim quote); page re-fetched manually and the cited content/value is present."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Redmond - Marymoor Velodrome",
+   "field": "booking_url",
+   "url": "https://velodrome.org/race-reg-portal/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Bassano del Grappa - Velodromo Rino Mercante",
+   "field": "operator",
+   "url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Dudenhofen - Badewanne (The Bathtub)",
+   "field": "opening_hours",
+   "url": "https://www.rv08dudenhofen.de/bahn-training",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Brisbane - Anna Meares Velodrome",
+   "field": "booking_url",
+   "url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Třebešín Velodrome",
+   "field": "booking_url",
+   "url": "https://www.kovopraha.cz/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  }
+ ]
+}

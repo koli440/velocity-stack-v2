@@ -17,24 +17,30 @@ Goal: confirmed venue info for every velodrome (website, booking, operator, year
 3. **Applier** (script run with the service role, no secrets in the repo): applies only what the rules below allow, via `upsert_track_info_source()` + a `tracks` update, and writes the needs-attention report.
 
 ## Auto-apply rules
+Rules were relaxed on 2026-11-05 (migration `20270137000000_velodrome_info_relaxed.sql`) after the Lee Valley VeloPark data held back by the strict rules was confirmed correct with the venue. `lib.mjs` implements both (`decide(c, 'strict'|'relaxed')`); the strict pass still reproduces migration `20270136` byte-for-byte and the second migration contains only the delta.
+
 A value is applied to `tracks` automatically only if **all** hold:
-- confidence `high`;
+- confidence `high`, or `medium` **only** when the reviewer verdict is `verified` (the reviewer's own fetch confirmed it). Phone/email stay `high`-only;
 - the reviewer verdict is `verified` **and** a second, independent fetch of the cited URL re-confirms the verbatim quote;
-- the source is the operator, owner or federation domain (`source_kind` in `operator|owner|federation`);
+- the source is the operator, owner or federation (`source_kind` in `operator|owner|federation`). `other`/missing `source_kind` (incl. pilot data) is reclassified to `operator`/`owner` **only** when the cited page is the venue's own or operator's/owner's official venue page (allowlist `OFFICIAL_PAGE_RECLASS` in `lib.mjs`, e.g. the Better/GLL page for a Better-run centre); each reclassification is listed in `rollout-log.md`. Wikipedia, directories/aggregators, non-owner tourism listings, news and club sites for a venue the club does not operate stay held;
 - the value is non-personal (generic venue phone/mailbox, URL, year, price range with currency, status);
+- a reviewer caveat is tolerated only when the stored value text itself states the scope (e.g. `Whole venue: ...` for opening hours); `price_range` is allowed only for rider-facing per-session prices;
 - the field is currently null (fill-only), or the new value equals the existing one (re-confirmation).
 
 Never auto-applied; they go to the **needs-attention report** (`status = needs_attention`, nothing written to `tracks`):
 - corrections or renames of existing values (including surface/length/coordinates);
-- staff, personal or council/town general contacts;
-- `medium`/`low` confidence;
+- staff, personal or council/town general contacts, or contacts not confirmed organisational (the DB enforces `contact_is_organisational`);
+- `low` confidence, or `medium` without a `verified` verdict;
 - fields where two official sources disagree (flag the conflict, never pick one);
-- prices from club or event pages, group/hall rental, or hours not specific to the track;
-- `operating_status = closed` inferred from news rather than the operator/owner (report it; apply only when an official source states it).
+- prices from club, event or course pages, group/hall rental, pro-only prices, or hours not specific to the track;
+- `operating_status = closed` (or inferred `open`) inferred from news rather than an official statement;
+- any overwrite of an existing value.
 Rejected and unverifiable values never reach `tracks`; they stay in the audit table only. Fields with no official source are recorded `not_found` (so refreshes can tell "never checked" from "checked, none").
 
 ## Batch quality gate
 After each batch, randomly sample ~10% of auto-applied rows (at least 3) for a fresh independent check of URL, quote and value. **Halt the rollout if more than 5% of the sampled rows fail**; fix the rules/prompts and re-review the whole batch (revert failed values by re-running the upsert with the corrected state). Record sample size and failures in the batch log.
+
+Values applied only because of the relaxation (medium confidence, reclassified source, caveated scope) are riskier: sample them separately at a higher rate (at least 20%, minimum 5 per batch, or all if fewer) with the same >5% halt/exclude rule, and report their failure rate separately (`spot-check-relaxed-sample.json`, `spot-check-relaxed.json`).
 
 ## Quarterly refresh
 Runs every quarter (and can be run ad hoc), driven by `track_info_refresh_due`:

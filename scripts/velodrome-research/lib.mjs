@@ -44,13 +44,48 @@ export const HOLD_TRACKS = {
 }
 
 // Reviewer says "verified" but the reason text carries a semantic caveat. Held, never applied.
-const CAVEAT_RE = new RegExp([
-  'needs[- ]attention', '\\bflag', 'caveat', 'not (velodrome|track)[- ]specific', 'venue-wide', 'facility-wide',
-  'whole-centre', 'centre-wide', 'club (session|fee|hours|training)', 'race[- ]entry', 'not general', 'weak',
-  'paraphras', 'inferred', 'keep medium', '\\bmedium\\b', 'low/medium', 'conflict', 'not confirmed', 'shared',
-  'mixes', 'council', 'truncated', 'ambiguous', 'lower bound', 'bapteme', 'not auto', 'not a track tariff',
-  'event pricing', '\\bintro', 'only supports', 'only the park', 'general sports', 'municipal listing',
-].join('|'), 'i')
+const CAVEAT_COMMON = [
+  'needs[- ]attention', '\\bflag', 'club (session|fee|hours|training)', 'race[- ]entry', 'not general', 'weak',
+  'paraphras', 'inferred', 'conflict', 'not confirmed', 'shared',
+  'mixes', 'council', 'truncated', 'lower bound', 'bapteme', 'not auto', 'not a track tariff',
+  'event pricing', '\\bintro', 'only supports', 'only the park', 'general sports', 'municipal listing', 'not a dedicated',
+]
+// Confidence wording: moot once medium confidence is allowed (reviewer verdict is still required).
+const CAVEAT_CONFIDENCE = ['keep medium', '\\bmedium\\b', 'low/medium']
+// Scope wording: acceptable (relaxed rules) only when the stored value itself states the scope.
+const CAVEAT_SCOPE = ['caveat', 'not (velodrome|track)[- ]specific', 'venue-wide', 'facility-wide', 'whole-centre', 'centre-wide']
+// Price timing ambiguity (e.g. announced increase) is acceptable only for rider-facing per-session prices (relaxed).
+const CAVEAT_PRICE_TIMING = ['ambiguous']
+const caveatRe = (...groups) => new RegExp(groups.flat().join('|'), 'i')
+const CAVEAT_RE = caveatRe(CAVEAT_COMMON, CAVEAT_CONFIDENCE, CAVEAT_SCOPE, CAVEAT_PRICE_TIMING)
+// Same pattern order as before the split so strict matching text is unchanged.
+const VALUE_SCOPE_RE = /^\s*(whole|entire)\s+(venue|centre|center|facility|complex|building)\b|\b(venue|centre|center|facility|arena|park)-wide\b|\bmay (differ|vary)\b|\bnot (velodrome|track)-specific\b/i
+const SESSION_PRICE_RE = /drop-?in|per (session|hour|visit|entry|person|ride)|\/\s*(hr|h|hour|min|session)\b|\b\d+\s*(min|minutes|mins|hour|hours)\b|admission|day (pass|ticket)|single (entry|ticket|session)|adult/i
+const NOT_SESSION_PRICE_RE = /club|event|hire|rental|course|lesson|membership|member(s)? only|coach|camp|party|corporate|team|league|structured/i
+
+// Operator/owner pages recognised for source_kind null/other (relaxed rules). Classified by domain (and path where the
+// host serves many venues); each entry is a venue's own site or its operator's/owner's official venue page.
+// Not allowed: Wikipedia, directories/aggregators, tourism listings, news, clubs that do not operate the venue.
+export const OFFICIAL_PAGE_RECLASS = [
+  { host: 'better.org.uk', path: /^\/leisure-centre\/lee-valley\//, kind: 'operator', why: 'Better (GLL) operator page for Lee Valley VeloPark' },
+  { host: 'thevelodrome.com', kind: 'operator', why: "Valley Preferred Cycling Center's own site" },
+  { host: 'hernehillvelodrome.com', kind: 'operator', why: 'Herne Hill Velodrome Trust own site' },
+  { host: 'ballerupsuperarena.dk', kind: 'operator', why: "Ballerup Super Arena's own site" },
+  { host: 'olimpijskicenter-nm.si', kind: 'operator', why: 'Olimpijski center Novo mesto (operator Zavod Novo mesto) own site' },
+  { host: 'jakartainternationalvelodrome.com', kind: 'operator', why: "Jakarta International Velodrome's own site" },
+  { host: 'milton.ca', kind: 'owner', why: 'Town of Milton (owner) venue page' },
+  { host: 'cbcity.nsw.gov.au', kind: 'owner', why: 'Canterbury-Bankstown Council (owner) venue page' },
+  { host: 'stad.gent', kind: 'owner', why: 'City of Ghent (owner) venue page' },
+  { host: 'ajsineu.net', kind: 'owner', why: 'Ajuntament de Sineu (owner) page' },
+]
+
+export function reclassifyOfficial(url) {
+  let u
+  try { u = new URL(url) } catch { return null }
+  const host = u.hostname.replace(/^www\./, '')
+  return OFFICIAL_PAGE_RECLASS.find((r) => r.host === host && (!r.path || r.path.test(u.pathname))) || null
+}
+
 // A reason may legitimately explain that the cited page differs from the (reviewer-fixed) one.
 const FIX_NOTE_RE = /not on the cited|does not contain|is on https?:\/\/|appears on \/|on \/cycling|on \/abonnements|found live/i
 
@@ -137,15 +172,22 @@ export function extractCandidates(batchId, research, review) {
   return { candidates, notFound, corrections, missed }
 }
 
-function caveatReason(rec) {
+function caveatReason(rec, c, relaxed) {
   let reason = rec.reason || ''
   if (rec.source_url_fix) reason = reason.split(/(?<=[.;])\s/).filter((s) => !FIX_NOTE_RE.test(s)).join(' ')
-  const m = reason.match(CAVEAT_RE)
+  let re = CAVEAT_RE
+  if (relaxed) {
+    const scopeStated = c.field === 'opening_hours' && VALUE_SCOPE_RE.test(String(c.value))
+    const timingOk = c.field === 'price_range' && /increase/i.test(reason)
+    re = caveatRe(CAVEAT_COMMON, scopeStated ? [] : CAVEAT_SCOPE, timingOk ? [] : CAVEAT_PRICE_TIMING)
+  }
+  const m = reason.match(re)
   return m ? `Reviewer caveat ("${m[0]}"): ${rec.reason}` : null
 }
 
 // Decide one researcher candidate: apply | hold (needs attention) | exclude (rejected/unverifiable).
-export function decide(c) {
+export function decide(c, rules = 'relaxed') {
+  const relaxed = rules === 'relaxed'
   const rec = c.review
   if (HOLD_TRACKS[c.seed]) return { decision: 'hold', code: 'identity', reason: HOLD_TRACKS[c.seed] }
   if (!rec) return { decision: 'hold', code: 'not_reviewed', reason: 'No reviewer verdict for this value.' }
@@ -154,17 +196,32 @@ export function decide(c) {
   if (rec.value_fix != null || rec.better_value != null || rec.better_source != null) {
     return { decision: 'hold', code: 'reviewer_fix', reason: `Reviewer proposes a different value/source (${JSON.stringify(rec.value_fix ?? rec.better_value ?? rec.better_source)}): ${rec.reason}` }
   }
-  if (c.confidence !== 'high') return { decision: 'hold', code: 'confidence', reason: `Researcher confidence is ${c.confidence ?? 'missing'}, not high.` }
-  if (!OFFICIAL_KINDS.includes(c.source_kind)) return { decision: 'hold', code: 'source_kind', reason: `Source kind "${c.source_kind}" is not operator/owner/federation.` }
+  const relax = []
+  if (relaxed ? !['high', 'medium'].includes(c.confidence) : c.confidence !== 'high') {
+    return { decision: 'hold', code: 'confidence', reason: `Researcher confidence is ${c.confidence ?? 'missing'}, not ${relaxed ? 'high/medium' : 'high'}.` }
+  }
+  if (c.confidence === 'medium') relax.push('medium')
   const url = rec.source_url_fix || c.source_url
+  let kind = c.source_kind
+  let reclassified
+  if (!OFFICIAL_KINDS.includes(kind)) {
+    const rc = relaxed && (kind == null || kind === 'other') ? reclassifyOfficial(url) : null
+    if (!rc) return { decision: 'hold', code: 'source_kind', reason: `Source kind "${c.source_kind}" is not operator/owner/federation.` }
+    reclassified = { from: kind ?? null, to: rc.kind, host: rc.host, why: rc.why }
+    kind = rc.kind
+    relax.push('source_kind')
+  }
   if (!url || !URL_RE.test(url)) return { decision: 'hold', code: 'source_url', reason: 'Missing or invalid source URL.' }
   if (!c.evidence || !String(c.evidence).trim()) return { decision: 'hold', code: 'no_quote', reason: 'No verbatim evidence quote.' }
-  const caveat = caveatReason(rec)
+  const caveat = caveatReason(rec, c, relaxed)
   if (caveat) return { decision: 'hold', code: 'reviewer_caveat', reason: caveat }
   if (c.extraEvidence) return { decision: 'hold', code: 'multi_source', reason: 'Value combines several pages (extra_evidence); one source URL cannot support the whole value.' }
   const f = c.field
   if (f === 'price_range') {
     if (!priceOk(c.value)) return { decision: 'hold', code: 'invalid_value', reason: 'Price range fails the schema constraints.' }
+    if (relax.length && !(SESSION_PRICE_RE.test(String(c.evidence)) && !NOT_SESSION_PRICE_RE.test(`${c.evidence} ${c.note ?? ''}`))) {
+      return { decision: 'hold', code: 'price_semantics', reason: 'Relaxed rules apply only to rider-facing per-session prices; the evidence does not show one.' }
+    }
     if (c.note && /club|event|hire|rental|course|lesson|intro/i.test(c.note) && !/exclud|not includ|without/i.test(c.note)) {
       return { decision: 'hold', code: 'price_semantics', reason: `Researcher note suggests a mixed price basis: ${c.note}` }
     }
@@ -175,6 +232,8 @@ export function decide(c) {
     if (!Number.isInteger(y) || y < 1850 || y > 2100) return { decision: 'hold', code: 'invalid_value', reason: 'year_built outside 1850-2100.' }
   }
   if (f === 'phone' || f === 'email') {
+    // Privacy: contacts are never relaxed; they stay high confidence with an organisational confirmation.
+    if (c.confidence !== 'high') return { decision: 'hold', code: 'confidence', reason: 'Contacts require high confidence (not relaxed).' }
     if (!c.organisational) return { decision: 'hold', code: 'contact', reason: 'Researcher did not assert an organisational contact.' }
     const confirmed = rec.contact_is_organisational_check === 'confirmed' ||
       /organisational|generic|venue (line|contact|mailbox)|switchboard|reception|mailbox|office|info@/i.test(rec.reason || '')
@@ -189,7 +248,10 @@ export function decide(c) {
   if (f === 'operating_status' && c.value === 'open' && !(OPEN_STATEMENT_RE.test(String(c.evidence)) && !/other facilities|geschlossen|closed/i.test(String(c.evidence)))) {
     return { decision: 'hold', code: 'status_inferred', reason: 'The quote does not itself state that the track is open/operating (open status would be inferred from hours, tariffs or events).' }
   }
-  return { decision: 'apply', code: 'apply', reason: 'All auto-apply rules satisfied.', source_url: url }
+  return {
+    decision: 'apply', code: 'apply', reason: 'All auto-apply rules satisfied.', source_url: url, source_kind: kind, relax,
+    ...(reclassified ? { reclassified, source_kind_original: c.source_kind ?? null } : {}),
+  }
 }
 
 // Reviewer-found values count only when complete, official, high confidence and not a correction.
@@ -222,7 +284,7 @@ export function decideMissed(m, researcherFields) {
   return { ...base, value, decision: 'apply', code: 'apply', reason: 'Reviewer-found value with verbatim quote and an official, high-confidence source.' }
 }
 
-export function evaluate(inputs) {
+export function evaluate(inputs, rules = 'relaxed') {
   const items = []
   const notFound = []
   const corrections = []
@@ -232,7 +294,7 @@ export function evaluate(inputs) {
     const x = extractCandidates(batch, research, review)
     for (const c of x.candidates) {
       researcherFields.add(`${c.seed}|${c.field}`)
-      items.push({ ...c, ...decide(c), value_text: valueText(c.field, c.value) })
+      items.push({ ...c, ...decide(c, rules), value_text: valueText(c.field, c.value) })
     }
     notFound.push(...x.notFound)
     corrections.push(...x.corrections)
@@ -292,10 +354,10 @@ function mulberry32(seed) {
 }
 const hashString = (s) => { let h = 2166136261; for (const ch of s) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) } return h >>> 0 }
 
-export const sampleSize = (n) => (n === 0 ? 0 : Math.min(n, Math.max(3, Math.ceil(n * 0.1))))
+export const sampleSize = (n, rate = 0.1, min = 3) => (n === 0 ? 0 : Math.min(n, Math.max(min, Math.ceil(n * rate))))
 
 // ~10% (at least 3) of each batch's applied values, reproducible for a given seed.
-export function sampleApplied(applied, seed) {
+export function sampleApplied(applied, seed, { rate = 0.1, min = 3 } = {}) {
   const byBatch = new Map()
   for (const it of applied) {
     if (!byBatch.has(it.batch)) byBatch.set(it.batch, [])
@@ -306,7 +368,7 @@ export function sampleApplied(applied, seed) {
     const pool = [...arr].sort((a, b) => `${a.name}|${a.field}`.localeCompare(`${b.name}|${b.field}`))
     const rnd = mulberry32(hashString(`${seed}|${batch}`))
     const picked = []
-    for (let i = 0, n = sampleSize(pool.length); i < n; i++) picked.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0])
+    for (let i = 0, n = sampleSize(pool.length, rate, min); i < n; i++) picked.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0])
     out[batch] = picked
   }
   return out

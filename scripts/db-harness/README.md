@@ -37,3 +37,5 @@ Admin dashboard RPC (admin-only, aggregate-only): `MIG=<repo>/supabase/migration
 Velodrome track info (provenance, contact privacy, open/closed status): `node harness.mjs <repo>/supabase/migrations ./velodrome-track-info-adversarial.mjs`
 
 Velodrome info data migration (fill-only, idempotent, exactly-one-match): `MIG=<repo>/supabase/migrations/20270136000000_velodrome_info_data.sql node harness.mjs <repo>/supabase/migrations ./velodrome-info-data-adversarial.mjs`
+
+Relaxed-rules delta migration (same adversarial checks plus Lee Valley's six values): `MIG=<repo>/supabase/migrations/20270137000000_velodrome_info_relaxed.sql node harness.mjs <repo>/supabase/migrations ./velodrome-info-relaxed-adversarial.mjs`
