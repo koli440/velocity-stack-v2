@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "researched_at": "2026-11-05",
+  "policy": "Only official/authoritative sources fetched directly (venue/operator, owner municipality, national/continental federation). Unverified values are null and listed in not_found. Coordinates are never proposed from non-official sources.",
+  "tracks": [
+    {
+      "seed_name": "London - Lee Valley VeloPark",
+      "seed_values": {"country_code": "GBR", "length_m": 250, "surface": "Wood", "is_indoor": true},
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {"value": "https://www.better.org.uk/leisure-centre/lee-valley/velopark", "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark", "evidence": "Official Better (GLL) venue page for Lee Valley VeloPark", "confidence": "high"},
+        "booking_url": {"value": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/track-cycling/sessions", "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/track-cycling/sessions", "evidence": "Track cycling sessions page", "confidence": "high"},
+        "operator": {"value": "Better (GLL) for Lee Valley Regional Park Authority", "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark", "evidence": "Page is branded 'Better'; footer: 'Better is a registered trademark and trading name of GLL'. Authority ownership not verified on fetched pages.", "confidence": "medium"},
+        "opening_hours": {"value": "Whole venue: Mon-Fri 06:00-22:00; Sat-Sun 07:00-20:00 (velodrome sessions may differ)", "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark", "evidence": "\"Different parts of the building may have slightly different opening times\"", "confidence": "medium"},
+        "pricing_url": {"value": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/prices", "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/prices", "evidence": "Official prices page", "confidence": "high"},
+        "price_range": {"value": {"min": 12.25, "max": 47.2, "currency": "GBP", "check_site": true}, "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/track-cycling/sessions", "evidence": "\"£12.25 for 60 minutes | £24.50 for 120 minutes\" (drop-in); prices page: Flying Lap £47.20, Track Taster £34.50; note of increases from 1 April 2026", "confidence": "medium"}
+      },
+      "corrections": [],
+      "not_found": ["phone", "email", "year_built", "operator_authority_confirmation", "official_coordinates"]
+    },
+    {
+      "seed_name": "Mattamy National Cycling Centre (Milton)",
+      "seed_values": {"country_code": "CAN", "length_m": 250, "surface": "Wood", "is_indoor": true},
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {"value": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/", "source_url": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/", "evidence": "Town of Milton venue page", "confidence": "high"},
+        "operator": {"value": "Town of Milton", "source_url": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/", "evidence": "\"owned and operated by the Town of Milton\"", "confidence": "high"},
+        "phone": {"value": "905-864-4132", "source_url": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/", "evidence": "Contact Recreation phone on venue page", "confidence": "medium"},
+        "year_built": {"value": 2015, "source_url": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/", "evidence": "\"constructed in preparation for the 2015 Pan American/Parapan American Games\" (construction target year; exact opening date not stated)", "confidence": "medium"}
+      },
+      "corrections": [],
+      "not_found": ["booking_url", "email", "opening_hours", "pricing_url", "price_range", "length_m_confirmation", "surface_confirmation", "official_coordinates"]
+    },
+    {
+      "seed_name": "Sydney - Dunc Gray Velodrome",
+      "seed_values": {"country_code": "AUS", "length_m": 250, "surface": "Wood", "is_indoor": true},
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {"value": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome", "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome", "evidence": "Owner council page (no standalone venue site)", "confidence": "high"},
+        "operator": {"value": "City of Canterbury Bankstown (owner); Bankstown Sports Cycling Club runs sessions", "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome", "evidence": "Council page; club site https://www.bankstownsportscycling.com/", "confidence": "medium"},
+        "year_built": {"value": 1999, "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome", "evidence": "\"officially dedicated on 28 November 1999\"; AusCycling: \"Opened in 1999\"", "confidence": "high"},
+        "phone": {"value": "02 9707 9000", "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome", "evidence": "Council general phone (not venue-specific)", "confidence": "medium"},
+        "opening_hours": {"value": "Club sessions: summer training Mon 18:00-20:30, Wed 19:00-21:00; winter competition Sat 14:00-16:00, Wed 19:00-21:00", "source_url": "https://www.bankstownsportscycling.com/", "evidence": "Club contact page 'open hours'", "confidence": "low"},
+        "pricing_url": {"value": "https://www.bankstownsportscycling.com/", "source_url": "https://www.bankstownsportscycling.com/", "evidence": "Training page: \"Fee $12\"", "confidence": "medium"},
+        "price_range": {"value": {"min": 12, "max": 12, "currency": "AUD", "check_site": true}, "source_url": "https://www.bankstownsportscycling.com/", "evidence": "Club training single entry \"Fee $12\"", "confidence": "medium"}
+      },
+      "corrections": [],
+      "confirmations": [
+        {"field": "length_m", "value": 250, "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome", "evidence": "\"250m long, international standard Baltic pine track\"", "confidence": "high"},
+        {"field": "surface", "value": "Wood", "source_url": "https://auscycling.org.au/about/facilities/dunc-gray-velodrome", "evidence": "\"250-metre timber track made of Baltic pine\"", "confidence": "high"},
+        {"field": "is_indoor", "value": true, "source_url": "https://auscycling.org.au/about/facilities/dunc-gray-velodrome", "evidence": "\"the only indoor velodrome in New South Wales\"", "confidence": "high"}
+      ],
+      "not_found": ["email (obfuscated on AusCycling)", "booking_url", "official_coordinates"]
+    },
+    {
+      "seed_name": "Valley Preferred Cycling Center",
+      "seed_values": {"country_code": "USA", "length_m": 333, "surface": "Concrete", "is_indoor": false, "latitude": 40.5473, "longitude": -75.6105},
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {"value": "https://thevelodrome.com/", "source_url": "https://thevelodrome.com/pages/contact", "evidence": "Official site", "confidence": "high"},
+        "phone": {"value": "610-395-7000", "source_url": "https://thevelodrome.com/pages/contact", "evidence": "\"1151 Mosser Road, Breinigsville, PA 18031, T 610-395-7000\"", "confidence": "high"},
+        "email": {"value": "info@thevelodrome.com", "source_url": "https://thevelodrome.com/pages/try-the-track", "evidence": "Contact email on try-the-track page", "confidence": "high"},
+        "year_built": {"value": 1975, "source_url": "https://thevelodrome.com/pages/history", "evidence": "\"The first race was held on October 12, 1975\" (construction began 1974; rebuilt 1995)", "confidence": "high"},
+        "pricing_url": {"value": "https://thevelodrome.com/pages/training", "source_url": "https://thevelodrome.com/pages/training", "evidence": "\"All VPCC training sessions have a $10 per-day, per-session fee\"", "confidence": "high"},
+        "price_range": {"value": {"min": 10, "max": null, "currency": "USD", "check_site": true}, "source_url": "https://thevelodrome.com/pages/training", "evidence": "$10 per-session training fee; passes/try-the-track prices not shown", "confidence": "medium"},
+        "booking_url": {"value": "https://thevelodrome.com/pages/try-the-track", "source_url": "https://thevelodrome.com/pages/try-the-track", "evidence": "Try-the-track page", "confidence": "medium"}
+      },
+      "corrections": [],
+      "not_found": ["operator", "opening_hours", "length_m_confirmation", "official_coordinates"]
+    },
+    {
+      "seed_name": "London - Herne Hill Velodrome",
+      "seed_values": {"country_code": "GBR", "length_m": 450, "surface": "Bitumen", "is_indoor": false},
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {"value": "https://www.hernehillvelodrome.com/", "source_url": "https://www.hernehillvelodrome.com/", "evidence": "Official site", "confidence": "high"},
+        "booking_url": {"value": "https://www.hernehillvelodrome.com/sessions", "source_url": "https://www.hernehillvelodrome.com/faq", "evidence": "Sessions booked via Eventrac linked from the site", "confidence": "medium"},
+        "phone": {"value": "0207 274 2135", "source_url": "https://www.hernehillvelodrome.com/contact", "evidence": "Contact page (address 104 Burbage Rd, London SE24 9HE)", "confidence": "high"},
+        "email": {"value": "info@hernehillvelodrome.com", "source_url": "https://www.hernehillvelodrome.com/contact", "evidence": "\"fastest way to get a response is to email\"", "confidence": "high"},
+        "year_built": {"value": 1891, "source_url": "https://www.hernehillvelodrome.com/history", "evidence": "\"1891 - Herne Hill Velodrome is built\"", "confidence": "high"},
+        "pricing_url": {"value": "https://www.hernehillvelodrome.com/faq", "source_url": "https://www.hernehillvelodrome.com/faq", "evidence": "\"Adult Sessions: £6.60 (+£0.93 booking fee)\"; \"Adult Track Tasters and Accreditations: £6.60 (+£1.58 booking fee)\"", "confidence": "high"},
+        "price_range": {"value": {"min": 6.6, "max": 8.18, "currency": "GBP", "check_site": true}, "source_url": "https://www.hernehillvelodrome.com/faq", "evidence": "£6.60 + booking fee £0.60-£1.58", "confidence": "high"}
+      },
+      "corrections": [
+        {"field": "surface", "old_value": "Bitumen", "new_value": "Tarmac (all-weather); needs reviewer decision on lookup value", "source_url": "https://www.hernehillvelodrome.com/history", "evidence": "2011: \"replaces the cracking and slippery track surface with an all-weather tarmac one\" (1992 resin surface was replaced)", "confidence": "medium"}
+      ],
+      "confirmations": [
+        {"field": "length_m", "value": 450, "source_url": "https://www.hernehillvelodrome.com/history", "evidence": "1992: \"slightly shorter 450m\"", "confidence": "high"}
+      ],
+      "not_found": ["operator (HHV Trust, name not confirmed in text)", "opening_hours", "official_coordinates"]
+    },
+    {
+      "seed_name": "Ballerup Super Arena",
+      "seed_values": {"country_code": "DNK", "length_m": 250, "surface": "Wood", "is_indoor": true},
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {"value": "https://ballerupsuperarena.dk/", "source_url": "https://ballerupsuperarena.dk/", "evidence": "Official site", "confidence": "high"},
+        "booking_url": {"value": "https://www.wannasport.dk/sb/ballerup", "source_url": "https://ballerupsuperarena.dk/proev-cykelbanen/", "evidence": "Booking link from the official 'Prøv cykelbanen' page", "confidence": "medium"},
+        "operator": {"value": "Ballerup Kommune", "source_url": "https://ballerupsuperarena.dk/om-arenaen", "evidence": "\"Arenaen ejes og drives af Ballerup Kommune\"", "confidence": "high"},
+        "year_built": {"value": 2001, "source_url": "https://ballerupsuperarena.dk/om-arenaen", "evidence": "\"opført i 2001 af BSF-Fonden\"", "confidence": "high"},
+        "email": {"value": "ballerupsuperarena@balk.dk", "source_url": "https://ballerupsuperarena.dk/kontakt/", "evidence": "Contact page", "confidence": "high"},
+        "phone": {"value": "+45 2516 9713", "source_url": "https://ballerupsuperarena.dk/kontakt/", "evidence": "Track/tournament booking coordinator (staff number, no generic line found)", "confidence": "medium"}
+      },
+      "corrections": [],
+      "confirmations": [
+        {"field": "length_m", "value": 250, "source_url": "https://ballerupsuperarena.dk/om-arenaen", "evidence": "\"250 m lang cykelbane\"", "confidence": "high"},
+        {"field": "is_indoor", "value": true, "source_url": "https://ballerupsuperarena.dk/om-arenaen", "evidence": "\"Danmarks eneste indendørs cykelbane\"", "confidence": "high"}
+      ],
+      "not_found": ["opening_hours (event driven)", "pricing_url", "price_range", "official_coordinates"]
+    },
+    {
+      "seed_name": "Gent - Vlaams Wielercentrum Eddy Merckx",
+      "seed_values": {"country_code": "BEL", "length_m": 250, "surface": "Wood", "is_indoor": true},
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {"value": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx", "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx", "evidence": "City of Ghent venue page (Sport Vlaanderen page returned 503, not verified)", "confidence": "medium"},
+        "operator": {"value": "Sport Vlaanderen", "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx", "evidence": "\"Sport Vlaanderen exploiteert het Vlaams Wielercentrum Eddy Merckx\"", "confidence": "high"},
+        "year_built": {"value": 2006, "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx", "evidence": "\"overdekte wielerpiste… officieel geopend in 2006\"", "confidence": "high"},
+        "phone": {"value": "+32 9 245 75 08", "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx", "evidence": "Phone on city venue page", "confidence": "medium"}
+      },
+      "corrections": [],
+      "confirmations": [
+        {"field": "is_indoor", "value": true, "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx", "evidence": "\"overdekte wielerpiste\"; \"De houten baan\"", "confidence": "high"}
+      ],
+      "notes": "Do not confuse with 't Kuipke (separate ~160 m 1927 velodrome). kuipke.be is a parked/for-sale domain and must not be used.",
+      "not_found": ["email", "opening_hours", "pricing_url", "price_range", "length_m_confirmation", "official_coordinates"]
+    },
+    {
+      "seed_name": "Novo Mesto - Velodrom Novo Mesto",
+      "seed_values": {"country_code": "SVN", "length_m": 250, "surface": "Wood", "is_indoor": true},
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {"value": "https://www.olimpijskicenter-nm.si/velodrom/", "source_url": "https://www.olimpijskicenter-nm.si/velodrom/", "evidence": "Official Olimpijski center Novo mesto velodrome page", "confidence": "high"},
+        "operator": {"value": "Zavod Novo mesto", "source_url": "https://www.olimpijskicenter-nm.si/velodrom/", "evidence": "Operator ZNM (www.znm.si) named on site", "confidence": "medium"},
+        "phone": {"value": "041 372 576", "source_url": "https://www.olimpijskicenter-nm.si/velodrom/", "evidence": "Velodrome contact phone", "confidence": "high"},
+        "email": {"value": "info@olimpijskicenter-nm.si", "source_url": "https://www.olimpijskicenter-nm.si/velodrom/", "evidence": "Contact email", "confidence": "high"},
+        "opening_hours": {"value": "Mon-Fri 08:00-21:00; Sat 10:00-20:00; Sun closed", "source_url": "https://www.olimpijskicenter-nm.si/velodrom/", "evidence": "\"Ponedeljek – petek: 8.00 – 21.00, Sobota: 10.00 – 20.00, Nedelja: ZAPRTO\"", "confidence": "high"},
+        "year_built": {"value": 1996, "source_url": "https://www.olimpijskicenter-nm.si/en/velodrom/", "evidence": "\"built in 1996 for the needs of the Junior World Cycling Championship. In 2018… got a roof\"", "confidence": "high"},
+        "pricing_url": {"value": "https://www.olimpijskicenter-nm.si/velodrom/", "source_url": "https://www.olimpijskicenter-nm.si/velodrom/", "evidence": "Price list valid from 1.5.2025, EUR incl. VAT", "confidence": "high"},
+        "price_range": {"value": {"min": 15, "max": 25, "currency": "EUR", "check_site": true}, "source_url": "https://www.olimpijskicenter-nm.si/velodrom/", "evidence": "Recreation without bike €15, with bike hire €25; group track rental €150-250/h excluded", "confidence": "high"}
+      },
+      "corrections": [],
+      "confirmations": [
+        {"field": "length_m", "value": 250, "source_url": "https://www.olimpijskicenter-nm.si/velodrom/", "evidence": "\"dolžina 250 m, širina 7 m, lesena podlaga… standard UCI\"", "confidence": "high"},
+        {"field": "surface", "value": "Wood", "source_url": "https://www.olimpijskicenter-nm.si/velodrom/", "evidence": "\"lesena podlaga\"", "confidence": "high"},
+        {"field": "is_indoor", "value": true, "source_url": "https://www.olimpijskicenter-nm.si/en/velodrom/", "evidence": "Roofed in 2018, covered and heated", "confidence": "high"}
+      ],
+      "not_found": ["booking_url (reception only)", "official_coordinates"]
+    },
+    {
+      "seed_name": "Sineu - Pista d'atletisme",
+      "seed_values": {"country_code": "ESP", "length_m": 333, "surface": "Concrete", "is_indoor": false, "latitude": 39.6431074, "longitude": 3.0018573},
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {"value": "https://ajsineu.net/ca/installacions-esportives", "source_url": "https://ajsineu.net/ca/installacions-esportives", "evidence": "Municipal page listing the 'Voltadora Francesc Alomar' at Poliesportiu de Son Matgí, camí vell de Costitx", "confidence": "medium"},
+        "operator": {"value": "Ajuntament de Sineu", "source_url": "https://ajsineu.net/ca/installacions-esportives", "evidence": "Municipal sports facility ('poliesportiu municipal')", "confidence": "medium"},
+        "phone": {"value": "971 520 027", "source_url": "https://ajsineu.net/ca/contacte", "evidence": "Town hall phone (not venue-specific)", "confidence": "medium"},
+        "email": {"value": "ajuntament@ajsineu.net", "source_url": "https://ajsineu.net/ca/contacte", "evidence": "Town hall email (not venue-specific)", "confidence": "medium"}
+      },
+      "corrections": [
+        {"field": "name", "old_value": "Sineu - Pista d'atletisme", "new_value": "Sineu - Voltadora Francesc Alomar (Poliesportiu de Son Matgí)", "source_url": "https://ajsineu.net/ca/installacions-esportives", "evidence": "\"Voltadora / Francesc Alomar\" listed under Poliesportiu de Son Matgí; 'voltadora' is the local term for the track", "confidence": "medium"}
+      ],
+      "notes": "Length 333 m, concrete and 1952 build year appear only on Wikipedia, so not recorded. Hard-to-find case.",
+      "not_found": ["booking_url", "opening_hours", "pricing_url", "price_range", "year_built", "length_m_confirmation", "surface_confirmation", "official_coordinates"]
+    },
+    {
+      "seed_name": "Cochabamba - Velódromo de Cochabamba",
+      "seed_values": {"country_code": "BOL", "length_m": 250, "surface": "Wood", "is_indoor": true, "elevation_m": 2558},
+      "info_verified_at": "2026-11-05",
+      "fields": {},
+      "corrections": [],
+      "confirmations": [
+        {"field": "length_m", "value": 250, "source_url": "https://www.copaci.org/wp-content/uploads/2019/05/ConvCPP2019ES.pdf", "evidence": "\"Longitud de la Pista 250 m… Ancho 7.00 m\"", "confidence": "high"},
+        {"field": "surface", "value": "Wood", "source_url": "https://www.copaci.org/wp-content/uploads/2019/05/ConvCPP2019ES.pdf", "evidence": "\"La Superficie de la Pista es de madera\"", "confidence": "high"},
+        {"field": "is_indoor", "value": true, "source_url": "https://www.copaci.org/wp-content/uploads/2019/05/ConvCPP2019ES.pdf", "evidence": "\"Infraestructura: Cubierta\"", "confidence": "high"},
+        {"field": "elevation_m", "value": 2558, "source_url": "https://www.copaci.org/wp-content/uploads/2019/05/ConvCPP2019ES.pdf", "evidence": "\"Altitud: 2558 m s. n. m.\" (Velódromo CEFED, La Tamborada)", "confidence": "high"}
+      ],
+      "notes": "Only a continental federation event call was found; hard-to-find case.",
+      "not_found": ["website_url", "booking_url", "operator", "year_built", "phone", "email", "opening_hours", "pricing_url", "price_range", "official_coordinates"]
+    }
+  ],
+  "coordinate_check_note": "No official source gave reliable venue coordinates. An unofficial OSM/Nominatim address geocode differed from seed values by 59 m (Valley Preferred) to ~2.5 km (Mattamy, Dunc Gray), but that is not authoritative, so no coordinate corrections are proposed. Seed coordinates look rounded/approximate; use a reviewed geocoding step at scale."
+}
