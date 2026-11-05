@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
+import Icon from '../../../components/Icon'
+import { AdminPage, AdminMessage, EmptyState, ErrorNote, StatusBadge, Field, adminCard, adminBtn } from '../../../components/admin/AdminUi'
 import { supabase } from '../../../lib/supabase'
 import { fetchCommentReports, resolveCommentReport, commentErrorMessage } from '../../../lib/activityComments'
 import { formatDateTime } from '../../../lib/dateFormat'
@@ -31,38 +32,44 @@ export default function AdminCommentReportsPage() {
     load()
   }
 
-  if (state.loading) return <p className="p-6 text-sm text-slate-500">Loading…</p>
-  if (!state.admin) return <p className="p-6 text-sm text-slate-500">Admins only.</p>
+  if (state.loading) return <AdminMessage>Loading…</AdminMessage>
+  if (!state.admin) return <AdminMessage>Admins only.</AdminMessage>
+
+  const open = state.rows.filter((r) => r.status === 'open').length
 
   return (
-    <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white">Reported comments</h1>
-        <Link href="/admin/suggestions" className="text-xs underline text-slate-500">Suggestions</Link>
-      </div>
-      {state.error && <p role="alert" className="text-sm text-rose-500">{state.error}</p>}
-      {state.rows.length === 0 && !state.error && <p className="text-sm text-slate-500">No reports.</p>}
-      {state.rows.map((r) => (
-        <div key={r.id} className="p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-sm space-y-2">
-          <p className="whitespace-pre-wrap break-words text-slate-900 dark:text-white">{r.body_snapshot}</p>
-          <p className="text-xs text-slate-500">
-            by <b>{r.author_name || 'deleted rider'}</b> · reported by {r.reporter_name || 'deleted rider'} ·{' '}
-            {formatDateTime(r.created_at)}
-            {r.reason ? ` · “${r.reason}”` : ''}
-          </p>
-          <div className="flex items-center gap-3 text-xs font-bold">
-            <span className="uppercase tracking-wider text-slate-400">{r.status}{!r.comment_exists && r.status === 'open' ? ' (comment gone)' : ''}</span>
+    <AdminPage title="Reported comments" description={`Review reports on activity comments. ${open} open.`}>
+      <ErrorNote>{state.error}</ErrorNote>
+      {state.rows.length === 0 && !state.error && <EmptyState>No reports.</EmptyState>}
+      <ul className="space-y-3">
+        {state.rows.map((r) => (
+          <li key={r.id} className={`${adminCard} space-y-3`}>
+            <div className="flex items-center gap-2 flex-wrap">
+              <StatusBadge status={r.status} />
+              {!r.comment_exists && r.status === 'open' && <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Comment already gone</span>}
+            </div>
+            <p className="whitespace-pre-wrap break-words text-sm text-slate-900 dark:text-white">{r.body_snapshot}</p>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+              <Field label="Author">{r.author_name || 'deleted rider'}</Field>
+              <Field label="Reported by">{r.reporter_name || 'deleted rider'}</Field>
+              <Field label="Reported">{formatDateTime(r.created_at)}</Field>
+              {r.reason && <Field label="Reason">“{r.reason}”</Field>}
+            </dl>
             {r.status === 'open' && (
-              <>
-                <button type="button" onClick={() => resolve(r, false)} className="text-slate-500 hover:text-slate-700">Dismiss</button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button type="button" onClick={() => resolve(r, false)} className={adminBtn.secondary}>
+                  <Icon name="check" /> Dismiss report
+                </button>
                 {r.comment_exists && (
-                  <button type="button" onClick={() => resolve(r, true)} className="text-rose-500 hover:text-rose-600">Delete comment</button>
+                  <button type="button" onClick={() => resolve(r, true)} className={adminBtn.danger}>
+                    <Icon name="trash" /> Delete comment
+                  </button>
                 )}
-              </>
+              </div>
             )}
-          </div>
-        </div>
-      ))}
-    </div>
+          </li>
+        ))}
+      </ul>
+    </AdminPage>
   )
 }
