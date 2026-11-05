@@ -36,6 +36,4 @@ Admin dashboard RPC (admin-only, aggregate-only): `MIG=<repo>/supabase/migration
 
 Velodrome track info (provenance, contact privacy, open/closed status): `node harness.mjs <repo>/supabase/migrations ./velodrome-track-info-adversarial.mjs`
 
-Velodrome info data migration (fill-only, idempotent, exactly-one-match): `MIG=<repo>/supabase/migrations/20270136000000_velodrome_info_data.sql node harness.mjs <repo>/supabase/migrations ./velodrome-info-data-adversarial.mjs`
-
-Relaxed-rules delta migration (same adversarial checks plus Lee Valley's six values): `MIG=<repo>/supabase/migrations/20270137000000_velodrome_info_relaxed.sql node harness.mjs <repo>/supabase/migrations ./velodrome-info-relaxed-adversarial.mjs`
+Velodrome info data migrations (helper + strict/relaxed chunks + penrose; tolerant, fill-only, idempotent, skip log). The test re-applies the whole `20270136*` set, so run it against a copy of the migrations plus a throw-away `CREATE UNIQUE INDEX tracks_name_uq ON public.tracks(name)` migration (versioned `20260924000001`) so the v1 track import applies on the stub: `node harness.mjs <copy-of-migrations> ./velodrome-info-data-adversarial.mjs` (`MIGDIR=<repo>/supabase/migrations` if the test file was copied out of the repo).

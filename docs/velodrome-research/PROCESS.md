@@ -17,7 +17,7 @@ Goal: confirmed venue info for every velodrome (website, booking, operator, year
 3. **Applier** (script run with the service role, no secrets in the repo): applies only what the rules below allow, via `upsert_track_info_source()` + a `tracks` update, and writes the needs-attention report.
 
 ## Auto-apply rules
-Rules were relaxed on 2026-11-05 (migration `20270137000000_velodrome_info_relaxed.sql`) after the Lee Valley VeloPark data held back by the strict rules was confirmed correct with the venue. `lib.mjs` implements both (`decide(c, 'strict'|'relaxed')`); the strict pass still reproduces migration `20270136` byte-for-byte and the second migration contains only the delta.
+Rules were relaxed on 2026-11-05 (migrations `20270136020001+`, "relaxed") after the Lee Valley VeloPark data held back by the strict rules was confirmed correct with the venue. `lib.mjs` implements both (`decide(c, 'strict'|'relaxed')`); the strict pass produces the `strict` migrations and the relaxed migrations contain only the delta (same values as before the rewrite).
 
 A value is applied to `tracks` automatically only if **all** hold:
 - confidence `high`, or `medium` **only** when the reviewer verdict is `verified` (the reviewer's own fetch confirmed it). Phone/email stay `high`-only;
@@ -36,6 +36,22 @@ Never auto-applied; they go to the **needs-attention report** (`status = needs_a
 - `operating_status = closed` (or inferred `open`) inferred from news rather than an official statement;
 - any overwrite of an existing value.
 Rejected and unverifiable values never reach `tracks`; they stay in the audit table only. Fields with no official source are recorded `not_found` (so refreshes can tell "never checked" from "checked, none").
+
+## How data migrations are generated and applied
+`node scripts/velodrome-research/apply.mjs` regenerates, from `docs/velodrome-research/*.json` and `track-coordinates.json` (seed lat/lon per track, used for the fallback match):
+- `20270136000000_velodrome_info_apply_helper.sql` (hand-written, not regenerated): table `track_info_apply_log` (not public; service role / SQL editor only), `velodrome_info_log()` and `apply_velodrome_info(batch, json)`.
+- `20270136010001..` `velodrome_info_strict_NN` (pass 1) and `20270136020001..` `velodrome_info_relaxed_NN` (pass 2): small, independent migrations (at most 20 tracks and ~30 KB each, so far below statement/pipeline limits). Each is one `DO` block that calls `apply_velodrome_info()` and swallows any error, so **a data migration can never block the migration pipeline** (an earlier single 236 KB block that raised on any unmatched track was never recorded in production's `schema_migrations`; see below).
+- `20270136030000_velodrome_penrose_notes.sql`: strips the hijacked `penroseparkvelo.com` from the Penrose Park notes.
+
+`apply_velodrome_info()` per track: match by (1) `name` + `country_code`, (2) whitespace/case-normalised name + country, (3) coordinates within 0.01 degrees + country. If none gives exactly one row, the track is **skipped** with `RAISE NOTICE` and a row in `track_info_apply_log` (`skipped_no_match` / `skipped_ambiguous`); fallback matches are logged as `matched_by_name_normalised` / `matched_by_coordinates`. Per field, in its own sub-transaction: fill-only (an existing different value stays and is logged `field_conflict` and stored as `needs_attention`), and a rejected field (CHECK violation such as phone/email format, year bounds, price, status; bad cast; unsupported field) is rolled back and logged `field_rejected` without affecting the other fields. phone/email are only ever written together with `contact_is_organisational = TRUE`. Everything is idempotent: re-running changes nothing.
+
+Never edit generated migrations by hand; change the data/rules and regenerate (this deletes and rewrites all generated chunk files). Once merged to `main` the set is applied by the Supabase integration, so new data goes in **new** migration versions (do not regenerate over applied ones: bump the `*_BASE` versions in `apply.mjs` or add a new pass).
+
+### Post-deploy verification
+Paste `docs/velodrome-research/post-deploy-check.sql` into the Supabase SQL editor: it shows which migrations are recorded, how many tracks now have operator / website / `info_verified_at`, and the skipped-track log (`track_info_apply_log`). If tracks were skipped, fix the name/coordinates in the data (or the track row) and ship a small new fill-only migration for just those tracks.
+
+### Why the first rollout (#399/#400) did not apply (hypothesis)
+Production only showed `20270135000000_velodrome_track_info` as applied; the two data migrations are absent from `schema_migrations` and the new columns were all null, so they failed as a whole and were rolled back. The production error was not available. The most likely cause is the `RAISE EXCEPTION 'matched % tracks rows, expected exactly 1'` guard: the migrations required every one of ~200 researched tracks to match exactly one production row by exact `name` + `country_code`, and the track data in production was imported separately (v1 sheet import, which itself needs a unique `tracks.name` index that no migration creates), so a single renamed/merged/duplicated/missing track aborts everything. Secondary risks removed here: one 236 KB statement, and any single field rejected by a table CHECK constraint aborting the batch. This cannot be confirmed without the production log.
 
 ## Batch quality gate
 After each batch, randomly sample ~10% of auto-applied rows (at least 3) for a fresh independent check of URL, quote and value. **Halt the rollout if more than 5% of the sampled rows fail**; fix the rules/prompts and re-review the whole batch (revert failed values by re-running the upsert with the corrected state). Record sample size and failures in the batch log.

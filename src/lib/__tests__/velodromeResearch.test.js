@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  decide, decideMissed, resolveTrack, evaluate, sampleApplied, sampleSize, applyGate, buildEntries, renderMigration,
+  decide, decideMissed, resolveTrack, evaluate, sampleApplied, sampleSize, applyGate, buildEntries, renderMigration, chunkTracks, withCoordinates,
   priceText, HOLD_TRACKS,
 } from '../../../scripts/velodrome-research/lib.mjs'
 
@@ -156,13 +156,29 @@ test('gate: >5% failures halt the batch, otherwise only failures are held', () =
   assert.equal(items2[1].code, undefined)
 })
 
-test('migration SQL is fill-only, strict and tags no secrets', () => {
+test('migration SQL delegates to the tolerant applier and cannot fail the pipeline', () => {
   const items = [{ decision: 'apply', code: 'apply', name: 'T', country_code: 'GER', field: 'phone', value_text: '+49 1234 5678', source_url: 'https://t.example/', evidence: 'q', confidence: 'high', source_kind: 'operator', reviewedDate: '2026-11-05' }]
   const tracks = buildEntries(items, [{ name: 'T', country_code: 'GER', seed: 'T', field: 'email', reviewedDate: '2026-11-05' }])
   assert.deepEqual(tracks[0].entries.map((e) => `${e.field}:${e.status}`), ['email:not_found', 'phone:verified'])
-  const sql = renderMigration(tracks, '-- h')
-  assert.match(sql, /expected exactly 1/)
-  assert.match(sql, /contact_is_organisational = TRUE/)
-  assert.match(sql, /needs_attention/)
-  assert.throws(() => renderMigration([{ name: '$json$' }], ''), /dollar-quote/)
+  const sql = renderMigration(tracks, '-- h', 'strict-01')
+  assert.match(sql, /PERFORM public\.apply_velodrome_info\('strict-01', \$json\$/)
+  assert.match(sql, /EXCEPTION WHEN OTHERS THEN/)
+  assert.match(sql, /'batch_error'/)
+  assert.doesNotMatch(sql, /RAISE EXCEPTION/)
+  assert.throws(() => renderMigration([{ name: '$json$' }], '', 'x'), /dollar-quote/)
+  assert.throws(() => renderMigration([], '', "x'; DROP"), /Invalid batch id/)
+})
+
+test('chunkTracks keeps chunks small and independent, withCoordinates adds seed coordinates', () => {
+  const mk = (n, pad = 0) => ({ name: `T${n}`, cc: 'GBR', entries: [{ field: 'operator', status: 'verified', value: 'x'.repeat(pad) }] })
+  const tracks = Array.from({ length: 45 }, (_, i) => mk(i))
+  const chunks = chunkTracks(tracks)
+  assert.deepEqual(chunks.map((c) => c.length), [20, 20, 5])
+  assert.deepEqual(chunks.flat(), tracks)
+  const big = chunkTracks(Array.from({ length: 4 }, (_, i) => mk(i, 12000)), { maxBytes: 30000 })
+  assert.ok(big.length >= 2 && big.every((c) => c.length >= 1))
+  const [t] = withCoordinates([mk(1)], { 'T1|GBR': [51.5, -0.1] })
+  assert.equal(t.lat, 51.5)
+  assert.equal(t.lon, -0.1)
+  assert.equal(withCoordinates([mk(2)], {})[0].lat, undefined)
 })

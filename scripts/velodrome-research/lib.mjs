@@ -435,96 +435,47 @@ export function buildEntries(items, notFound) {
   return [...tracks.values()].filter((t) => t.entries.length).sort((a, b) => `${a.name}|${a.cc}`.localeCompare(`${b.name}|${b.cc}`))
 }
 
-export function renderMigration(tracks, header) {
+export const CHUNK_MAX_TRACKS = 20
+export const CHUNK_MAX_BYTES = 30000
+
+// Seed coordinates (docs/velodrome-research/track-coordinates.json, keyed "name|cc") enable the migrations' coordinate fallback match.
+export function withCoordinates(tracks, coords) {
+  return tracks.map((t) => {
+    const c = coords[`${t.name}|${t.cc}`]
+    return c ? { name: t.name, cc: t.cc, lat: c[0], lon: c[1], entries: t.entries } : t
+  })
+}
+
+// Splits tracks (already sorted) into independent chunks: at most maxTracks tracks and maxBytes of JSON each.
+export function chunkTracks(tracks, { maxTracks = CHUNK_MAX_TRACKS, maxBytes = CHUNK_MAX_BYTES } = {}) {
+  const chunks = []
+  let cur = [], size = 0
+  for (const t of tracks) {
+    const n = JSON.stringify(t, null, 1).length
+    if (cur.length && (cur.length >= maxTracks || size + n > maxBytes)) { chunks.push(cur); cur = []; size = 0 }
+    cur.push(t); size += n
+  }
+  if (cur.length) chunks.push(cur)
+  return chunks
+}
+
+// One small data migration: calls public.apply_velodrome_info() (20270136000000_velodrome_info_apply_helper.sql), which skips and
+// logs unmatched tracks and rejected fields. The outer handler guarantees that nothing in here can fail the migration.
+export function renderMigration(tracks, header, batch) {
   const json = JSON.stringify(tracks, null, 1)
   if (json.includes('$json$')) throw new Error('Data contains the dollar-quote tag')
+  if (!/^[a-z0-9_-]+$/.test(batch || '')) throw new Error('Invalid batch id')
   return `${header}
 DO $migration$
-DECLARE
-    d JSONB := $json$${json}$json$::jsonb;
-    t JSONB;
-    e JSONB;
-    v_id UUID;
-    v_cnt INT;
-    v_field TEXT;
-    v_cur TEXT;
-    v_new TEXT;
-    v_ok BOOLEAN;
-    v_status TEXT;
-    v_json JSONB;
-    v_date DATE;
 BEGIN
-    FOR t IN SELECT * FROM jsonb_array_elements(d) LOOP
-        SELECT count(*) INTO v_cnt FROM public.tracks
-        WHERE name = t->>'name' AND country_code IS NOT DISTINCT FROM (t->>'cc');
-        IF v_cnt <> 1 THEN
-            RAISE EXCEPTION 'velodrome info: % (%) matched % tracks rows, expected exactly 1', t->>'name', t->>'cc', v_cnt;
-        END IF;
-        SELECT id INTO v_id FROM public.tracks
-        WHERE name = t->>'name' AND country_code IS NOT DISTINCT FROM (t->>'cc');
-
-        FOR e IN SELECT * FROM jsonb_array_elements(t->'entries') LOOP
-            v_field := e->>'field';
-            v_status := e->>'status';
-            v_json := e->'json';
-            v_date := (e->>'date')::date;
-            v_new := e->>'value';
-            v_ok := TRUE;
-
-            IF v_status = 'verified' THEN
-                -- Fill-only: write the column only when it is empty or already equal; a differing value is
-                -- never overwritten and is recorded as needs_attention instead.
-                IF v_field IN ('website_url', 'booking_url', 'pricing_url', 'operator', 'phone', 'email', 'opening_hours') THEN
-                    EXECUTE format('SELECT %I FROM public.tracks WHERE id = $1', v_field) INTO v_cur USING v_id;
-                    v_ok := v_cur IS NULL OR v_cur = v_new;
-                    IF v_ok THEN
-                        IF v_field IN ('phone', 'email') THEN
-                            -- Only organisational contacts reach this migration; the flag must be set in the same statement.
-                            EXECUTE format('UPDATE public.tracks SET %I = $2, contact_is_organisational = TRUE WHERE id = $1', v_field) USING v_id, v_new;
-                        ELSE
-                            EXECUTE format('UPDATE public.tracks SET %I = $2 WHERE id = $1', v_field) USING v_id, v_new;
-                        END IF;
-                    END IF;
-                ELSIF v_field = 'year_built' THEN
-                    SELECT year_built::text INTO v_cur FROM public.tracks WHERE id = v_id;
-                    v_ok := v_cur IS NULL OR v_cur = v_new;
-                    IF v_ok THEN UPDATE public.tracks SET year_built = v_new::smallint WHERE id = v_id; END IF;
-                ELSIF v_field = 'price_range' THEN
-                    SELECT (price_min IS NULL AND price_max IS NULL AND price_currency IS NULL)
-                        OR (price_min IS NOT DISTINCT FROM (v_json->>'min')::numeric
-                            AND price_max IS NOT DISTINCT FROM (v_json->>'max')::numeric
-                            AND price_currency IS NOT DISTINCT FROM (v_json->>'currency'))
-                      INTO v_ok FROM public.tracks WHERE id = v_id;
-                    IF v_ok THEN
-                        UPDATE public.tracks SET price_min = (v_json->>'min')::numeric, price_max = (v_json->>'max')::numeric,
-                               price_currency = v_json->>'currency' WHERE id = v_id;
-                    END IF;
-                ELSIF v_field = 'operating_status' THEN
-                    SELECT operating_status INTO v_cur FROM public.tracks WHERE id = v_id;
-                    v_ok := v_cur = 'unknown' OR v_cur = v_new;
-                    IF v_ok THEN
-                        UPDATE public.tracks SET operating_status = v_new, operating_status_checked_at = v_date WHERE id = v_id;
-                    END IF;
-                ELSE
-                    RAISE EXCEPTION 'velodrome info: unsupported field %', v_field;
-                END IF;
-                IF NOT v_ok THEN
-                    RAISE NOTICE 'velodrome info: % % already has a different value; recorded as needs_attention', t->>'name', v_field;
-                    v_status := 'needs_attention';
-                END IF;
-            END IF;
-
-            -- Never demote an established verified row to a weaker status.
-            IF v_status <> 'verified' AND EXISTS (
-                SELECT 1 FROM public.track_info_sources s
-                WHERE s.track_id = v_id AND s.field = v_field AND s.is_current AND s.status = 'verified') THEN
-                CONTINUE;
-            END IF;
-
-            PERFORM public.upsert_track_info_source(
-                v_id, v_field, v_status, v_new, v_json, e->>'url', e->>'kind', e->>'quote', e->>'conf', NULL, v_date);
-        END LOOP;
-    END LOOP;
+    PERFORM public.apply_velodrome_info('${batch}', $json$${json}$json$::jsonb);
+EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'velodrome info ${batch}: skipped (%): %', SQLSTATE, SQLERRM;
+    BEGIN
+        PERFORM public.velodrome_info_log('${batch}', NULL, NULL, NULL, 'batch_error', SQLSTATE || ': ' || SQLERRM);
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'velodrome info ${batch}: could not write apply log';
+    END;
 END
 $migration$;
 `
