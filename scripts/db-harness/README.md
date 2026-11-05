@@ -35,3 +35,5 @@ Threshold apply permissions (issue #379): `MIG=<repo>/supabase/migrations/202701
 Admin dashboard RPC (admin-only, aggregate-only): `MIG=<repo>/supabase/migrations/20270128000000_admin_dashboard.sql node harness.mjs <repo>/supabase/migrations ./admin-dashboard-adversarial.mjs`
 
 Velodrome track info (provenance, contact privacy, open/closed status): `node harness.mjs <repo>/supabase/migrations ./velodrome-track-info-adversarial.mjs`
+
+Velodrome info data migration (fill-only, idempotent, exactly-one-match): `MIG=<repo>/supabase/migrations/20270136000000_velodrome_info_data.sql node harness.mjs <repo>/supabase/migrations ./velodrome-info-data-adversarial.mjs`

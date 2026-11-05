@@ -1,0 +1,859 @@
+{
+ "reviewed_at": "2026-11-05",
+ "batch": 4,
+ "method": "Every cited source_url re-fetched with curl and text-matched (PDF via pypdf); quotes, values, organisational-vs-personal contacts and price sanity checked by hand; independent searches (web-search summaries used only as leads, every reported fact re-fetched) on the 12 least-covered/empty tracks (63%): Arima - National Cycling Centre; Barcelona - Velòdrom d'Horta; Bournemouth - Slades Park; Cali - Velódromo Alcides Nieto Patiño; Chun'an - Jieshou Velodrome; Dubai Sharjah Velodrome; Gera - Radrennbahn Gera; Kokura Media Dome; Lusail Shooting Club Velodrome; Medellín - Velódromo Martín Emilio Rodríguez; New Delhi - IGI Velodrome; Roubaix - Vélodrome André-Pétrieux. Chun'an, Dubai/Sharjah, Lusail: no official page found; researcher's not_found/needs_attention confirmed (existence of the venues remains unverified).",
+ "counts": {
+  "total": 68,
+  "verified": 55,
+  "rejected": 6,
+  "unverifiable": 7
+ },
+ "notes": [
+  "The researcher's evidence field is often a description rather than a verbatim quote; values were judged against the page text itself.",
+  "Contacts: Gera club phone/email and Falun mobile rejected; Quibell council lines and Barcelona municipal-listing contacts verified but must go to needs-attention (medium confidence / council)."
+ ],
+ "missed_info": [
+  {
+   "track": "Arima - National Cycling Centre",
+   "field": "website_url",
+   "value": "https://sportt-tt.com/book-a-facility/national-cycling-velodrome/",
+   "source_url": "https://sportt-tt.com/book-a-facility/national-cycling-velodrome/",
+   "quote": "The National Cycling Velodrome – Balmain, Couva ... Officially opened on July 23rd, 2016",
+   "confidence": "high",
+   "source_kind": "operator",
+   "note": "Official SporTT venue page. NOTE identity/location conflict: the venue is at Balmain, Couva, but the seed row has Arima coordinates (10.635,-61.278). Needs human decision before any value is applied."
+  },
+  {
+   "track": "Arima - National Cycling Centre",
+   "field": "year_built",
+   "value": 2016,
+   "source_url": "https://sportt-tt.com/book-a-facility/national-cycling-velodrome/",
+   "quote": "Officially opened on July 23rd, 2016, the facility was built for competition and training",
+   "confidence": "high",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Arima - National Cycling Centre",
+   "field": "operator",
+   "value": "The Sports Company of Trinidad and Tobago Limited (SporTT)",
+   "source_url": "https://sportt-tt.com/contact-us/",
+   "quote": "The Sports Company of Trinidad and Tobago Limited communications@sportt-tt.com 868-225-4886 ... Off Couva Main Road, Balmain, Couva",
+   "confidence": "medium",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Arima - National Cycling Centre",
+   "field": "phone",
+   "value": "+1 868 225 4886 (ext. 112-113 bookings)",
+   "source_url": "https://sportt-tt.com/book-a-facility/national-cycling-velodrome/",
+   "quote": "CONTACT INFORMATION National Cycling Velodrome Off Couva Main Rd., Balmain Couva 1 (868) 225-4886 ext. 112-113 Email: bookings@sportt-tt.com",
+   "confidence": "high",
+   "source_kind": "operator",
+   "note": "Organisational company switchboard/bookings line."
+  },
+  {
+   "track": "Arima - National Cycling Centre",
+   "field": "email",
+   "value": "bookings@sportt-tt.com",
+   "source_url": "https://sportt-tt.com/book-a-facility/national-cycling-velodrome/",
+   "quote": "Email: bookings@sportt-tt.com",
+   "confidence": "high",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Arima - National Cycling Centre",
+   "field": "length_m/surface",
+   "value": "250 m wooden",
+   "source_url": "https://sportt-tt.com/book-a-facility/national-cycling-velodrome/",
+   "quote": "250m wooden track (Schuermann Designed and Built)",
+   "confidence": "high",
+   "source_kind": "operator",
+   "note": "Consistent with seed (250, Wood); supports identity of the seed row as the Couva NCV with wrong coordinates."
+  },
+  {
+   "track": "Bournemouth - Slades Park",
+   "field": "booking_url",
+   "value": "https://www.activedorset.org/slades-booking",
+   "source_url": "https://www.activedorset.org/slades-booking",
+   "quote": "our facilities are now booked online. These include bookings for the 3G pitch, Velodrome, Slades Park Pavilion and parties.",
+   "confidence": "high",
+   "source_kind": "operator",
+   "note": "Researcher recorded booking_url as not_found. Page also says the velodrome is available for registered clubs only; the individual booking is via the linked platform."
+  },
+  {
+   "track": "Barcelona - Velòdrom d'Horta",
+   "field": "operator",
+   "value": "Poc3 Velòdrom Horta (concessionaire of the municipal velodrome)",
+   "source_url": "https://ajuntament.barcelona.cat/horta-guinardo/ca/guia-del-districte/equipaments-temes/llistat/velodrom-municipal-dhorta-miquel-poblet-92086010739",
+   "quote": "Entitat Gestora: Poc3 Velòdrom Horta",
+   "confidence": "medium",
+   "source_kind": "owner",
+   "note": "Researcher recorded no operator."
+  },
+  {
+   "track": "Gera - Radrennbahn Gera",
+   "field": "year_built",
+   "value": 1957,
+   "source_url": "https://www.gera.de/meldung/sanierung-radrennbahn-vorbereitungen-schreiten-voran",
+   "quote": "Die Radrennbahn wurde 1957 errichtet.",
+   "confidence": "high",
+   "source_kind": "owner",
+   "note": "Researcher recorded year_built not_found; a second gera.de release says 'seit 1957 ein zentraler Ort'."
+  },
+  {
+   "track": "Kokura Media Dome",
+   "field": "is_indoor",
+   "value": true,
+   "source_url": "https://www.kokurakeirin.com/bank-taiken/",
+   "quote": "【会場】 北九州メディアドーム（小倉競輪場） 全天候型屋内バンク",
+   "confidence": "high",
+   "source_kind": "operator",
+   "note": "Seed is_indoor is NULL. Also confirms the Media Dome = Kokura keirin venue, address 北九州市小倉北区三萩野3-1-1."
+  },
+  {
+   "track": "Kokura Media Dome",
+   "field": "public_session",
+   "value": "Free monthly 'bank experience' sessions (club event, JPY 0), next 2026-10-31, 2026-12-19",
+   "source_url": "https://www.kokurakeirin.com/bank-taiken/",
+   "quote": "毎月1回競輪場の走路（バンク）を開放して、誰でも自由に参加できるバンク走行体験会 ... 【参加費】 無料",
+   "confidence": "medium",
+   "source_kind": "operator",
+   "note": "Club event page, so not a track-use price; informational only, do not set price_min=0."
+  },
+  {
+   "track": "New Delhi - IGI Velodrome",
+   "field": "website_url",
+   "value": "https://sportsauthorityofindia.nic.in/sai_new/stadiaIgsc",
+   "source_url": "https://sportsauthorityofindia.nic.in/sai_new/stadiaIgsc",
+   "quote": "Indira Gandhi Sports Complex (IGSC) ... Cycling Velodrome (fully AC) with 3000 fixed seats.",
+   "confidence": "medium",
+   "source_kind": "owner",
+   "note": "Official SAI stadia page lists the velodrome as part of IGSC (SAI-run complex). Page does not give a velodrome-specific contact, hours or prices; the 'Contact Us' tab content was not retrievable."
+  },
+  {
+   "track": "Cali - Velódromo Alcides Nieto Patiño",
+   "field": "operating_status",
+   "value": "closed/damaged (unconfirmed)",
+   "source_url": "https://www.eltiempo.com/deportes/ciclismo/preocupacion-por-el-velodromo-alcides-nieto-patino-de-cali-tras-el-terremoto-del-pasado-10-de-agosto-3582614",
+   "quote": "\"El velódromo tiene afectaciones estructurales serias, ese se va a demorar un poco más ... probablemente requerirá de una inversión muy grande\" (mayor Alejandro Eder, after the 10 Aug earthquake)",
+   "confidence": "medium",
+   "source_kind": "other",
+   "note": "IMPORTANT: news report (El Tiempo) quoting the mayor; roof/cover structure has the highest risk level of all evaluated venues. Official cali.gov.co notice could not be fetched (403/outage) and no official closure statement was verified. Researcher left status 'unknown' (not found). Do NOT show as open; needs-attention (possible closure, not auto-applicable)."
+  },
+  {
+   "track": "Roubaix - Vélodrome André-Pétrieux",
+   "field": "operating_status/works",
+   "value": "Site redevelopment programme from 2026 (renovation of the east stands); no closure stated",
+   "source_url": "https://www.lillemetropole.fr/communique-de-presse/site-roubaix-parc-des-sports-la-mel-engage-un-projet-damenagement-durable-et",
+   "quote": "la Métropole engage, aux côtés de la Ville de Roubaix, la transformation du site du vélodrome André Pétrieux ... À partir de 2026, les premières étapes opérationnelles",
+   "confidence": "medium",
+   "source_kind": "owner",
+   "note": "Official MEL release + ville-renouvelee.fr project page; confirms researcher was right to avoid stabvelodromeroubaix.fr (separate indoor venue). No operator/hours/contact for the outdoor track found."
+  }
+ ],
+ "records": [
+  {
+   "track": "Barcelona - Velòdrom d'Horta",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://velodrombcn.cat",
+   "source_url": "https://velodrombcn.cat",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Operator site loads (200); the city-listed http://www.velodrom.cat 301-redirects to it. Operator named on the city page as 'Entitat Gestora: Poc3 Velòdrom Horta'."
+  },
+  {
+   "track": "Barcelona - Velòdrom d'Horta",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1984,
+   "source_url": "https://www.barcelona.cat/ca/conocebcn/pics/el-velodromo-de-horta-92086010739",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Verbatim \"El velòdrom es va inaugurar l'any 1984\" present on city page (owner)."
+  },
+  {
+   "track": "Barcelona - Velòdrom d'Horta",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+34 93 009 74 37",
+   "source_url": "https://ajuntament.barcelona.cat/horta-guinardo/ca/guia-del-districte/equipaments-temes/llistat/velodrom-municipal-dhorta-miquel-poblet-92086010739",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "'Tel.: 93 009 74 37' appears in the municipal listing for the venue itself (organisational, not staff/council line). Medium confidence so not auto-applied; the operator site shows no phone to cross-check."
+  },
+  {
+   "track": "Barcelona - Velòdrom d'Horta",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@velodrom.cat",
+   "source_url": "https://ajuntament.barcelona.cat/horta-guinardo/ca/guia-del-districte/equipaments-temes/llistat/velodrom-municipal-dhorta-miquel-poblet-92086010739",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "'E-mail info@velodrom.cat' on the same listing; velodrom.cat is the venue's own (redirecting) domain. Generic mailbox."
+  },
+  {
+   "track": "Barcelona - Velòdrom d'Horta",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Mon-Fri 00:00-01:30 and 06:00-23:59; Sat-Sun 08:00-21:00",
+   "source_url": "https://velodrombcn.cat/horaris",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Operator hours page shows exactly these slots (01/01-31/12) plus a list of exceptional closing days. Ambiguous (00:00-01:30 slot) but faithfully transcribed; stays medium."
+  },
+  {
+   "track": "Barcelona - Velòdrom d'Horta",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://velodrombcn.cat/pista",
+   "source_url": "https://velodrombcn.cat/pista",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Operator track page lists quarterly group-training fees 82,11 / 136,86 / 191,59 EUR (confirmed). No per-session price, so no price_range; link is a valid pricing page."
+  },
+  {
+   "track": "Barcelona - Velòdrom d'Horta",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://velodrombcn.cat/horaris",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "Operator publishes current opening hours; no closure notice found."
+  },
+  {
+   "track": "Bournemouth - Slades Park",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.activedorset.org/velodrome",
+   "source_url": "https://www.activedorset.org/velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Operator (Active Dorset) page for the velodrome; 200."
+  },
+  {
+   "track": "Bournemouth - Slades Park",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Active Dorset CIO (in partnership with BCP Council)",
+   "source_url": "https://www.activedorset.org/velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Verbatim 'managed by Active Dorset CIO in partnership with BCP Council, British Cycling and local clubs'."
+  },
+  {
+   "track": "Bournemouth - Slades Park",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2011,
+   "source_url": "https://www.activedorset.org/uploads/velodrome-information-2025-12.pdf",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "PDF (operator domain) text: 'a 250 metre Olympic standard facility ... which was built in 2011'."
+  },
+  {
+   "track": "Bournemouth - Slades Park",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "sladespark@activedorset.org",
+   "source_url": "https://www.activedorset.org/velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "'Email sladespark@activedorset.org' on the velodrome page; generic venue mailbox on operator domain."
+  },
+  {
+   "track": "Bournemouth - Slades Park",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.activedorset.org/velodrome",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "Page offers track bookings via online booking platform; no closure notice."
+  },
+  {
+   "track": "Bournemouth - Slades Park",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.activedorset.org/velodrome",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "'250m Olympic size track' present."
+  },
+  {
+   "track": "Reading - Palmer Park",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.better.org.uk/leisure-centre/reading/palmer-park/cycling",
+   "source_url": "https://www.better.org.uk/leisure-centre/reading/palmer-park/cycling",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Official Better (GLL) cycling page for Palmer Park; 200."
+  },
+  {
+   "track": "Reading - Palmer Park",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://bookings.better.org.uk/location/palmer-park/cycling",
+   "source_url": "https://www.better.org.uk/leisure-centre/reading/palmer-park/cycling",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "The cited page links to exactly this URL (several hrefs); the booking site itself is JS-only."
+  },
+  {
+   "track": "Reading - Palmer Park",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Better (GLL)",
+   "source_url": "https://www.better.org.uk/leisure-centre/reading/palmer-park/cycling",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Footer: 'Better is a registered trademark and trading name of GLL (Greenwich Leisure Limited)'. Council ownership not stated; value only claims the operator."
+  },
+  {
+   "track": "Reading - Palmer Park",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "palmerpark@gll.org",
+   "source_url": "https://www.better.org.uk/leisure-centre/reading/palmer-park/cycling",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "'For availability and cost please email us at palmerpark@gll.org' is verbatim; venue mailbox on the operator's group domain."
+  },
+  {
+   "track": "Reading - Palmer Park",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.better.org.uk/leisure-centre/reading/palmer-park/prices",
+   "source_url": "https://www.better.org.uk/leisure-centre/reading/palmer-park/prices",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Prices page exists and lists 'Cycling - Casual Drop in' prices (GBP 6.80 adult, 3.50 junior, 6.00 PAYG resident)."
+  },
+  {
+   "track": "Reading - Palmer Park",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 4.5,
+    "max": 6.5,
+    "currency": "GBP"
+   },
+   "source_url": "https://www.better.org.uk/leisure-centre/reading/palmer-park/cycling",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Range is built from the coached-lesson programme (4.50-6.50) but the same page also lists GBP 5.25 lessons and the official prices page shows casual drop-in cycling at GBP 3.50 (junior) to 6.80 (adult). Researcher's range is incomplete/inconsistent with the operator's price page.",
+   "value_fix": {
+    "min": 3.5,
+    "max": 6.8,
+    "currency": "GBP"
+   },
+   "source_url_fix": "https://www.better.org.uk/leisure-centre/reading/palmer-park/prices"
+  },
+  {
+   "track": "Reading - Palmer Park",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://bookings.better.org.uk/location/palmer-park/cycling",
+   "original_confidence": "n/a",
+   "verdict": "unverifiable",
+   "reason": "Cited booking site is JavaScript-rendered; fetch returns only 'Activity booking', so the claim 'lists bookable cycling sessions' could not be confirmed. The cycling page (published lesson timetable, 2026 content) supports 'open' and could be cited instead.",
+   "source_url_fix": "https://www.better.org.uk/leisure-centre/reading/palmer-park/cycling"
+  },
+  {
+   "track": "Reading - Palmer Park",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": "~460",
+   "source_url": "https://www.better.org.uk/leisure-centre/reading/palmer-park/cycling",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "'460m tarmacadam surface' present; consistent with seed 459."
+  },
+  {
+   "track": "Hyères - Vélodrome Toulon Provence",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://metropoletpm.fr/velodrome-tpm",
+   "source_url": "https://metropoletpm.fr/velodrome-tpm",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Official Métropole TPM venue page (owner); 200."
+  },
+  {
+   "track": "Hyères - Vélodrome Toulon Provence",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Métropole Toulon Provence Méditerranée",
+   "source_url": "https://metropoletpm.fr/velodrome-tpm",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "'géré par la Métropole de Toulon Provence Méditerranée' present (researcher's quote is a truncated but real substring)."
+  },
+  {
+   "track": "Hyères - Vélodrome Toulon Provence",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+33 4 94 57 41 34",
+   "source_url": "https://metropoletpm.fr/velodrome-tpm",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Contact block 'Accueil du Vélodrome ... 04 94 57 41 34' is the venue reception line (organisational). The page also shows a second mobile number 06 07 77 19 80 which the researcher correctly did not record."
+  },
+  {
+   "track": "Hyères - Vélodrome Toulon Provence",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "velodrome@metropoletpm.fr",
+   "source_url": "https://metropoletpm.fr/velodrome-tpm",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "'Accueil du Vélodrome velodrome@metropoletpm.fr' - generic venue mailbox."
+  },
+  {
+   "track": "Hyères - Vélodrome Toulon Provence",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Mon-Fri 08:00-21:00; Sat 09:00-17:00 (adapted during competitions)",
+   "source_url": "https://metropoletpm.fr/velodrome-tpm",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Verbatim 'Lundi au vendredi : 8h à 21h. Samedi : 9h à 17h. (Horaires adaptés selon les compétitions.)'. Note the page's separate 'Secrétariat' hours (9-12/13-17) are office hours, not the track."
+  },
+  {
+   "track": "Hyères - Vélodrome Toulon Provence",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://metropoletpm.fr/velodrome-tpm",
+   "source_url": "https://metropoletpm.fr/velodrome-tpm",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Page says only 'Tarifs : Sur demande au secrétariat'; it contains no prices, so it is not a pricing page. Should be recorded not_found (phone for price requests)."
+  },
+  {
+   "track": "Hyères - Vélodrome Toulon Provence",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://metropoletpm.fr/velodrome-tpm",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "Current weekly hours published; no closure notice."
+  },
+  {
+   "track": "Kokura Media Dome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.kokurakeirin.com/",
+   "source_url": "https://www.kokurakeirin.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Official Kitakyushu-city Kokura keirin site (header 北九州市小倉けいりん); the site's news names the venue '北九州メディアドーム（小倉競輪場） 全天候型屋内バンク', so identity with the seed is confirmed."
+  },
+  {
+   "track": "Kokura Media Dome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "小倉競輪運営事務局 (Kokura Keirin Operations Office, City of Kitakyushu)",
+   "source_url": "https://www.kokurakeirin.com/contact/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Contact page names 小倉競輪運営事務局; City of Kitakyushu appears as site header '北九州市小倉けいりん' (home page), not on the cited page. Acceptable."
+  },
+  {
+   "track": "Kokura Media Dome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+81 93 941 0945",
+   "source_url": "https://www.kokurakeirin.com/contact/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "'小倉競輪運営事務局 TEL：093-941-0945' verbatim; organisation line (race operations office, also printed in every page footer)."
+  },
+  {
+   "track": "Medellín - Velódromo Martín Emilio Rodríguez",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "INDER Medellín (municipal sports institute)",
+   "source_url": "https://www.inder.gov.co/noticias/alcalde-federico-gutierrez-rindio-homenaje-a-martin-emilio-cochise-rodriguez-y-anuncio-obras-de-renovacion-en-el-velodromo-que-lleva-su-nombre/",
+   "original_confidence": "low",
+   "verdict": "unverifiable",
+   "reason": "Page body is only the headline and a date (04/03/2026); it announces renovation works but never says INDER operates the velodrome."
+  },
+  {
+   "track": "Medellín - Velódromo Martín Emilio Rodríguez",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.inder.gov.co/noticias/alcalde-federico-gutierrez-rindio-homenaje-a-martin-emilio-cochise-rodriguez-y-anuncio-obras-de-renovacion-en-el-velodromo-que-lleva-su-nombre/",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "Consistent: page only announces renovation works, no closure or reopening stated."
+  },
+  {
+   "track": "Oderlandhalle",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+   "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Municipal Sportzentrum Frankfurt (Oder) page titled 'Oderlandhalle / Sportzentrum Frankfurt Oder'; 200."
+  },
+  {
+   "track": "Oderlandhalle",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Sportzentrum Frankfurt (Oder)",
+   "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Page title/branding supports it (venue listed as a Sportanlage of the Sportzentrum)."
+  },
+  {
+   "track": "Oderlandhalle",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1988,
+   "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "'in 1988 fertig gestellte Oderlandhalle' (wooden track installed 2014)."
+  },
+  {
+   "track": "Oderlandhalle",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+   "original_confidence": "n/a",
+   "verdict": "unverifiable",
+   "reason": "Cited reason 'booking request form' not found: only a generic 'Online-Anfragen' menu entry. No statement of current operation."
+  },
+  {
+   "track": "Oderlandhalle",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "'Radsportholzbahn ... Länge von 250 m' present."
+  },
+  {
+   "track": "Penrose Park Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.penroseparkvelodrome.com/",
+   "source_url": "https://www.penroseparkvelodrome.com/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Site titled 'Penrose Park Velodrome Event Calendar Since 1962', address 4200 North Kingshighway matches the track."
+  },
+  {
+   "track": "Penrose Park Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "City of St. Louis (park owner); events run by the track's volunteer community",
+   "source_url": "https://www.penroseparkvelodrome.com/facilities",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Quote only supports 'outdoor concrete velodrome in a City of St. Louis park'. Park ownership is implied; 'events run by volunteer community' and 'operator' are not stated. Suggest 'City of St. Louis (park)' as owner only."
+  },
+  {
+   "track": "Penrose Park Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1962,
+   "source_url": "https://www.penroseparkvelodrome.com/facilities",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "'Originally constructed in 1962 ... brand new concrete surface in 2019' verbatim."
+  },
+  {
+   "track": "Penrose Park Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Open during daylight hours in dry weather, all year",
+   "source_url": "https://www.penroseparkvelodrome.com/facilities",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Verbatim 'The track is open during daylight hours in dry weather all year long'."
+  },
+  {
+   "track": "Penrose Park Velodrome",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.penroseparkvelodrome.com/facilities",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "Same verbatim statement."
+  },
+  {
+   "track": "Penrose Park Velodrome",
+   "kind": "correction",
+   "field": "website_url",
+   "proposed_value": "https://www.penroseparkvelodrome.com/ (replaces seed https://www.penroseparkvelo.com/)",
+   "source_url": "https://www.penroseparkvelodrome.com/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Independently confirmed: penroseparkvelo.com now redirects to an unrelated gambling/spam page (graceandsuccess.com, 'BURUNGBET'). The cited page does not itself show the hijack; my fetch did. Correction -> needs-attention by rule."
+  },
+  {
+   "track": "Penrose Park Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 322,
+   "source_url": "https://www.penroseparkvelodrome.com/facilities",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "'The track is 322 meters long' verbatim."
+  },
+  {
+   "track": "Gera - Radrennbahn Gera",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Stadt Gera (owner); SSV Gera 1990 e.V. is the resident club",
+   "source_url": "https://www.gera.de/meldung/ueber-4-millionen-euro-fuer-die-radrennbahn-gera",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Press release shows the city funds/leads the renovation ('Für die Sanierung der Radrennbahn hat die Stadt Gera Jahrzehnte gekämpft') but never states ownership/operation, and the SSV club role is not on this page (club page cited elsewhere)."
+  },
+  {
+   "track": "Gera - Radrennbahn Gera",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+49 365 7113548",
+   "source_url": "https://ssv-gera.de/pages/kontakt",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Number is the resident club's office (Haeckelstraße 39), not the venue; source_kind 'other'. Not an organisational contact of the track; do not publish."
+  },
+  {
+   "track": "Gera - Radrennbahn Gera",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@ssv-gera.de",
+   "source_url": "https://ssv-gera.de/pages/kontakt",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Club mailbox, not the venue's; page lists info@ and buero@ of the club. Same reason as phone."
+  },
+  {
+   "track": "Gera - Radrennbahn Gera",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.gera.de/meldung/ueber-4-millionen-euro-fuer-die-radrennbahn-gera",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "Press release states renovation is funded/planned; no statement of closure or reopening."
+  },
+  {
+   "track": "Scunthorpe - Quibell Park",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.livewellnorthlincolnshire.org.uk/service/quibell-park",
+   "source_url": "https://www.livewellnorthlincolnshire.org.uk/service/quibell-park",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Council service page 'Quibell Park ... outdoor athletics track and velodrome'."
+  },
+  {
+   "track": "Scunthorpe - Quibell Park",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "North Lincolnshire Council / NLActive",
+   "source_url": "https://www.livewellnorthlincolnshire.org.uk/service/quibell-park",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "'Service provider NLActive' + 'North Lincolnshire Council manages a number of NLActive centres and sports facilities'."
+  },
+  {
+   "track": "Scunthorpe - Quibell Park",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+44 1724 291900",
+   "source_url": "https://www.livewellnorthlincolnshire.org.uk/service/quibell-park",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "'call 01724 291900 and choose option 1' (bookings). Quote real, but it is a council facilities-bookings line shared by many sites -> per PROCESS this goes to needs-attention, never auto-apply."
+  },
+  {
+   "track": "Scunthorpe - Quibell Park",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "bookings.pods@northlincs.gov.uk",
+   "source_url": "https://www.livewellnorthlincolnshire.org.uk/service/quibell-park",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Present verbatim; council bookings mailbox shared by many facilities -> needs-attention."
+  },
+  {
+   "track": "Scunthorpe - Quibell Park",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Daily 08:00-20:00 (park, not track-specific)",
+   "source_url": "https://www.livewellnorthlincolnshire.org.uk/service/quibell-park",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "'Daily from 08:00 to 20:00' present but it is the park, not the track; rule 'hours not specific to the track' -> needs-attention."
+  },
+  {
+   "track": "Scunthorpe - Quibell Park",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.livewellnorthlincolnshire.org.uk/service/quibell-park",
+   "original_confidence": "n/a",
+   "verdict": "unverifiable",
+   "reason": "Published park hours do not state the velodrome is currently open/usable."
+  },
+  {
+   "track": "Tokyo Oval Keiokaku",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://keiokaku.com/",
+   "source_url": "https://keiokaku.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Official site '東京オーヴァル京王閣'; 200."
+  },
+  {
+   "track": "Tokyo Oval Keiokaku",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://keiokaku.com/info/guide/",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "Banner on 2026-11-05 shows today's race day ('10:00 開門 ミッドナイト 開催 本場 開催') - operating as a keirin venue."
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://velodromen.se",
+   "source_url": "https://velodromen.se",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Operator site 'Velodromen i Falun'."
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://velodromen.se/boka",
+   "source_url": "https://velodromen.se/boka",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Operator booking calendar page (sessions list/booking)."
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Velodromen i Falun (owner: Hagströmska Gymnasiet)",
+   "source_url": "https://velodromen.se/om-velodromen/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Page: Hagströmska Gymnasiet '... är även ägare av Velodromen' (researcher's quote slightly paraphrased)."
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2010,
+   "source_url": "https://velodromen.se/om-velodromen/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "'Velodromen i Falun stod klar i februari år 2010' verbatim."
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+46 72 519 24 07",
+   "source_url": "https://velodromen.se",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Mobile-format number in footer, conflicts with the /kontakt/ page's landline 023-799523 ('Kontakta oss'); mobile may be a person's phone. Per rules conflicts are not resolved by picking; use landline only if confirmed.",
+   "value_fix": "+46 23 799523",
+   "source_url_fix": "https://velodromen.se/kontakt/"
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@velodromen.se",
+   "source_url": "https://velodromen.se/kontakt/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Verbatim on contact page and footer; generic mailbox."
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Mon 05:30-21:00; Tue 06:30-21:30; Wed 17:00-21:00; Thu 07:30-21:30; Fri 06:30-21:30; Sat 08:30-15:30; Sun 08:30-12:30",
+   "source_url": "https://velodromen.se",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Home-page footer matches the value, but /kontakt/ on the same site lists different hours (Mon-Wed 08:00-20:30, Thu 08:00-21:30, Sun 08:30-13:30): two operator pages disagree -> conflict, do not publish."
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://velodromen.se/priser/",
+   "source_url": "https://velodromen.se/priser/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Operator price page lists session/course/membership prices in SEK."
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 395,
+    "max": 1395,
+    "currency": "SEK"
+   },
+   "source_url": "https://velodromen.se/priser/",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "1395 SEK is 'Banbokning' = hiring the whole track with an instructor for an hour (group/hall rental-type price excluded by rules). Per-rider prices: 395 (single session) and 1150 (intro course).",
+   "value_fix": {
+    "min": 395,
+    "max": 1150,
+    "currency": "SEK"
+   },
+   "source_url_fix": "https://velodromen.se/priser/"
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://velodromen.se",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "Home page news (19 Oct 2026) says youth training starts 21/10; price page lists season card 3/10-24/3."
+  },
+  {
+   "track": "YA Arena (Falun)",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 190,
+   "source_url": "https://velodromen.se/om-velodromen/",
+   "original_confidence": "n/a",
+   "verdict": "verified",
+   "reason": "'Banan har en längd på 190 m' verbatim."
+  }
+ ]
+}

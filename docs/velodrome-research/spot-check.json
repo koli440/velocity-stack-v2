@@ -1,0 +1,212 @@
+{
+ "seed": "velodrome-research-2026-11-05",
+ "results": [
+  {
+   "batch": "batch-0",
+   "name": "Valencia - Velódromo Luis Puig",
+   "field": "website_url",
+   "url": "https://www.fdmvalencia.es/es/instalaciones/palau-velodrom-lluis-puig/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-0",
+   "name": "Plovdiv - Kolodruma",
+   "field": "website_url",
+   "url": "https://www.kolodrumplovdiv.com/bg/zalata/pistata",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-0",
+   "name": "Plovdiv - Kolodruma",
+   "field": "year_built",
+   "url": "https://www.kolodrumplovdiv.com/bg/zalata/istoriya",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-1",
+   "name": "Helsinki Velodrome",
+   "field": "operator",
+   "url": "https://palvelukartta.hel.fi/fi/unit/41334",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-1",
+   "name": "Tafalla - Velódromo Miguel Induráin",
+   "field": "website_url",
+   "url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-1",
+   "name": "Maebashi - Green Dome",
+   "field": "website_url",
+   "url": "https://www.maebashi-keirin.jp/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-1",
+   "name": "Middlesbrough - Sports Village",
+   "field": "booking_url",
+   "url": "https://www.necycling.com/bookings",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Detroit - Lexus Velodrome",
+   "field": "operator",
+   "url": "https://madtrackarena.com/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Velodrome Suisse (Aigle)",
+   "field": "booking_url",
+   "url": "https://www.cmc-aigle.ch/calendrier-des-initiations",
+   "http": 200,
+   "result": "pass",
+   "note": "Static HTML is a Wix shell; rendered page (web_fetch) shows heading \"Comment réserver son initiation piste?\" with the availability calendar - supports the booking URL."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Roubaix - Stab Vélodrome",
+   "field": "website_url",
+   "url": "https://stabvelodromeroubaix.fr/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Pruskow - Arena",
+   "field": "year_built",
+   "url": "https://arenapruszkow.pl/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-2",
+   "name": "Tissot Velodrome (Grenchen)",
+   "field": "pricing_url",
+   "url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-3",
+   "name": "Büttgen - Sportforum Kaarst-Büttgen",
+   "field": "year_built",
+   "url": "https://www.sportforum-kaarst.de/de/historie.html",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-3",
+   "name": "Dick Lane Velodrome",
+   "field": "website_url",
+   "url": "https://dicklanevelodrome.com/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-3",
+   "name": "Hong Kong - HK Velodrome",
+   "field": "operator",
+   "url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-4",
+   "name": "Barcelona - Velòdrom d'Horta",
+   "field": "year_built",
+   "url": "https://www.barcelona.cat/ca/conocebcn/pics/el-velodromo-de-horta-92086010739",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-4",
+   "name": "Bournemouth - Slades Park",
+   "field": "year_built",
+   "url": "https://www.activedorset.org/uploads/velodrome-information-2025-12.pdf",
+   "http": 200,
+   "result": "pass",
+   "note": "Source is a PDF; text extraction shows \"built in 2011\"."
+  },
+  {
+   "batch": "batch-4",
+   "name": "Bournemouth - Slades Park",
+   "field": "booking_url",
+   "url": "https://www.activedorset.org/slades-booking",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Asker Velodrom",
+   "field": "operator",
+   "url": "https://velodromen.no/vilkar-og-betingelser/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Dudenhofen - Badewanne (The Bathtub)",
+   "field": "email",
+   "url": "https://www.rv08dudenhofen.de/kontakt",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Brisbane - Anna Meares Velodrome",
+   "field": "year_built",
+   "url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Newport - Geraint Thomas Velodrome",
+   "field": "email",
+   "url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  },
+  {
+   "batch": "batch-5",
+   "name": "Sola Arena (Stavanger)",
+   "field": "year_built",
+   "url": "https://varenergiarenasola.no/trainingcamps-eng/",
+   "http": 200,
+   "result": "pass",
+   "note": "Fresh fetch: verbatim quote found on the page and it supports the exact value."
+  }
+ ]
+}

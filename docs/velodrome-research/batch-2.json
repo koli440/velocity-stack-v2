@@ -1,0 +1,1692 @@
+{
+  "schema_version": 1,
+  "researched_at": "2026-11-05",
+  "policy": "Only official/authoritative sources fetched directly (venue/operator, owner municipality, national/continental federation). Unverified values are null and listed in not_found. Researcher-asserted contact_is_organisational: phone/email are generic venue contacts only.",
+  "batch": 2,
+  "tracks": [
+    {
+      "seed_name": "Alkmaar - Sportpaleis",
+      "seed_values": {
+        "country_code": "NED",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": true
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://sportpaleis-alkmaar.nl/",
+          "source_url": "https://sportpaleis-alkmaar.nl/",
+          "evidence": "Home - Sportpaleis Alkmaar",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://sportpaleis-alkmaar.nl/activiteiten/introductieclinic/",
+          "source_url": "https://sportpaleis-alkmaar.nl/activiteiten/introductieclinic/",
+          "evidence": "Tickets voor een introductieclinic",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "B.V. Sportpaleis (subsidiary of Alkmaar Sport N.V.)",
+          "source_url": "https://sportpaleis-alkmaar.nl/wie-zijn-wij/",
+          "evidence": "Sportpaleis Alkmaar wordt geëxploiteerd door B.V. Sportpaleis, een dochter van Alkmaar Sport NV.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@sportpaleisalkmaar.nl",
+          "source_url": "https://sportpaleis-alkmaar.nl/contact/",
+          "evidence": "info@sportpaleisalkmaar.nl",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Free training 2026/27: Mon 20:00-22:30 (Nov-22 Feb); Wed 19:30-22:00 (Sep-24 Mar); Thu 19:00-21:30 (Sep-25 Mar); not track-wide opening hours",
+          "source_url": "https://sportpaleis-alkmaar.nl/activiteiten/vrij-trainen/",
+          "evidence": "Woensdag 19.30 – 22.00 uur",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://sportpaleis-alkmaar.nl/activiteiten/vrij-trainen/",
+          "source_url": "https://sportpaleis-alkmaar.nl/activiteiten/vrij-trainen/",
+          "evidence": "Baantarieven 2026 – 2027",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 12.95,
+            "max": 28.0,
+            "currency": "EUR",
+            "check_site": true
+          },
+          "source_url": "https://sportpaleis-alkmaar.nl/activiteiten/vrij-trainen/",
+          "evidence": "Dagkaart € 12,95",
+          "confidence": "medium",
+          "source_kind": "operator",
+          "extra_evidence": [
+            {
+              "source_url": "https://sportpaleis-alkmaar.nl/activiteiten/introductieclinic/",
+              "evidence": "De kosten voor een introductieclinic zijn € 28,00 p.p inclusief fietshuur"
+            }
+          ]
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://sportpaleis-alkmaar.nl/activiteiten/vrij-trainen/",
+        "evidence": "Baantarieven 2026 – 2027",
+        "confidence": "high",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface",
+          "value": "250 m wood",
+          "source_url": "https://sportpaleis-alkmaar.nl/activiteiten/introductieclinic/",
+          "evidence": "Op de houten 250 meterbaan van Sportpaleis Alkmaar",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "year_built",
+        "phone"
+      ],
+      "notes": [
+        "Official site is sportpaleis-alkmaar.nl (web_fetch failed with transport error; fetched via curl).",
+        "Contact page lists mobile number '06 41088332' (not clearly a generic venue line) -> phone not_found.",
+        "Email conflict on same site: contact page info@sportpaleisalkmaar.nl vs vrij-trainen page info@sportpaleis-alkmaar.nl; contact page used, medium.",
+        "Hours are free-training sessions only; opening hours for the hall not published as such.",
+        "Introductory clinic page says clinics are run in 2026/27; baanclinic page €42.75 pp not used (likely group/school)."
+      ]
+    },
+    {
+      "seed_name": "Augsburg - Peter-Krauss-Velodrom",
+      "seed_values": {
+        "country_code": "GER",
+        "length_m": 200,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.rsg-augsburg.de/radrennbahn/",
+          "source_url": "https://www.rsg-augsburg.de/verein/geschichte/",
+          "evidence": "Das vereinseigene Peter-Krauß-Velodrom befindet sich in Augsburg-Lechhausen an der Eisackstraße",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.rsg-augsburg.de/radrennbahn/bahnreservierung/",
+          "source_url": "https://www.rsg-augsburg.de/radrennbahn/bahnreservierung/",
+          "evidence": "Bahnreservierung",
+          "confidence": "low",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Radsportgemeinschaft Augsburg e.V. (RSG Augsburg)",
+          "source_url": "https://www.rsg-augsburg.de/verein/geschichte/",
+          "evidence": "vom Verein im Auftrag der Stadt Augsburg organisiert",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1988,
+          "source_url": "https://www.rsg-augsburg.de/verein/geschichte/",
+          "evidence": "Der Bau der Radrennbahn im Jahr 1988",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+49 821 723831",
+          "source_url": "https://www.rsg-augsburg.de/verein/impressum/",
+          "evidence": "Telefon: 0821/723831",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Winter (Okt-Mär): Mi 17-20, Fr 17-20, Sa 14-17, So 17-20; Sommer reduziert; August Bahnschließung",
+          "source_url": "https://www.rsg-augsburg.de/radrennbahn/trainingszeiten/",
+          "evidence": "August: Bahnschließung",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.rsg-augsburg.de/radrennbahn/preise/",
+          "source_url": "https://www.rsg-augsburg.de/radrennbahn/preise/",
+          "evidence": "Tageskarte (3 Stunden)",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "min": 10,
+          "max": 20,
+          "currency": "EUR",
+          "check_site": true,
+          "source_url": "https://www.rsg-augsburg.de/radrennbahn/preise/",
+          "evidence": "Tageskarte (3 Stunden)",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.rsg-augsburg.de/radrennbahn/trainingszeiten/",
+        "evidence": "August: Bahnschließung",
+        "confidence": "medium",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 200,
+          "source_url": "https://www.rsg-augsburg.de/verein/geschichte/",
+          "evidence": "eine vollkommen überdachte Holzbahn mit 200 m Länge"
+        }
+      ],
+      "not_found": [
+        "email"
+      ]
+    },
+    {
+      "seed_name": "Bordeaux - Stadium Vélodrome",
+      "seed_values": {
+        "country_code": "FRA",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://axelvega.com/etablissements/stadium-bordeaux-velodrome/",
+          "source_url": "https://axelvega.com/etablissements/stadium-bordeaux-velodrome/",
+          "evidence": "Vélodrome Bordeaux : Stadium - Axel Vega Accessible à tous",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Axel Vega (société récréa)",
+          "source_url": "https://axelvega.com/etablissements/stadium-bordeaux-velodrome/",
+          "evidence": "Nos autres établissements Tennis Badminton Bowling Patinoire Boxe",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+33 6 20 43 10 53",
+          "source_url": "https://www.bordeaux.fr/stadium-de-bordeaux-lac-velodrome",
+          "evidence": "Téléphone : 06 20 43 10 53",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "email": {
+          "value": "stadium@axelvega.com",
+          "source_url": "https://axelvega.com/etablissements/stadium-bordeaux-velodrome/",
+          "evidence": "Nous Contacter 06 20 43 10 53 stadium@axelvega.com",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Mon-Fri 09:00-21:00 (off-peak 09:00-17:00, peak 17:00-21:00), reservation required; Sat-Sun closed per operator hours page",
+          "source_url": "https://axelvega.com/horaires/",
+          "evidence": "Vélodrome Jour Horaires Lundi 9H00 – 21H00 Mardi 9H00 – 21H00 Mercredi 9H00 – 21H00 Jeudi 9H00 – 21H00 Vendredi 9H00 – 21H00 Samedi FERME Dimanche FERME",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://axelvega.com/wp-content/uploads/2021/11/Tarifs-2026.pdf",
+          "source_url": "https://axelvega.com/etablissements/stadium-bordeaux-velodrome/",
+          "evidence": "Tarifs Cyclisme sur piste 2026",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 9.0,
+            "max": 17.5,
+            "currency": "EUR",
+            "check_site": true
+          },
+          "source_url": "https://axelvega.com/wp-content/uploads/2021/11/Tarifs-2026.pdf",
+          "evidence": "Open 1h de piste",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.bordeaux.fr/stadium-de-bordeaux-lac-velodrome",
+        "evidence": "Ouvert du lundi au vendredi : heures creuses de 9h à 17h heures pleines de 17h à 21h (réservation obligatoire)",
+        "confidence": "high",
+        "source_kind": "owner"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface",
+          "value": "250 m, wood",
+          "source_url": "https://www.bordeaux.fr/stadium-de-bordeaux-lac-velodrome",
+          "evidence": "une piste cycliste de 250 m x 7 m en bois Doussié du Cameroun",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        {
+          "field": "is_indoor",
+          "value": true,
+          "source_url": "https://axelvega.com/etablissements/stadium-bordeaux-velodrome/",
+          "evidence": "Ses 10 000m² couverts abritent une piste cycliste et une d’athlétisme",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "booking_url",
+        "year_built"
+      ]
+    },
+    {
+      "seed_name": "Burnaby Velodrome",
+      "seed_values": {
+        "country_code": "CAN",
+        "length_m": 200,
+        "surface": "Wood",
+        "is_indoor": true
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.burnabyvelodrome.ca/",
+          "source_url": "https://www.burnabyvelodrome.ca/",
+          "evidence": "The Burnaby Velodrome Club runs a combination of programs throughout the year.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://upliftercycling.com/#!/events/bvc-portal-2026/store",
+          "source_url": "https://www.burnabyvelodrome.ca/about-us/membership-fees/",
+          "evidence": "Buy your session before you come and we’ll check you in at the track.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Burnaby Velodrome Club (not-for-profit; based at the City of Burnaby's Harry Jerome Sports Centre)",
+          "source_url": "https://www.burnabyvelodrome.ca/about-us/",
+          "evidence": "The Burnaby Velodrome Club is a not-for-profit organization dedicated to promoting track cycling and racing.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@burnabyvelodrome.ca",
+          "source_url": "https://www.burnabyvelodrome.ca/about-us/contact-us/",
+          "evidence": "General Enquiries:",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.burnabyvelodrome.ca/about-us/membership-fees/",
+          "source_url": "https://www.burnabyvelodrome.ca/about-us/membership-fees/",
+          "evidence": "Current prices are always listed in Uplifter.",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.burnabyvelodrome.ca/schedule/",
+        "evidence": "All regular track sessions are running as scheduled.",
+        "confidence": "high",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": "200",
+          "source_url": "https://www.burnabyvelodrome.ca/resources/faq/",
+          "evidence": "The track is 200 metres long",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "is_indoor",
+          "value": true,
+          "source_url": "https://www.burnabyvelodrome.ca/2025/08/10/bvc-august-newsletter-2/",
+          "evidence": "the only indoor track of its kind in Western Canada",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "year_built",
+        "phone",
+        "opening_hours",
+        "price_range"
+      ],
+      "notes": [
+        "Email is Cloudflare-obfuscated in the HTML; decoded from the data-cfemail value on the contact page (General Enquiries) -> medium.",
+        "Prices live only in the Uplifter JS app (upliftercycling.com), not readable by fetch -> price_range not_found.",
+        "Hours: contact page says 'Please check the schedule'; schedule is a dynamic calendar without text hours -> not_found.",
+        "Surface 'Wood' not stated on any fetched official page (unverified).",
+        "Aug 2025 newsletter: City of Burnaby issued an RFP for a new operator of Harry Jerome Sports Centre (home of velodrome); club site still shows 2026-27 season operations. Watch for operator change."
+      ]
+    },
+    {
+      "seed_name": "Carson - Velo Sports Center",
+      "seed_values": {
+        "country_code": "USA",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.dignityhealthsportspark.com/about/venues/velodrome",
+          "source_url": "https://www.dignityhealthsportspark.com/about/venues/velodrome",
+          "evidence": "250- meter indoor wood bicycle racing track",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.dignityhealthsportspark.com/stadium-info/venues/velo/getting-startedregistration",
+          "source_url": "https://www.dignityhealthsportspark.com/stadium-info/venues/velo/getting-startedregistration",
+          "evidence": "Sample Session",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "AEG (Dignity Health Sports Park)",
+          "source_url": "https://www.dignityhealthsportspark.com/about/about-us",
+          "evidence": "managed by AEG",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2003,
+          "source_url": "https://www.dignityhealthsportspark.com/about/about-us",
+          "evidence": "Since opening on June 1, 2003",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+1 310 630 2073",
+          "source_url": "https://www.dignityhealthsportspark.com/stadium-info/venues/velo/getting-startedregistration",
+          "evidence": "310.630.2073",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@velosportscenter.com",
+          "source_url": "https://www.dignityhealthsportspark.com/stadium-info/venues/velo/getting-startedregistration",
+          "evidence": "info@velosportscenter.com",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.dignityhealthsportspark.com/stadium-info/venues/velo/getting-startedregistration",
+          "source_url": "https://www.dignityhealthsportspark.com/stadium-info/venues/velo/getting-startedregistration",
+          "evidence": "costs $25 per rider",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "min": 25,
+          "max": 100,
+          "currency": "USD",
+          "check_site": true,
+          "source_url": "https://www.dignityhealthsportspark.com/stadium-info/venues/velo/getting-startedregistration",
+          "evidence": "costs $25 per rider",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.dignityhealthsportspark.com/stadium-info/venues/velo/getting-startedregistration",
+        "evidence": "costs $25 per rider",
+        "confidence": "medium",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface",
+          "value": "250 wood indoor",
+          "source_url": "https://www.dignityhealthsportspark.com/about/venues/velodrome",
+          "evidence": "250- meter indoor wood bicycle racing track"
+        }
+      ],
+      "not_found": [
+        "opening_hours (only session times; calendar JS-only)"
+      ]
+    },
+    {
+      "seed_name": "Detroit - Lexus Velodrome",
+      "seed_values": {
+        "country_code": "USA",
+        "length_m": 166,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://madtrackarena.com/",
+          "source_url": "https://madtrackarena.com/",
+          "evidence": "Mad Track Arena is home to the only indoor velodrome of its kind in the United States",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://madtrackarena.com/riding/",
+          "source_url": "https://madtrackarena.com/riding/",
+          "evidence": "Check out the options below to book an open riding session.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Detroit Fitness Foundation",
+          "source_url": "https://madtrackarena.com/",
+          "evidence": "Mad Track Arena is owned and operated by the Detroit Fitness Foundation",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+1 313-265-6725",
+          "source_url": "https://madtrackarena.com/",
+          "evidence": "Contact Info 313.265.6725 contact@madtrackarena.com",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "contact@madtrackarena.com",
+          "source_url": "https://madtrackarena.com/",
+          "evidence": "Contact Info 313.265.6725 contact@madtrackarena.com",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Facility: Mon 10:00-23:00; Tue-Thu 10:00-20:00; Fri-Sat 10:00-18:00; Sun 12:00-18:00",
+          "source_url": "https://madtrackarena.com/",
+          "evidence": "Open daily Mon 10am - 11pm Tues - Thurs 10am - 8pm Fri - Sat 10am - 6pm Sun 12pm - 6pm",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://madtrackarena.com/riding/",
+          "source_url": "https://madtrackarena.com/riding/",
+          "evidence": "There are three options: a daily cycling pass for $40, a monthly membership for $99 or a yearly membership for $399.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 40,
+            "max": 40,
+            "currency": "USD",
+            "check_site": true
+          },
+          "source_url": "https://madtrackarena.com/riding/",
+          "evidence": "a daily cycling pass for $40",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://madtrackarena.com/",
+        "evidence": "Open daily Mon 10am - 11pm Tues - Thurs 10am - 8pm Fri - Sat 10am - 6pm Sun 12pm - 6pm",
+        "confidence": "high",
+        "source_kind": "operator"
+      },
+      "corrections": [
+        {
+          "field": "name",
+          "old_value": "Lexus Velodrome",
+          "new_value": "Mad Track Arena (formerly the Lexus Velodrome)",
+          "source_url": "https://madtrackarena.com/",
+          "evidence": "formerly the lexus velodrome",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "confirmations": [
+        {
+          "field": "surface/is_indoor",
+          "value": "wood, indoor",
+          "source_url": "https://madtrackarena.com/",
+          "evidence": "Mad Track Arena is home to the only indoor velodrome of its kind in the United States. Our signature feature is a 1/10th-mile wooden oval track",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "year_built"
+      ]
+    },
+    {
+      "seed_name": "Frankfurt (Oder) - Oderlandhalle",
+      "seed_values": {
+        "country_code": "GER",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": true
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+          "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+          "evidence": "ist eine Spezialhalle für den Bahnradsport",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "booking_url": {
+          "value": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/Buchungsanfrage.php?object=tx,3248.3&ModID=6&FID=3248.553.1&NavID=3248.37",
+          "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+          "evidence": "Online-Buchungsanfrage Sporteigenbetrieb",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "operator": {
+          "value": "Eigenbetrieb Sportzentrum der Stadt Frankfurt (Oder)",
+          "source_url": "https://www.sport-in-frankfurt.de/Kurzmen%C3%BC/Impressum/",
+          "evidence": "Eigenbetrieb Sportzentrum der Stadt Frankfurt (Oder)",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "year_built": {
+          "value": 1988,
+          "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+          "evidence": "die in 1988 fertig gestellte Oderlandhalle",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "phone": {
+          "value": "+49 335 683730",
+          "source_url": "https://www.sport-in-frankfurt.de/Kurzmen%C3%BC/Impressum/",
+          "evidence": "Telefon: +49 335 68373- 0",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "email": {
+          "value": "info@sport-in-frankfurt.de",
+          "source_url": "https://www.sport-in-frankfurt.de/Kurzmen%C3%BC/Impressum/",
+          "evidence": "info@sport-in-frankfurt.de",
+          "confidence": "medium",
+          "source_kind": "owner"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+        "evidence": "die einzige Indoorradrennbahn von Deutschland, die den internationalen UCI-Regeln enspricht und ganzjährig nutzbar ist",
+        "confidence": "medium",
+        "source_kind": "owner"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface/is_indoor",
+          "value": "250 m wood, indoor",
+          "source_url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+          "evidence": "Radsportholzbahn aus sibirischer Fichte mit einer Länge von 250 m",
+          "confidence": "high",
+          "source_kind": "owner"
+        }
+      ],
+      "not_found": [
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": [
+        "Seed name's likely domain oderlandhalle.de does not resolve; official info is on the municipal Eigenbetrieb site sport-in-frankfurt.de.",
+        "Phone/email are the Eigenbetrieb's general line/mailboxes at the same address (Stendaler Straße 26) rather than a venue-only line -> medium; named staff contacts ignored.",
+        "Hall built 1988; current 250 m track installed 2014; extension 2018 (year_built uses hall completion year).",
+        "Status is inferred from present-tense page without date -> medium; no explicit open/closed notice. Facility is training centre for national squads; no public hours/prices published."
+      ]
+    },
+    {
+      "seed_name": "Heusden-Zolder - Velodroom",
+      "seed_values": {
+        "country_code": "BEL",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/",
+          "source_url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/aanbod/ons-complex/",
+          "evidence": "olympische overdekte wielerpiste",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/tickets-piste/",
+          "source_url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/tickets-piste/",
+          "evidence": "Heusden-Zolder Velodroom Limburg",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Sport Vlaanderen",
+          "source_url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/tickets-piste/",
+          "evidence": "Sport Vlaanderen Heusden-Zolder Velodroom Limburg",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+32 11 12 30 17",
+          "source_url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/algemene-info/contacteer-ons/",
+          "evidence": "+32 11 12 30 17",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Ma-Za 08:00-22:00, Zo 08:00-15:00 (sportinfrastructuur); gesloten 25 dec en 1 jan",
+          "source_url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/algemene-info/openingsuren/",
+          "evidence": "Sportinfrastructuur",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/algemene-info/onze-tarieven/",
+          "source_url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/algemene-info/onze-tarieven/",
+          "evidence": "Vrije training (per sessie van 2u)",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "min": 6.5,
+          "max": 11,
+          "currency": "EUR",
+          "check_site": true,
+          "source_url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/tickets-piste/",
+          "evidence": "Starters en/of vrije training",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/tickets-piste/",
+        "evidence": "Heusden-Zolder Velodroom Limburg",
+        "confidence": "medium",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "indoor track",
+          "value": "indoor",
+          "source_url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/aanbod/ons-complex/",
+          "evidence": "olympische overdekte wielerpiste"
+        }
+      ],
+      "not_found": [
+        "email (contact form only)",
+        "year_built (no official dated source)",
+        "length_m 250 / surface wood not stated on official pages"
+      ]
+    },
+    {
+      "seed_name": "Jakarta - International Velodrome",
+      "seed_values": {
+        "country_code": "INA",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.jakartainternationalvelodrome.com/",
+          "source_url": "https://www.jakartainternationalvelodrome.com/",
+          "evidence": "Jakarta International Velodrome adalah arena balap sepeda trek bersertifikasi UCI Kelas 1",
+          "confidence": "medium",
+          "source_kind": "other"
+        },
+        "operator": {
+          "value": "PT Jakarta Propertindo (Jakpro)",
+          "source_url": "https://www.jakarta.go.id/jakarta-international-velodrome",
+          "evidence": "Jakpro bekerja sama dengan ISSI juga menyediakan pelatihan dasar dan ujian",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "year_built": {
+          "value": 1973,
+          "source_url": "https://www.jakarta.go.id/jakarta-international-velodrome",
+          "evidence": "Bangunan ini awal mulanya berdiri pada tahun 1973, kemudian direnovasi pada tahun 2016 hingga 2018",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "email": {
+          "value": "commercial.jiv@jakpro.co.id",
+          "source_url": "https://www.jakartainternationalvelodrome.com/",
+          "evidence": "Kontak Operasional commercial.jiv@jakpro.co.id",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.jakartainternationalvelodrome.com/",
+        "evidence": "Jadwal event dan booking venue terkini di JIV",
+        "confidence": "medium",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface",
+          "value": "250 m, Siberian spruce wood",
+          "source_url": "https://www.jakartainternationalvelodrome.com/",
+          "evidence": "Lintasan Utama — 250m, kayu spruce Siberia",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "is_indoor",
+          "value": true,
+          "source_url": "https://www.jakartainternationalvelodrome.com/",
+          "evidence": "menjalani renovasi besar pada 2016—2018",
+          "confidence": "low",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "booking_url",
+        "opening_hours",
+        "phone",
+        "price_range",
+        "pricing_url"
+      ]
+    },
+    {
+      "seed_name": "Linz - TipsArena",
+      "seed_values": {
+        "country_code": "AUT",
+        "length_m": 200,
+        "surface": "Wood",
+        "is_indoor": true
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.hello-yellow.at/velodrom/",
+          "source_url": "https://www.hello-yellow.at/velodrom/",
+          "evidence": "Das einzige Velodrom in Österreich",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.hello-yellow.at/velodrom/einschulungstermin-velodrom/",
+          "source_url": "https://www.hello-yellow.at/velodrom/einschulungstermin-velodrom/",
+          "evidence": "Anmeldung Zum Einschulungstraining",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Schachermayer GmbH (hello yellow); introductory courses by Verein Velodrom Linz",
+          "source_url": "https://www.hello-yellow.at/velodrom/",
+          "evidence": "hello yellow Velodrom by Schachermayer",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2022,
+          "source_url": "https://www.hello-yellow.at/velodrom/",
+          "evidence": "Seit Juli 2022 ist die Anlage in Betrieb.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+43 664 88639466",
+          "source_url": "https://www.hello-yellow.at/anreise",
+          "evidence": "T: +43 664 88639466",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "office@hello-yellow.at",
+          "source_url": "https://www.hello-yellow.at/velodrom/",
+          "evidence": "office@hello-yellow.at",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Daily 07:00-21:00 (until further notice); no use when wet; entry only after introductory course",
+          "source_url": "https://www.hello-yellow.at/velodrom/",
+          "evidence": "Täglich von 07:00 bis 21:00 Uhr (bis auf Widerruf)",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.hello-yellow.at/velodrom/",
+        "evidence": "Täglich von 07:00 bis 21:00 Uhr (bis auf Widerruf)",
+        "confidence": "high",
+        "source_kind": "operator"
+      },
+      "corrections": [
+        {
+          "field": "is_indoor",
+          "old_value": true,
+          "new_value": false,
+          "source_url": "https://www.hello-yellow.at/velodrom/",
+          "evidence": "als offenes Radoval, aus Accoya Holz mit einer Rundenlänge von 200 Metern",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "name",
+          "old_value": "Linz - TipsArena",
+          "new_value": "hello yellow Velodrom (Linz)",
+          "source_url": "https://www.hello-yellow.at/anreise",
+          "evidence": "hello yellow Radarena Prinz-Eugen-Straße 30 Linz, Austria 4020",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      ],
+      "confirmations": [
+        {
+          "field": "length_m/surface",
+          "value": "200 m wood",
+          "source_url": "https://www.hello-yellow.at/velodrom/",
+          "evidence": "Rundenlänge von 200 Metern",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": [
+        "Seed is indoor 'TipsArena' but the only Linz track found officially is the open-air hello yellow Velodrom (Accoya wood, 200 m, opened July 2022) at Prinz-Eugen-Straße 30; no official page links it to the name 'TipsArena' (TipsArena is not verified; adjacency assumed only from address).",
+        "Introductory course is free ('kostenlos' on einschulungstermin page); no public tariff for riding afterwards -> price not_found. Intro 2027 dates not yet published, current session slots 'Ausgebucht'.",
+        "Phone is a 0664 mobile-format number labelled as office line (Mo-Do 09:00-15:00) -> medium."
+      ]
+    },
+    {
+      "seed_name": "Manchester - National Cycling Centre",
+      "seed_values": {
+        "country_code": "GBR",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.nationalcyclingcentre.com/",
+          "source_url": "https://www.nationalcyclingcentre.com/track",
+          "evidence": "One lap is 250 metres",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://bookings.better.org.uk/location/national-cycling-centre/cycling-activities",
+          "source_url": "https://www.nationalcyclingcentre.com/prices-how-to-book",
+          "evidence": "Book online",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1994,
+          "source_url": "https://www.nationalcyclingcentre.com/track",
+          "evidence": "since it opened in 1994",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+44 161 223 2244",
+          "source_url": "https://www.nationalcyclingcentre.com/about/contact-us",
+          "evidence": "0161 223 2244",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "cyclingcentre@gll.org",
+          "source_url": "https://www.nationalcyclingcentre.com/about/contact-us",
+          "evidence": "cyclingcentre@gll.org",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Mon-Fri 07:30-22:00; Sat-Sun 07:30-19:00; bank holidays 10:00-16:00",
+          "source_url": "https://www.nationalcyclingcentre.com/about/opening-times",
+          "evidence": "07:30",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.nationalcyclingcentre.com/prices-how-to-book",
+          "source_url": "https://www.nationalcyclingcentre.com/prices-how-to-book",
+          "evidence": "Book online",
+          "confidence": "low",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.nationalcyclingcentre.com/timetable",
+        "evidence": "Timetable",
+        "confidence": "medium",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 250,
+          "source_url": "https://www.nationalcyclingcentre.com/track",
+          "evidence": "One lap is 250 metres"
+        }
+      ],
+      "not_found": [
+        "operator (no official page states it)",
+        "price_range (prices only in booking system)"
+      ]
+    },
+    {
+      "seed_name": "Milano - Velodromo Vigorelli",
+      "seed_values": {
+        "country_code": "ITA",
+        "length_m": 397,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.milanosport.it/impianto/10112/maspes-vigorelli/2d89b312-cbe9-ed11-8849-00224887dafe",
+          "source_url": "https://www.milanosport.it/impianto/10112/maspes-vigorelli/2d89b312-cbe9-ed11-8849-00224887dafe",
+          "evidence": "Il velodromo Maspes-Vigorelli è un impianto sportivo storico della città di Milano",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Milanosport SSD S.p.A.",
+          "source_url": "https://www.milanosport.it/impianto/10112/maspes-vigorelli/2d89b312-cbe9-ed11-8849-00224887dafe",
+          "evidence": "Milanosport - gli impianti: Maspes Vigorelli",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1935,
+          "source_url": "https://www.milanosport.it/impianto/10112/maspes-vigorelli/2d89b312-cbe9-ed11-8849-00224887dafe",
+          "evidence": "Fu costruito nel 1935, l'inaugurazione avvenne il 28 ottobre dello stesso anno.",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.milanosport.it/impianto/10112/maspes-vigorelli/2d89b312-cbe9-ed11-8849-00224887dafe",
+        "evidence": "Al Velodromo Maspes Vigorelli sono partiti i corsi Fitness Milanosport della stagione 2026/2027",
+        "confidence": "medium",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface",
+          "value": "397.7 m, Swedish pine strips",
+          "source_url": "https://www.milanosport.it/impianto/10112/maspes-vigorelli/2d89b312-cbe9-ed11-8849-00224887dafe",
+          "evidence": "La pista è di 397,7 metri, con una larghezza di 7,50 m.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "surface",
+          "value": "wood",
+          "source_url": "https://www.milanosport.it/impianto/10112/maspes-vigorelli/2d89b312-cbe9-ed11-8849-00224887dafe",
+          "evidence": "La pista è ricoperta con 72 chilometri di listarelle di pino di Svezia.",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "booking_url",
+        "email",
+        "opening_hours",
+        "phone",
+        "price_range",
+        "pricing_url"
+      ]
+    },
+    {
+      "seed_name": "Noto - Velodromo Paolo Pilone",
+      "seed_values": {
+        "country_code": "ITA",
+        "length_m": 333,
+        "surface": "Concrete",
+        "is_indoor": true
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "operator": {
+          "value": "ASD VelodroN",
+          "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/sicilia/",
+          "evidence": "Società di Gestione: ASD VELODRON",
+          "confidence": "high",
+          "source_kind": "federation"
+        }
+      },
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "https://www.comune.noto.sr.it/it/unita_organizzative/sport-e-tempo-libero",
+        "evidence": "Velodromo (via Cavarra)",
+        "confidence": "low",
+        "source_kind": "owner"
+      },
+      "corrections": [
+        {
+          "field": "surface",
+          "old_value": "Concrete",
+          "new_value": "Resin (tri-component resin surface)",
+          "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/sicilia/",
+          "evidence": "(333,33 mt – RESINA TRICOMPONENTE)",
+          "confidence": "medium",
+          "source_kind": "federation"
+        }
+      ],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": "333.33",
+          "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/sicilia/",
+          "evidence": "(333,33 mt – RESINA TRICOMPONENTE)",
+          "confidence": "high",
+          "source_kind": "federation"
+        }
+      ],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": [
+        "Only official sources: FCI (Federciclismo) Sicily track-centres page and the Comune di Noto 'Sport e tempo libero' page (lists Velodromo via Cavarra among municipal facilities it manages/maintains). Comune site search is JS/captcha-gated.",
+        "FCI lists email prof.larosa45@gmail.com (private-looking Gmail) -> not recorded as organisational.",
+        "Status 'unknown': no official page states open/closed (news sites report 2018 inauguration, not usable).",
+        "Surface: FCI says 'resina tricomponente' (resin coating, likely over concrete) - flagged as correction candidate, medium; needs human decision."
+      ]
+    },
+    {
+      "seed_name": "Paris - Vélodrome National (SQY)",
+      "seed_values": {
+        "country_code": "FRA",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "evidence": "Une piste olympique couverte de 250 mètres en bois de pin de Sibérie",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "evidence": "Séance Cyclisme sur Piste",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "UCPA",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/baptemes",
+          "evidence": "Encadré et animé par l’UCPA",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+33 1 76 21 93 20",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+          "evidence": "Tel : 01.76.21.93.20",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "hello-velodrome@ucpa.asso.fr",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+          "evidence": "hello-velodrome@ucpa.asso.fr",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Lun 9-22, Mar 7-22, Mer 9-22, Jeu 7-22, Ven 9-22, Sam 9-20, Dim 9-17",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+          "evidence": "HORAIRES & CONTACT",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "evidence": "Séance Cyclisme sur Piste à partir de 16.00",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "min": 16,
+          "max": 39.2,
+          "currency": "EUR",
+          "check_site": true,
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "evidence": "Séance Cyclisme sur Piste à partir de 16.00",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+        "evidence": "HORAIRES & CONTACT",
+        "confidence": "medium",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface/indoor",
+          "value": "250 wood indoor",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "evidence": "Une piste olympique couverte de 250 mètres en bois de pin de Sibérie"
+        }
+      ],
+      "not_found": [
+        "year_built (no official source)"
+      ]
+    },
+    {
+      "seed_name": "Pruskow - Arena",
+      "seed_values": {
+        "country_code": "POL",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://arenapruszkow.pl/",
+          "source_url": "https://arenapruszkow.pl/",
+          "evidence": "ARENA Pruszków to przede wszystkim jedyny kryty tor kolarski w Polsce",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "http://www.arenapruszkow.pl/wynajem/",
+          "source_url": "http://www.arenapruszkow.pl/wynajem/",
+          "evidence": "rezerwacje telefoniczne w dn. poniedziałek – piątek w godz. 9.00 – 15.30",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Arena Pruszków Sp. z o.o.",
+          "source_url": "http://www.arenapruszkow.pl/",
+          "evidence": "Arena Pruszków Sp. z o.o. ul. Andrzeja 1 05-800 Pruszków",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2009,
+          "source_url": "https://arenapruszkow.pl/",
+          "evidence": "który został zbudowany w 2009 roku",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+48 22 738 83 81",
+          "source_url": "http://www.arenapruszkow.pl/",
+          "evidence": "Wynajem obiektu i organizacja imprez: +48 22 738 83 81",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "arena.pruszkow@pzkol.pl",
+          "source_url": "http://www.arenapruszkow.pl/",
+          "evidence": "Arena Pruszków Sp. z o.o. ul. Andrzeja 1 05-800 Pruszków arena.pruszkow@pzkol.pl",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Public bike rental/riding sessions: Tue and Thu 19:30-21:00 (no rental on race days); office Mon-Fri 08:00-16:00",
+          "source_url": "http://www.arenapruszkow.pl/ostre-kolo/",
+          "evidence": "wtorek 19 30 – 21 00 czwartek 19 30 – 21 00 W dniu zawodów torowych wypożyczalnia nieczynna.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "http://www.arenapruszkow.pl/ostre-kolo/",
+          "source_url": "http://www.arenapruszkow.pl/ostre-kolo/",
+          "evidence": "Cennik (obowiązuje od 1 maja 2025)",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 70,
+            "max": 80,
+            "currency": "PLN",
+            "check_site": true
+          },
+          "source_url": "http://www.arenapruszkow.pl/ostre-kolo/",
+          "evidence": "Jazda na torze i wypożyczenie roweru – 80 zł / h (**) Jazda na torze własnym rowerem – 70 zł/ h",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "http://www.arenapruszkow.pl/ostre-kolo/",
+        "evidence": "Cennik (obowiązuje od 1 maja 2025)",
+        "confidence": "medium",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "is_indoor",
+          "value": true,
+          "source_url": "https://arenapruszkow.pl/",
+          "evidence": "ARENA Pruszków to przede wszystkim jedyny kryty tor kolarski w Polsce",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": []
+    },
+    {
+      "seed_name": "Roubaix - Stab Vélodrome",
+      "seed_values": {
+        "country_code": "FRA",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": true
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://stabvelodromeroubaix.fr/",
+          "source_url": "https://stabvelodromeroubaix.fr/",
+          "evidence": "Vélodrome olympique, le Stab est un lieu unique",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://stabvelodrome.horanet.com/",
+          "source_url": "https://stabvelodrome.horanet.com/",
+          "evidence": "STAB Vélodrome Roubaix - Billetterie",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "STAB Vélodrome de Roubaix",
+          "source_url": "https://stabvelodromeroubaix.fr/mentions-legales/",
+          "evidence": "est édité par Le STAB Vélodrome de Roubaix",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2012,
+          "source_url": "https://stabvelodromeroubaix.fr/histoire-du-stab/",
+          "evidence": "il ouvrira ses portes en juin 2012",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+33 3 20 65 31 60",
+          "source_url": "https://stabvelodromeroubaix.fr/contacts/",
+          "evidence": "Par téléphone : 03 20 65 31 60",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "stab@stabvelodrome.fr",
+          "source_url": "https://stabvelodromeroubaix.fr/contacts/",
+          "evidence": "Par mail à : stab@stabvelodrome.fr",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://stabvelodromeroubaix.fr/sentrainer/",
+          "source_url": "https://stabvelodromeroubaix.fr/sentrainer/",
+          "evidence": "tarifs & abonnements",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 12,
+            "max": 25,
+            "currency": "EUR",
+            "check_site": true
+          },
+          "source_url": "https://stabvelodromeroubaix.fr/sentrainer/",
+          "evidence": "1 SÉANCE 12€",
+          "confidence": "medium",
+          "source_kind": "operator",
+          "extra_evidence": [
+            {
+              "source_url": "https://stabvelodromeroubaix.fr/decouvrir/",
+              "evidence": "Baptême adulte 25€"
+            }
+          ]
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://stabvelodromeroubaix.fr/sentrainer/",
+        "evidence": "la piste vous accueille dans des conditions optimales",
+        "confidence": "high",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface/is_indoor",
+          "value": "250 m wood, covered",
+          "source_url": "https://stabvelodromeroubaix.fr/histoire-du-stab/",
+          "evidence": "vélodrome couvert en bois de 250 m",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "opening_hours"
+      ],
+      "notes": [
+        "Seed-name guesses stabvelodrome.fr/www.stabvelodrome.fr do not resolve; real site is stabvelodromeroubaix.fr.",
+        "Opening hours exist only as an image ('planning haute saison'); not text-verifiable -> not_found.",
+        "Price range: €12 single session (sentrainer) to €25 adult baptême (decouvrir page); second quote in extra_evidence. Excludes subscriptions/groups.",
+        "Opening: history page says opened June 2012 (and 'inauguré en septembre' 2012) - same year, value 2012."
+      ]
+    },
+    {
+      "seed_name": "Santiago - Velódromo Peñalolén",
+      "seed_values": {
+        "country_code": "CHI",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "operator": {
+          "value": "Federación de Ciclismo de Chile with Instituto Nacional del Deporte (IND)",
+          "source_url": "https://www.velodromo.cl/",
+          "evidence": "quienes manejan estos Velódromos junto con el Instituto Nacional del Deporte",
+          "confidence": "low",
+          "source_kind": "other"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://fdnciclismochile.cl/blogs/noticias/velodromo-obtiene-homologacion",
+        "evidence": "El Velódromo de Peñalolén fue el escenario del histórico Campeonato Mundial de Pista UCI Tissot 2025",
+        "confidence": "low",
+        "source_kind": "federation"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface/indoor",
+          "value": "250 wood indoor",
+          "source_url": "https://fdnciclismochile.cl/blogs/noticias/velodromo-obtiene-homologacion",
+          "evidence": "superficie de madera indoor, sus medidas oficiales —250 metros de longitud"
+        }
+      ],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ]
+    },
+    {
+      "seed_name": "Tissot Velodrome (Grenchen)",
+      "seed_values": {
+        "country_code": "SUI",
+        "length_m": 250,
+        "surface": "Wood",
+        "is_indoor": null
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.tissotvelodrome.ch/",
+          "source_url": "https://www.tissotvelodrome.ch/",
+          "evidence": "Tickets für unsere Rennen sind ab sofort am Empfang im Tissot Velodrome",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "evidence": "Kursanmeldung Bahnkurs",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Velodrome Suisse AG",
+          "source_url": "https://www.tissotvelodrome.ch/home/kontakt-1/",
+          "evidence": "Kontakt Velodrome Suisse AG Neumattstrasse 25 CH-2540 Grenchen",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2013,
+          "source_url": "https://www.grenchen.ch/allesehens/8559",
+          "evidence": "Eine grosse Vision wurde 2013 mit dem Tissot Velodrome verwirklicht.",
+          "confidence": "high",
+          "source_kind": "other"
+        },
+        "phone": {
+          "value": "+41 32 654 20 40",
+          "source_url": "https://www.tissotvelodrome.ch/home/kontakt-1/",
+          "evidence": "Telefon: +41 32 654 20 40",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@tissotvelodrome.ch",
+          "source_url": "https://www.tissotvelodrome.ch/home/kontakt-1/",
+          "evidence": "E-Mail: [email protected]",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Public track training usually Mon-Fri 11:30-13:30 and 18:00-21:30 (not Wed evening), Sat 11:00-14:00; reception Mon, Wed-Fri 08:00-12:30/13:30-18:15, Tue 08:00-12:30",
+          "source_url": "https://www.tissotvelodrome.ch/home/allgemeine-fragen-faq/",
+          "evidence": "In der Regel ist unter der Woche das Training möglich von MO - FR, 11:30 - 13:30 Uhr und am Abend von 18:00 - 21:30 Uhr , ausser am MI Abend. Am SA besteht die Möglichkeit von 11:00 - 14:00 Uhr zu trainieren.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "evidence": "Einzeleintritt , nur für Trainierende mit Bahnerfahrung. Erwachsene: CHF 35.- pro Trainingseinheit",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 17.5,
+            "max": 35,
+            "currency": "CHF",
+            "check_site": true
+          },
+          "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "evidence": "Einzeleintritt , nur für Trainierende mit Bahnerfahrung. Erwachsene: CHF 35.- pro Trainingseinheit; Jugendliche (unter 18 Jahren) bezahlen 50%, d.h. CHF 17.50",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.tissotvelodrome.ch/",
+        "evidence": "Tickets für unsere Rennen sind ab sofort am Empfang im Tissot Velodrome",
+        "confidence": "high",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface",
+          "value": "250 m wood",
+          "source_url": "https://www.tissotvelodrome.ch/home/über-uns-1/",
+          "evidence": "Es vereint eine 250m lange Holzrennbahn",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "is_indoor",
+          "value": true,
+          "source_url": "https://www.tissotvelodrome.ch/home/über-uns-1/",
+          "evidence": "Es vereint eine 250m lange Holzrennbahn, ein Innenoval mit Dreifachsporthalle",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": []
+    },
+    {
+      "seed_name": "Velodrome Suisse (Aigle)",
+      "seed_values": {
+        "country_code": "SUI",
+        "length_m": 200,
+        "surface": "Wood",
+        "is_indoor": true
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.cmc-aigle.ch/",
+          "source_url": "https://www.cmc-aigle.ch/",
+          "evidence": "Le Centre Mondial du Cyclisme UCI est un centre de formation et d'entraînement de haut niveau",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.cmc-aigle.ch/calendrier-des-initiations",
+          "source_url": "https://www.cmc-aigle.ch/calendrier-des-initiations",
+          "evidence": "Comment réserver son initiation piste?",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "CMC Exploitation SA (UCI World Cycling Centre)",
+          "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+          "evidence": "CMC Exploitation SA",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2002,
+          "source_url": "https://www.cmc-aigle.ch/a-propos",
+          "evidence": "Depuis 2002, il accueille tous les ans",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+41 24 468 58 85",
+          "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+          "evidence": "+41 24 468 58 85",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "cmc@uci.ch",
+          "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+          "evidence": "cmc@uci.ch",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Mon-Fri 07:30-17:00; Sat-Sun 09:00-18:00 (CMC centre; track sessions per weekly occupancy calendar)",
+          "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+          "evidence": "Du lundi au vendredi de 7h30 à 17h00",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.cmc-aigle.ch/initiations-velo-sur-piste",
+          "source_url": "https://www.cmc-aigle.ch/initiations-velo-sur-piste",
+          "evidence": "Initiation \"individuelle\"",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 65,
+            "max": 90,
+            "currency": "CHF",
+            "check_site": true
+          },
+          "source_url": "https://www.cmc-aigle.ch/initiations-velo-sur-piste",
+          "evidence": "CHF 65.– par personne",
+          "confidence": "medium",
+          "source_kind": "operator",
+          "extra_evidence": [
+            {
+              "source_url": "https://www.cmc-aigle.ch/abonnements-piste",
+              "evidence": "Formation (2h) + session abonnés (2h)"
+            }
+          ]
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.cmc-aigle.ch/abonnements-piste",
+        "evidence": "Période du lundi 5 octobre 2026 au samedi 1 mai 2027",
+        "confidence": "high",
+        "source_kind": "operator"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m/surface",
+          "value": "200 m wood",
+          "source_url": "https://www.cmc-aigle.ch/infrastructures",
+          "evidence": "Vélodrome en bois de 200m",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [],
+      "notes": [
+        "velodrome-suisse.ch (seed-derived guess) returns a PHP fatal error; official operator site is cmc-aigle.ch (UCI World Cycling Centre).",
+        "Phone and email appear in page HTML footer/contact block (mailto/tel links), not in the web_fetch text rendering.",
+        "year_built = 2002 is the centre's start ('Depuis 2002'), not an explicit velodrome construction date -> medium.",
+        "Price range: CHF 65 initiation (2h) up to CHF 90 'baptême de la piste' for season-pass candidates; group same price; pass CHF 199-399 excluded."
+      ]
+    }
+  ]
+}

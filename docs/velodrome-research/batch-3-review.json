@@ -1,0 +1,1614 @@
+{
+ "reviewed_at": "2026-11-05",
+ "method": "Every cited source_url re-fetched (curl + HTML/PDF text extraction); verbatim quote fuzzy-matched then each claim read in context for meaning, domain trust, organisational vs personal contact, currency/range sanity. Independent missed-info searches on the least-covered tracks (Santiago, Montichiari, Marseille, Bangkok, Galapagar, Anoeta, Juan de Fuca, Loulé, Bourges, plus Roubaix/Pruszków/Büttgen/Tissot). Official sites for Santiago (Cloudflare 403/JS) and Marseille (JS) unreachable; no official missed info for Santiago, Marseille, Bangkok, Galapagar. Convention: no_claim = status with no source, excluded from error rate; error_rate = (rejected+unverifiable)/(total-no_claim).",
+ "counts": {
+  "total": 146,
+  "verified": 134,
+  "unverifiable": 4,
+  "rejected": 6,
+  "no_claim": 2,
+  "error_rate": 0.069
+ },
+ "missed_info": [
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "field": "operator",
+   "value": "Le STAB Vélodrome de Roubaix",
+   "source_url": "https://stabvelodromeroubaix.fr/mentions-legales/",
+   "evidence": "Site 'édité par Le STAB Vélodrome de Roubaix', SIRET 75178166700017, siège 59 rue Alexandre Fleming, stab@stabvelodrome.fr",
+   "confidence": "high",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Pruskow - Arena",
+   "field": "opening_hours",
+   "value": "Public Ostre Kolo sessions Tue and Thu 19:30-21:00 (no sessions on race days)",
+   "source_url": "https://arenapruszkow.pl/ostre-kolo/",
+   "evidence": "wtorek 19 30 – 21 00 czwartek 19 30 – 21 00 W dniu zawodów torowych wypożyczalnia nieczynna",
+   "confidence": "high",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Pruskow - Arena",
+   "field": "pricing_url",
+   "value": "https://arenapruszkow.pl/ostre-kolo/",
+   "source_url": "https://arenapruszkow.pl/ostre-kolo/",
+   "evidence": "Cennik (obowiązuje od 1 maja 2025) Jazda na torze i wypożyczeni…; exclusive track rental 800 zł/h (group rate, not for price_range). Rental contact is a named person: do not store.",
+   "confidence": "medium",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "field": "operator",
+   "value": "West Shore Parks & Recreation (WSPR)",
+   "source_url": "https://www.wspr.ca/about-us/contact/bookings-arenas-fields-diamonds-courts-velodrome-indoor-sports-complex-special",
+   "evidence": "WSPR contact page 'Bookings - Arenas, Fields, ... Velodrome ...' Facilities, Events & Catering, sportbookings@wspr.ca, 250-474-8626 (named staff member listed: store only the org email/phone)",
+   "confidence": "medium",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Montichiari - Velodromo Fassa Bortolo",
+   "field": "operating_status",
+   "value": "open",
+   "source_url": "https://www.federciclismo.it/articoli/montichiari-il-velodromo-puo-riaprire-anche-allattivita-di-base/",
+   "evidence": "17 Dec 2025: 'il Velodromo di Montichiari può riaprire ufficialmente anche all'attività di base' (owner: Comune di Montichiari per 2022 FCI release; operator not confirmed)",
+   "confidence": "medium",
+   "source_kind": "federation"
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "field": "closures",
+   "value": "18-21 Dec 2026 (championships), 24 Dec-3 Jan 2027 holidays",
+   "source_url": "https://www.sportforum-kaarst.de/de/",
+   "evidence": "Das Sportforum hat vom 18.12. - 21.12.2026 wegen der Winterbahnmeisterschaft geschlossen. Das Sportforum hat vom 24.12. - 03.01.2027 Betriebsferien",
+   "confidence": "high",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "field": "pricing_url",
+   "value": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+   "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+   "evidence": "Kosten Schnupperkurs: CHF 90.– (inkl. Mietrad, Helm und Schuhe) (course price, not for price_range)",
+   "confidence": "medium",
+   "source_kind": "operator"
+  }
+ ],
+ "records": [
+  {
+   "track": "Anoeta (San Sebastián) - Velódromo Antonio Elorza",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+   "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Anoeta (San Sebastián) - Velódromo Antonio Elorza",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Donostia Kirola",
+   "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Anoeta (San Sebastián) - Velódromo Antonio Elorza",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+34 943 481 860",
+   "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Anoeta (San Sebastián) - Velódromo Antonio Elorza",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Facility (polideportivo) hours: Mon-Fri 08:00-22:00; Sat 08:30-20:00; Sun 09:00-14:00; public holidays closed. Summer (15 Jun-30 Aug): Mon-Fri 08:30-21:00; Sat 09:00-14:00; Sun and holidays closed. Closed 1 Jan, 20 Jan, 25 Dec and Easter Thu-Mon. Hours are for the whole sports centre; cycling-track sessions may differ.",
+   "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Hours apply to the whole sports centre, not the track alone."
+  },
+  {
+   "track": "Anoeta (San Sebastián) - Velódromo Antonio Elorza",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1965,
+   "source_url": "https://www.geo.euskadi.eus/cartografia/DatosDescarga/Documentacion/Geocuriosidades/Castellano/20-08%20Ciudad%20deportiva%20de%20Anoeta.pdf",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "1965 confirmed in geoEuskadi PDF; source_kind 'other' so not auto-appliable."
+  },
+  {
+   "track": "Anoeta (San Sebastián) - Velódromo Antonio Elorza",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://donostia.eus/kirola/es/instalaciones/entrada/precios-publicos-ins",
+   "source_url": "https://donostia.eus/kirola/es/instalaciones/entrada/precios-publicos-ins",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Generic public-facilities entry table (2025), not velodrome-specific; link works."
+  },
+  {
+   "track": "Anoeta (San Sebastián) - Velódromo Antonio Elorza",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Weak support: facility listing includes a cycling track; no explicit open statement."
+  },
+  {
+   "track": "Bangkok - Huamark Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Sports Authority of Thailand (SAT / กกท.)",
+   "source_url": "https://www.thaicycling.or.th/en/news/r/1558",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Source only says the velodrome is 'inside SAT premises' (location), not that SAT operates it.",
+   "reason_type": "inference"
+  },
+  {
+   "track": "Bangkok - Huamark Velodrome",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.thaicycling.or.th/en/news/r/1558",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Bourges - Vélodrome de Bourges",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.creps-cvl.fr/",
+   "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote found live; cited page is the tariffs page not the homepage, but it is the operator (CREPS) domain and confirms velodrome use."
+  },
+  {
+   "track": "Bourges - Vélodrome de Bourges",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "original_confidence": "low",
+   "verdict": "unverifiable",
+   "reason": "Tariffs page shows no velodrome booking function.",
+   "reason_type": "weak_support"
+  },
+  {
+   "track": "Bourges - Vélodrome de Bourges",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "CREPS Centre-Val de Loire",
+   "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Bourges - Vélodrome de Bourges",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+33 2 48 48 01 44",
+   "source_url": "https://www.creps-cvl.fr/accueil.infrastructures-sportives",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Bourges - Vélodrome de Bourges",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "velodrome@creps-cvl.fr",
+   "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Bourges - Vélodrome de Bourges",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Bourges - Vélodrome de Bourges",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 7.0,
+    "max": 21.0,
+    "currency": "EUR",
+    "check_site": true
+   },
+   "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Bourges - Vélodrome de Bourges",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.sportforum-kaarst.de/de/",
+   "source_url": "https://www.sportforum-kaarst.de/de/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Trägerverein Sportforum Kaarst-Büttgen e.V.",
+   "source_url": "https://www.sportforum-kaarst.de/de/impressum.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1971,
+   "source_url": "https://www.sportforum-kaarst.de/de/historie.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+49 2131 5362803",
+   "source_url": "https://www.sportforum-kaarst.de/de/impressum.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "service@sportforum-kaarst.de",
+   "source_url": "https://www.sportforum-kaarst.de/de/impressum.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Freies Training (open track sessions) Oct-Mar: Mon, Wed, Fri 20:00-22:00; other times by decision of the Sportforum. Hall has closure dates, e.g. 18-21 Dec 2026 and 24 Dec-3 Jan 2027.",
+   "source_url": "https://www.sportforum-kaarst.de/de/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.sportforum-kaarst.de/de/preise.html",
+   "source_url": "https://www.sportforum-kaarst.de/de/preise.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 20.0,
+    "max": 30.0,
+    "currency": "EUR",
+    "check_site": true
+   },
+   "source_url": "https://www.sportforum-kaarst.de/de/preise.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.sportforum-kaarst.de/de/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.sportforum-kaarst.de/de/hallenkonzept.html",
+   "original_confidence": null,
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Büttgen - Sportforum Kaarst-Büttgen",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.sportforum-kaarst.de/de/historie.html",
+   "original_confidence": null,
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://chiba-jpf-dome.com/",
+   "source_url": "https://chiba-jpf-dome.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://chiba-jpf-dome.com/schedule/",
+   "source_url": "https://chiba-jpf-dome.com/",
+   "original_confidence": "low",
+   "verdict": "unverifiable",
+   "reason": "/schedule/ is an event schedule, not a booking system; no booking function confirmed.",
+   "reason_type": "weak_support"
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "株式会社JPF (JPF Co., Ltd.)",
+   "source_url": "https://chiba-jpf-dome.com/terms/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+81 43-331-6678",
+   "source_url": "https://chiba-jpf-dome.com/access/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Facility use time for hirers, including set-up and tear-down: 08:00-22:00 in principle (switchboard hours 09:00-18:00); public track-use days are scheduled individually.",
+   "source_url": "https://chiba-jpf-dome.com/terms/",
+   "original_confidence": "low",
+   "verdict": "rejected",
+   "reason": "Times are hirers' set-up/tear-down hours from the terms page, not public track hours.",
+   "reason_type": "wrong_meaning"
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://chiba-jpf-dome.com/%e7%ab%b6%e8%bc%aa%e9%81%b8%e6%89%8b%e5%90%91%e3%81%91%e8%b5%b0%e8%b7%af%e9%96%8b%e6%94%be/9760/",
+   "source_url": "https://chiba-jpf-dome.com/%e7%ab%b6%e8%bc%aa%e9%81%b8%e6%89%8b%e5%90%91%e3%81%91%e8%b5%b0%e8%b7%af%e9%96%8b%e6%94%be/9760/",
+   "original_confidence": "low",
+   "verdict": "rejected",
+   "reason": "Cited page is a single event page (2026-11-09) for a keirin-professional track opening (競輪選手向け走路開放); not public pricing.",
+   "reason_type": "wrong_page"
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 2000,
+    "max": 2000,
+    "currency": "JPY",
+    "check_site": true
+   },
+   "source_url": "https://chiba-jpf-dome.com/%e7%ab%b6%e8%bc%aa%e9%81%b8%e6%89%8b%e5%90%91%e3%81%91%e8%b5%b0%e8%b7%af%e9%96%8b%e6%94%be/9760/",
+   "original_confidence": "low",
+   "verdict": "rejected",
+   "reason": "The 2,000 JPY fee applies only to keirin professionals (250 m experience), not to the public.",
+   "reason_type": "wrong_audience"
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://chiba-jpf-dome.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.city.chiba.jp/keizainosei/keizai/koeijigyo/250kyousougaiyou.html",
+   "original_confidence": null,
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Chiba JPF Dome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://chiba-jpf-dome.com/terms/",
+   "original_confidence": null,
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://dicklanevelodrome.com/",
+   "source_url": "https://dicklanevelodrome.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://dicklanevelodrome.com/shop/",
+   "source_url": "https://dicklanevelodrome.com/fees/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "East Point Velodrome Association (EPVA)",
+   "source_url": "https://dicklanevelodrome.com/history/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1974,
+   "source_url": "https://dicklanevelodrome.com/history/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@dicklanevelodrome.com",
+   "source_url": "https://dicklanevelodrome.com/contact/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Track open via the pedestrian gate during normal park hours (hours not stated); vehicle gates open during scheduled programs",
+   "source_url": "https://dicklanevelodrome.com/riderfaqs/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://dicklanevelodrome.com/fees/",
+   "source_url": "https://dicklanevelodrome.com/fees/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 15,
+    "max": 35,
+    "currency": "USD",
+    "check_site": true
+   },
+   "source_url": "https://dicklanevelodrome.com/fees/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://dicklanevelodrome.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Homepage says 'Regular programming has resumed' / 51st season starts April 1; text is somewhat stale."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 321.8,
+   "source_url": "https://dicklanevelodrome.com/history/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Concrete",
+   "source_url": "https://dicklanevelodrome.com/history/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Dick Lane Velodrome",
+   "kind": "confirmation",
+   "field": "country_code",
+   "proposed_value": "USA",
+   "source_url": "https://dicklanevelodrome.com/contact/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Galapagar - Velódromo Municipal",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://galapagar.es/areas-municipales/deportes/",
+   "source_url": "https://galapagar.es/areas-municipales/deportes/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Galapagar - Velódromo Municipal",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Ayuntamiento de Galapagar (Concejalía de Deportes)",
+   "source_url": "https://galapagar.es/areas-municipales/deportes/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Galapagar - Velódromo Municipal",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://galapagar.es/areas-municipales/deportes/",
+   "source_url": "https://galapagar.es/areas-municipales/deportes/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Galapagar - Velódromo Municipal",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 5,
+    "max": 8,
+    "currency": "EUR",
+    "check_site": true
+   },
+   "source_url": "https://galapagar.es/areas-municipales/deportes/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Galapagar - Velódromo Municipal",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://galapagar.es/areas-municipales/deportes/",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.lcsd.gov.hk/en/hkv/index.html",
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.lcsd.gov.hk/en/hkv/applications.html",
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/applications.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Leisure and Cultural Services Department (LCSD), Hong Kong SAR Government",
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+852 2878 8622",
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/contact.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "hkv@lcsd.gov.hk",
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/contact.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Venue: 7:00 am - 11:00 pm daily (except maintenance days: 7:00 am - 1:00 pm on 1st and 3rd Tuesdays); track shared-use sessions Wednesdays 8-10pm",
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.lcsd.gov.hk/en/hkv/indoor/fee.html",
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/indoor/fee.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 40,
+    "max": 110,
+    "currency": "HKD",
+    "check_site": true
+   },
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/indoor/fee.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Hong Kong - HK Velodrome",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://gvva.bc.ca/",
+   "source_url": "https://gvva.bc.ca/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://gvva.bc.ca/product/drop-in-track-pass/",
+   "source_url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Greater Victoria Velodrome Association (GVVA)",
+   "source_url": "https://gvva.bc.ca/about/",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "GVVA 'advocates and facilitates'; its about page sends general bookings to West Shore Parks & Recreation, which is probably the operator.",
+   "reason_type": "weak_support"
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1994,
+   "source_url": "https://gvva.bc.ca/about/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@gvva.bc.ca",
+   "source_url": "https://gvva.bc.ca/contact/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Open track and adult coached sessions Mondays, Wednesdays and Sundays; facility by reservation only (times not stated)",
+   "source_url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://gvva.bc.ca/product/drop-in-track-pass/",
+   "source_url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 20,
+    "max": 20,
+    "currency": "CAD",
+    "check_site": true
+   },
+   "source_url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://gvva.bc.ca/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 333,
+   "source_url": "https://gvva.bc.ca/about/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Concrete",
+   "source_url": "https://gvva.bc.ca/about/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Juan de Fuca Velodrome",
+   "kind": "confirmation",
+   "field": "country_code",
+   "proposed_value": "CAN",
+   "source_url": "https://gvva.bc.ca/contact/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Loulé - Velódromo de Loulé",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "http://www.centrociclismoloule.com/index.php/actividade-pistas",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Loulé - Velódromo de Loulé",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 400,
+   "source_url": "https://www.cm-loule.pt/pt/agenda/13761/xivx-volta-ao-concelho-de-loule.aspx",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Quote concerns 'Pista Bexiga Peres (Estádio Municipal de Loulé)', an athletics track (10 laps = 400 m), not a velodrome. cm-loule.pt lists no velodrome.",
+   "reason_type": "wrong_facility"
+  },
+  {
+   "track": "Marseille - Vélodrome Jean Bouin",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": null,
+   "original_confidence": "low",
+   "verdict": "no_claim",
+   "reason": "No source_url given; nothing to verify (status 'unknown'). Excluded from error rate."
+  },
+  {
+   "track": "Montichiari - Velodromo Fassa Bortolo",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.federciclismo.it/comunicati-a/allenamenti-ciclismo-paralimpico-su-pista-montichiari-bs-30-09-2026/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Odense Cyklebane",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+   "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Odense Cyklebane",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://shop.compuapp.dk/odensesv/booking",
+   "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Odense Cyklebane",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Odense Idrætspark (Odense Kommune)",
+   "source_url": "https://odense-idraetspark.dk/hvem-er-vi",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Odense Cyklebane",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "65 51 53 72",
+   "source_url": "https://odense-idraetspark.dk/kontakt",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Odense Cyklebane",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "Idraetsparken@odense.dk",
+   "source_url": "https://odense-idraetspark.dk/kontakt",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Odense Cyklebane",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+   "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Odense Cyklebane",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 55,
+    "max": 55,
+    "currency": "DKK",
+    "check_site": true
+   },
+   "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Odense Cyklebane",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Odense Cyklebane",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+   "original_confidence": null,
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "LE VELODROME SQY (SARL; UCPA-branded site)",
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/mentions-legales",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2014,
+   "source_url": "https://museedelaville.sqy.fr/patrimoine/le-velodrome-national-de-saint-quentin-en-yvelines/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "01.76.21.93.20",
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "hello-velodrome@ucpa.asso.fr",
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Mon 9:00-22:00; Tue 7:00-22:00; Wed 9:00-22:00; Thu 7:00-22:00; Fri 9:00-22:00; Sat 9:00-20:00; Sun 9:00-17:00",
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.ucpa.com/centres-sportifs/velodrome-national/tarifs-velodrome",
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/tarifs-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 16.0,
+    "max": 49.0,
+    "currency": "EUR",
+    "check_site": true
+   },
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/tarifs-velodrome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+   "original_confidence": null,
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Paris - Vélodrome National (SQY)",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+   "original_confidence": null,
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Pruskow - Arena",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://arenapruszkow.pl/",
+   "source_url": "https://arenapruszkow.pl/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Pruskow - Arena",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Arena Pruszków Sp. z o.o.",
+   "source_url": "https://arenapruszkow.pl/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Pruskow - Arena",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2009,
+   "source_url": "https://arenapruszkow.pl/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Pruskow - Arena",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+48 22 738 83 81",
+   "source_url": "https://arenapruszkow.pl/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Pruskow - Arena",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "arena.pruszkow@pzkol.pl",
+   "source_url": "https://arenapruszkow.pl/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Pruskow - Arena",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Office hours: Mon-Fri 8:00-16:00 (track session times not published on this page)",
+   "source_url": "https://arenapruszkow.pl/",
+   "original_confidence": "low",
+   "verdict": "rejected",
+   "reason": "Mon-Fri 8-16 are office hours, not track hours. Public Ostre Kolo sessions are in missed_info.",
+   "reason_type": "wrong_meaning"
+  },
+  {
+   "track": "Pruskow - Arena",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://arenapruszkow.pl/ostre-kolo/",
+   "source_url": "https://arenapruszkow.pl/ostre-kolo/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Pruskow - Arena",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 70,
+    "max": 80,
+    "currency": "PLN",
+    "check_site": true
+   },
+   "source_url": "https://arenapruszkow.pl/ostre-kolo/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Pruskow - Arena",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://arena.pzkol.pl/kalendarz/2760,mistrzostwa-polski-elity-w-kolarstwie-torowym.html",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://stabvelodromeroubaix.fr/",
+   "source_url": "https://stabvelodromeroubaix.fr/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://stabvelodrome.horanet.com/",
+   "source_url": "https://stabvelodromeroubaix.fr/programmation/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2012,
+   "source_url": "https://stabvelodromeroubaix.fr/histoire-du-stab/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+33 3 20 65 31 60",
+   "source_url": "https://stabvelodromeroubaix.fr/contacts/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "stab@stabvelodrome.fr",
+   "source_url": "https://stabvelodromeroubaix.fr/contacts/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://stabvelodromeroubaix.fr/sentrainer/",
+   "source_url": "https://stabvelodromeroubaix.fr/sentrainer/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 12,
+    "max": 12,
+    "currency": "EUR",
+    "check_site": true
+   },
+   "source_url": "https://stabvelodromeroubaix.fr/sentrainer/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://stabvelodromeroubaix.fr/programmation/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://stabvelodromeroubaix.fr/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Roubaix - Stab Vélodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://stabvelodromeroubaix.fr/decouvrir/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Santiago - Velódromo Peñalolén",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": null,
+   "original_confidence": "low",
+   "verdict": "no_claim",
+   "reason": "No source_url given; nothing to verify (status 'unknown'). Excluded from error rate."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.tissotvelodrome.ch/",
+   "source_url": "https://www.tissotvelodrome.ch/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+   "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Velodrome Suisse AG",
+   "source_url": "https://www.tissotvelodrome.ch/home/kontakt-1/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+41 32 654 20 40",
+   "source_url": "https://www.tissotvelodrome.ch/home/kontakt-1/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@tissotvelodrome.ch",
+   "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Reception: Mon, Wed-Fri 08:00-12:30 and 13:30-18:15; Tue 08:00-12:30; Sat-Sun closed. Track hall per weekly schedule.",
+   "source_url": "https://www.tissotvelodrome.ch/home/kontakt-1/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+   "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 17.5,
+    "max": 35,
+    "currency": "CHF",
+    "check_site": true
+   },
+   "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.tissotvelodrome.ch/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.tissotvelodrome.ch/home/über-uns-1/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Tissot Velodrome (Grenchen)",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.tissotvelodrome.ch/home/über-uns-1/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.cmc-aigle.ch/",
+   "source_url": "https://www.cmc-aigle.ch/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.cmc-aigle.ch/calendrier-des-initiations",
+   "source_url": "https://www.cmc-aigle.ch/calendrier-des-initiations",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "CMC Exploitation SA",
+   "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+41 24 468 58 85",
+   "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "cmc@uci.ch",
+   "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Centre: Mon-Fri 07:30-17:00; Sat-Sun 09:00-18:00 (track slots per weekly occupancy calendar)",
+   "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.cmc-aigle.ch/abonnements-piste",
+   "source_url": "https://www.cmc-aigle.ch/abonnements-piste",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 65,
+    "max": 90,
+    "currency": "CHF",
+    "check_site": true
+   },
+   "source_url": "https://www.cmc-aigle.ch/abonnements-piste",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "65-90 CHF are prerequisite initiation/training fees; subscriptions are CHF 199-399 and a 10-session pass CHF 199 (+100 with bike hire). Range misleading.",
+   "reason_type": "wrong_meaning"
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.cmc-aigle.ch/abonnements-piste",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 200,
+   "source_url": "https://www.cmc-aigle.ch/infrastructures",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Velodrome Suisse (Aigle)",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.cmc-aigle.ch/infrastructures",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  }
+ ]
+}

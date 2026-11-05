@@ -1,0 +1,1585 @@
+{
+ "reviewed_at": "2026-11-05",
+ "batch": 5,
+ "method": "Every cited source_url re-fetched with curl and the verbatim quote text-matched (whitespace/punctuation normalised); pages that returned 403 (hants.gov.uk) re-fetched with web_fetch; surrounding page text read for each value to check the quote really supports it (phone/email targets, price semantics, operator claims). Searches for missed or conflicting official info run for the 8 least-covered tracks (44%); web-search summaries used only as leads.",
+ "counts": {
+  "total": 146,
+  "verified": 132,
+  "unverifiable": 7,
+  "rejected": 7
+ },
+ "missed_info": [
+  {
+   "track": "Sola Arena (Stavanger)",
+   "field": "note",
+   "value": "Folkehallene (arena operator) offers no velodrome price on /pris/; velodrome use requires accreditation (separate courses/prices on the course booking pages).",
+   "source_url": "https://varenergiarenasola.no/pris/",
+   "quote": "Kjøp av et dagspass gir ikke mulighet til å booke plass på forhånd til aktiviteter med booking",
+   "confidence": "medium",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "field": "owner",
+   "value": "Stadt Zürich (owner since 1951); IG offene Rennbahn Oerlikon organises the races",
+   "source_url": "https://rennbahn-oerlikon.ch/sport/",
+   "quote": "1951 übernimmt die Stadt Zürich das Kind",
+   "confidence": "medium",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Cottbus - Velodrom Cottbus",
+   "field": "length_m",
+   "value": 333.33,
+   "source_url": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+   "quote": "Bahn: 333 m Zement-Oval inkl. Warmfahrstrecke und Fahrerkabinen im Innenraum",
+   "confidence": "high",
+   "source_kind": "owner"
+  },
+  {
+   "track": "Saint-Denis - Vélodrome de Saint-Denis",
+   "field": "conflict",
+   "value": "Phone 01 48 22 10 23 is given by tourisme93.com as the Club Vélocipédique Dionysien line; city page shows it under the venue address",
+   "source_url": "https://www.tourisme93.com/velodrome-saint-denis.html",
+   "quote": "cvdionysien@wanadoo.fr (Club Vélocipédique Dyonisien) tel : 01 48 22 10 23",
+   "confidence": "medium",
+   "source_kind": "other"
+  },
+  {
+   "track": "Calshot - Calshot Velodrome",
+   "field": "length_m",
+   "value": 142,
+   "source_url": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+   "quote": "142m around with banking of 45 degrees",
+   "confidence": "high",
+   "source_kind": "owner"
+  }
+ ],
+ "searched_without_new_findings": {
+  "Konya Velodrome": "No official venue site: velodrom.konya.bel.tr (suggested by a search summary) does not resolve; konyavelodrome.com still lorem ipsum template. Nothing missed.",
+  "Lviv Velodrome (SKA)": "No official site or closure notice found (only heritage portal lia.lvivcenter.org, not official). Nothing missed.",
+  "Bassano del Grappa - Velodromo Rino Mercante": "Comune di Bassano has a page for the stadium-velodrome, but it is JavaScript-rendered and its text could not be retrieved; no operator site found. Nothing recorded.",
+  "Cottbus - Velodrom Cottbus": "Event site bahnrad-em-cottbus.de (RSC Cottbus) confirms the 'Lausitz Velodrom' hosted the July 2026 U23/U19 Europeans; SSB cash-desk hours are for the hall complex only.",
+  "Melbourne - DISC": "Darebin council page confirms bookings go via AusCycling; no hours or tariffs published. Nothing missed.",
+  "Saint-Denis - Vélodrome de Saint-Denis": "No official page states indoor/outdoor, but the heritage page describes an open-air layout (lawn, stands); seed is_indoor=true looks wrong (researcher left it). Phone ownership conflict recorded.",
+  "Newport - Geraint Thomas Velodrome": "newportlive.co.uk has only general memberships (adult £44.70/month), no track-session tariff. Nothing missed.",
+  "Glasgow - Sir Chris Hoy Velodrome": "No velodrome price on the cited pages. Nothing missed."
+ },
+ "records": [
+  {
+   "track": "Asker Velodrom",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://velodromen.no/",
+   "source_url": "https://velodromen.no/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Asker Velodrom",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://velodromen.no/booking/",
+   "source_url": "https://velodromen.no/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Home page links /booking/ (booking system); quote is a weak anchor."
+  },
+  {
+   "track": "Asker Velodrom",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Norges Cycleforbunds Kompetansesenter AS",
+   "source_url": "https://velodromen.no/vilkar-og-betingelser/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Asker Velodrom",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "resepsjonen@velodromen.no",
+   "source_url": "https://velodromen.no/vilkar-og-betingelser/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Asker Velodrom",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://velodromen.no/prisliste/",
+   "source_url": "https://velodromen.no/prisliste/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Asker Velodrom",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 100,
+    "max": 250,
+    "currency": "NOK",
+    "check_site": true
+   },
+   "source_url": "https://velodromen.no/prisliste/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Asker Velodrom",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://velodromen.no/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Home page shows current weekly timetable and a lap counter 'siden 1.9.26'; quote itself is a weak anchor but the page evidences current operation."
+  },
+  {
+   "track": "Asker Velodrom",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 200,
+   "source_url": "https://velodromen.no/banesykling/hva-er-banesykling/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Asker Velodrom",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://velodromen.no/banesykling/hva-er-banesykling/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Bassano del Grappa - Velodromo Rino Mercante",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "A.S.D. Velodromo Mercante",
+   "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Bassano del Grappa - Velodromo Rino Mercante",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Bassano del Grappa - Velodromo Rino Mercante",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 400,
+   "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Bassano del Grappa - Velodromo Rino Mercante",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Concrete (federation says resin/cement)",
+   "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Federation says '(400,00 mt – RESINA/CEMENTO)': resin/cement, not unambiguously Concrete; value string is also prose, not a lookup value."
+  },
+  {
+   "track": "Brisbane - Anna Meares Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+   "source_url": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Brisbane - Anna Meares Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://auscycling.org.au/events?discipline=track&state=qld",
+   "source_url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Page links to AusCycling QLD track events list under 'Open and Coach Led Sessions'; booking is via event registration (medium)."
+  },
+  {
+   "track": "Brisbane - Anna Meares Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Stadiums Queensland (operates Sleeman Sports Complex)",
+   "source_url": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Sleeman site is Stadiums Queensland-branded (venue list, footer disclaimer) so the operator is supported, but the quoted sentence does not say 'operates Sleeman'; keep medium."
+  },
+  {
+   "track": "Brisbane - Anna Meares Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2016,
+   "source_url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Brisbane - Anna Meares Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "(07) 3131 9620",
+   "source_url": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Brisbane - Anna Meares Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@sleemansports.com.au",
+   "source_url": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Brisbane - Anna Meares Velodrome",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.sleemansports.com.au/whats-on",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Brisbane - Anna Meares Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Brisbane - Anna Meares Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Calshot - Calshot Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+   "source_url": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch (web_fetch; curl gets 403): quote present on the county council's own centre page; owner domain."
+  },
+  {
+   "track": "Calshot - Calshot Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+   "source_url": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Calshot - Calshot Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Hampshire County Council (Hampshire Outdoor Centres)",
+   "source_url": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch (web_fetch; curl gets 403): quote present. Operator is inferred from the hants.gov.uk (council) domain hosting the centre page; keep medium."
+  },
+  {
+   "track": "Calshot - Calshot Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "calshot.bkgs@hants.gov.uk",
+   "source_url": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Calshot - Calshot Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+   "source_url": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Calshot - Calshot Velodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 26,
+    "max": 39,
+    "currency": "GBP",
+    "check_site": true
+   },
+   "source_url": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Calshot - Calshot Velodrome",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "No claim ('unknown'); no closure notice on cited page."
+  },
+  {
+   "track": "Calshot - Calshot Velodrome",
+   "kind": "correction",
+   "field": "length_m",
+   "proposed_value": 142,
+   "source_url": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch (web_fetch; curl gets 403): '142m around with banking of 45 degrees' present (seed 143). Source_kind should be owner. Correction, needs-attention only."
+  },
+  {
+   "track": "Cottbus - Velodrom Cottbus",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+   "source_url": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Cottbus - Velodrom Cottbus",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Sportstättenbetrieb der Stadt Cottbus (SSB)",
+   "source_url": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Cottbus - Velodrom Cottbus",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1987,
+   "source_url": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Cottbus - Velodrom Cottbus",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.rsc-cottbus.de/",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "No claim ('unknown'); club news of a Sept 2026 race is not an operating notice."
+  },
+  {
+   "track": "Cottbus - Velodrom Cottbus",
+   "kind": "correction",
+   "field": "length_m",
+   "proposed_value": 333.33,
+   "source_url": "https://www.rsc-cottbus.de/verein/radrennbahn/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Club page states 333,33 m and owner page agrees (333 m); seed 250 m is wrong for the Cottbus Radrennbahn (Lausitz Velodrom, outdoor). Source_kind should be 'other' (club) with owner corroboration. Correction, needs-attention only."
+  },
+  {
+   "track": "Cottbus - Velodrom Cottbus",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Concrete",
+   "source_url": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Owner page says 'Bahn: 333 m Zement-Oval'; club page mentions a synthetic coating on the concrete, so 'Concrete' stays correct. Source_kind should be owner."
+  },
+  {
+   "track": "Dudenhofen - Badewanne (The Bathtub)",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.rv08dudenhofen.de/bahn",
+   "source_url": "https://www.rv08dudenhofen.de/bahn",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Dudenhofen - Badewanne (The Bathtub)",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Radfahrerverein Dudenhofen 1908 e. V.",
+   "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Dudenhofen - Badewanne (The Bathtub)",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+49 6232 93029",
+   "source_url": "https://www.rv08dudenhofen.de/kontakt",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Dudenhofen - Badewanne (The Bathtub)",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@rv08dudenhofen.de",
+   "source_url": "https://www.rv08dudenhofen.de/kontakt",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Dudenhofen - Badewanne (The Bathtub)",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Landesverband training in summer months: Wednesdays from 18:00; other usage by arrangement with the track warden",
+   "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Dudenhofen - Badewanne (The Bathtub)",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.rv08dudenhofen.de/bahn-training",
+   "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Dudenhofen - Badewanne (The Bathtub)",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 10,
+    "max": 10,
+    "currency": "EUR",
+    "check_site": true
+   },
+   "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Dudenhofen - Badewanne (The Bathtub)",
+   "kind": "operating_status",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "No claim ('unknown')."
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Glasgow Life",
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2012,
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "0141 287 7000",
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Number is the Arena reception line named on the cited page for velodrome bookings; organisational but shared with the whole arena (medium).",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "velodrome@glasgowlife.org.uk",
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Glasgow International Arena (venue & gym, not velodrome-specific): Mon-Fri 06:00-22:00; Sat 08:00-18:00; Sun 08:00-20:00. Velodrome session times vary (see Glasgow Club app).",
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Venue and gym hours match the Arena page; correctly labelled not velodrome-specific."
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Glasgow - Sir Chris Hoy Velodrome",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "'inside the Glasgow International Arena' supports indoor."
+  },
+  {
+   "track": "Indianapolis - Major Taylor Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://indycycloplex.com/",
+   "source_url": "https://indycycloplex.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Indianapolis - Major Taylor Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://indycycloplex.com/shop/p/track-101-1-wzlyw-t64ke-xk4mx-3b9hl-8hnp7-sx98x",
+   "source_url": "https://indycycloplex.com/t101",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Link is the registration product for the one-off Track 101 clinic ('Register now, at this link'), not a general booking page for the track."
+  },
+  {
+   "track": "Indianapolis - Major Taylor Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Marian University (owner: City of Indianapolis Department of Parks and Recreation)",
+   "source_url": "https://indycycloplex.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Indianapolis - Major Taylor Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "317-778-1056",
+   "source_url": "https://indycycloplex.com/schedule",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "tel: link and text 317.778.1056 in the page footer, generic Indy Cycloplex line.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Indianapolis - Major Taylor Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "indycycloplex@marian.edu",
+   "source_url": "https://indycycloplex.com/schedule",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Displayed text is indycycloplex@marian.edu but the mailto href is a named staff address (jhoopingarner@marian.edu); no confirmable organisational mailbox, contact_is_organisational cannot be confirmed.",
+   "contact_is_organisational_check": "not confirmed"
+  },
+  {
+   "track": "Indianapolis - Major Taylor Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://indycycloplex.com/t101",
+   "source_url": "https://indycycloplex.com/t101",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Page is the single Track 101 clinic ($50 per rider), not a tariff page; researcher itself notes no drop-in tariff."
+  },
+  {
+   "track": "Indianapolis - Major Taylor Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://indycycloplex.com/major-taylor-race-league",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "No claim ('unknown'); 2026 season finished, no current schedule."
+  },
+  {
+   "track": "Indianapolis - Major Taylor Velodrome",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": false,
+   "source_url": "https://indycycloplex.com/",
+   "original_confidence": "low",
+   "verdict": "unverifiable",
+   "reason": "Quote 'Home of the Major Taylor Velodrome' says nothing about outdoor/indoor; low confidence from the researcher. (Outdoor is plausible but unsupported by the cited page.)"
+  },
+  {
+   "track": "Konya Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.konya.bel.tr/haber/2026-uec-elit-avrupa-pist-bisikleti-sampiyonasi-avrupa-bisiklet-baskenti-konyada-basladi",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "No claim ('unknown'); cited news is about an event, correctly not used to infer status."
+  },
+  {
+   "track": "Konya Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.konya.bel.tr/haber/baskan-altay-tum-sporseverleri-2026-elit-avrupa-pist-bisikleti-sampiyonasina-davet-etti",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Lviv Velodrome (SKA)",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": null,
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "No claim ('unknown'), no source; my own search also found no official Lviv source or closure notice."
+  },
+  {
+   "track": "Melbourne - DISC",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Melbourne - DISC",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Melbourne - DISC",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Darebin City Council (AusCycling runs bookings and sessions)",
+   "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Melbourne - DISC",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2004,
+   "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Melbourne - DISC",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Melbourne - DISC",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Melbourne - DISC",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Melbourne - DISC",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+   "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-sessions/",
+   "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-sessions/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Newport Live",
+   "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Page is on newportlive.co.uk (Newport Live site, venue listed under Newport Live nav); quote is a weak anchor."
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "01633 656757",
+   "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "nisv@newportlive.co.uk",
+   "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Venue-wide: Mon-Fri 06:00-22:00; Sat & Sun 08:00-21:00 (track session times vary)",
+   "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-sessions/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Session page says sessions are bookable 7 days in advance with online booking links; indicates current operation."
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-faqs/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-sessions/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Newport - Geraint Thomas Velodrome",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://rennbahn-oerlikon.ch/",
+   "source_url": "https://rennbahn-oerlikon.ch/impressum/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Cited impressum lists www.rennbahn-oerlikon.ch for the association; operator's own domain."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "IG offene Rennbahn Oerlikon (IGOR)",
+   "source_url": "https://rennbahn-oerlikon.ch/sport/",
+   "original_confidence": "high",
+   "verdict": "unverifiable",
+   "reason": "Quote only says IGOR organises Tuesday evening races since 2003. Site history says the City of Zurich has owned the track since 1951; operator relationship of IGOR is not stated."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1912,
+   "source_url": "https://rennbahn-oerlikon.ch/sport/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "sekretariat@rennbahn-oerlikon.ch",
+   "source_url": "https://rennbahn-oerlikon.ch/impressum/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Race evenings on Tuesdays, early May to end of September; box office opens 16:30 on race days",
+   "source_url": "https://rennbahn-oerlikon.ch/einzeleintritt/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://rennbahn-oerlikon.ch/einzeleintritt/",
+   "source_url": "https://rennbahn-oerlikon.ch/einzeleintritt/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 10,
+    "max": 20,
+    "currency": "CHF",
+    "check_site": true
+   },
+   "source_url": "https://rennbahn-oerlikon.ch/einzeleintritt/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://rennbahn-oerlikon.ch/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Home page lists results of the 29 Sept 2026 evening race; seasonal outdoor track, no closure notice."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 333,
+   "source_url": "https://rennbahn-oerlikon.ch/sport/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Concrete",
+   "source_url": "https://rennbahn-oerlikon.ch/sport/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Offene Rennbahn (Zurich-Oerlikon)",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": false,
+   "source_url": "https://rennbahn-oerlikon.ch/sport/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Page describes the open (outdoor) track and rain danger/abort rule."
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.venueswest.wa.gov.au/venues/speeddome",
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.venueswest.wa.gov.au/venues/speeddome/booking-hiring",
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome/booking-hiring",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "VenuesWest",
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "(08) 9250 6701",
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "bookings@venueswest.wa.gov.au",
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome/booking-hiring",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Mon-Fri 1:00pm-8:30pm; Sat 9:00am-3:00pm; Sun & public holidays closed (bookings essential; hours vary with training and competition)",
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome/visitor-information",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome/visitor-information",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Owner page shows current opening hours (bookings essential) and no closure notice."
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Perth - SpeedDome",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://velodrome.org/",
+   "source_url": "https://velodrome.org/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://velodrome.org/race-reg-portal/",
+   "source_url": "https://velodrome.org/race-reg-portal/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Marymoor Velodrome Association (MVA)",
+   "source_url": "https://velodrome.org/about-the-jbm-velo/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1975,
+   "source_url": "https://velodrome.org/about-the-jbm-velo/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Race nights Mon/Wed/Fri from 7:00 PM (May-September); open track outside scheduled events, most common Sat/Sun mornings and Tue evenings",
+   "source_url": "https://velodrome.org/track-cycling-faq/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Cited FAQ only supports the open-track days; race nights Mon/Wed 7-9:30 PM and Fri 7 PM are on /about-track-racing/ and /friday-night/ of the same site.",
+   "source_url_fix": "https://velodrome.org/about-track-racing/"
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://velodrome.org/friday-night/",
+   "source_url": "https://velodrome.org/friday-night/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Page is the Friday Night race page (registration $30/$20); it is event pricing, not a track tariff, so not auto-apply material."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 5,
+    "max": 30,
+    "currency": "USD",
+    "check_site": true
+   },
+   "source_url": "https://velodrome.org/friday-night/",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Range mixes a suggested $5 spectator admission with a $30 race-registration fee; these are not one coherent track-use price."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://velodrome.org/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 400,
+   "source_url": "https://velodrome.org/about-track-racing/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Concrete",
+   "source_url": "https://velodrome.org/about-track-racing/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Redmond - Marymoor Velodrome",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": false,
+   "source_url": "https://velodrome.org/about-track-racing/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Saint-Denis - Vélodrome de Saint-Denis",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+   "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Municipal (owner) page for the velodrome; no operator site exists."
+  },
+  {
+   "track": "Saint-Denis - Vélodrome de Saint-Denis",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Ville de Saint-Denis (municipal velodrome)",
+   "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Page calls it 'le vélodrome municipal', so the city is the owner; who operates is not stated."
+  },
+  {
+   "track": "Saint-Denis - Vélodrome de Saint-Denis",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1928,
+   "source_url": "https://patrimoine.seinesaintdenis.fr/Velodrome-municipal",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Heritage inventory says construction 1928-1930 and inauguration 1933 (tourisme93, not official, says built and inaugurated 1933); track rebuilt 2013. A single year_built=1928 is not supported."
+  },
+  {
+   "track": "Saint-Denis - Vélodrome de Saint-Denis",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "01 48 22 10 23",
+   "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Number appears under the venue address on the city page, but tourisme93.com lists the same 01 48 22 10 23 as the Club Vélocipédique Dionysien (club) line; venue-vs-club line unclear.",
+   "contact_is_organisational_check": "not confirmed"
+  },
+  {
+   "track": "Saint-Denis - Vélodrome de Saint-Denis",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "No claim ('unknown')."
+  },
+  {
+   "track": "Saint-Denis - Vélodrome de Saint-Denis",
+   "kind": "correction",
+   "field": "surface",
+   "proposed_value": "Concrete",
+   "source_url": "https://patrimoine.seinesaintdenis.fr/Velodrome-municipal",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Heritage page text is about the 1928-30 build ('béton armé' followed by a '?'); track renovated 2013. Does not establish the current surface. Needs-attention only anyway."
+  },
+  {
+   "track": "Saint-Denis - Vélodrome de Saint-Denis",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://varenergiarenasola.no/",
+   "source_url": "https://varenergiarenasola.no/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://folkehallene.ibooking.no/?page=courses&location=1316",
+   "source_url": "https://varenergiarenasola.no/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Folkehallene IKS",
+   "source_url": "https://varenergiarenasola.no/kontakt-oss/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Operator is Folkehallene IKS (site is Folkehallene-branded, quote is its invoice-address line); weak anchor, medium."
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2021,
+   "source_url": "https://varenergiarenasola.no/trainingcamps-eng/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+47 952 03 133",
+   "source_url": "https://varenergiarenasola.no/kontakt-oss/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "sola@folkehallene.no",
+   "source_url": "https://varenergiarenasola.no/kontakt-oss/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Mon-Thu 08-22; Fri 08-20; Sat 09-18; Sun 09-20 (whole arena; velodrome public 'Åpne timer' follow the timetable)",
+   "source_url": "https://varenergiarenasola.no/kontakt-oss/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://varenergiarenasola.no/pris/",
+   "source_url": "https://varenergiarenasola.no/pris/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 85,
+    "max": 160,
+    "currency": "NOK",
+    "check_site": true
+   },
+   "source_url": "https://varenergiarenasola.no/pris/",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Figures are arena-wide day passes (adult 160, child 85); the page states a day pass does not give booked access, and velodrome use needs accreditation. Not a velodrome price range."
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://varenergiarenasola.no/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Sola Arena (Stavanger)",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://varenergiarenasola.no/trainingcamps-eng/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.kovopraha.cz/",
+   "source_url": "https://www.kovopraha.cz/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://shop.kovopraha.cz/",
+   "source_url": "https://www.kovopraha.cz/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "TJ Kovo Praha (KOVO Praha)",
+   "source_url": "https://rekotrebe.cz/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1941,
+   "source_url": "https://www.kovopraha.cz/o-nas/",
+   "original_confidence": "low",
+   "verdict": "rejected",
+   "reason": "'První velodrom zde stál už v roce 1941' is the year of the first velodrome on the site, not the current track; value should not populate year_built."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@kovopraha.cz",
+   "source_url": "https://praguetrack.cz/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain.",
+   "contact_is_organisational_check": "confirmed"
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Public rides every Wednesday and Friday; track course Monday afternoon (times not published)",
+   "source_url": "https://www.kovopraha.cz/verejnost/",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Wed/Fri public rides confirmed; the 'track course Monday afternoon' part is not on the cited page."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.kovopraha.cz/verejnost/",
+   "source_url": "https://www.kovopraha.cz/verejnost/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 1000,
+    "max": 3300,
+    "currency": "CZK",
+    "check_site": true
+   },
+   "source_url": "https://www.kovopraha.cz/verejnost/",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Range mixes CZK 1,000 motopacing/individual coaching with a CZK 3,300 course fee; no entry/session tariff for the track."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.kovopraha.cz/verejnost/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Operator page lists weekly public rides and current race calendar; reconstruction appeal does not announce a closure."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 333.33,
+   "source_url": "https://praguetrack.cz/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": false,
+   "source_url": "https://praguetrack.cz/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  },
+  {
+   "track": "Třebešín Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Concrete",
+   "source_url": "https://www.kovopraha.cz/o-nas/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch 2026-11-05: verbatim quote found on cited page and supports the value; source is the operator/owner/federation domain."
+  }
+ ]
+}

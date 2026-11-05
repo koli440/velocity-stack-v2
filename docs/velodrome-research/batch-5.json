@@ -1,0 +1,1543 @@
+{
+ "schema_version": 1,
+ "batch": 5,
+ "researched_at": "2026-11-05",
+ "policy": "Same as pilot.json. source_kind: operator|owner|federation|other. operating_status carries its own source.",
+ "tracks": [
+  {
+   "seed_name": "Asker Velodrom",
+   "seed_values": {
+    "country_code": "NOR",
+    "length_m": 200,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://velodromen.no/",
+     "source_url": "https://velodromen.no/",
+     "evidence": "Nye leiesykler i Velodromen",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://velodromen.no/booking/",
+     "source_url": "https://velodromen.no/",
+     "evidence": "Syklene finnes i Bookingen, finn timen som passer og velg ønsket sykkel.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "Norges Cycleforbunds Kompetansesenter AS",
+     "source_url": "https://velodromen.no/vilkar-og-betingelser/",
+     "evidence": "Velodromen er Norges Cycleforbunds Kompetansesenter AS",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "resepsjonen@velodromen.no",
+     "contact_is_organisational": true,
+     "source_url": "https://velodromen.no/vilkar-og-betingelser/",
+     "evidence": "resepsjonen@velodromen.no",
+     "evidence_note": "Reception mailbox named in the membership cancellation clause.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://velodromen.no/prisliste/",
+     "source_url": "https://velodromen.no/prisliste/",
+     "evidence": "Inngangs avgift banesykling, timer",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 100,
+      "max": 250,
+      "currency": "NOK",
+      "check_site": true
+     },
+     "source_url": "https://velodromen.no/prisliste/",
+     "evidence": "250,- /time",
+     "evidence_min": "100,-/time",
+     "note": "Per-hour track entry: 16+ 250 NOK, 11-16 years 100 NOK. Bike hire (50-500 NOK/h), memberships, courses, venue hire excluded.",
+     "confidence": "high",
+     "source_kind": "operator"
+    }
+   },
+   "operating_status": {
+    "value": "open",
+    "source_url": "https://velodromen.no/",
+    "evidence": "Ukens timeplan:",
+    "note": "Home page shows a current weekly timetable image dated 2026-11-04 and a live lap counter since 1.9.26.",
+    "confidence": "high",
+    "source_kind": "operator"
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 200,
+     "source_url": "https://velodromen.no/banesykling/hva-er-banesykling/",
+     "evidence": "banedekket er av tre og en runde er 200m",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    {
+     "field": "surface",
+     "value": "Wood",
+     "source_url": "https://velodromen.no/banesykling/hva-er-banesykling/",
+     "evidence": "banedekket er av tre og en runde er 200m",
+     "confidence": "high",
+     "source_kind": "operator"
+    }
+   ],
+   "not_found": [
+    "phone (only a named staff member's mobile, also listed by the council: personal, excluded)",
+    "year_built",
+    "opening_hours (only an image timetable on home page)"
+   ]
+  },
+  {
+   "seed_name": "Bassano del Grappa - Velodromo Rino Mercante",
+   "seed_values": {
+    "country_code": "ITA",
+    "length_m": 400,
+    "surface": "Concrete"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "operator": {
+     "value": "A.S.D. Velodromo Mercante",
+     "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+     "evidence": "Società di Gestione: A.S.D. VELODROMO MERCANTE",
+     "note": "The FCI Veneto page https://www.fciveneto.it/centri-territoriali-pista/ names the manager 'G.S. VELODROMO MERCANTE – 03L3075' (different legal-form prefix): minor conflict between federation pages.",
+     "confidence": "medium",
+     "source_kind": "federation"
+    }
+   },
+   "operating_status": {
+    "value": "unknown",
+    "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+    "evidence": "Società di Gestione: A.S.D. VELODROMO MERCANTE",
+    "note": "Federation lists the venue as a Centro Territoriale Pista but shows no schedule or closure notice; the municipal (Comune di Bassano) page is JavaScript-rendered and its text could not be retrieved.",
+    "confidence": "low",
+    "source_kind": "federation"
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 400,
+     "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+     "evidence": "(400,00 mt – RESINA/CEMENTO)",
+     "confidence": "high",
+     "source_kind": "federation"
+    },
+    {
+     "field": "surface",
+     "value": "Concrete (federation says resin/cement)",
+     "source_url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+     "evidence": "(400,00 mt – RESINA/CEMENTO)",
+     "confidence": "medium",
+     "source_kind": "federation"
+    }
+   ],
+   "not_found": [
+    "website_url (no operator site found; official-looking leads were directories only)",
+    "booking_url",
+    "phone (only a named president's mobile on federation pages)",
+    "email (venue-named gmail listed with the president's contacts; the federation page's mailto target differs from its displayed text, so not reliable)",
+    "year_built",
+    "opening_hours",
+    "pricing_url",
+    "price_range (municipal tariffs are club/day-use rates, not individual sessions)"
+   ]
+  },
+  {
+   "seed_name": "Brisbane - Anna Meares Velodrome",
+   "seed_values": {
+    "country_code": "AUS",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+     "source_url": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+     "evidence": "The Anna Meares Velodrome, named after Australia's celebrated cyclist, is a premier indoor cycling facility located within the Sleeman Sports Complex.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://auscycling.org.au/events?discipline=track&state=qld",
+     "source_url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+     "evidence": "Open and Coach Led Sessions",
+     "note": "Sleeman's Cycling & BMX page says riders book via Cycling Queensland; the AusCycling facility page links to the QLD track events list.",
+     "confidence": "medium",
+     "source_kind": "federation"
+    },
+    "operator": {
+     "value": "Stadiums Queensland (operates Sleeman Sports Complex)",
+     "source_url": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+     "evidence": "Stadiums Queensland has a massive range of events and high performance training opportunities lined up across our nine major sporting and entertainment venues.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 2016,
+     "source_url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+     "evidence": "opened in November 2016",
+     "confidence": "high",
+     "source_kind": "federation"
+    },
+    "phone": {
+     "value": "(07) 3131 9620",
+     "contact_is_organisational": true,
+     "source_url": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+     "evidence": "Phone number: (07) 3131 9620",
+     "note": "Sleeman Sports Complex general line in the page footer, not velodrome-specific.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "info@sleemansports.com.au",
+     "contact_is_organisational": true,
+     "source_url": "https://www.sleemansports.com.au/facilities/anna-meares-velodrome",
+     "evidence": "info@sleemansports.com.au",
+     "note": "Sleeman Sports Complex general mailbox in the page footer, not velodrome-specific.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "operating_status": {
+    "value": "open",
+    "source_url": "https://www.sleemansports.com.au/whats-on",
+    "evidence": "AMV Track Series",
+    "note": "Operator's What's On page lists AMV Track Series events on Saturday 7 and Sunday 8 November 2026 (category Cycling).",
+    "confidence": "high",
+    "source_kind": "operator"
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+     "evidence": "The Velodrome boasts a 250-metre timber track",
+     "confidence": "high",
+     "source_kind": "federation"
+    },
+    {
+     "field": "surface",
+     "value": "Wood",
+     "source_url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+     "evidence": "250-metre timber track",
+     "confidence": "high",
+     "source_kind": "federation"
+    }
+   ],
+   "not_found": [
+    "opening_hours (velodrome-specific hours not published; pool hours only)",
+    "pricing_url",
+    "price_range (open/come-and-try session prices are only on AusCycling event-registration pages, not retrievable as text)"
+   ]
+  },
+  {
+   "seed_name": "Calshot - Calshot Velodrome",
+   "seed_values": {
+    "country_code": "GBR",
+    "length_m": 143,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+     "source_url": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+     "evidence": "Calshot Activities Centre houses the only indoor banked velodrome in the south of England",
+     "note": "Note: calshot.com is a parked for-sale domain and is not used.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+     "source_url": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+     "evidence": "to see when this activity will next be available to book",
+     "note": "Hampshire Outdoor Centres booking portal; footer links to hants.gov.uk.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "Hampshire County Council (Hampshire Outdoor Centres)",
+     "source_url": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+     "evidence": "Calshot Activities Centre houses the only indoor banked velodrome in the south of England",
+     "note": "Operator inferred from the hants.gov.uk (council) domain hosting the centre pages; booking portal is branded Hampshire Outdoor Centres.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "calshot.bkgs@hants.gov.uk",
+     "contact_is_organisational": true,
+     "source_url": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+     "evidence": "calshot.bkgs@hants.gov.uk",
+     "note": "Centre bookings mailbox (not velodrome-specific).",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+     "source_url": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+     "evidence": "1 hour 30 minute session | ages 11+ | from £39",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 26,
+      "max": 39,
+      "currency": "GBP",
+      "check_site": true
+     },
+     "source_url": "https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-taster-experience",
+     "evidence": "from £39",
+     "evidence_min": "1 hour 30 minute session | ages 11-16 | from £26 (page https://hampshireoutdoorcentres.cinolla.com/calshot/course/track-cycling-youth-experience)",
+     "note": "Adult taster from £39, youth session from £26; 'from' prices; courses (stage 1&2 from £78) excluded.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "operating_status": {
+    "value": "unknown",
+    "source_url": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+    "evidence": "our range of courses and sessions have got your covered",
+    "note": "Operator pages describe current courses but dates/availability load dynamically; no closure notice seen.",
+    "confidence": "low",
+    "source_kind": "operator"
+   },
+   "corrections": [
+    {
+     "field": "length_m",
+     "old_value": 143,
+     "new_value": 142,
+     "source_url": "https://www.hants.gov.uk/thingstodo/calshot/hangar/the-track",
+     "evidence": "142m around with banking of 45 degrees",
+     "confidence": "medium"
+    }
+   ],
+   "confirmations": [],
+   "not_found": [
+    "phone",
+    "year_built",
+    "opening_hours (plan-your-visit page returned 403)",
+    "surface (not stated on official pages)"
+   ]
+  },
+  {
+   "seed_name": "Cottbus - Velodrom Cottbus",
+   "seed_values": {
+    "country_code": "GER",
+    "length_m": 250,
+    "surface": "Concrete"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+     "source_url": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+     "evidence": "Fakten und Zahlen",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "operator": {
+     "value": "Sportstättenbetrieb der Stadt Cottbus (SSB)",
+     "source_url": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+     "evidence": "SSB Sportstättenbetrieb der Stadt Cottbus",
+     "note": "Municipal operator whose site hosts the Radrennbahn page; appears in page navigation/footer area. Resident club: Radsportclub Cottbus e.V.",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "year_built": {
+     "value": 1987,
+     "source_url": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+     "evidence": "Baujahr: 1987",
+     "confidence": "high",
+     "source_kind": "owner"
+    }
+   },
+   "operating_status": {
+    "value": "unknown",
+    "source_url": "https://www.rsc-cottbus.de/",
+    "evidence": "Großer Preis von Deutschland im Sprint:Siege für das Track-Team Brandenburg",
+    "note": "Resident club news (16.09.2026) reports a September 2026 race at the Lausitz-Velodrom; no operator schedule or closure notice found.",
+    "confidence": "low",
+    "source_kind": "other"
+   },
+   "corrections": [
+    {
+     "field": "length_m",
+     "old_value": 250,
+     "new_value": 333.33,
+     "source_url": "https://www.rsc-cottbus.de/verein/radrennbahn/",
+     "evidence": "Mit einer Bahnlänge von 333,33 Metern",
+     "confidence": "high",
+     "note": "Owner SSB page agrees: 'Bahn: 333 m Zement-Oval' at https://www.ssb-cottbus.de/index.php/Radstadion.html (outdoor concrete oval)."
+    }
+   ],
+   "confirmations": [
+    {
+     "field": "surface",
+     "value": "Concrete",
+     "source_url": "https://www.ssb-cottbus.de/index.php/Radstadion.html",
+     "evidence": "Bahn: 333 m Zement-Oval",
+     "confidence": "medium",
+     "note": "Club page says 'Ein spezieller Kunststoffbelag' (synthetic surface layer): flag for review, not corrected."
+    }
+   ],
+   "not_found": [
+    "booking_url",
+    "phone (only club line naming the Geschäftsführer)",
+    "email",
+    "opening_hours (SSB hours are for the hall complex/cash desk, not the track)",
+    "pricing_url",
+    "price_range"
+   ]
+  },
+  {
+   "seed_name": "Dudenhofen - Badewanne (The Bathtub)",
+   "seed_values": {
+    "country_code": "GER",
+    "length_m": 250,
+    "surface": "Concrete"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.rv08dudenhofen.de/bahn",
+     "source_url": "https://www.rv08dudenhofen.de/bahn",
+     "evidence": "Radfahrerverein Dudenhofen 1908 e. V.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "Radfahrerverein Dudenhofen 1908 e. V.",
+     "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+     "evidence": "Eine Haftung wird vom Radfahrerverein Dudenhofen e. V. nicht übernommen.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": {
+     "value": "+49 6232 93029",
+     "contact_is_organisational": true,
+     "source_url": "https://www.rv08dudenhofen.de/kontakt",
+     "evidence": "Tel.: +49 6232 93029",
+     "note": "Club office line listed at the track address (Iggelheimer Str. 40); no person named.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "info@rv08dudenhofen.de",
+     "contact_is_organisational": true,
+     "source_url": "https://www.rv08dudenhofen.de/kontakt",
+     "evidence": "info@rv08dudenhofen.de",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Landesverband training in summer months: Wednesdays from 18:00; other usage by arrangement with the track warden",
+     "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+     "evidence": "in den Sommermonaten auf der Radrennbahn Dudenhofen Mittwochs ab 18:00 Uhr statt",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://www.rv08dudenhofen.de/bahn-training",
+     "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+     "evidence": "Für die Nutzung der Radrennbahn von lizenzierten Fahrern werden folgende Gebühren erhoben",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 10,
+      "max": 10,
+      "currency": "EUR",
+      "check_site": true
+     },
+     "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+     "evidence": "Tageskarte (2 Stunden): 10,00 €",
+     "note": "Adult individual day ticket (2 h) for licensed riders, non-members of the Landesverband; prices plus VAT (Alle Preis plus MwSt.). Annual pass 75 EUR, groups and bike hire (15 EUR) excluded.",
+     "confidence": "high",
+     "source_kind": "operator"
+    }
+   },
+   "operating_status": {
+    "value": "unknown",
+    "source_url": "https://www.rv08dudenhofen.de/bahn-training",
+    "evidence": "Die Nutzungszeiten sind mit dem Platzwart",
+    "note": "Operator site shows tariffs and training in summer months only; 2026 events (e.g. Sprint-Grand-Prix 28/29.08.2026) already past; no closure notice.",
+    "confidence": "low",
+    "source_kind": "operator"
+   },
+   "corrections": [],
+   "confirmations": [],
+   "not_found": [
+    "booking_url",
+    "year_built",
+    "length_m/surface (not stated on the official pages fetched)"
+   ]
+  },
+  {
+   "seed_name": "Glasgow - Sir Chris Hoy Velodrome",
+   "seed_values": {
+    "country_code": "GBR",
+    "length_m": 250,
+    "surface": "Wood",
+    "is_indoor": true
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+     "evidence": "The track is 250 meters long and made from special wood called Serbian pine.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+     "evidence": "You can then book a sessions:",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "Glasgow Life",
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+     "evidence": "These sessions can include a Glasgow Life coach",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 2012,
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+     "evidence": "It was built in 2012 and is inside the Glasgow International Arena.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": {
+     "value": "0141 287 7000",
+     "contact_is_organisational": true,
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+     "evidence": "by calling 0141 287 7000",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "velodrome@glasgowlife.org.uk",
+     "contact_is_organisational": true,
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+     "evidence": "please email velodrome@glasgowlife.org.uk",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Glasgow International Arena (venue & gym, not velodrome-specific): Mon-Fri 06:00-22:00; Sat 08:00-18:00; Sun 08:00-20:00. Velodrome session times vary (see Glasgow Club app).",
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena",
+     "evidence": "Venue & Gym Opening Hours",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome/velodrome-sessions",
+     "evidence": "Discipline Specific Training",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+     "evidence": "The track is 250 meters long and made from special wood called Serbian pine.",
+     "confidence": "high"
+    },
+    {
+     "field": "surface",
+     "value": "Wood",
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+     "evidence": "made from special wood called Serbian pine",
+     "confidence": "high"
+    },
+    {
+     "field": "is_indoor",
+     "value": true,
+     "source_url": "https://www.glasgowlife.org.uk/sport/venues/glasgow-international-arena/glasgow-international-arena-facilities/sir-chris-hoy-velodrome",
+     "evidence": "is inside the Glasgow International Arena",
+     "confidence": "medium"
+    }
+   ],
+   "not_found": [
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "Velodrome page publishes no tariff; glasgowclub.org/Prices (Pay As You Go) has no velodrome line. Phone is the Arena reception line, shown on the velodrome sessions page as the booking line."
+  },
+  {
+   "seed_name": "Indianapolis - Major Taylor Velodrome",
+   "seed_values": {
+    "country_code": "USA",
+    "length_m": 333.3,
+    "surface": "Concrete",
+    "is_indoor": false
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://indycycloplex.com/",
+     "source_url": "https://indycycloplex.com/",
+     "evidence": "Home of the Major Taylor Velodrome",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://indycycloplex.com/shop/p/track-101-1-wzlyw-t64ke-xk4mx-3b9hl-8hnp7-sx98x",
+     "source_url": "https://indycycloplex.com/t101",
+     "evidence": "now, at this link",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "Marian University (owner: City of Indianapolis Department of Parks and Recreation)",
+     "source_url": "https://indycycloplex.com/",
+     "evidence": "and operated by Marian University",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": {
+     "value": "317-778-1056",
+     "contact_is_organisational": true,
+     "source_url": "https://indycycloplex.com/schedule",
+     "evidence": "317.778.1056",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "indycycloplex@marian.edu",
+     "contact_is_organisational": true,
+     "source_url": "https://indycycloplex.com/schedule",
+     "evidence": "indycycloplex@marian.edu",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://indycycloplex.com/t101",
+     "source_url": "https://indycycloplex.com/t101",
+     "evidence": "$50 per rider",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operating_status": {
+     "value": "unknown",
+     "source_url": "https://indycycloplex.com/major-taylor-race-league",
+     "evidence": "Final standings of the 2026 series.",
+     "confidence": "low",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "is_indoor",
+     "value": false,
+     "source_url": "https://indycycloplex.com/",
+     "evidence": "Home of the Major Taylor Velodrome",
+     "confidence": "low"
+    }
+   ],
+   "not_found": [
+    "year_built",
+    "opening_hours",
+    "price_range",
+    "length_m_confirmation",
+    "surface_confirmation"
+   ],
+   "notes": "Email: link text is the generic mailbox indycycloplex@marian.edu but the mailto href points to a named staff address; kept medium so it needs attention. Pricing page only shows the $50 Track 101 clinic (not a drop-in tariff), so no price_range. 2026 race season finished (standings updated 8/28/2026); no current-session schedule found, so status is unknown (seasonal outdoor track)."
+  },
+  {
+   "seed_name": "Konya Velodrome",
+   "seed_values": {
+    "country_code": "TUR",
+    "length_m": 250,
+    "surface": "Wood",
+    "is_indoor": true
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "operating_status": {
+     "value": "unknown",
+     "source_url": "https://www.konya.bel.tr/haber/2026-uec-elit-avrupa-pist-bisikleti-sampiyonasi-avrupa-bisiklet-baskenti-konyada-basladi",
+     "evidence": "Bu yarışma Türkiye’de nerede yapılacak deseniz herkes der ki; bunun Konya’da yapılması lazım",
+     "confidence": "low",
+     "source_kind": "owner"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://www.konya.bel.tr/haber/baskan-altay-tum-sporseverleri-2026-elit-avrupa-pist-bisikleti-sampiyonasina-davet-etti",
+     "evidence": "17 bin 600 metrekarelik alanda 250 metre pisti",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "website_url",
+    "booking_url",
+    "operator",
+    "year_built",
+    "phone",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "No venue-specific official site found. konyavelodrome.com is an unfinished template (lorem ipsum, only a 2025 UCI Nations Cup page, links to the Turkish Cycling Federation) and is not claimed as the venue site. sporkonya.com.tr is blocked (403). Municipality (konya.bel.tr) only has event news: it hosted the 2026 UEC Elite Track Europeans on 1-5 Feb 2026, which is not current activity, so status is unknown."
+  },
+  {
+   "seed_name": "Lviv Velodrome (SKA)",
+   "seed_values": {
+    "country_code": "UKR",
+    "length_m": 250,
+    "surface": "Wood",
+    "is_indoor": true
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "operating_status": {
+     "value": "unknown",
+     "source_url": null,
+     "evidence": "No official source located. nsblvs.org (suggested for the base) returns 404; ucf.org.ua, ska.lviv.ua and velosport.org.ua are unrelated/spam or blocked (403).",
+     "confidence": "low",
+     "source_kind": "other"
+    }
+   },
+   "corrections": [],
+   "confirmations": [],
+   "not_found": [
+    "website_url",
+    "booking_url",
+    "operator",
+    "year_built",
+    "phone",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range",
+    "length_m_confirmation",
+    "surface_confirmation",
+    "official_closure_or_war_damage_notice"
+   ],
+   "notes": "Only directories and search summaries mention the track (Kleparivska St 39a); these are not accepted. Several look-alike or spam domains were encountered and rejected. No official closure or damage notice found."
+  },
+  {
+   "seed_name": "Melbourne - DISC",
+   "seed_values": {
+    "country_code": "AUS",
+    "length_m": 250,
+    "surface": "Wood",
+    "is_indoor": true
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "evidence": "The Home of Track Cycling in Victoria",
+     "confidence": "high",
+     "source_kind": "federation"
+    },
+    "booking_url": {
+     "value": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "evidence": "The velodrome is available for casual use outside of booked times.",
+     "confidence": "medium",
+     "source_kind": "federation"
+    },
+    "operator": {
+     "value": "Darebin City Council (AusCycling runs bookings and sessions)",
+     "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "evidence": "DISC is managed by Darebin City Council.",
+     "confidence": "high",
+     "source_kind": "federation"
+    },
+    "year_built": {
+     "value": 2004,
+     "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "evidence": "Opened in 2004",
+     "confidence": "high",
+     "source_kind": "federation"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "evidence": "to view bookings for week commencing Monday 2nd November",
+     "confidence": "high",
+     "source_kind": "federation"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "evidence": "250-meter timber track with a maximum banking of 42 degrees",
+     "confidence": "high"
+    },
+    {
+     "field": "surface",
+     "value": "Wood",
+     "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "evidence": "250-meter timber track",
+     "confidence": "high"
+    },
+    {
+     "field": "is_indoor",
+     "value": true,
+     "source_url": "https://auscycling.org.au/about/facilities/disc-velodrome",
+     "evidence": "is the premier indoor velodrome in Victoria",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "phone",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "Only contacts found are a named staff member (AusCycling), the national AusCycling line 1300 137 197 on the Darebin Council page (not a venue line) and council general lines; none recorded. AusCycling page lists club user-group slots, not general opening hours, and no tariffs. Darebin's own DISC page (darebin.vic.gov.au Find-and-book-a-sport-venue) refers bookings to AusCycling."
+  },
+  {
+   "seed_name": "Newport - Geraint Thomas Velodrome",
+   "seed_values": {
+    "country_code": "GBR",
+    "length_m": 250,
+    "surface": "Wood",
+    "is_indoor": true
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+     "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+     "evidence": "Geraint Thomas National Velodrome of Wales",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-sessions/",
+     "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-sessions/",
+     "evidence": "With an online account, you can book sessions using the links below.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "Newport Live",
+     "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+     "evidence": "The Velodrome is home to our 250-meter oval shaped track",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "phone": {
+     "value": "01633 656757",
+     "contact_is_organisational": true,
+     "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+     "evidence": "01633 656757",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "nisv@newportlive.co.uk",
+     "contact_is_organisational": true,
+     "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+     "evidence": "nisv@newportlive.co.uk",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Venue-wide: Mon-Fri 06:00-22:00; Sat & Sun 08:00-21:00 (track session times vary)",
+     "source_url": "https://www.newportlive.co.uk/en/venues/geraint-thomas-national-velodrome-wales/",
+     "evidence": "Monday - Friday: 6am - 10pm",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-sessions/",
+     "evidence": "Sessions are bookable 7 days in advance.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-faqs/",
+     "evidence": "250m (black line)",
+     "confidence": "high"
+    },
+    {
+     "field": "surface",
+     "value": "Wood",
+     "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/track-cycling-sessions/",
+     "evidence": "steeply banked wooden track",
+     "confidence": "high"
+    },
+    {
+     "field": "is_indoor",
+     "value": true,
+     "source_url": "https://www.newportlive.co.uk/en/sports-wellbeing/cycling/track-cycling/",
+     "evidence": "is one of 5 indoor velodromes in the UK",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "year_built",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "Venue page says it was renamed in 2018 but gives no build year. No tariff page for track sessions found on newportlive.co.uk (booking is via Gladstone login). Phone is shared Newport Live line, listed as the venue contact on the venue page."
+  },
+  {
+   "seed_name": "Offene Rennbahn (Zurich-Oerlikon)",
+   "seed_values": {
+    "country_code": "SUI",
+    "length_m": 333,
+    "surface": "Concrete",
+    "is_indoor": false
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://rennbahn-oerlikon.ch/",
+     "source_url": "https://rennbahn-oerlikon.ch/impressum/",
+     "evidence": "www.rennbahn-oerlikon.ch",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": null,
+    "operator": {
+     "value": "IG offene Rennbahn Oerlikon (IGOR)",
+     "source_url": "https://rennbahn-oerlikon.ch/sport/",
+     "evidence": "Seit 2003 organisiert die IGOR von Anfang Mai bis Ende September jeden Dienstagabend Rennen.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 1912,
+     "source_url": "https://rennbahn-oerlikon.ch/sport/",
+     "evidence": "Im August 1912 wird die offene Rennbahn nach fünfmonatiger Bauzeit eröffnet.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": null,
+    "email": {
+     "value": "sekretariat@rennbahn-oerlikon.ch",
+     "contact_is_organisational": true,
+     "source_url": "https://rennbahn-oerlikon.ch/impressum/",
+     "evidence": "sekretariat@rennbahn-oerlikon.ch",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Race evenings on Tuesdays, early May to end of September; box office opens 16:30 on race days",
+     "source_url": "https://rennbahn-oerlikon.ch/einzeleintritt/",
+     "evidence": "An Renntagen ist die Kasse ab 16:30 Uhr geöffnet.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://rennbahn-oerlikon.ch/einzeleintritt/",
+     "source_url": "https://rennbahn-oerlikon.ch/einzeleintritt/",
+     "evidence": "Der Einzeleintritt beträgt CHF 10.-.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 10,
+      "max": 20,
+      "currency": "CHF",
+      "check_site": true
+     },
+     "source_url": "https://rennbahn-oerlikon.ch/einzeleintritt/",
+     "evidence": "Bei Events wie die Präsentation historischer Rennfahrzeuge beträgt der Einzeleintritt CHF 20.-.",
+     "confidence": "high",
+     "source_kind": "operator",
+     "note": "Standard single entry CHF 10; CHF 20 at special events; children up to 16 free"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://rennbahn-oerlikon.ch/",
+     "evidence": "Resultate Abendrennen 29. September 2026",
+     "confidence": "medium",
+     "source_kind": "operator",
+     "note": "Seasonal outdoor track: weekly race meetings in 2026 until end of September; no closure notice found"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 333,
+     "source_url": "https://rennbahn-oerlikon.ch/sport/",
+     "evidence": "Der Umfang des Beton-Ovals beträgt 333,3 Meter.",
+     "confidence": "high",
+     "note": "333.3 m, seed 333 compatible"
+    },
+    {
+     "field": "surface",
+     "value": "Concrete",
+     "source_url": "https://rennbahn-oerlikon.ch/sport/",
+     "evidence": "Der Umfang des Beton-Ovals beträgt 333,3 Meter.",
+     "confidence": "high"
+    },
+    {
+     "field": "is_indoor",
+     "value": false,
+     "source_url": "https://rennbahn-oerlikon.ch/sport/",
+     "evidence": "Sobald es regnet, erhöht sich in den Steilkurven von über 40 Grad Neigung die Absturzgefahr dramatisch.",
+     "confidence": "medium"
+    }
+   ],
+   "not_found": [
+    "booking_url",
+    "phone"
+   ]
+  },
+  {
+   "seed_name": "Perth - SpeedDome",
+   "seed_values": {
+    "country_code": "AUS",
+    "length_m": 250,
+    "surface": "Wood",
+    "is_indoor": true
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.venueswest.wa.gov.au/venues/speeddome",
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+     "evidence": "Owned and managed by VenuesWest, SpeedDome is Western Australia’s only combined indoor cycling velodrome and roller sports complex.",
+     "confidence": "high",
+     "source_kind": "owner"
+    },
+    "booking_url": {
+     "value": "https://www.venueswest.wa.gov.au/venues/speeddome/booking-hiring",
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome/booking-hiring",
+     "evidence": "Make a booking at SpeedDome by completing the enquiry form above or contacting VenuesWest.",
+     "confidence": "high",
+     "source_kind": "owner"
+    },
+    "operator": {
+     "value": "VenuesWest",
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+     "evidence": "Owned and managed by VenuesWest",
+     "confidence": "high",
+     "source_kind": "owner"
+    },
+    "year_built": null,
+    "phone": {
+     "value": "(08) 9250 6701",
+     "contact_is_organisational": true,
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+     "evidence": "(08) 9250 6701",
+     "confidence": "medium",
+     "source_kind": "owner",
+     "note": "Listed as SpeedDome phone on the venue page; the visitor-information page lists the same number for Track Cycling WA. VenuesWest bookings line (08) 9300 7153 is on the booking-hiring page."
+    },
+    "email": {
+     "value": "bookings@venueswest.wa.gov.au",
+     "contact_is_organisational": true,
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome/booking-hiring",
+     "evidence": "bookings@venueswest.wa.gov.au",
+     "confidence": "high",
+     "source_kind": "owner"
+    },
+    "opening_hours": {
+     "value": "Mon-Fri 1:00pm-8:30pm; Sat 9:00am-3:00pm; Sun & public holidays closed (bookings essential; hours vary with training and competition)",
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome/visitor-information",
+     "evidence": "Please note that bookings are essential. Opening hours vary due to",
+     "confidence": "high",
+     "source_kind": "owner"
+    },
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome/visitor-information",
+     "evidence": "Please note that bookings are essential. Opening hours vary due to",
+     "confidence": "medium",
+     "source_kind": "owner",
+     "note": "Owner page shows current opening hours and a weekly daily-schedule of club sessions; no closure notice seen. Upcoming-events list on the page was stale (March)."
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+     "evidence": "250m timber cycling track",
+     "confidence": "high"
+    },
+    {
+     "field": "surface",
+     "value": "Wood",
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+     "evidence": "250m timber cycling track",
+     "confidence": "high"
+    },
+    {
+     "field": "is_indoor",
+     "value": true,
+     "source_url": "https://www.venueswest.wa.gov.au/venues/speeddome",
+     "evidence": "SpeedDome is Perth’s only combined indoor velodrome and roller sports complex.",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "year_built",
+    "pricing_url",
+    "price_range"
+   ]
+  },
+  {
+   "seed_name": "Redmond - Marymoor Velodrome",
+   "seed_values": {
+    "country_code": "USA",
+    "length_m": 400,
+    "surface": "Concrete",
+    "is_indoor": false
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://velodrome.org/",
+     "source_url": "https://velodrome.org/",
+     "evidence": "The Jerry Baker Velodrome (formerly Marymoor Velodrome), located in Redmond, WA.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://velodrome.org/race-reg-portal/",
+     "source_url": "https://velodrome.org/race-reg-portal/",
+     "evidence": "Register for upcoming races at the Jerry Baker Memorial Velodrome using the links below.",
+     "confidence": "medium",
+     "source_kind": "operator",
+     "note": "Race registration; classes are at https://velodrome.org/adult-classes/. Casual spectator entry is paid at the gate."
+    },
+    "operator": {
+     "value": "Marymoor Velodrome Association (MVA)",
+     "source_url": "https://velodrome.org/about-the-jbm-velo/",
+     "evidence": "The MVA continues to operate the Velodrome",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 1975,
+     "source_url": "https://velodrome.org/about-the-jbm-velo/",
+     "evidence": "officially opened for racing as the Marymoor Velodrome in the spring of 1975",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": null,
+    "email": null,
+    "opening_hours": {
+     "value": "Race nights Mon/Wed/Fri from 7:00 PM (May-September); open track outside scheduled events, most common Sat/Sun mornings and Tue evenings",
+     "source_url": "https://velodrome.org/track-cycling-faq/",
+     "evidence": "is most common on Saturday and Sunday mornings, as well as Tuesday evenings.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://velodrome.org/friday-night/",
+     "source_url": "https://velodrome.org/friday-night/",
+     "evidence": "Friday Night registration costs $30 per adult registrant, $20 per U23.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 5,
+      "max": 30,
+      "currency": "USD",
+      "check_site": true
+     },
+     "source_url": "https://velodrome.org/friday-night/",
+     "evidence": "Admission is suggested $5 at the gate",
+     "confidence": "medium",
+     "source_kind": "operator",
+     "note": "$5 spectator admission (Friday nights); $30 adult rider race entry; Monday race entry $20, novice $10"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://velodrome.org/",
+     "evidence": "2026 Season Overall FINAL standings Awards party",
+     "confidence": "medium",
+     "source_kind": "operator",
+     "note": "Seasonal outdoor track; 2026 season run by operator, no closure notice found"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 400,
+     "source_url": "https://velodrome.org/about-track-racing/",
+     "evidence": "At 400 meters in length per lap",
+     "confidence": "high"
+    },
+    {
+     "field": "surface",
+     "value": "Concrete",
+     "source_url": "https://velodrome.org/about-track-racing/",
+     "evidence": "is a concrete, outdoor velodrome",
+     "confidence": "high"
+    },
+    {
+     "field": "is_indoor",
+     "value": false,
+     "source_url": "https://velodrome.org/about-track-racing/",
+     "evidence": "is a concrete, outdoor velodrome",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "phone",
+    "email"
+   ],
+   "notes": "Only a named Program Director (staff) and board mailboxes are published as contacts, so phone/email are not_found. Track renamed Jerry Baker Memorial Velodrome (official site velodrome.org)."
+  },
+  {
+   "seed_name": "Saint-Denis - Vélodrome de Saint-Denis",
+   "seed_values": {
+    "country_code": "FRA",
+    "length_m": 250,
+    "surface": "Wood",
+    "is_indoor": true
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+     "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+     "evidence": "Situé dans le quartier Allende, le vélodrome municipal est doté d’une piste de 250 mètres",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "booking_url": null,
+    "operator": {
+     "value": "Ville de Saint-Denis (municipal velodrome)",
+     "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+     "evidence": "Il est accessible aux associations et à leurs membres.",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "year_built": {
+     "value": 1928,
+     "source_url": "https://patrimoine.seinesaintdenis.fr/Velodrome-municipal",
+     "evidence": "1928 -1930 ; 1933 (inauguration)",
+     "confidence": "medium",
+     "source_kind": "other",
+     "note": "Département Seine-Saint-Denis heritage inventory (construction 1928-1930, inauguration 1933); track renovated in 2013"
+    },
+    "phone": {
+     "value": "01 48 22 10 23",
+     "contact_is_organisational": true,
+     "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+     "evidence": "Téléphone : 01 48 22 10 23",
+     "confidence": "medium",
+     "source_kind": "owner",
+     "note": "Venue address+phone on the municipal (owner) page; lowered to medium because it may route via the city"
+    },
+    "email": null,
+    "opening_hours": null,
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "unknown",
+     "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+     "evidence": "Il est accessible aux associations et à leurs membres.",
+     "confidence": "low",
+     "source_kind": "owner",
+     "note": "City page describes the velodrome as hosting the annual Grand Prix and accessible to associations; no schedule, closure or works notice found"
+    }
+   },
+   "corrections": [
+    {
+     "field": "surface",
+     "old_value": "Wood",
+     "new_value": "Concrete",
+     "source_url": "https://patrimoine.seinesaintdenis.fr/Velodrome-municipal",
+     "evidence": "est doté d’une piste de 250 mètres de développement en béton armé",
+     "confidence": "medium",
+     "note": "Describes the track as built 1928-30; the track had a complete renovation in 2013 so the current surface layer is not stated by an official source"
+    }
+   ],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://www.saintdenis.fr/v%C3%A9lodrome-de-saint-denis",
+     "evidence": "est doté d’une piste de 250 mètres",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "booking_url",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range",
+    "is_indoor"
+   ],
+   "notes": "Velodrome is at 43 avenue de Stalingrad (Allende district); the heritage page describes an open-air layout (central lawn, stands) but never states outdoor explicitly, so is_indoor is not corrected."
+  },
+  {
+   "seed_name": "Sola Arena (Stavanger)",
+   "seed_values": {
+    "country_code": "NOR",
+    "length_m": 250,
+    "surface": "Wood",
+    "is_indoor": true
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://varenergiarenasola.no/",
+     "source_url": "https://varenergiarenasola.no/",
+     "evidence": "Nysgjerrig på banesykling?",
+     "confidence": "high",
+     "source_kind": "operator",
+     "note": "sola-arena.no redirects to varenergiarenasola.no (arena is now named Vår Energi Arena Sola)"
+    },
+    "booking_url": {
+     "value": "https://folkehallene.ibooking.no/?page=courses&location=1316",
+     "source_url": "https://varenergiarenasola.no/",
+     "evidence": "Se våre intro -og akkrediteringskurs her",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "Folkehallene IKS",
+     "source_url": "https://varenergiarenasola.no/kontakt-oss/",
+     "evidence": "Folkehallene IKS v/Stavanger kommune fakturamottak",
+     "confidence": "medium",
+     "source_kind": "operator",
+     "note": "Owner municipalities (Sandnes, Sola, Randaberg, Stavanger) per folkehallene.no/idrettslag/"
+    },
+    "year_built": {
+     "value": 2021,
+     "source_url": "https://varenergiarenasola.no/trainingcamps-eng/",
+     "evidence": "The track is built by Velotrack and opened in 2021.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": {
+     "value": "+47 952 03 133",
+     "contact_is_organisational": true,
+     "source_url": "https://varenergiarenasola.no/kontakt-oss/",
+     "evidence": "+47 952 03 133",
+     "confidence": "high",
+     "source_kind": "operator",
+     "note": "Labelled 'Telefon resepsjon' (reception)"
+    },
+    "email": {
+     "value": "sola@folkehallene.no",
+     "contact_is_organisational": true,
+     "source_url": "https://varenergiarenasola.no/kontakt-oss/",
+     "evidence": "sola@folkehallene.no",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Mon-Thu 08-22; Fri 08-20; Sat 09-18; Sun 09-20 (whole arena; velodrome public 'Åpne timer' follow the timetable)",
+     "source_url": "https://varenergiarenasola.no/kontakt-oss/",
+     "evidence": "Mandag-Torsdag 08-22 Fredag 08-20 Lørdag 09-18 Søndag 09-20",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://varenergiarenasola.no/pris/",
+     "source_url": "https://varenergiarenasola.no/pris/",
+     "evidence": "Dagspass er for deg som ønsker adgang «her og nå» til publikumstilbudet.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 85,
+      "max": 160,
+      "currency": "NOK",
+      "check_site": true
+     },
+     "source_url": "https://varenergiarenasola.no/pris/",
+     "evidence": "(Voksen i følge med barn betaler barnepris)",
+     "confidence": "medium",
+     "source_kind": "operator",
+     "note": "Day pass (dagspass): child 4-17 NOK 85, student/honnør NOK 145, adult NOK 160; velodrome use additionally requires accreditation (faq page) and rental bike NOK 150/day"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://varenergiarenasola.no/",
+     "evidence": "Åpent i dag",
+     "confidence": "high",
+     "source_kind": "operator",
+     "note": "Home page shows current opening hours and an event on 13 November (Sola SuperCup)"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://varenergiarenasola.no/trainingcamps-eng/",
+     "evidence": "250m Cat1 track",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "surface_wood_confirmation",
+    "is_indoor_confirmation"
+   ],
+   "notes": "Name now 'Vår Energi Arena Sola' at Åsnutveien 44B, 4055 Sola (municipality Sola, near Stavanger)."
+  },
+  {
+   "seed_name": "Třebešín Velodrome",
+   "seed_values": {
+    "country_code": "CZE",
+    "length_m": 333.33,
+    "surface": "Concrete",
+    "is_indoor": false
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.kovopraha.cz/",
+     "source_url": "https://www.kovopraha.cz/",
+     "evidence": "KOVO Praha propojuje děti, rodiče, závodníky, veřejnost i sousedy v jednom živém areálu.",
+     "confidence": "high",
+     "source_kind": "operator",
+     "note": "trebesin.cz is a school (Průmyslovka a Gymnázium Třebešín), not the velodrome. Event site: https://praguetrack.cz/"
+    },
+    "booking_url": {
+     "value": "https://shop.kovopraha.cz/",
+     "source_url": "https://www.kovopraha.cz/",
+     "evidence": "E-shop a rezervace",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "TJ Kovo Praha (KOVO Praha)",
+     "source_url": "https://rekotrebe.cz/",
+     "evidence": "Věnujeme se sportu na Třebešíně už desítky let a máme zde unikátní velodrom.",
+     "confidence": "high",
+     "source_kind": "operator",
+     "note": "rekotrebe.cz is linked from the operator's site and states it is the site of TJ Kovo Praha; Hl.m. Praha and MČ Praha 10 help with operation"
+    },
+    "year_built": {
+     "value": 1941,
+     "source_url": "https://www.kovopraha.cz/o-nas/",
+     "evidence": "První velodrom zde stál už v roce 1941.",
+     "confidence": "low",
+     "source_kind": "operator",
+     "note": "Year of the first velodrome on the site; the present track's build year is not stated"
+    },
+    "phone": null,
+    "email": {
+     "value": "info@kovopraha.cz",
+     "contact_is_organisational": true,
+     "source_url": "https://praguetrack.cz/",
+     "evidence": "info@kovopraha.cz",
+     "confidence": "high",
+     "source_kind": "operator",
+     "note": "praguetrack.cz is the operator's event site (Hosted by KOVO Praha)"
+    },
+    "opening_hours": {
+     "value": "Public rides every Wednesday and Friday; track course Monday afternoon (times not published)",
+     "source_url": "https://www.kovopraha.cz/verejnost/",
+     "evidence": "Jízdy veřejnosti probíhají každou středu a pátek.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://www.kovopraha.cz/verejnost/",
+     "source_url": "https://www.kovopraha.cz/verejnost/",
+     "evidence": "Motopacing a individuální vedení za 1 000 Kč za trénink.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 1000,
+      "max": 3300,
+      "currency": "CZK",
+      "check_site": true
+     },
+     "source_url": "https://www.kovopraha.cz/verejnost/",
+     "evidence": "3 300 Kč za kurz.",
+     "confidence": "medium",
+     "source_kind": "operator",
+     "note": "Individual track training CZK 1,000 per session; track cycling course CZK 3,300 (required entry for public rides); memberships CZK 6,000-9,000"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://www.kovopraha.cz/verejnost/",
+     "evidence": "Jízdy veřejnosti probíhají každou středu a pátek.",
+     "confidence": "medium",
+     "source_kind": "operator",
+     "note": "Operator pages show current public rides and 2026 race calendar; a fundraising/reconstruction site (rekotrebe.cz) exists but does not announce a closure"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 333.33,
+     "source_url": "https://praguetrack.cz/",
+     "evidence": "Prague Velodrome Třebešín is an outdoor 333-metre cycling track in Prague 10.",
+     "confidence": "medium",
+     "note": "Operator states 333 m (rounded); seed 333.33"
+    },
+    {
+     "field": "is_indoor",
+     "value": false,
+     "source_url": "https://praguetrack.cz/",
+     "evidence": "Prague Velodrome Třebešín is an outdoor 333-metre cycling track in Prague 10.",
+     "confidence": "high"
+    },
+    {
+     "field": "surface",
+     "value": "Concrete",
+     "source_url": "https://www.kovopraha.cz/o-nas/",
+     "evidence": "Pro naši činnost využíváme betonový velodrom",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "phone"
+   ],
+   "notes": "Only a customer-support mobile for the e-shop (shop.kovopraha.cz) is published, not a velodrome line, so phone is not_found."
+  }
+ ]
+}
