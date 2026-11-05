@@ -31,7 +31,7 @@ export default function AdminSuggestionsPage() {
   if (!state.admin) return <p className="p-6 text-sm text-slate-500">Admins only.</p>
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-4">
+    <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Suggestions</h1>
         <div className="flex gap-3">

@@ -67,7 +67,7 @@ export default function AdminTemplateRerunsPage() {
   const btn = 'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50'
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-5">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Template run re-run</h1>
         <Link href="/admin/suggestions" className="text-xs underline text-slate-500">Suggestions</Link>
