@@ -5,9 +5,13 @@ import Link from 'next/link'
 import { supabase } from '../../../lib/supabase'
 import { STATUS_LABELS, reviewPath } from '../../../lib/suggestions'
 import { formatDateTime } from '../../../lib/dateFormat'
+import SegmentedTabs from '../../../components/SegmentedTabs'
+import Icon from '../../../components/Icon'
+import { AdminPage, AdminMessage, EmptyState, StatusBadge, adminCard, adminMuted } from '../../../components/admin/AdminUi'
 
 export default function AdminSuggestionsPage() {
   const [state, setState] = useState({ loading: true, admin: false, rows: [] })
+  const [filter, setFilter] = useState('pending')
 
   useEffect(() => {
     ;(async () => {
@@ -27,33 +31,37 @@ export default function AdminSuggestionsPage() {
     })()
   }, [])
 
-  if (state.loading) return <p className="p-6 text-sm text-slate-500">Loading…</p>
-  if (!state.admin) return <p className="p-6 text-sm text-slate-500">Admins only.</p>
+  if (state.loading) return <AdminMessage>Loading…</AdminMessage>
+  if (!state.admin) return <AdminMessage>Admins only.</AdminMessage>
+
+  const count = (k) => state.rows.filter((r) => r.status === k).length
+  const tabs = [['all', `All (${state.rows.length})`], ...Object.keys(STATUS_LABELS).map((k) => [k, `${STATUS_LABELS[k]} (${count(k)})`])]
+  const shown = filter === 'all' ? state.rows : state.rows.filter((r) => r.status === filter)
 
   return (
-    <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white">Suggestions</h1>
-        <div className="flex gap-3">
-          <Link href="/admin" className="text-xs underline text-slate-500">Dashboard</Link>
-          <Link href="/admin/exercises" className="text-xs underline text-slate-500">Exercise mapping</Link>
-          <Link href="/admin/comment-reports" className="text-xs underline text-slate-500">Reported comments</Link>
-          <Link href="/admin/template-reruns" className="text-xs underline text-slate-500">Template re-run</Link>
-          <Link href="/admin/partner-apps" className="text-xs underline text-slate-500">Partner apps</Link>
-        </div>
-      </div>
-      {state.rows.length === 0 && <p className="text-sm text-slate-500">No suggestions yet.</p>}
-      {state.rows.map((s) => (
-        <Link
-          key={s.id}
-          href={reviewPath(s.id)}
-          className="block p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-sm"
-        >
-          <b>{s.entity_type}</b> · {s.target_id ? `edit ${s.target_id}` : 'new'} ·{' '}
-          {STATUS_LABELS[s.status]}
-          <span className="block text-xs text-slate-400">{formatDateTime(s.created_at)}</span>
-        </Link>
-      ))}
-    </div>
+    <AdminPage title="Suggestions" description="Rider-submitted edits and new entries waiting for review.">
+      <SegmentedTabs label="Filter by status" tabs={tabs} value={filter} onChange={setFilter} />
+      {shown.length === 0 && <EmptyState>No {filter === 'all' ? '' : `${STATUS_LABELS[filter].toLowerCase()} `}suggestions.</EmptyState>}
+      <ul className="space-y-2">
+        {shown.map((s) => (
+          <li key={s.id}>
+            <Link
+              href={reviewPath(s.id)}
+              className={`${adminCard} flex items-center justify-between gap-3 min-h-[56px] hover:border-orange-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500`}
+            >
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-slate-900 dark:text-white break-words">{s.entity_type} · {s.target_id ? 'edit' : 'new'}</span>
+                {s.target_id && <span className={`block text-xs ${adminMuted} truncate`} title={String(s.target_id)}>{s.target_id}</span>}
+                <span className={`block text-xs ${adminMuted}`}>{formatDateTime(s.created_at)}</span>
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                <StatusBadge status={s.status} label={STATUS_LABELS[s.status]} />
+                <Icon name="chevronRight" className="text-slate-500" />
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </AdminPage>
   )
 }

@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
+import Icon from '../../../components/Icon'
+import { AdminPage, AdminMessage, EmptyState, StatusBadge, Field, adminCard, adminMuted, adminBtn } from '../../../components/admin/AdminUi'
 import { getAuthHeader } from '../../../lib/supabase'
 import { formatDateTime } from '../../../lib/dateFormat'
 
@@ -21,36 +22,46 @@ export default function AdminPartnerAppsPage() {
     load()
   }
 
-  if (state.loading) return <p className="p-6 text-sm text-slate-500">Loading…</p>
-  if (!state.ok) return <p className="p-6 text-sm text-slate-500">Admins only.</p>
+  if (state.loading) return <AdminMessage>Loading…</AdminMessage>
+  if (!state.ok) return <AdminMessage>Admins only.</AdminMessage>
   const names = Object.fromEntries(state.apps.map((a) => [a.id, a.name]))
   return (
-    <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white">Partner apps</h1>
-        <Link href="/admin" className="text-xs underline text-slate-500">Dashboard</Link>
-      </div>
-      {state.apps.length === 0 && <p className="text-sm text-slate-500">No apps registered.</p>}
-      {state.apps.map((a) => (
-        <div key={a.id} className="p-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder text-xs space-y-1">
-          <div className="flex items-center justify-between gap-2">
-            <b className="text-sm">{a.name}</b>
-            <span className="uppercase font-bold text-slate-400">{a.status}</span>
-          </div>
-          {a.description && <p>{a.description}</p>}
-          {a.homepage_url && <p>Website: {a.homepage_url}</p>}
-          <p>Redirects: {a.redirect_uris.join(', ')}</p>
-          <p className="text-slate-400">{a.scopes.join(', ')} · {a.rate_limit_per_min}/min · {a.rate_limit_per_day}/day · registered {formatDateTime(a.created_at)}</p>
-          <div className="flex gap-3 pt-1">
-            {a.status !== 'approved' && <button type="button" onClick={() => setStatus(a.id, 'approved')} className="font-bold uppercase text-emerald-600">Approve</button>}
-            {a.status !== 'suspended' && <button type="button" onClick={() => setStatus(a.id, 'suspended')} className="font-bold uppercase text-red-500">Suspend</button>}
-          </div>
-        </div>
-      ))}
-      <h2 className="text-sm font-black uppercase tracking-wider">Recent activity</h2>
-      <ul className="text-xs text-slate-500 space-y-0.5">
-        {state.log.map((l) => <li key={l.id}>{formatDateTime(l.created_at)} · {l.event} · {names[l.app_id] || '—'}</li>)}
+    <AdminPage title="Partner apps" description="Third-party apps registered to use the API. Approve to allow access, suspend to block it.">
+      {state.apps.length === 0 && <EmptyState>No apps registered.</EmptyState>}
+      <ul className="space-y-3">
+        {state.apps.map((a) => (
+          <li key={a.id} className={`${adminCard} space-y-3`}>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h2 className="text-lg font-black text-slate-900 dark:text-white break-words">{a.name}</h2>
+              <StatusBadge status={a.status} />
+            </div>
+            {a.description && <p className="text-sm text-slate-900 dark:text-white break-words">{a.description}</p>}
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+              {a.homepage_url && <Field label="Website"><span className="break-all">{a.homepage_url}</span></Field>}
+              <Field label="Redirects"><span className="break-all">{a.redirect_uris.join(', ')}</span></Field>
+              <Field label="Scopes">{a.scopes.join(', ') || '—'}</Field>
+              <Field label="Rate limit">{a.rate_limit_per_min}/min · {a.rate_limit_per_day}/day</Field>
+              <Field label="Registered">{formatDateTime(a.created_at)}</Field>
+            </dl>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {a.status !== 'approved' && <button type="button" onClick={() => setStatus(a.id, 'approved')} className={adminBtn.success}><Icon name="check" /> Approve</button>}
+              {a.status !== 'suspended' && <button type="button" onClick={() => setStatus(a.id, 'suspended')} className={adminBtn.danger}><Icon name="close" /> Suspend</button>}
+            </div>
+          </li>
+        ))}
       </ul>
-    </div>
+      <section aria-labelledby="partner-activity" className={`${adminCard} space-y-2`}>
+        <h2 id="partner-activity" className="text-lg font-black text-slate-900 dark:text-white">Recent activity</h2>
+        {state.log.length === 0 && <p className={`text-sm ${adminMuted}`}>No activity yet.</p>}
+        <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+          {state.log.map((l) => (
+            <li key={l.id} className="py-2 text-sm text-slate-900 dark:text-white flex flex-col sm:flex-row sm:gap-3">
+              <span className={`${adminMuted} sm:w-48 shrink-0`}>{formatDateTime(l.created_at)}</span>
+              <span className="break-words">{l.event} · {names[l.app_id] || '—'}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </AdminPage>
   )
 }
