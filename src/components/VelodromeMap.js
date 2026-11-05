@@ -32,7 +32,7 @@ export default function VelodromeMap({ tracks = [] }) {
   const validTracks = tracks.filter(t => t.latitude && t.longitude && !isNaN(t.latitude) && !isNaN(t.longitude))
 
   return (
-    <div className="h-[420px] w-full rounded-xl overflow-hidden border border-track-line shadow-2xl relative z-0">
+    <div className="h-[260px] sm:h-[360px] lg:h-[420px] w-full rounded-2xl overflow-hidden border border-track-line shadow-2xl relative z-0">
       <MapContainer
         center={[30.0, 10.0]}
         zoom={2}
@@ -54,12 +54,12 @@ export default function VelodromeMap({ tracks = [] }) {
           >
             <Popup className="track-popup">
               <div className="text-slate-900 p-1">
-                <div className="font-bold text-sm">{track.name}</div>
-                <div className="text-xs text-slate-600 mb-1">
+                <div className="font-bold text-base">{track.name}</div>
+                <div className="text-sm text-slate-700 mb-1">
                   {track.country_code ? `[${track.country_code}] ` : ''}{track.surface} • {track.length_m} m
                 </div>
-                <div className="text-[11px] font-semibold text-orange-600">
-                  {track.is_indoor ? <><Icon name="velodrome" /> Indoor</> : <><Icon name="sun" /> Outdoor</>} • {track.elevation_m} m a.s.l.
+                <div className="text-xs font-semibold text-orange-700">
+                  {track.is_indoor ? <><Icon name="velodrome" /> Indoor</> : <><Icon name="sun" /> Outdoor</>}{track.elevation_m != null ? ` • ${track.elevation_m} m a.s.l.` : ''}
                 </div>
               </div>
             </Popup>

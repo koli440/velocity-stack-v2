@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Icon from '../../../components/Icon'
 import { notFound } from 'next/navigation'
 import { SITE_URL, trackTitle, fitDescription } from '../../../lib/seo'
 import { isIndexableTrack } from '../../../lib/trackSlug'
@@ -38,8 +39,8 @@ export async function generateMetadata({ params }) {
 
 const Row = ({ label, children }) => (
   <div>
-    <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</dt>
-    <dd className="text-sm font-semibold text-slate-900 dark:text-white mt-0.5">{children}</dd>
+    <dt className="text-xs font-semibold text-slate-600 dark:text-slate-300">{label}</dt>
+    <dd className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">{children}</dd>
   </div>
 )
 
@@ -61,17 +62,27 @@ export default async function TrackPage({ params }) {
       {indexable && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(trackJsonLd(t, country, fitting)) }} />
       )}
-      <nav className="text-xs text-slate-500">
-        <Link href="/velodromes" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Velodromes</Link>
+      <nav className="text-sm">
+        <Link href="/velodromes" className="inline-flex items-center gap-1 min-h-[44px] font-semibold text-emerald-800 dark:text-brand-neon hover:underline">
+          <Icon name="chevronLeft" size={16} /> Velodromes
+        </Link>
       </nav>
-      <h1 className="text-3xl font-black text-slate-900 dark:text-white">{t.name} velodrome: length, surface and location</h1>
+      <header className="space-y-3">
+        <h1 className="text-2xl sm:text-3xl font-black leading-tight text-slate-900 dark:text-white">{t.name} velodrome: length, surface and location</h1>
+        <div className="flex flex-wrap gap-2 text-sm font-semibold">
+          <span className={`px-2.5 py-1 rounded-lg ${t.is_indoor ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' : 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300'}`}>{t.is_indoor ? 'Indoor' : 'Outdoor'}</span>
+          {t.surface && <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">{t.surface}</span>}
+          {t.length_m ? <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">{Number(t.length_m)} m</span> : null}
+          {country && <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200"><Icon name="pin" size={14} /> {country}</span>}
+        </div>
+        <p className="text-base text-slate-700 dark:text-slate-300">{trackDescription(t, country)}</p>
+      </header>
       {closed && (
         <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 px-4 py-3 text-sm font-semibold text-amber-900 dark:text-amber-200">
           This velodrome appears to be closed{statusChecked ? ` (status checked ${statusChecked})` : ''}. Check with the operator before travelling.
         </div>
       )}
-      <p className="text-sm text-slate-600 dark:text-slate-300">{trackDescription(t, country)}</p>
-      <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-5">
+      <dl className="glass-dense grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 sm:p-5 [&_dd]:break-words">
         <Row label="Track length">{t.length_m ? `${Number(t.length_m)} m` : 'Unknown'}</Row>
         <Row label="Surface">{t.surface || 'Unknown'}</Row>
         <Row label="Type">{t.is_indoor ? 'Indoor' : 'Outdoor'}</Row>
@@ -84,28 +95,28 @@ export default async function TrackPage({ params }) {
         {t.operator && <Row label="Operator">{t.operator}</Row>}
         {t.year_built && <Row label="Year built">{t.year_built}</Row>}
         {!closed && t.opening_hours && <Row label="Opening hours">{t.opening_hours}</Row>}
-        {price && <Row label="Typical price">{price} <span className="block text-[11px] font-normal text-slate-500">Rough per-session range: check their site for current prices.</span></Row>}
+        {price && <Row label="Typical price">{price} <span className="block text-xs font-normal text-slate-600 dark:text-slate-300">Rough per-session range: check their site for current prices.</span></Row>}
       </dl>
-      {t.notes && <p className="text-sm italic text-slate-500">{t.notes}</p>}
+      {t.notes && <p className="text-sm text-slate-700 dark:text-slate-300">{t.notes}</p>}
       {fitting.length > 0 && (
         <section>
-          <h2 className="text-lg font-black text-slate-900 dark:text-white mb-2">Disciplines that fit this track</h2>
-          <p className="text-xs text-slate-500 mb-2">Events whose distance rules allow a {Number(t.length_m)} m track.</p>
+          <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Disciplines that fit this track</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">Events whose distance rules allow a {Number(t.length_m)} m track.</p>
           <ul className="flex flex-wrap gap-2">
             {fitting.map((d) => (
-              <li key={d.id} className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">{d.name}</li>
+              <li key={d.id} className="text-sm font-semibold px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">{d.name}</li>
             ))}
           </ul>
         </section>
       )}
-      <div className="flex flex-wrap gap-4 text-sm">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 text-sm">
         {[['website_url', 'Website'], ['pricing_url', 'Pricing'], ['booking_url', 'Book a session']].map(([k, label]) =>
-          t[k] && !(closed && k === 'booking_url') ? <a key={k} href={t[k]} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 dark:text-brand-neon underline">{label}</a> : null,
+          t[k] && !(closed && k === 'booking_url') ? <a key={k} href={t[k]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-xl border border-emerald-600/50 font-semibold text-emerald-800 dark:text-brand-neon hover:bg-emerald-500/10">{label} <Icon name="chevronRight" size={14} /></a> : null,
         )}
       </div>
-      {verified && <p className="text-xs text-slate-500">Venue details last verified against official sources on {verified}.</p>}
-      <p className="text-sm text-slate-500">
-        Analyse your own rides on this track with <Link href="/how-it-works" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">VelocityStack</Link>.
+      {verified && <p className="text-sm text-slate-600 dark:text-slate-300">Venue details last verified against official sources on {verified}.</p>}
+      <p className="text-sm text-slate-700 dark:text-slate-300 break-words">
+        Analyse your own rides on this track with <Link href="/how-it-works" className="font-semibold text-emerald-800 dark:text-brand-neon hover:underline">VelocityStack</Link>.
         Canonical page: {SITE_URL}/velodromes/{t.slug}
       </p>
     </article>
