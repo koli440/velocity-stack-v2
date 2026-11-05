@@ -1,0 +1,1505 @@
+{
+ "schema_version": 1,
+ "researched_at": "2026-11-05",
+ "batch": 1,
+ "policy": "Official sources only; unverified values are null and listed in not_found. Nothing here is applied.",
+ "tracks": [
+  {
+   "seed_name": "Aguascalientes - Velódromo Bicentenario",
+   "seed_values": {
+    "country_code": "MEX",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": null,
+    "booking_url": null,
+    "operator": null,
+    "year_built": null,
+    "phone": null,
+    "email": null,
+    "opening_hours": null,
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "unknown",
+     "source_url": null,
+     "evidence": null,
+     "confidence": "low",
+     "source_kind": "other"
+    }
+   },
+   "corrections": [],
+   "confirmations": [],
+   "not_found": [
+    "website_url",
+    "booking_url",
+    "operator",
+    "year_built",
+    "phone",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range",
+    "operating_status"
+   ],
+   "notes": "The only plausible official source is the state sports institute (INDEA) on aguascalientes.gob.mx, but every request (curl with browser headers and web_fetch) to www.aguascalientes.gob.mx / ags.gob.mx returned HTTP 403, so nothing could be quoted. Web-search summaries (hours, phone +52 449 158 3404, 'INDEA manages') come only from aggregators/maps and were not used. No venue-specific site found. Needs a re-run from a network that can reach the state portal."
+  },
+  {
+   "seed_name": "Athens - Olympic Velodrome",
+   "seed_values": {
+    "country_code": "GRE",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+     "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+     "evidence": "αποτελεί μέρος του ευρύτερου Ολυμπιακού Συγκροτήματος του Αμαρουσίου",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": null,
+    "operator": {
+     "value": "Ο.Α.Κ.Α. (Ολυμπιακό Αθλητικό Κέντρο Αθηνών «Σπύρος Λούης»)",
+     "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+     "evidence": "ΑΘΛΗΤΙΚΟ ΚΕΝΤΡΟ Ο.Α.Κ.Α.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 1991,
+     "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+     "evidence": "Κατασκευάστηκε το 1991 και μέχρι το 2003 λειτούργησε ως ανοιχτό Ποδηλατοδρόμιο",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": null,
+    "email": {
+     "value": "info@oaka.gr",
+     "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+     "evidence": "Email: info@oaka.gr",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Mon-Fri 07:30-22:00",
+     "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+     "evidence": "Λειτουργεί καθημερινώς από Δευτέρα έως Παρασκευή από 7:30 έως 22:00.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+     "evidence": "Λειτουργεί καθημερινώς από Δευτέρα έως Παρασκευή από 7:30 έως 22:00.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+     "evidence": "Η περίμετρος είναι 250μ",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "booking_url",
+    "phone",
+    "pricing_url",
+    "price_range",
+    "surface"
+   ],
+   "notes": "Phone: the header shows 210 6834021 unlabeled but the page footer labels the same number 'Fax: 210 6834021', so it is not recorded as a phone; other numbers on /epikoinonia/ belong to named management posts. No velodrome tariff on the OAKA price list (category/timokatalogoi) and no public-session booking found; the velodrome is mainly an event/federation venue. Opening-hours sentence is undated (possible staleness). Surface (wood) not stated on the page."
+  },
+  {
+   "seed_name": "Berlin - Velodrom Berlin",
+   "seed_values": {
+    "country_code": "GER",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.velodrom.de/",
+     "source_url": "https://www.velodrom.de/",
+     "evidence": "Managed by Velomax Berlin Hallenbetriebs GmbH",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": null,
+    "operator": {
+     "value": "Velomax Berlin Hallenbetriebs GmbH",
+     "source_url": "https://www.velodrom.de/",
+     "evidence": "Managed by Velomax Berlin Hallenbetriebs GmbH",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 1997,
+     "source_url": "https://www.velodrom.de/location/daten-fakten",
+     "evidence": "Eröffnung im August 1997",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": null,
+    "email": {
+     "value": "info@velomax.de",
+     "source_url": "https://www.velodrom.de/impressum/",
+     "evidence": "info@velomax.de",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "opening_hours": null,
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://www.velodrom.de/",
+     "evidence": "Ab sofort wird bei uns bargeldlos bezahlt.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://www.velodrom.de/location/daten-fakten",
+     "evidence": "Länge Radrennbahn: orig. sibirische Fichte 250 m",
+     "confidence": "high"
+    },
+    {
+     "field": "surface",
+     "value": "Wood",
+     "source_url": "https://www.velodrom.de/location/daten-fakten",
+     "evidence": "Länge Radrennbahn: orig. sibirische Fichte 250 m",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "booking_url",
+    "phone",
+    "opening_hours",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "Velodrom is a 12,000-seat event arena; the site lists concerts/events only (no public track sessions, hours or tariffs). Office hours (Mon-Fri 9-16) are not track opening hours. Phone appears only inside an HTML source comment (not visible content), so not used. Email info@velomax.de is the operator's general mailbox (shared with Max-Schmeling-Halle). Status 'open' is inferred from current event programme/announcement, medium. Opening date text is inconsistent between pages (Aug 1997 on daten-fakten; premiere 23 Jan 1997 on /location; handover Sept 1997); year 1997 is consistent."
+  },
+  {
+   "seed_name": "Bromont - Centre National de Cyclisme",
+   "seed_values": {
+    "country_code": "CAN",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://centrenationalbromont.com/",
+     "source_url": "https://centrenationalbromont.com/",
+     "evidence": "Le Centre National de Cyclisme de Bromont est un organisme à but non lucratif",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://activitymessenger.com/org/828/page/heljhU1/velodrome",
+     "source_url": "https://centrenationalbromont.com/acces-journalier/",
+     "evidence": "Procurez-vous votre accès journalier et venez rouler sur le vélodrome!",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "Centre National de Cyclisme de Bromont (CNCB)",
+     "source_url": "https://centrenationalbromont.com/",
+     "evidence": "Le Centre National de Cyclisme de Bromont est un organisme à but non lucratif",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 2022,
+     "source_url": "https://centrenationalbromont.com/mission-et-historique/",
+     "evidence": "Ouverture du Vélodrome Sylvan Adams",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": {
+     "value": "450 534-3333",
+     "source_url": "https://centrenationalbromont.com/nous-joindre/",
+     "evidence": "450 534-3333",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "info@cncb.ca",
+     "source_url": "https://centrenationalbromont.com/nous-joindre/",
+     "evidence": "info@cncb.ca",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Mon-Fri 07:00-21:00; Sat-Sun 08:00-21:00 (whole centre; velodrome session times are in the booking schedule)",
+     "source_url": "https://centrenationalbromont.com/nous-joindre/",
+     "evidence": "Lundi 7h00 à 21h00",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://centrenationalbromont.com/acces-journalier/",
+     "source_url": "https://centrenationalbromont.com/acces-journalier/",
+     "evidence": "Procurez-vous votre accès journalier et venez rouler sur le vélodrome!",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 32.5,
+      "max": 35.0,
+      "currency": "CAD",
+      "check_site": true
+     },
+     "source_url": "https://activitymessenger.com/org/828/page/heljhU1/velodrome",
+     "evidence": "Horaire régulier À partir de 32,50 $",
+     "confidence": "medium",
+     "source_kind": "other"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://centrenationalbromont.com/abonnement/",
+     "evidence": "Ouvert 7 jours sur 7",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [],
+   "not_found": [],
+   "notes": "Price range comes from the operator's ticketing page (activitymessenger.com, linked from the official site, hence source_kind other): free session 'À partir de 32,50 $' (regular schedule) and motor-pacing session 'À partir de 35,00 $'; both are 'from' prices, taxes excluded; the official site's own '5,50 $' headline is multisport, not velodrome. Initiation courses (76.50-125 $) and 10-visit cards/subscriptions excluded. Booking URL is the operator's velodrome ticketing page, reached via the official 'Réserver une séance' button. Hours are centre-wide, not velodrome-specific. Status from 'Ouvert 7 jours sur 7' on the subscription page. Seed length 250 m / wood not stated on pages checked (not contradicted). Year 2022 is the opening of the current Sylvan Adams velodrome; an earlier outdoor velodrome opened in 1998 (same page)."
+  },
+  {
+   "seed_name": "Cardiff - Maindy Stadium",
+   "seed_values": {
+    "country_code": "GBR",
+    "length_m": 460,
+    "surface": "Concrete"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+     "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+     "evidence": "Better Maindy Centre’s cycle track is 460m in length.",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": null,
+    "operator": {
+     "value": "Better (GLL - Greenwich Leisure Limited)",
+     "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+     "evidence": "Better is a registered trademark and trading name of GLL (Greenwich Leisure Limited)",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 1958,
+     "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+     "evidence": "Built back in 1958 for the British Empire and Commonwealth Games",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": null,
+    "email": {
+     "value": "Maindy@gll.org",
+     "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+     "evidence": "Maindy@gll.org",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Cycle track: Mon 06:00-18:00; Tue 06:00-16:00; Wed 06:00-14:00; Thu 06:00-17:00; Fri 06:30-17:30; Sat 07:30-09:00; Sun 07:30-16:30",
+     "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre",
+     "evidence": "Cycle Track Mon 06:00 - 18:00 Tue 06:00 - 16:00 Wed 06:00 - 14:00",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/prices",
+     "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/prices",
+     "evidence": "Cycle Velodrome",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 3.85,
+      "max": 7.3,
+      "currency": "GBP",
+      "check_site": true
+     },
+     "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/prices",
+     "evidence": "Adult As timetabled £7.30 £6.55 £5.50",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre",
+     "evidence": "Opening times for week commencing November 02, 2026",
+     "confidence": "high",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 460,
+     "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+     "evidence": "Better Maindy Centre’s cycle track is 460m in length.",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "booking_url",
+    "phone",
+    "surface"
+   ],
+   "notes": "Cardiff Council site is behind a Cloudflare challenge (not fetchable); Better (GLL) runs the centre. Price range: non-member Adult £7.30 and Junior 11-17 £3.85 on the prices page; the cycling page still says 'from just £7.00 per person', which differs slightly from £7.30 (flag for reviewer; kept medium). Member/resident rates (down to £2.90) excluded. Group/club track hire excluded. No venue-specific phone published on the cited pages. Surface (Concrete) not stated; owner (Cardiff Council) not verified from an official page. Cycle track is an outdoor 460 m track."
+  },
+  {
+   "seed_name": "Derby - Derby Arena",
+   "seed_values": {
+    "country_code": "GBR",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.derbyarena.co.uk/",
+     "source_url": "https://www.derbyarena.co.uk/get-involved/contact-us/",
+     "evidence": "Derby Arena, Royal Way, Pride Park, Derby, DE24 8JB",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://www.derbyarena.co.uk/cycling/track-cycling/programme-prices/",
+     "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/accredited-rider/",
+     "evidence": "The programme will be available to book up to",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "Derby City Council",
+     "source_url": "https://www.derbyarena.co.uk/get-involved/contact-us/",
+     "evidence": "©2017 Derby City Council",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "year_built": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "phone": {
+     "value": "+44 1332 640011",
+     "source_url": "https://www.derbyarena.co.uk/get-involved/contact-us/",
+     "evidence": "Telephone: 01332 640011",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "derbyarena@derby.gov.uk",
+     "source_url": "https://www.derbyarena.co.uk/get-involved/contact-us/",
+     "evidence": "Email: derbyarena@derby.gov.uk",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Arena-wide (not track-specific): Mon-Fri 06:00-22:00; Sat-Sun 07:00-19:00; subject to early closure at some events. Track sessions follow a separate weekly programme.",
+     "source_url": "https://www.derbyarena.co.uk/plan-a-visit/opening-hours/",
+     "evidence": "opening times are subject to early closure at some events",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://www.derbyarena.co.uk/cycling/track-cycling/accredited-rider/",
+     "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/accredited-rider/",
+     "evidence": "Track cycling prices",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 17.45,
+      "max": 41.6,
+      "currency": "GBP",
+      "check_site": true
+     },
+     "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/accredited-rider/",
+     "evidence": "Structured training – A&B 1 hour £17.45",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/programme-prices/",
+     "evidence": "Track Cycling Drop In 1 Hour",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/about-the-track/",
+     "evidence": "hand-driven into the 250m track",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    {
+     "field": "surface",
+     "value": "Wood",
+     "source_url": "https://www.derbyarena.co.uk/plan-a-visit/about-the-arena/",
+     "evidence": "The cycle track itself is made out of Siberian Spruce",
+     "confidence": "high",
+     "source_kind": "operator"
+    }
+   ],
+   "not_found": [
+    "year_built"
+   ],
+   "notes": "derbyarena.com is a parked HugeDomains for-sale page; the real operator site is derbyarena.co.uk (Derby City Council / Derby LIVE). Several URLs from search summaries (/track-programme-prices/, /plan-a-visit/opening-times/) are 404; live ones are /programme-prices/ and /opening-hours/. Price range: min 17.45 = accredited structured training 1h (accredited-rider page); max 41.60 = 2h Stage 3/4 sessions (accreditation page, https://www.derbyarena.co.uk/cycling/track-cycling/accreditation/); taster 1h £21. Excludes £150 fast-track course, equipment hire and group bookings. Max not on the cited page, hence medium. Email uses the council domain but is the Derby Arena general enquiries mailbox. Operator ownership rests on the site copyright line only (medium). Year built not stated on any official page fetched."
+  },
+  {
+   "seed_name": "Fiorenzuola d'Arda - Velodromo Attilio Pavesi",
+   "seed_values": {
+    "country_code": "ITA",
+    "length_m": 394,
+    "surface": "Concrete"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "booking_url": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "operator": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "year_built": {
+     "value": 1929,
+     "source_url": "https://visitpiacenza.it/natura/velodromo-attilio-pavesi/",
+     "evidence": "risale al 1929",
+     "confidence": "medium",
+     "source_kind": "other"
+    },
+    "phone": {
+     "value": "+39 0523 892838",
+     "source_url": "https://visitpiacenza.it/natura/velodromo-attilio-pavesi/",
+     "evidence": "+39.0523.892838",
+     "confidence": "medium",
+     "source_kind": "other"
+    },
+    "email": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "opening_hours": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "pricing_url": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "price_range": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "operating_status": {
+     "value": "unknown",
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m/surface",
+     "value": "394 m, cemento (Concrete)",
+     "source_url": "https://www.federciclismo.it/pista/velodromi/",
+     "evidence": "Fiorenzuola (Pc) - Vel. Attilio Pavesi - 394,00 m. - cemento",
+     "confidence": "high",
+     "source_kind": "federation"
+    }
+   ],
+   "not_found": [
+    "website_url",
+    "booking_url",
+    "operator",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range",
+    "operating_status"
+   ],
+   "notes": "No venue or comune page for the velodrome found (comune.fiorenzuola.pc.it has none). fiorenzuolatrack.eu is the Sei Giorni delle Rose event organiser (gmail mailbox, mobile number), not the venue, so not used. Year and phone come from visitpiacenza.it, an official regional tourism information site (not the owner or operator), hence medium / source_kind other and not auto-applicable. The venue's own web presence is only a Facebook page (not an acceptable source)."
+  },
+  {
+   "seed_name": "Helsinki Velodrome",
+   "seed_values": {
+    "country_code": "FIN",
+    "length_m": 400,
+    "surface": "Concrete"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://palvelukartta.hel.fi/fi/unit/41334",
+     "source_url": "https://palvelukartta.hel.fi/fi/unit/41334",
+     "evidence": "Käpylän liikuntapuisto / Velodromi / Pyöräilystadion",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "booking_url": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "operator": {
+     "value": "City of Helsinki (Culture and Leisure Division)",
+     "source_url": "https://palvelukartta.hel.fi/fi/unit/41334",
+     "evidence": "Kunnallinen palvelu, Kulttuurin ja vapaa-ajan toimiala, Helsingin kaupunki.",
+     "confidence": "high",
+     "source_kind": "owner"
+    },
+    "year_built": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "phone": {
+     "value": "+358 9 310 87990",
+     "source_url": "https://palvelukartta.hel.fi/fi/unit/41334",
+     "evidence": "+358 9 310 87990",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "email": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "opening_hours": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "pricing_url": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "price_range": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "operating_status": {
+     "value": "unknown",
+     "source_url": "https://pyoraily.fi/lajit/rata/ratapyorailyn-velodromit/",
+     "evidence": "Helsingin velodromi on suljettu kesän 2025 remontin vuoksi.",
+     "confidence": "low",
+     "source_kind": "federation"
+    }
+   },
+   "corrections": [],
+   "confirmations": [],
+   "not_found": [
+    "booking_url",
+    "year_built",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "No dedicated venue site; the City's service map lists 'Kotisivua ei ilmoitettu' and 'Aukioloaikoja ei ilmoitettu', and liikunta.hel.fi is JavaScript-rendered so its text could not be verified. The phone is the City's number listed on the unit page, possibly a Culture and Leisure sports-services line rather than a venue-specific one (medium; reviewer to decide). Status: the national federation (Suomen Pyöräily) says the velodrome is closed for a summer 2025 renovation; this is dated and may be stale (today is 2026-11-05), and the owner's Käpylä sports park project page (hel.fi) only says the Velodromi building needs renovation. No official current status found, so value is unknown; this is a needs-attention item. Search-engine summaries contradicted each other on closure and were not used. Seed length/surface not covered by any official page found."
+  },
+  {
+   "seed_name": "Izu Velodrome (Shizuoka)",
+   "seed_values": {
+    "country_code": "JPN",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+     "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+     "evidence": "世界的大会で使用された室内自転車競技場！",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "operator": {
+     "value": "一般財団法人日本サイクルスポーツセンター (Japan Cycle Sports Center)",
+     "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+     "evidence": "一般財団法人日本サイクルスポーツセンター",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "phone": {
+     "value": "+81 558 79 0001",
+     "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+     "evidence": "0558-79-0001",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "info@csc.or.jp",
+     "source_url": "https://www.csc.or.jp/foundation-overview/",
+     "evidence": "Mail / info@csc.or.jp",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Park-wide (not velodrome-specific): closed Wed and Thu (open on public holidays); hours vary by season, e.g. 2026 weekdays 10:00-16:30, Sat/Sun/holidays 09:30-16:30. Velodrome general use is currently suspended; camp use follows park hours.",
+     "source_url": "https://www.csc.or.jp/about/",
+     "evidence": "定休日・・・毎週水曜日・木曜日(祝日は営業)",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://www.csc.or.jp/about/",
+     "source_url": "https://www.csc.or.jp/about/",
+     "evidence": "施設のご利用には、入場料と施設利用料が必要です。",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "operating_status": {
+     "value": "closed",
+     "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+     "evidence": "一般営業については当面の間中止とさせていただきます。",
+     "confidence": "high",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m/surface",
+     "value": "250 m, wood",
+     "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+     "evidence": "国内初の屋内型板張り250ｍトラック。",
+     "confidence": "high",
+     "source_kind": "operator"
+    }
+   ],
+   "not_found": [
+    "booking_url",
+    "year_built",
+    "price_range"
+   ],
+   "notes": "Operator page states general operation is suspended 'for the time being' and tours are suspended from 1 Sept for Aichi-Nagoya Asian Games venue works; camps/training for school, university and corporate teams are still accepted (https://www.csc.or.jp/tournament/tournament-2606/, application by email/FAX, no online booking). So status closed means closed to general public use only. The pricing page lists park admission (adult ¥850) and passes only, no velodrome-specific price, so price_range is not_found and pricing_url is park-wide (medium). Organisational lines: 0558-79-0001 (facilities) and 0558-79-0004 (cycling competition dept, also on the velodrome page); mailbox cscshinkou@csc.or.jp is the competition-promotion department mailbox (camp applications). Year built (2011 per non-official sources) not stated on an official page fetched."
+  },
+  {
+   "seed_name": "Lima - Velódromo de la Videna",
+   "seed_values": {
+    "country_code": "PER",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "booking_url": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "operator": {
+     "value": "Instituto Peruano del Deporte (IPD)",
+     "source_url": "https://www.gob.pe/institucion/ipd/noticias/1166848-velodromo-de-la-videna-luce-espectacular-luego-de-los-trabajos-realizados-por-el-ipd",
+     "evidence": "al recuperar la administración de la Videna",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "year_built": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "phone": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "email": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "opening_hours": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "pricing_url": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "price_range": {
+     "value": null,
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    },
+    "operating_status": {
+     "value": "unknown",
+     "source_url": null,
+     "evidence": null,
+     "confidence": null,
+     "source_kind": null
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m/surface",
+     "value": "250 m, wood",
+     "source_url": "https://www.gob.pe/institucion/ipd/noticias/1166848-velodromo-de-la-videna-luce-espectacular-luego-de-los-trabajos-realizados-por-el-ipd",
+     "evidence": "la pista de madera de 250 metros",
+     "confidence": "high",
+     "source_kind": "owner"
+    }
+   ],
+   "not_found": [
+    "website_url",
+    "booking_url",
+    "year_built",
+    "phone",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range",
+    "operating_status"
+   ],
+   "notes": "www.ipd.gob.pe did not resolve; IPD publishes via gob.pe and has no velodrome-specific page, contact page or timetable (the IPD contact/institution URLs return 404). A May 2025 IPD press note says track maintenance was completed and a July 2025 note says the velodrome would host the Pan-American Junior Track Championship, but neither is a current open/closed statement (the track is used mainly by federation/national teams), so status is unknown. Phone numbers seen in search summaries ((01) 323-1086, FDPC mobile) were not found on an official page and were not used. fedepeci.pe is the national federation; its pages were not venue-specific."
+  },
+  {
+   "seed_name": "Maebashi - Green Dome",
+   "seed_values": {
+    "country_code": "JPN",
+    "length_m": 333.3,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.maebashi-keirin.jp/",
+     "source_url": "https://www.maebashi-keirin.jp/",
+     "evidence": "前橋競輪オフィシャルサイトです。",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": null,
+    "operator": null,
+    "year_built": null,
+    "phone": {
+     "value": "+81 27-231-4508",
+     "source_url": "https://greendome.jp/access",
+     "evidence": "競輪に関するお問い合わせは027-231-4508",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": null,
+    "opening_hours": {
+     "value": "Gates open 10:00 on keirin race days (not a general public track-riding schedule)",
+     "source_url": "https://www.maebashi-keirin.jp/",
+     "evidence": "開門時間 10:00～",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://www.maebashi-keirin.jp/",
+     "evidence": "前橋競輪場 〒371-0035 群馬県前橋市岩神町1-2-1",
+     "confidence": "low",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [],
+   "not_found": [
+    "booking_url",
+    "operator",
+    "year_built",
+    "email",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "Professional keirin venue inside Green Dome Maebashi; no public track sessions or individual rider prices published. Official keirin site is current (news dated 2026-10-28, November race schedule). greendome.jp is run by Nippon Totor (arena operator) and lists 027-235-2000 as the arena line and 027-231-4508 for keirin enquiries; its email is obfuscated and arena-only, so not recorded. Operator/施行者 of the keirin track and year built not stated on fetched official pages. Seed length 333.3 m / Wood not confirmed or contradicted by any fetched official page; no correction proposed."
+  },
+  {
+   "seed_name": "Middlesbrough - Sports Village",
+   "seed_values": {
+    "country_code": "GBR",
+    "length_m": 250,
+    "surface": "Asphalt"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.necycling.com/copy-of-cycle-circuit",
+     "source_url": "https://www.necycling.com/copy-of-cycle-circuit",
+     "evidence": "As the official operator of the velodrome, NE Cycling CIC manages all activity on-site",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://www.necycling.com/bookings",
+     "source_url": "https://www.necycling.com/bookings",
+     "evidence": "We recommend using the TeamUp app to book sessions, manage memberships",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "NE Cycling CIC (North East Cycling Academy)",
+     "source_url": "https://www.necycling.com/copy-of-cycle-circuit",
+     "evidence": "As the official operator of the velodrome, NE Cycling CIC manages all activity on-site",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "year_built": null,
+    "phone": null,
+    "email": null,
+    "opening_hours": null,
+    "pricing_url": {
+     "value": "https://goteamup.com/p/7640998-north-east-cycling-academ/memberships/",
+     "source_url": "https://goteamup.com/p/7640998-north-east-cycling-academ/memberships/",
+     "evidence": "Individual Monthly Membership: £35 per month",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "price_range": null,
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://www.necycling.com/copy-of-cycle-circuit",
+     "evidence": "We run a year-round programme of activity",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://www.necycling.com/copy-of-cycle-circuit",
+     "evidence": "Our 250m long state of the art outdoor Velodrome",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "year_built",
+    "phone",
+    "email",
+    "opening_hours",
+    "price_range"
+   ],
+   "notes": "Official operator site is necycling.com (Wix, copyright 2025). Contact page lists only named-staff mailboxes (Adam@/Paul@/Dave@northeastcyclingacademy.com) so no email recorded. Pricing page is TeamUp memberships (annual £300 shown, monthly £35); no drop-in single-session price found, so no price_range. Timetable is not published as text on the site. everyoneactive.com and middlesbrough.gov.uk (Cloudflare 403) could not be fetched; web-search leads say Everyone Active manages the Sports Village centre, which may conflict with NE Cycling's operator claim for the velodrome. Surface not stated on fetched official pages (seed Asphalt not verified)."
+  },
+  {
+   "seed_name": "Northeast Velodrome",
+   "seed_values": {
+    "country_code": "USA",
+    "length_m": 333,
+    "surface": "Asphalt"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://northeastvelodrome.wordpress.com/",
+     "source_url": "https://northeastvelodrome.wordpress.com/",
+     "evidence": "Northeast Velodrome is operated by New England Track Cycling",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": {
+     "value": "https://northeastvelodrome.wordpress.com/event-schedule/",
+     "source_url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+     "evidence": "Register for NEV Events",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operator": {
+     "value": "New England Track Cycling (501(c)(3) nonprofit)",
+     "source_url": "https://northeastvelodrome.wordpress.com/",
+     "evidence": "Northeast Velodrome is operated by New England Track Cycling",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 2007,
+     "source_url": "https://northeastvelodrome.wordpress.com/about/",
+     "evidence": "The facility first operated as the New England Velodrome from 2007–2009",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "phone": {
+     "value": "+1 978-621-7725",
+     "source_url": "https://northeastvelodrome.wordpress.com/",
+     "evidence": "(978) 621-7725",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "info@newenglandtrackcycling.com",
+     "source_url": "https://northeastvelodrome.wordpress.com/contact/",
+     "evidence": "Direct Email: info@newenglandtrackcycling.com",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": {
+     "value": "Seasonal (mid-April to mid-September). Tuesday mass-start racing: gates 17:00, racing 18:00",
+     "source_url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+     "evidence": "Gates open at 5:00 PM, racing starts at 6:00 PM.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "pricing_url": {
+     "value": "https://northeastvelodrome.wordpress.com/event-schedule/",
+     "source_url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+     "evidence": "Cost is $20 or included with Grassroots or Velodrome membership.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 20,
+      "max": 30,
+      "currency": "USD",
+      "check_site": true
+     },
+     "source_url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+     "evidence": "Cost is $30 for non-members or $10 with Velodrome membership.",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://northeastvelodrome.wordpress.com/about/",
+     "evidence": "operating seasonally from mid-April through mid-September",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 333,
+     "source_url": "https://northeastvelodrome.wordpress.com/about/",
+     "evidence": "The Northeast Velodrome is a 333-meter, 14-degree banked oval track",
+     "confidence": "high"
+    },
+    {
+     "field": "surface",
+     "value": "Asphalt",
+     "source_url": "https://northeastvelodrome.wordpress.com/2026-nev-summer-championship-series/",
+     "evidence": "Surface: Outdoor asphalt velodrome",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [],
+   "notes": "Seed website IS the official, current site: run by the operator New England Track Cycling, 2026 posts (latest 2026-09-03), 2026 membership/series pages, address 23 Grenier Field Road, Londonderry NH. Prices are event entry fees (Tue mass start $20; weekend omnium $30 non-members), not drop-in training; range is therefore medium. Year 2007 is when the track first operated (not explicitly 'built'). Phone is in the home page footer; unclear if it is a staff mobile, so medium. It is currently off-season (Apr–Sep), status 'open' means operating seasonally. Page also lists northeastvelodrome@gmail.com."
+  },
+  {
+   "seed_name": "Palma de Mallorca - Velòdrom Illes Balears",
+   "seed_values": {
+    "country_code": "ESP",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://velodromillesbalears.com/es",
+     "source_url": "https://velodromillesbalears.com/es",
+     "evidence": "Consorci Velòdrom Illes Balears",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": null,
+    "operator": {
+     "value": "Fundació per a l'Esport Balear (site published by Consorci Velòdrom Illes Balears)",
+     "source_url": "https://velodromillesbalears.com/es/sobre-nosotros",
+     "evidence": "La gestión del mismo la lleva la Fundació per a l'Esport Balear",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "year_built": {
+     "value": 2007,
+     "source_url": "https://velodromillesbalears.com/es/sobre-nosotros",
+     "evidence": "Fue inaugurado con la celebración del Campeonato Mundial de Ciclismo en Pista el 29 de marzo del 2007",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "phone": {
+     "value": "+34 971 763 299",
+     "source_url": "https://velodromillesbalears.com/es/contacto",
+     "evidence": "971 763 299",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "info@velodromillesbalears.com",
+     "source_url": "https://velodromillesbalears.com/es/contacto",
+     "evidence": "info@velodromillesbalears.com",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": null,
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://velodromillesbalears.com/es/sobre-nosotros",
+     "evidence": "Actualmente, cuenta con un amplio espacio de oficinas de organismos oficiales",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://velodromillesbalears.com/es",
+     "evidence": "Pista de ciclismo de 250 metros de cuerda y anchura de 7 metros",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "booking_url",
+    "opening_hours",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "Official venue site is velodromillesbalears.com (not www, which does not resolve). It is a multi-purpose arena: site publishes 'Tarifas 2026' (https://velodromillesbalears.com/es/tarifas, PDF Tarifes2026.pdf) but these are training/event/space rental terms for clubs and promoters, so no individual session price or opening hours were recorded. Booking is a space-request form (/es/reserva), not a track session booking. Home page also lists esdeveniments@velodromillesbalears.com (events mailbox). Wood surface not stated on fetched pages; no correction proposed."
+  },
+  {
+   "seed_name": "Portsmouth - Mountbatten Centre",
+   "seed_values": {
+    "country_code": "GBR",
+    "length_m": 536,
+    "surface": "Asphalt"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://bhliveactive.org.uk/mountbatten",
+     "source_url": "https://bhliveactive.org.uk/mountbatten",
+     "evidence": "Mountbatten Leisure Centre is Portsmouth’s flagship community sports and leisure centre",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "booking_url": null,
+    "operator": {
+     "value": "BH Live (BH Live Active), under agency agreement with Portsmouth City Council",
+     "source_url": "https://bhliveactive.org.uk/mountbatten",
+     "evidence": "Read about our Agency agreement with Portsmouth City Council",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "year_built": null,
+    "phone": null,
+    "email": null,
+    "opening_hours": {
+     "value": "Centre-wide (not track-specific): Mon-Fri 05:00-21:00, Sat-Sun 06:00-19:00",
+     "source_url": "https://bhliveactive.org.uk/mountbatten",
+     "evidence": "Monday - Friday 05:00 - 21:00",
+     "confidence": "low",
+     "source_kind": "operator"
+    },
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://bhliveactive.org.uk/mountbatten",
+     "evidence": "an outdoor velodrome",
+     "confidence": "medium",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [],
+   "confirmations": [],
+   "not_found": [
+    "booking_url",
+    "year_built",
+    "phone",
+    "email",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "BH Live Active's Mountbatten page lists 'an outdoor velodrome' among current facilities, but has no velodrome-specific page, hours, prices, booking or contact; centre hours apply to the leisure centre, hence low. Track was closed in 2014-15 after a fatal crash (road.cc 2015, non-official, stale); British Cycling South (federation) shows later activity (2025 'Mountbatten circuit' events, youth round 13 Aug 2025), so status is not closed, but the track's current public availability is unconfirmed. portsmouth.gov.uk (owner) pages on the track not found/503 at research time. Seed length 536 m / Asphalt not verified by any official page; no correction proposed."
+  },
+  {
+   "seed_name": "Rock Hill - Giordana Velodrome",
+   "seed_values": {
+    "country_code": "USA",
+    "length_m": 250,
+    "surface": "Concrete"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+     "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+     "evidence": "The 240m world-class Rock Hill Velodrome is part of the",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "booking_url": null,
+    "operator": null,
+    "year_built": null,
+    "phone": {
+     "value": "803-326-2453",
+     "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+     "evidence": "Phone: 803-326-2453",
+     "confidence": "high",
+     "source_kind": "owner"
+    },
+    "email": null,
+    "opening_hours": {
+     "value": "Tue-Fri 12:00-20:00; Sat 09:00-17:00; Sun 13:00-17:00",
+     "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+     "evidence": "Hours: Tuesday – Friday: Noon – 8 PM; Saturday: 9 AM – 5 PM; Sunday: 1 PM – 5 PM",
+     "confidence": "high",
+     "source_kind": "owner"
+    },
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "unknown",
+     "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+     "evidence": "The 240m world-class Rock Hill Velodrome is part of the",
+     "confidence": "low",
+     "source_kind": "owner"
+    }
+   },
+   "corrections": [
+    {
+     "field": "length_m",
+     "old_value": 250,
+     "new_value": 240,
+     "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+     "evidence": "The 240m world-class Rock Hill Velodrome is part of the",
+     "confidence": "medium"
+    }
+   ],
+   "confirmations": [],
+   "not_found": [
+    "booking_url",
+    "operator",
+    "year_built",
+    "email",
+    "pricing_url",
+    "price_range",
+    "surface_confirmation"
+   ],
+   "notes": "City of Rock Hill site (cityofrockhill.com, incl. rockhillvelodrome.com redirect) returns Akamai 403 Access Denied to all automated fetches, so the operator/owner page could not be read; only the city's own tourism site (visitrockhillsc.com, footer '© City of Rock Hill 2026') was usable. Its 'Website' link target could not be extracted. Hours/phone are on a venue-specific page but the city-site page should be checked when reachable. Operating status: no explicit statement; hours listed imply operating but recorded unknown."
+  },
+  {
+   "seed_name": "San Juan - Velódromo Vicente Alejo Chancay",
+   "seed_values": {
+    "country_code": "ARG",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+     "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+     "evidence": "Velódromo Provincial Vicente Alejo Chancay es una infraestructura deportiva",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "booking_url": null,
+    "operator": null,
+    "year_built": {
+     "value": 2023,
+     "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+     "evidence": "este recinto multipropósito fue inaugurado en 2023",
+     "confidence": "medium",
+     "source_kind": "owner"
+    },
+    "phone": null,
+    "email": null,
+    "opening_hours": null,
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "unknown",
+     "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+     "evidence": "fue inaugurado en 2023",
+     "confidence": "low",
+     "source_kind": "owner"
+    }
+   },
+   "corrections": [],
+   "confirmations": [
+    {
+     "field": "length_m",
+     "value": 250,
+     "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+     "evidence": "El corazón del velódromo es su óvalo de 250 metros de longitud",
+     "confidence": "high"
+    },
+    {
+     "field": "surface",
+     "value": "Wood",
+     "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+     "evidence": "cuya pista está construida con madera de alta calidad",
+     "confidence": "high"
+    }
+   ],
+   "not_found": [
+    "booking_url",
+    "operator",
+    "phone",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "Provincial Secretaría de Deporte site (deporte.sanjuan.gob.ar) returns a WAF 'Web Page Blocked' (500) to automated fetches; only the provincial government tourism portal (sanjuan.tur.ar, '© Gobierno de San Juan') was readable. Year is the inauguration year. No official statement of operator or open/closed status."
+  },
+  {
+   "seed_name": "Tafalla - Velódromo Miguel Induráin",
+   "seed_values": {
+    "country_code": "ESP",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": {
+     "value": "https://cdtafalla.com/",
+     "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+     "evidence": "www.cdtafalla.com",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "booking_url": null,
+    "operator": {
+     "value": "Instalaciones Deportivas Masquatro SL (Ciudad Deportiva Tafalla)",
+     "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+     "evidence": "bajo la responsabilidad de INSTALACIONES DEPORTIVAS MASQUATRO SL",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "year_built": null,
+    "phone": {
+     "value": "948 70 44 91",
+     "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+     "evidence": "948 70 44 91",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "email": {
+     "value": "info.cdtafalla@masquatro.com",
+     "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+     "evidence": "info.cdtafalla@masquatro.com",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "opening_hours": null,
+    "pricing_url": {
+     "value": "https://cdtafalla.com/portal/seccion.aspx?N=215",
+     "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=215",
+     "evidence": "TARIFAS no ABONAD@S 2026",
+     "confidence": "high",
+     "source_kind": "operator"
+    },
+    "price_range": {
+     "value": {
+      "min": 2.8,
+      "max": 10.9,
+      "currency": "EUR",
+      "check_site": true
+     },
+     "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=215",
+     "evidence": "Velódromo Cicloturista",
+     "confidence": "medium",
+     "source_kind": "operator"
+    },
+    "operating_status": {
+     "value": "open",
+     "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=215",
+     "evidence": "TARIFAS no ABONAD@S 2026",
+     "confidence": "low",
+     "source_kind": "operator"
+    }
+   },
+   "corrections": [
+    {
+     "field": "surface",
+     "old_value": "Wood",
+     "new_value": "Concrete",
+     "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=81",
+     "evidence": "pista artificial de cemento y pintura de forma de rectángulo redondeado",
+     "confidence": "high"
+    }
+   ],
+   "confirmations": [],
+   "not_found": [
+    "booking_url",
+    "year_built",
+    "opening_hours"
+   ],
+   "notes": "Operator site cdtafalla.com (Ciudad Deportiva Tafalla, run by Masquatro). Price range: min 2,80 EUR (disabled/child-type daily entry), max 10,90 EUR (adult daily entry incl. pool+relax+velodrome+small gym); 'Velódromo Cicloturista' single entry is 6,25 EUR; these are bundled/entry tariffs, hence medium. Opening hours are only published as images (/Instalaciones/Horario-y-Calendario/n30.aspx), not quotable text. Operating status 'open' inferred from current 2026 tariffs and 2026/2027 season news, not an explicit statement. Town site tafalla.es unreachable (connection failure) so owner page and year built could not be checked. Seed surface Wood contradicts operator text (concrete)."
+  },
+  {
+   "seed_name": "Valencia - Velódromo Máximo Viloria",
+   "seed_values": {
+    "country_code": "VEN",
+    "length_m": 250,
+    "surface": "Wood"
+   },
+   "info_verified_at": "2026-11-05",
+   "fields": {
+    "website_url": null,
+    "booking_url": null,
+    "operator": null,
+    "year_built": null,
+    "phone": null,
+    "email": null,
+    "opening_hours": null,
+    "pricing_url": null,
+    "price_range": null,
+    "operating_status": {
+     "value": "unknown",
+     "source_url": "https://fundadeporte.gob.ve/carabobo/velodromo-maximo-romero/",
+     "evidence": "plan de remodelación integral para el emblemático Velódromo Máximo Romero",
+     "confidence": "low",
+     "source_kind": "owner"
+    }
+   },
+   "corrections": [],
+   "confirmations": [],
+   "not_found": [
+    "website_url",
+    "booking_url",
+    "operator",
+    "year_built",
+    "phone",
+    "email",
+    "opening_hours",
+    "pricing_url",
+    "price_range"
+   ],
+   "notes": "Only official source found: Fundadeporte Carabobo (state government foundation) news dated June 2026 calling the venue 'Velódromo Máximo Romero' (seed name says 'Viloria'; possible name discrepancy, not applied) and describing an integral remodelling (lighting, stands, track maintenance) with the 2026 national track championship planned there. No official length/surface/contacts found; status recorded unknown (works under way, not stated closed)."
+  }
+ ]
+}

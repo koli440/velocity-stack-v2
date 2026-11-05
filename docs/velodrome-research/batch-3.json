@@ -1,0 +1,1520 @@
+{
+  "schema_version": 1,
+  "researched_at": "2026-11-05",
+  "batch": 3,
+  "policy": "Only official/authoritative sources fetched directly (venue/operator, owner municipality, national/continental federation). Unverified values are null and listed in not_found. Coordinates are never proposed from non-official sources.",
+  "tracks": [
+    {
+      "seed_name": "Anoeta (San Sebastián) - Velódromo Antonio Elorza",
+      "seed_values": {
+        "country_code": "ESP",
+        "length_m": 285.0,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+          "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+          "evidence": "Velódromo Antonio Elorza Donostia Kirola Instalaciones Guía de instalaciones Centros Deportivos Dirección Anoeta pasealekua, 14 Teléfono 943 481 860 Gestión Donostia kirola",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "operator": {
+          "value": "Donostia Kirola",
+          "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+          "evidence": "Gestión Donostia kirola",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "phone": {
+          "value": "+34 943 481 860",
+          "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+          "evidence": "Dirección Anoeta pasealekua, 14 Teléfono 943 481 860",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "opening_hours": {
+          "value": "Facility (polideportivo) hours: Mon-Fri 08:00-22:00; Sat 08:30-20:00; Sun 09:00-14:00; public holidays closed. Summer (15 Jun-30 Aug): Mon-Fri 08:30-21:00; Sat 09:00-14:00; Sun and holidays closed. Closed 1 Jan, 20 Jan, 25 Dec and Easter Thu-Mon. Hours are for the whole sports centre; cycling-track sessions may differ.",
+          "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+          "evidence": "Horario 8:00 - 22:00 8:30 - 20:00 9:00 - 14:00 Cerrado Horario de verano (del 15 de junio al 30 de agosto) 8:30 - 21:00 9:00 - 14:00 Cerrado Cerrado",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "year_built": {
+          "value": 1965,
+          "source_url": "https://www.geo.euskadi.eus/cartografia/DatosDescarga/Documentacion/Geocuriosidades/Castellano/20-08%20Ciudad%20deportiva%20de%20Anoeta.pdf",
+          "evidence": "En el año 1965 se construyó el Velódromo de Anoeta, dotado con dos graderíos con una capacidad total de 7.500 espectadores",
+          "confidence": "medium",
+          "source_kind": "other"
+        },
+        "pricing_url": {
+          "value": "https://donostia.eus/kirola/es/instalaciones/entrada/precios-publicos-ins",
+          "source_url": "https://donostia.eus/kirola/es/instalaciones/entrada/precios-publicos-ins",
+          "evidence": "Entrada diaria adulto 1 uso 8,25€ Entrada diaria menor de 16 años 1 uso 4,45€",
+          "confidence": "medium",
+          "source_kind": "owner"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://donostia.eus/kirola/es/instalaciones/guia-de-instalaciones/centros-deportivos/velodromo-antonio-elorza",
+        "evidence": "Espacios deportivos Pista de ciclismo Pista de atletismo Sala de cursillos Gimnasio",
+        "confidence": "medium",
+        "source_kind": "owner",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [],
+      "not_found": [
+        "booking_url",
+        "email",
+        "price_range",
+        "official_surface_and_length"
+      ],
+      "notes": "Municipal facility run by Donostia Kirola (Donostia / San Sebastián). Public pages in Spanish. Pricing page shows 'AÑO 2025' general daily-entry prices (facility entry, not a cycling-track-specific tariff), so no price_range is proposed; pricing_url kept at medium confidence. Online booking page found is for generic facility hire, not track sessions, so booking_url omitted. Only generic Donostia Kirola mailbox (udala_kirolak@donostia.eus, municipal) exists, not venue-specific, so email omitted. Year built from Basque Government (geoEuskadi) PDF, an official regional source but not the operator/owner. No official page found confirming 285 m length or Wood surface; no contradiction found. operating_status 'open' reflects the facility listing a Pista de ciclismo and current 2026 hours; the cycling track itself was not separately confirmed as in use."
+    },
+    {
+      "seed_name": "Bangkok - Huamark Velodrome",
+      "seed_values": {
+        "country_code": "THA",
+        "length_m": 333.3,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "operator": {
+          "value": "Sports Authority of Thailand (SAT / กกท.)",
+          "source_url": "https://www.thaicycling.or.th/en/news/r/1558",
+          "evidence": "โดยเฉพาะบริเวณสนามเวลโลโดรม หัวหมาก ภายในการกีฬาแห่งประเทศไทย (กกท.)",
+          "confidence": "medium",
+          "source_kind": "federation"
+        }
+      },
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "https://www.thaicycling.or.th/en/news/r/1558",
+        "evidence": "ส่งผลให้ไม่สามารถจัดการแข่งขันจักรยานประเภทลู่ชิงแชมป์ประเทศไทย ประจำปี 2569 ชิงถ้วยพระราชทาน “ควีนส์สิริกิติ์” สนามที่ 5 (สนามสุดท้าย) ได้ตามกำหนดการเดิม คือ ระหว่างวันที่ 9-11 ตุลาคม 2569",
+        "confidence": "medium",
+        "source_kind": "federation",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "No official venue site found. The Sports Authority of Thailand (sat.or.th, area.sat.or.th) site does not list the velodrome (area.sat.or.th gallery pages have no velodrome entry; one gallery URL blocks curl with a 555 response). The Thai Cycling Association (national federation, thaicycling.or.th) is housed at the velodrome (286 Velodrome HuaMak) with phone 0-2719-3340-2, but that is the federation's office line, not the venue's, and its email is obfuscated on the page, so phone/email are not_found. Operator evidence is a federation news item dated 1 Oct 2026 saying the Hua Mak velodrome lies inside SAT premises (Thai text). The same item says the velodrome area was flooded (water chest-high) and the final national track championship round of 9-11 Oct 2026 was postponed while the track is restored; no official statement that it is closed or reopened was found, so status is 'unknown'."
+    },
+    {
+      "seed_name": "Bourges - Vélodrome de Bourges",
+      "seed_values": {
+        "country_code": "FRA",
+        "length_m": 200.0,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.creps-cvl.fr/",
+          "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+          "evidence": "Vélodrome - Séance tout public de 2h30 - Personne adulte - 1 séance 9.00 €",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+          "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+          "evidence": "Tarifs & réservation TARIFS RÉSERVATION Réservez votre stage Installations sportives",
+          "confidence": "low",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "CREPS Centre-Val de Loire",
+          "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+          "evidence": "Vélodrome (contacter au préalable velodrome@creps-cvl.fr) - Bapteme de piste adulte - Tarif horaire par personne 21.00 €",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+33 2 48 48 01 44",
+          "source_url": "https://www.creps-cvl.fr/accueil.infrastructures-sportives",
+          "evidence": "48 avenue du Maréchal Juin 18000 BOURGES 02 48 48 01 44",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "velodrome@creps-cvl.fr",
+          "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+          "evidence": "Vélodrome (contacter au préalable velodrome@creps-cvl.fr)",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+          "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+          "evidence": "Vélodrome - Séance tout public de 2h30 - Personne moins de 18 ans - 1 séance 7.00 €",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 7.0,
+            "max": 21.0,
+            "currency": "EUR",
+            "check_site": true
+          },
+          "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+          "evidence": "Vélodrome - Séance tout public de 2h30 - Personne moins de 18 ans - 1 séance 7.00 € | Vélodrome (contacter au préalable velodrome@creps-cvl.fr) - Bapteme de piste adulte - Tarif horaire par personne 21.00 €",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+        "evidence": "Vélodrome - Séance tout public de 2h30 - Personne adulte - 1 séance 9.00 €",
+        "confidence": "low",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [],
+      "not_found": [
+        "year_built",
+        "opening_hours"
+      ],
+      "notes": "Velodrome is run by the CREPS Centre-Val de Loire (public sports establishment) in Bourges. The CREPS site (creps-cvl.fr) has no dedicated velodrome page: the velodrome appears only in the tariff page; the installations page has no velodrome entry (also checked haut-niveau.* and accueil.infos). Tariff page is undated. Price range covers individual per-person sessions only: public sessions 7 EUR (under 18) / 9 EUR (adult) per 2h30 session and track introduction (baptême) 15/21 EUR per hour; excludes subscriptions, 11-entry packs, hire, competition and event packages. Public opening hours exist only on non-official sites (e.g. roulez-jeunesse.com), so opening_hours is not_found. The phone is the general CREPS reception number shown with the installations list (no velodrome-specific number found). booking_url is the CREPS tariff/reservation tab (page title 'Tarifs & réservation'), confidence low because it is a general reservation page. Status 'unknown': no official dated 2026 velodrome schedule or event was found."
+    },
+    {
+      "seed_name": "Büttgen - Sportforum Kaarst-Büttgen",
+      "seed_values": {
+        "country_code": "GER",
+        "length_m": 250.0,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.sportforum-kaarst.de/de/",
+          "source_url": "https://www.sportforum-kaarst.de/de/",
+          "evidence": "Willkommen im Sportforum Kaarst-Büttgen! Sportforum Trägerverein Multifunktionshalle",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Trägerverein Sportforum Kaarst-Büttgen e.V.",
+          "source_url": "https://www.sportforum-kaarst.de/de/impressum.html",
+          "evidence": "Impressum Trägerverein Sportforum Kaarst-Büttgen e.V. Olympiastraße 5 41564 Kaarst",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1971,
+          "source_url": "https://www.sportforum-kaarst.de/de/historie.html",
+          "evidence": "1971 Eröffnung der Radrennbahn mit NRW-Innenminister Willi Weyer",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+49 2131 5362803",
+          "source_url": "https://www.sportforum-kaarst.de/de/impressum.html",
+          "evidence": "Kontakt Telefon: 02131 5362803 E-Mail: service@sportforum-kaarst.de",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "service@sportforum-kaarst.de",
+          "source_url": "https://www.sportforum-kaarst.de/de/impressum.html",
+          "evidence": "Kontakt Telefon: 02131 5362803 E-Mail: service@sportforum-kaarst.de",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Freies Training (open track sessions) Oct-Mar: Mon, Wed, Fri 20:00-22:00; other times by decision of the Sportforum. Hall has closure dates, e.g. 18-21 Dec 2026 and 24 Dec-3 Jan 2027.",
+          "source_url": "https://www.sportforum-kaarst.de/de/",
+          "evidence": "Das Freie Training findet von Oktober - März Montags, Mittwochs und Freitags von 20:00 - 22:00 statt.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.sportforum-kaarst.de/de/preise.html",
+          "source_url": "https://www.sportforum-kaarst.de/de/preise.html",
+          "evidence": "Freies Training auf der Radsportbahn Montag, Mittwoch, Freitag (20:00 – 22:00 Uhr) € 20 inkl. MwSt.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 20.0,
+            "max": 30.0,
+            "currency": "EUR",
+            "check_site": true
+          },
+          "source_url": "https://www.sportforum-kaarst.de/de/preise.html",
+          "evidence": "Freies Training auf der Radsportbahn Montag, Mittwoch, Freitag (20:00 – 22:00 Uhr) € 20 inkl. MwSt. | Dernytraining € 30 inkl. MwSt. nur nach Anmeldung min. 5 Personen",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.sportforum-kaarst.de/de/",
+        "evidence": "Das Sportforum hat vom 18.12. - 21.12.2026 wegen der Winterbahnmeisterschaft geschlossen.",
+        "confidence": "high",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 250,
+          "source_url": "https://www.sportforum-kaarst.de/de/hallenkonzept.html",
+          "evidence": "Radrennbahn 250 m oval, mit großer Bahninnenfläche, Olympiamaße"
+        },
+        {
+          "field": "surface",
+          "value": "Wood",
+          "source_url": "https://www.sportforum-kaarst.de/de/historie.html",
+          "evidence": "Die Radrennbahn mit Holzboden wird sowohl internationalen als auch olympischen Maßanforderungen im Bahnradsport gerecht"
+        }
+      ],
+      "not_found": [
+        "booking_url"
+      ],
+      "notes": "Operator is the Trägerverein (club) per the Impressum; the Impressum lists a mobile number and staff names (not used). The only booking route is a mailto link to a web.de address for 'Anmeldung für das freie Training' (no booking URL), so booking_url is not_found. Price range = individual track sessions at the track-specific tariff: free training 20 EUR (incl. VAT) and Dernytraining 30 EUR (incl. VAT, min. 5 people); excludes 7 EUR bike rental, subscriptions (100-300 EUR), external track hire (80/120 EUR/h + VAT), event and hall hire. Seed surface/length confirmed. Year built = inauguration June 1971 (Historie page)."
+    },
+    {
+      "seed_name": "Chiba JPF Dome",
+      "seed_values": {
+        "country_code": "JPN",
+        "length_m": 250.0,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://chiba-jpf-dome.com/",
+          "source_url": "https://chiba-jpf-dome.com/",
+          "evidence": "千葉JPFドーム公式サイト | 千葉JPFドーム施設利用案内",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://chiba-jpf-dome.com/schedule/",
+          "source_url": "https://chiba-jpf-dome.com/",
+          "evidence": "団体走路利用日 団体走路利用（空） 16:30-19:30 残り3枠",
+          "confidence": "low",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "株式会社JPF (JPF Co., Ltd.)",
+          "source_url": "https://chiba-jpf-dome.com/terms/",
+          "evidence": "千葉JPFドーム施設利用規約 株式会社JPF（以下「当社」といいます。）は、千葉JPFドーム（以下「当施設」といいます。）の利用契約",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+81 43-331-6678",
+          "source_url": "https://chiba-jpf-dome.com/access/",
+          "evidence": "千葉JPFドーム 所在地 〒260-0045 千葉県千葉市中央区弁天4-1-1 TEL 043-331-6678",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Facility use time for hirers, including set-up and tear-down: 08:00-22:00 in principle (switchboard hours 09:00-18:00); public track-use days are scheduled individually.",
+          "source_url": "https://chiba-jpf-dome.com/terms/",
+          "evidence": "当施設利用時間は準備、撤収を含め原則8:00～22:00となっております。",
+          "confidence": "low",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://chiba-jpf-dome.com/%e7%ab%b6%e8%bc%aa%e9%81%b8%e6%89%8b%e5%90%91%e3%81%91%e8%b5%b0%e8%b7%af%e9%96%8b%e6%94%be/9760/",
+          "source_url": "https://chiba-jpf-dome.com/%e7%ab%b6%e8%bc%aa%e9%81%b8%e6%89%8b%e5%90%91%e3%81%91%e8%b5%b0%e8%b7%af%e9%96%8b%e6%94%be/9760/",
+          "evidence": "受付にて、お1人様2,000円をお支払いください。",
+          "confidence": "low",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 2000,
+            "max": 2000,
+            "currency": "JPY",
+            "check_site": true
+          },
+          "source_url": "https://chiba-jpf-dome.com/%e7%ab%b6%e8%bc%aa%e9%81%b8%e6%89%8b%e5%90%91%e3%81%91%e8%b5%b0%e8%b7%af%e9%96%8b%e6%94%be/9760/",
+          "evidence": "受付にて、お1人様2,000円をお支払いください。",
+          "confidence": "low",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://chiba-jpf-dome.com/",
+        "evidence": "2026 11.08 Sun PIST6サイクルクラブ イベント 9:00～17:30",
+        "confidence": "high",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 250,
+          "source_url": "https://www.city.chiba.jp/keizainosei/keizai/koeijigyo/250kyousougaiyou.html",
+          "evidence": "千葉JPFドームは、自転車競技の国際規格に基づいた250メートル木製トラック（バンク）を有する多目的スポーツ施設です。"
+        },
+        {
+          "field": "surface",
+          "value": "Wood",
+          "source_url": "https://chiba-jpf-dome.com/terms/",
+          "evidence": "木製走路は競技用自転車走行に用いる目的で設置しておりますので"
+        }
+      ],
+      "not_found": [
+        "email",
+        "year_built"
+      ],
+      "notes": "Japanese-language site. Official operator site is chiba-jpf-dome.com (the other lead, chiba-jpfdome.jp, returned no usable content and was not used). Operator is JPF Co., Ltd. (terms of use). The only per-person track price found is 2,000 JPY for the keirin-rider-only open-track day (restricted audience, so low confidence); group track-use and hire prices are not published (enquiry only). No public-facing general-session tariff was found. booking_url is the schedule page that lists track-use days with application links (a Google Form link is on each day page); low confidence. Only an enquiry form is offered, no public mailbox, so email is not_found. Chiba city page (city.chiba.jp) confirms the 250 m wooden track but says only that the dome was built with 100% private funds, with no opening year, so year_built is not_found."
+    },
+    {
+      "seed_name": "Dick Lane Velodrome",
+      "seed_values": {
+        "country_code": "USA",
+        "length_m": 321.8,
+        "surface": "Concrete",
+        "latitude": 33.685176,
+        "longitude": -84.451496
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://dicklanevelodrome.com/",
+          "source_url": "https://dicklanevelodrome.com/",
+          "evidence": "Dick Lane Velodrome | A volunteer-based 501(c)3 nonprofit organization dedicated to the rehabilitation, care and growth of the Dick Lane Velodrome, located in East Point, Georgia",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://dicklanevelodrome.com/shop/",
+          "source_url": "https://dicklanevelodrome.com/fees/",
+          "evidence": "All fees can be paid through online in our online store.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "East Point Velodrome Association (EPVA)",
+          "source_url": "https://dicklanevelodrome.com/history/",
+          "evidence": "The City of East Point owns the velodrome and has a long-term partnership with the EPVA to manage the Dick Lane Velodrome",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1974,
+          "source_url": "https://dicklanevelodrome.com/history/",
+          "evidence": "Constructed in 1974, the Dick Lane Velodrome was inspired by a group of residents and City officials that visited the Munich Olympics.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@dicklanevelodrome.com",
+          "source_url": "https://dicklanevelodrome.com/contact/",
+          "evidence": "Operations: Any questions regarding sponsorship, racing, and operations. info@dicklanevelodrome.com",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Track open via the pedestrian gate during normal park hours (hours not stated); vehicle gates open during scheduled programs",
+          "source_url": "https://dicklanevelodrome.com/riderfaqs/",
+          "evidence": "The track is open via the pedestrian gate during normal park hours.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://dicklanevelodrome.com/fees/",
+          "source_url": "https://dicklanevelodrome.com/fees/",
+          "evidence": "Season Fees All fees can be paid through online in our online store. Here is the breakdown of fees:",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 15,
+            "max": 35,
+            "currency": "USD",
+            "check_site": true
+          },
+          "source_url": "https://dicklanevelodrome.com/fees/",
+          "evidence": "Tuesday MWB, Sprint Night or Pursuit Night $15.00 | Pro Race Series $35.00",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://dicklanevelodrome.com/",
+        "evidence": "Regular programming has resumed.",
+        "confidence": "high",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 321.8,
+          "source_url": "https://dicklanevelodrome.com/history/",
+          "evidence": "the Dick Lane Velodrome is a 1/5 of a mile and 36° banked concrete track for bicycle racing",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "surface",
+          "value": "Concrete",
+          "source_url": "https://dicklanevelodrome.com/history/",
+          "evidence": "the Dick Lane Velodrome is a 1/5 of a mile and 36° banked concrete track for bicycle racing",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "country_code",
+          "value": "USA",
+          "source_url": "https://dicklanevelodrome.com/contact/",
+          "evidence": "1889 Lexington Ave East Point, GA 30344",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "phone"
+      ],
+      "notes": "Phone: the only number published is for a named individual (certification class contact), so not recorded. Price min/max combine the Tuesday-night ($15) and Pro Race Series ($35) per-session fees; the $10 training-day item is only a 'recommended donation' and season passes ($275/$325) are excluded. Opening hours depend on unspecified city park hours."
+    },
+    {
+      "seed_name": "Galapagar - Velódromo Municipal",
+      "seed_values": {
+        "country_code": "ESP",
+        "length_m": 250.0,
+        "surface": "Wood",
+        "latitude": 40.5833,
+        "longitude": -3.9915
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://galapagar.es/areas-municipales/deportes/",
+          "source_url": "https://galapagar.es/areas-municipales/deportes/",
+          "evidence": "Velódromo pista de ciclismo uso individual",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "operator": {
+          "value": "Ayuntamiento de Galapagar (Concejalía de Deportes)",
+          "source_url": "https://galapagar.es/areas-municipales/deportes/",
+          "evidence": "Concejalía de Deportes",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "pricing_url": {
+          "value": "https://galapagar.es/areas-municipales/deportes/",
+          "source_url": "https://galapagar.es/areas-municipales/deportes/",
+          "evidence": "Velódromo pista de ciclismo uso individual",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "price_range": {
+          "value": {
+            "min": 5,
+            "max": 8,
+            "currency": "EUR",
+            "check_site": true
+          },
+          "source_url": "https://galapagar.es/areas-municipales/deportes/",
+          "evidence": "Velódromo pista de ciclismo uso individual 8 € 60 € 5 € 36 €",
+          "confidence": "medium",
+          "source_kind": "owner"
+        }
+      },
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "https://galapagar.es/areas-municipales/deportes/",
+        "evidence": "Velódromo pista de ciclismo uso individual",
+        "confidence": "low",
+        "source_kind": "owner",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [],
+      "not_found": [
+        "booking_url",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours"
+      ],
+      "notes": "Only the municipal sports page lists the velodrome, as tariff rows (no description, location, length, surface or hours). Table columns are NO ABONADOS price per hour / 10-use pass / ABONADOS price per hour / 10-use pass, so individual cycling-track use is 8 EUR/h (non-member) and 5 EUR/h (member). The venue is not listed among the online-bookable facilities. The page's phone numbers (918 587 800 town hall; 918 582 582 Polideportivo, a different site; deportes@ is the council sports department mailbox; infocplgalapagar@ is a gmail address) are not velodrome-specific organisational lines, so none recorded. Seed length 250 m / Wood not confirmed or contradicted by any official source."
+    },
+    {
+      "seed_name": "Hong Kong - HK Velodrome",
+      "seed_values": {
+        "country_code": "CHN",
+        "length_m": 250.0,
+        "surface": "Wood",
+        "latitude": 22.3145,
+        "longitude": 114.2635
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.lcsd.gov.hk/en/hkv/index.html",
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+          "evidence": "The Hong Kong Velodrome, located at 105-107 Po Hong Road, Tseung Kwan O, is the first-ever local indoor cycling venue",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "booking_url": {
+          "value": "https://www.lcsd.gov.hk/en/hkv/applications.html",
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/applications.html",
+          "evidence": "Track pass holders can book the cycling track through the following channels:",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "operator": {
+          "value": "Leisure and Cultural Services Department (LCSD), Hong Kong SAR Government",
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+          "evidence": "Hong Kong Velodrome Leisure and Cultural Services Department",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "phone": {
+          "value": "+852 2878 8622",
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/contact.html",
+          "evidence": "Hong Kong Velodrome Office Address : Telephone : Fax : E-mail : 105-107 Po Hong Road, Tseung Kwan O 2878 8622 2878 8630 hkv@lcsd.gov.hk",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "email": {
+          "value": "hkv@lcsd.gov.hk",
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/contact.html",
+          "evidence": "Hong Kong Velodrome Office Address : Telephone : Fax : E-mail : 105-107 Po Hong Road, Tseung Kwan O 2878 8622 2878 8630 hkv@lcsd.gov.hk",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "opening_hours": {
+          "value": "Venue: 7:00 am - 11:00 pm daily (except maintenance days: 7:00 am - 1:00 pm on 1st and 3rd Tuesdays); track shared-use sessions Wednesdays 8-10pm",
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+          "evidence": "7:00 am - 11:00 pm daily (except maintenance days)",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "pricing_url": {
+          "value": "https://www.lcsd.gov.hk/en/hkv/indoor/fee.html",
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/indoor/fee.html",
+          "evidence": "Hiring charges for Cycling Track",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "price_range": {
+          "value": {
+            "min": 40,
+            "max": 110,
+            "currency": "HKD",
+            "check_site": true
+          },
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/indoor/fee.html",
+          "evidence": "Shared use of track (per person) $110 per two hours $80 per two hours $56 per two hours $40 per two hours",
+          "confidence": "high",
+          "source_kind": "owner"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+        "evidence": "During the above closure periods, other facilities at Hong Kong Velodrome will remain open as usual.",
+        "confidence": "high",
+        "source_kind": "owner",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 250,
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+          "evidence": "Apart from the 250-metre wooden cycling track",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        {
+          "field": "surface",
+          "value": "Wood",
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+          "evidence": "Apart from the 250-metre wooden cycling track",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        {
+          "field": "is_indoor",
+          "value": true,
+          "source_url": "https://www.lcsd.gov.hk/en/hkv/index.html",
+          "evidence": "is the first-ever local indoor cycling venue that meets the standards of the International Cycling Union",
+          "confidence": "high",
+          "source_kind": "owner"
+        }
+      ],
+      "not_found": [
+        "year_built"
+      ],
+      "notes": "Fee page lists four shared-use per-person rates (normal vs concessionary, peak vs off-peak); exclusive-use track hire ($280-$800 per hour) excluded. Track requires an LCSD track pass; booking via SmartPLAY. Seed country CHN (Hong Kong SAR) left as is."
+    },
+    {
+      "seed_name": "Juan de Fuca Velodrome",
+      "seed_values": {
+        "country_code": "CAN",
+        "length_m": 333.0,
+        "surface": "Concrete",
+        "latitude": 48.443429,
+        "longitude": -123.464457
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://gvva.bc.ca/",
+          "source_url": "https://gvva.bc.ca/",
+          "evidence": "The Greater Victoria Velodrome Association advocates and facilitates track riding and racing on Vancouver Island at the WestShore Velodrome",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://gvva.bc.ca/product/drop-in-track-pass/",
+          "source_url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+          "evidence": "One day track pass, good for one open track session and adult coached session (Mondays, Wednesdays, and Sunday).",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Greater Victoria Velodrome Association (GVVA)",
+          "source_url": "https://gvva.bc.ca/about/",
+          "evidence": "The Greater Victoria Velodrome Association (GVVA) advocates and facilitates track riding and racing on Vancouver Island at the WestShore Velodrome",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1994,
+          "source_url": "https://gvva.bc.ca/about/",
+          "evidence": "The West Shore Velodrome was built for the 1994 Commonwealth Games.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@gvva.bc.ca",
+          "source_url": "https://gvva.bc.ca/contact/",
+          "evidence": "Greater Victoria Velodrome Association 1767 Island Highway Victoria, BC Canada V9B 1J1 Email: info@gvva.bc.ca",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Open track and adult coached sessions Mondays, Wednesdays and Sundays; facility by reservation only (times not stated)",
+          "source_url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+          "evidence": "One day track pass, good for one open track session and adult coached session (Mondays, Wednesdays, and Sunday).",
+          "confidence": "low",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://gvva.bc.ca/product/drop-in-track-pass/",
+          "source_url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+          "evidence": "Drop-in Track Pass $ 20.00 One day track pass",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 20,
+            "max": 20,
+            "currency": "CAD",
+            "check_site": true
+          },
+          "source_url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+          "evidence": "Drop-in Track Pass $ 20.00 One day track pass",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://gvva.bc.ca/",
+        "evidence": "2026 season is here",
+        "confidence": "high",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 333,
+          "source_url": "https://gvva.bc.ca/about/",
+          "evidence": "is a 333.3 metre concrete oval with 29 degree banking at the ends and 10 degree banking on the straights",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "surface",
+          "value": "Concrete",
+          "source_url": "https://gvva.bc.ca/about/",
+          "evidence": "is a 333.3 metre concrete oval with 29 degree banking at the ends and 10 degree banking on the straights",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "country_code",
+          "value": "CAN",
+          "source_url": "https://gvva.bc.ca/contact/",
+          "evidence": "Victoria, BC Canada",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "phone"
+      ],
+      "notes": "The track is now branded Westshore Velodrome (formerly Juan de Fuca Rec. Centre grounds; the contact page says 'Behind the Westshore Parks & Recreation Center (formerly Juan de Fuca Rec. Center)'). GVVA is the programme operator/user; the facility sits on West Shore Parks & Recreation (WSPR) land and the about page says personal-use bookings go to sportbookings@wspr.ca, but no WSPR page specific to the velodrome was found, and WSPR's reception lines are general (not recorded). The site gives prices only as '$' (CAD assumed, Canadian venue); drop-in pass requires a $15 GVVA membership. Drop-in is the only per-session price (Learn to Ride $70 is a course; track bike rental $15-$200 excluded). Hours are not published as times on the schedule page."
+    },
+    {
+      "seed_name": "Loulé - Velódromo de Loulé",
+      "seed_values": {
+        "country_code": "POR",
+        "length_m": 400.0,
+        "surface": "Concrete",
+        "latitude": 37.1355,
+        "longitude": -8.0215
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {},
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "http://www.centrociclismoloule.com/index.php/actividade-pistas",
+        "evidence": "Aos sabados podes vir experimentar uma bicicleta de estrada na pista Bexiga Peres (Estádio Municipal de Loulé) a partir das 09h:30H",
+        "confidence": "low",
+        "source_kind": "other",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 400,
+          "source_url": "https://www.cm-loule.pt/pt/agenda/13761/xivx-volta-ao-concelho-de-loule.aspx",
+          "evidence": "Contrarrelógio por Equipas na Pista Bexiga Peres (Estádio Municipal de Loulé) com 4km (10 voltas à pista de 400mts)",
+          "confidence": "medium",
+          "source_kind": "owner"
+        }
+      ],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "operator",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "No official venue page exists. The Câmara Municipal's sports portal (louledesporto.com) does not list a velodrome among its facilities. The only track found is the 'Pista Bexiga Peres' at the Estádio Municipal de Loulé (400 m per a 2018 CML event page; surface not stated, so seed Concrete unconfirmed and not contradicted). The Centro de Ciclismo de Loulé club site (a club, not owner/operator; undated page, footer 'Copyright 2026') mentions Saturday try-out sessions by phone appointment only; its phone numbers (911 809 044 / 911 809 437) and gmail address are club/personal-style lines and not recorded. Status left unknown. Non-official local press suggests Loulé has no homologated velodrome, which was used only as a lead and is not cited."
+    },
+    {
+      "seed_name": "Marseille - Vélodrome Jean Bouin",
+      "seed_values": {
+        "country_code": "FRA",
+        "length_m": 400.0,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {},
+      "operating_status": {
+        "value": "unknown",
+        "source_url": null,
+        "evidence": null,
+        "confidence": "low",
+        "source_kind": "other",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "operator",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "No official velodrome/track page found. marseille.fr and mairie-marseille6-8.fr serve only a JS/cookie redirect to non-browser clients (no content retrievable). smuc.fr (club resident at 65 av. Clot Bey) lists no cycling section and is a club, not the venue operator, so it was not used. Search summaries suggest the site is now a multisport complex (football/rugby/athletics) with no active cycling track, but that is not from an official fetched page, so status stays unknown."
+    },
+    {
+      "seed_name": "Montichiari - Velodromo Fassa Bortolo",
+      "seed_values": {
+        "country_code": "ITA",
+        "length_m": 250.0,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {},
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.federciclismo.it/comunicati-a/allenamenti-ciclismo-paralimpico-su-pista-montichiari-bs-30-09-2026/",
+        "evidence": "sono stati convocati dalle ore 10:00 alle ore 17:00, c/o il velodromo di Montichiari gli Atleti",
+        "confidence": "medium",
+        "source_kind": "federation",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "operator",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "velodromomontichiari.it shows only a 'Website is under maintenance' page and its ownership is not established; velodromodimontichiari.com does not resolve (NXDOMAIN); arena/www.fassabortolovelodrome.it unreachable. The Italian Cycling Federation (FCI) states (17 Dec 2025, https://www.federciclismo.it/articoli/montichiari-il-velodromo-puo-riaprire-anche-allattivita-di-base/) that the velodrome may reopen officially to base activity and that 'Nelle prossime settimane verranno definite le modalità di gestione ed utilizzo dell'impianto', so no operator is confirmed. Owner per a 2022 Comune press release republished by FCI (https://www.federciclismo.it/articoli/pista-articoli/velodromo-di-montichiari-la-precisazione-del-comune/): 'Il Comune di Montichiari e` proprietario della struttura.' Status 'open' rests on FCI national-team training convocations at the track in Sept/Nov 2026; no public operator schedule exists."
+    },
+    {
+      "seed_name": "Odense Cyklebane",
+      "seed_values": {
+        "country_code": "DNK",
+        "length_m": 250.0,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+          "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+          "evidence": "Thorvald Ellegaard Arena - en kombineret cykle- og atletikarena Cyklebane 250 m",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://shop.compuapp.dk/odensesv/booking",
+          "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+          "evidence": "Du kan reservere plads til på de åbne motionshold via Booking Portalen",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Odense Idrætspark (Odense Kommune)",
+          "source_url": "https://odense-idraetspark.dk/hvem-er-vi",
+          "evidence": "Odense Idrætspark er en del af Fritidsafdelingen, og vi tilhører By- og Kulturforvaltningen i Odense Kommune (Fritid og Kultur). Vores primære opgaver består i at drive en række større idrætsanlæg i Odense Kommune",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "65 51 53 72",
+          "source_url": "https://odense-idraetspark.dk/kontakt",
+          "evidence": "Administrationen Telefon: 65 51 53 72 Mail: Idraetsparken@odense.dk",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "Idraetsparken@odense.dk",
+          "source_url": "https://odense-idraetspark.dk/kontakt",
+          "evidence": "Administrationen Telefon: 65 51 53 72 Mail: Idraetsparken@odense.dk",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+          "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+          "evidence": "Banecykling - Åben motion (01. oktober - 31. marts) Det koster 55 kr. at køre per gang, og banecykel kan lejes for 34 kr.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 55,
+            "max": 55,
+            "currency": "DKK",
+            "check_site": true
+          },
+          "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+          "evidence": "Det koster 55 kr. at køre per gang, og banecykel kan lejes for 34 kr.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+        "evidence": "Banecykling - Åben motion (01. oktober - 31. marts) Det koster 55 kr. at køre per gang",
+        "confidence": "medium",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 250,
+          "source_url": "https://odense-idraetspark.dk/aabningstider-og-info/thorvald-ellegaard-arena",
+          "evidence": "Cyklebane 250 m Løbebaner 200 m"
+        }
+      ],
+      "not_found": [
+        "year_built",
+        "opening_hours",
+        "surface_confirmation"
+      ],
+      "notes": "The track is officially called Thorvald Ellegaard Arena (run by Odense Idrætspark); the guessed domain odensecyklebane.dk returns Cloudflare 520. Danish pages. Phone/email are the Idrætspark administration (not track-specific, not town hall); the arena page itself only lists named individuals, which were not used. The only seasonal schedule given is open track riding 1 Oct-31 Mar, with no weekday times (booking portal holds the slots), so opening_hours is not found. Price: 55 DKK per visit; bike hire 34 DKK extra (min=max=55 for the entry price). Booking portal link is hosted on shop.compuapp.dk (third-party shop used by Odense Idrætspark, linked from the official page)."
+    },
+    {
+      "seed_name": "Paris - Vélodrome National (SQY)",
+      "seed_values": {
+        "country_code": "FRA",
+        "length_m": 250.0,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+          "evidence": "Vélodrome National de Saint-Quentin-en-Yvelines : le sport et la piste accessibles à tous dans le 78",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "evidence": "Cyclisme sur piste à Saint-Quentin en Yvelines Présentation Offres Réservations",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "LE VELODROME SQY (SARL; UCPA-branded site)",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/mentions-legales",
+          "evidence": "LE VELODROME SQY, société à responsabilité limitée à associé unique au capital de 10 000 euros. 1, rue Laurent Fignon 78180 Montigny le Bretonneux",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2014,
+          "source_url": "https://museedelaville.sqy.fr/patrimoine/le-velodrome-national-de-saint-quentin-en-yvelines/",
+          "evidence": "Le Vélodrome National est inauguré en 2014 pour répondre à la pénurie des équipements de ce type",
+          "confidence": "medium",
+          "source_kind": "other"
+        },
+        "phone": {
+          "value": "01.76.21.93.20",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+          "evidence": "CONTACT Tel : 01.76.21.93.20 e-mail : hello-velodrome@ucpa.asso.fr",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "hello-velodrome@ucpa.asso.fr",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+          "evidence": "CONTACT Tel : 01.76.21.93.20 e-mail : hello-velodrome@ucpa.asso.fr",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Mon 9:00-22:00; Tue 7:00-22:00; Wed 9:00-22:00; Thu 7:00-22:00; Fri 9:00-22:00; Sat 9:00-20:00; Sun 9:00-17:00",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+          "evidence": "HORAIRES Lundi : 9:00 – 22:00 Mardi : 7:00 – 22:00 Mercredi : 9:00 – 22:00 Jeudi : 7:00 – 22:00 Vendredi : 9:00 – 22:00 Samedi : 9:00 – 20:00 Dimanche : 9:00 – 17:00",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.ucpa.com/centres-sportifs/velodrome-national/tarifs-velodrome",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/tarifs-velodrome",
+          "evidence": "Séance Unitaire - 120min Catégorie Tarifaire* Tarif Réduit / Tarif Plein 16,00€ / 20,00€",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 16.0,
+            "max": 49.0,
+            "currency": "EUR",
+            "check_site": true
+          },
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/tarifs-velodrome",
+          "evidence": "Baptême - 60min Catégorie Tarifaire* Tarif Réduit / Tarif Plein 39,20€ / 49,00€",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national",
+        "evidence": "HORAIRES Lundi : 9:00 – 22:00 Mardi : 7:00 – 22:00 Mercredi : 9:00 – 22:00 Jeudi : 7:00 – 22:00 Vendredi : 9:00 – 22:00 Samedi : 9:00 – 20:00 Dimanche : 9:00 – 17:00",
+        "confidence": "medium",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 250,
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "evidence": "Une piste olympique couverte de 250 mètres en bois de pin de Sibérie"
+        },
+        {
+          "field": "surface",
+          "value": "Wood",
+          "source_url": "https://www.ucpa.com/centres-sportifs/velodrome-national/cyclisme-sur-piste",
+          "evidence": "Une piste olympique couverte de 250 mètres en bois de pin de Sibérie"
+        }
+      ],
+      "not_found": [],
+      "notes": "velodrome-national.com 301-redirects to the UCPA-hosted official site (ucpa.com), which is used for all operator values. The booking engine is JS-rendered; the cited cyclisme-sur-piste page has a 'Réservations' section. Operator legal entity per mentions légales is 'LE VELODROME SQY' (page itself is UCPA-branded; UCPA group parentage not stated in the quote so confidence is medium). Prices: individual track sessions (Séance Unitaire 120 min 16.00/20.00 EUR reduced/full; beginner 60 min 19.20/24.00; baptême 60 min 39.20/49.00); min = reduced-rate 120-min session, max = full-rate baptême. year_built is the inauguration year, from the SQY agglomeration's Musée de la Ville (agglomeration is a project sponsor; ownership not verified)."
+    },
+    {
+      "seed_name": "Pruskow - Arena",
+      "seed_values": {
+        "country_code": "POL",
+        "length_m": 250.0,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://arenapruszkow.pl/",
+          "source_url": "https://arenapruszkow.pl/",
+          "evidence": "ARENA Pruszków to przede wszystkim jedyny kryty tor kolarski w Polsce",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Arena Pruszków Sp. z o.o.",
+          "source_url": "https://arenapruszkow.pl/",
+          "evidence": "Arena Pruszków Sp. z o.o. ul. Andrzeja 1 05-800 Pruszków",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2009,
+          "source_url": "https://arenapruszkow.pl/",
+          "evidence": "który został zbudowany w 2009 roku",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+48 22 738 83 81",
+          "source_url": "https://arenapruszkow.pl/",
+          "evidence": "Wynajem obiektu i organizacja imprez: +48 22 738 83 81",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "arena.pruszkow@pzkol.pl",
+          "source_url": "https://arenapruszkow.pl/",
+          "evidence": "Arena Pruszków Sp. z o.o. ul. Andrzeja 1 05-800 Pruszków arena.pruszkow@pzkol.pl",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Office hours: Mon-Fri 8:00-16:00 (track session times not published on this page)",
+          "source_url": "https://arenapruszkow.pl/",
+          "evidence": "Godziny pracy: od poniedziałku do piątku w godz. 8:00-16:00",
+          "confidence": "low",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://arenapruszkow.pl/ostre-kolo/",
+          "source_url": "https://arenapruszkow.pl/ostre-kolo/",
+          "evidence": "Cennik (obowiązuje od 1 maja 2025) Jazda na torze i wypożyczenie roweru – 80 zł / h",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 70,
+            "max": 80,
+            "currency": "PLN",
+            "check_site": true
+          },
+          "source_url": "https://arenapruszkow.pl/ostre-kolo/",
+          "evidence": "Jazda na torze i wypożyczenie roweru – 80 zł / h (**) Jazda na torze własnym rowerem – 70 zł/ h",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://arena.pzkol.pl/kalendarz/2760,mistrzostwa-polski-elity-w-kolarstwie-torowym.html",
+        "evidence": "Data: 2026-08-01 - 2026-08-03 Miejsce: tor kolarski - Pruszków Ranga: Mistrzostwa Polski",
+        "confidence": "medium",
+        "source_kind": "federation",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [],
+      "not_found": [
+        "booking_url"
+      ],
+      "notes": "Polish pages. Seed name has typo 'Pruskow'; venue is Arena Pruszków (ul. Andrzeja 1). Phone/email are the venue's generic rental/office line and mailbox (arena.pruszkow@pzkol.pl); the Ostre Koło bike-rental contact is a named person and was not used. No online booking page found (rental is by phone/e-mail), so booking_url omitted. Prices (ostre-kolo page, valid from 1 May 2025, cash only): 70 PLN/h own bike, 80 PLN/h incl. bike hire. Opening hours are the office hours only; weekly track-session times are shown only partially in rendered text (Tue/Thu 19:30-21:00 on the Ostre Koło page) so were not used. Status 'open' based on the Polish Cycling Federation calendar entry for the 2026 national championships at the track; the venue site itself carries no dated 2026 activity."
+    },
+    {
+      "seed_name": "Roubaix - Stab Vélodrome",
+      "seed_values": {
+        "country_code": "FRA",
+        "length_m": 250.0,
+        "surface": "Wood",
+        "latitude": 50.6811,
+        "longitude": 3.2065
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://stabvelodromeroubaix.fr/",
+          "source_url": "https://stabvelodromeroubaix.fr/",
+          "evidence": "STAB VÉLODROME DE ROUBAIX : LE CYCLISME AUTREMENT",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://stabvelodrome.horanet.com/",
+          "source_url": "https://stabvelodromeroubaix.fr/programmation/",
+          "evidence": "Lien d’inscription : https://stabvelodrome.horanet.com",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2012,
+          "source_url": "https://stabvelodromeroubaix.fr/histoire-du-stab/",
+          "evidence": "il ouvrira ses portes en juin 2012",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+33 3 20 65 31 60",
+          "source_url": "https://stabvelodromeroubaix.fr/contacts/",
+          "evidence": "Par téléphone : 03 20 65 31 60",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "stab@stabvelodrome.fr",
+          "source_url": "https://stabvelodromeroubaix.fr/contacts/",
+          "evidence": "Par mail à : stab@stabvelodrome.fr",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://stabvelodromeroubaix.fr/sentrainer/",
+          "source_url": "https://stabvelodromeroubaix.fr/sentrainer/",
+          "evidence": "1 SÉANCE 12€ ✔ 1 séance de 2 heures",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 12,
+            "max": 12,
+            "currency": "EUR",
+            "check_site": true
+          },
+          "source_url": "https://stabvelodromeroubaix.fr/sentrainer/",
+          "evidence": "1 SÉANCE 12€ ✔ 1 séance de 2 heures",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://stabvelodromeroubaix.fr/programmation/",
+        "evidence": "C’est reparti pour une nouvelle saison de folie sur la piste du STAB Vélodrome de Roubaix !",
+        "confidence": "high",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 250,
+          "source_url": "https://stabvelodromeroubaix.fr/",
+          "evidence": "Parcourez les 250 mètres de longueur à travers un baptême de cyclisme sur piste.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "surface",
+          "value": "Wood",
+          "source_url": "https://stabvelodromeroubaix.fr/decouvrir/",
+          "evidence": "Sur la piste en bois aux dimensions olympiques du STAB Vélodrome de Roubaix",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "operator",
+        "opening_hours"
+      ],
+      "notes": "Operator site stabvelodromeroubaix.fr fetched directly (the lead domain velodrome-roubaix.fr/stab-velodrome.fr do not resolve). Operator legal name not stated (mentions légales only says site is 'édité par Le STAB Vélodrome de Roubaix', SIRET 75178166700017) -> not_found. Opening hours are only published as an image (planning haute saison) -> not quotable. price max=min=12 EUR is the single 2h drop-in session; baptême (20-25 EUR, /decouvrir/), 10-session card 108 EUR, bike hire 8 EUR and subscriptions 150-350 EUR are on the same operator site. The site's contact line (/contact/) is labelled events service; /contacts/ is the general 'équipe du vélodrome' contact used here. Year: the history page gives opening 'juin 2012' (future tense) and chronology says inaugurated in September 2012; both 2012."
+    },
+    {
+      "seed_name": "Santiago - Velódromo Peñalolén",
+      "seed_values": {
+        "country_code": "CHI",
+        "length_m": 250.0,
+        "surface": "Wood",
+        "latitude": -33.483,
+        "longitude": -70.548
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {},
+      "operating_status": {
+        "value": "unknown",
+        "source_url": null,
+        "evidence": null,
+        "confidence": "low",
+        "source_kind": "other",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "operator",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "No official source could be fetched. The operator-side domains (deportespenalolen.cl incl. portal. subdomain; Corporación Municipal de Deportes y Recreación de Peñalolén) return a Cloudflare 403 block to curl and are not reachable by web_fetch; www.penalolen.cl and ind.cl search yielded no velodrome page (penalolen.cl times out; ind.cl directory is a JS app). The only official page reached, transparenciaproactiva.penalolen.cl/informate/medio-ambiente/parques-comunales, mentions 'Incluye un velódromo' inside Parque Peñalolén (2023 data, park hours only) and does not support any field or current status, so nothing is recorded. Phone/email seen only in web-search summaries/aggregators (not accepted). A browser-capable re-try of deportespenalolen.cl is recommended."
+    },
+    {
+      "seed_name": "Tissot Velodrome (Grenchen)",
+      "seed_values": {
+        "country_code": "SUI",
+        "length_m": 250.0,
+        "surface": "Wood",
+        "latitude": 47.1935,
+        "longitude": 7.3914
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.tissotvelodrome.ch/",
+          "source_url": "https://www.tissotvelodrome.ch/",
+          "evidence": "Das Nationalstadion des Schweizer Radsports - Tissot Velodrome",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "evidence": "Kursanmeldung (Bahnschnupperkurs)",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Velodrome Suisse AG",
+          "source_url": "https://www.tissotvelodrome.ch/home/kontakt-1/",
+          "evidence": "Velodrome Suisse AG Neumattstrasse 25 CH-2540 Grenchen",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+41 32 654 20 40",
+          "source_url": "https://www.tissotvelodrome.ch/home/kontakt-1/",
+          "evidence": "Telefon: +41 32 654 20 40",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@tissotvelodrome.ch",
+          "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "evidence": "title=\"info@tissotvelodrome.ch\">per Mail </a> oder telefonisch unter 032 654 20 40 entgegen",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Reception: Mon, Wed-Fri 08:00-12:30 and 13:30-18:15; Tue 08:00-12:30; Sat-Sun closed. Track hall per weekly schedule.",
+          "source_url": "https://www.tissotvelodrome.ch/home/kontakt-1/",
+          "evidence": "Empfang Mo, Mi - Fr: 08.00 - 12.30 Uhr / 13.30 - 18.15 Uhr Di: 08.00 - 12.30 Uhr / nachmittags geschlossen Sa & So geschlossen Halle Die Halle ist gemäss dem Wochenplan auf der Startseite geöffnet.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "evidence": "Einzeleintritt , nur für Trainierende mit Bahnerfahrung. Erwachsene: CHF 35.- pro Trainingseinheit;",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 17.5,
+            "max": 35,
+            "currency": "CHF",
+            "check_site": true
+          },
+          "source_url": "https://www.tissotvelodrome.ch/home/kurse-training-1/",
+          "evidence": "Einzeleintritt , nur für Trainierende mit Bahnerfahrung. Erwachsene: CHF 35.- pro Trainingseinheit; Jugendliche (unter 18 Jahren) bezahlen 50%, d.h. CHF 17.50",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.tissotvelodrome.ch/",
+        "evidence": "Wochenplan 02. - 08.11.2026",
+        "confidence": "high",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 250,
+          "source_url": "https://www.tissotvelodrome.ch/home/über-uns-1/",
+          "evidence": "Es vereint eine 250m lange Holzrennbahn",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "surface",
+          "value": "Wood",
+          "source_url": "https://www.tissotvelodrome.ch/home/über-uns-1/",
+          "evidence": "Es vereint eine 250m lange Holzrennbahn",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "year_built"
+      ],
+      "notes": "Operator site fetched directly. Email is Cloudflare-obfuscated in the visible text of /home/kontakt-1/ (data-cfemail decodes to info@tissotvelodrome.ch); the only plaintext occurrence is the link title attribute in raw HTML of /home/kurse-training-1/ (quote is raw HTML) -> medium. Operator = Velodrome Suisse AG (contact block/footer ©; /home/über-uns-1/ says the Stiftung Velodrome Suisse is its sole shareholder and financed the building) but no page literally says 'operator' -> medium. Hours given are reception hours (track hall hours are in weekly PDF plans on the homepage). Price range = individual drop-in 'Einzeleintritt' (junior 17.50 / adult 35 CHF), excluding bike rental 25 CHF, courses (Schnupperkurs 90 CHF, Bahnkurs 480 CHF) and annual pass 750 CHF. Booking: courses via online forms on the cited page, drop-in at the Tageskasse (FAQ); no online drop-in booking found. No official page states the opening/construction year. Site is German-only."
+    },
+    {
+      "seed_name": "Velodrome Suisse (Aigle)",
+      "seed_values": {
+        "country_code": "SUI",
+        "length_m": 200.0,
+        "surface": "Wood",
+        "latitude": 46.3186,
+        "longitude": 6.9272
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.cmc-aigle.ch/",
+          "source_url": "https://www.cmc-aigle.ch/",
+          "evidence": "Centre Mondial du Cyclisme UCI (CMC) | Aigle | Suisse",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://www.cmc-aigle.ch/calendrier-des-initiations",
+          "source_url": "https://www.cmc-aigle.ch/calendrier-des-initiations",
+          "evidence": "Comment réserver son initiation piste? Dates initiations pistes",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "CMC Exploitation SA",
+          "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+          "evidence": "CMC Exploitation SA Allée Ferdi Kübler 12 1860 Aigle, Suisse",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+41 24 468 58 85",
+          "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+          "evidence": "+41 24 468 58 85",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "cmc@uci.ch",
+          "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+          "evidence": "cmc@uci.ch",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Centre: Mon-Fri 07:30-17:00; Sat-Sun 09:00-18:00 (track slots per weekly occupancy calendar)",
+          "source_url": "https://www.cmc-aigle.ch/contact-et-horaires",
+          "evidence": "Du lundi au vendredi de 7h30 à 17h00 | Samedi & dimanche de 09h00 à 18h00",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://www.cmc-aigle.ch/abonnements-piste",
+          "source_url": "https://www.cmc-aigle.ch/abonnements-piste",
+          "evidence": "Avoir participé à une intitiation Individuelle ou par groupe (2h) CHF 65.-",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 65,
+            "max": 90,
+            "currency": "CHF",
+            "check_site": true
+          },
+          "source_url": "https://www.cmc-aigle.ch/abonnements-piste",
+          "evidence": "Individuelle ou par groupe (2h) CHF 65.- Durée : 2h + 2 Avoir participé au baptême de la piste Formation (2h) + session abonnés (2h) CHF 90.-",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.cmc-aigle.ch/abonnements-piste",
+        "evidence": "Période du lundi 5 octobre 2026 au samedi 1 mai 2027",
+        "confidence": "high",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "confirmations": [
+        {
+          "field": "length_m",
+          "value": 200,
+          "source_url": "https://www.cmc-aigle.ch/infrastructures",
+          "evidence": "Longueur 200m",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        {
+          "field": "surface",
+          "value": "Wood",
+          "source_url": "https://www.cmc-aigle.ch/infrastructures",
+          "evidence": "Vélodrome en bois de 200m",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      ],
+      "not_found": [
+        "year_built"
+      ],
+      "notes": "Seed 'Velodrome Suisse (Aigle)' = velodrome of the UCI World Cycling Centre (CMC), Aigle; not to be confused with Velodrome Suisse AG (Grenchen). Wix site, rendered text fetched. Phone/email are the CMC organisational line/mailbox (cmc@uci.ch on the operator's own contact page). Hours are centre-wide; velodrome slots are in weekly occupancy PDFs. Price range = single initiation (65 CHF, 2h) to baptême (90 CHF, 4h) for new users; winter subscriptions 199 (10-session pass, own bike) to 399 CHF. Only the velodrome-specific build year is absent: site says the centre has hosted athletes 'Depuis 2002' (centre, not the track) -> year_built not_found."
+    }
+  ]
+}

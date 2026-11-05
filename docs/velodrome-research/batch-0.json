@@ -1,0 +1,1010 @@
+{
+  "schema_version": 1,
+  "researched_at": "2026-11-05",
+  "policy": "Only official/authoritative sources fetched directly (venue/operator, owner municipality, national/continental federation). Unverified values are null and listed in not_found. Coordinates are never proposed from non-official sources.",
+  "tracks": [
+    {
+      "seed_name": "Aarhus Cyklebane",
+      "seed_values": {
+        "country_code": "DNK",
+        "length_m": 333,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.aarhuscyklebane.dk/",
+          "source_url": "https://www.aarhuscyklebane.dk/informationer/",
+          "evidence": "Jyllands Allé 79 | 8000 Aarhus C cvr: 36270365 | info@aarhuscyklebane.dk",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Foreningen Aarhus Cyklebane (CVR 36270365)",
+          "source_url": "https://www.aarhuscyklebane.dk/informationer/",
+          "evidence": "Aarhus Cyklebane Jyllands Allé 79 | 8000 Aarhus C cvr: 36270365",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@aarhuscyklebane.dk",
+          "source_url": "https://www.aarhuscyklebane.dk/kontakt/",
+          "evidence": "Aarhus Cyklebane Jyllands Alle 79 8000 Aarhus tlf.: 30 62 12 48 info@aarhuscyklebane.dk CVR: 36270365",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1940,
+          "source_url": "https://www.aarhuscyklebane.dk/informationer/historie/",
+          "evidence": "1940 – 2025 Aarhusbanen",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "closed",
+        "source_url": "https://www.aarhuscyklebane.dk/informationer/traening/",
+        "evidence": "Med nedrivningen af Aarhus Cyklebane i efteråret 2025, kan der ikke længere dyrkes banecykling i byen.",
+        "confidence": "high",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "phone",
+        "booking_url",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "Operator site states the Aarhus track was demolished in autumn 2025 (replacement 'Aarhus-Hallen' indoor track planned, no date). Phone on /kontakt/ belongs to the named chairman (personal, excluded)."
+    },
+    {
+      "seed_name": "Astana - Saryarka Velodrome",
+      "seed_values": {
+        "country_code": "KAZ",
+        "length_m": 250,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://velotrek.kz/en/",
+          "source_url": "https://velotrek.kz/en/about-us/about-center/",
+          "evidence": "The sports complex is managed by the Republican State Enterprise (RGKP) “Olympic Training Center “Astana”",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "RGKP 'Olympic Training Center Astana'",
+          "source_url": "https://velotrek.kz/en/about-us/about-center/",
+          "evidence": "The sports complex is managed by the Republican State Enterprise (RGKP) “Olympic Training Center “Astana”, which ensures its uninterrupted functioning.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2011,
+          "source_url": "https://velotrek.kz/en/about-us/about-center/",
+          "evidence": "multifunctional sports complex, built in 2011",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+7 7172 707 173",
+          "source_url": "https://velotrek.kz/en/contacts/",
+          "evidence": "Reception +7 (7172) 707 173",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@odo-astana.kz",
+          "source_url": "https://velotrek.kz/en/contacts/",
+          "evidence": "Reception +7 (7172) 707 173 cop-astana@yandex.kz info@odo-astana.kz",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://velotrek.kz/en/sections/velosport/",
+          "source_url": "https://velotrek.kz/en/sections/velosport/",
+          "evidence": "Single session fee: 5,000 (Cycling Enthusiasts section; Tue/Thu 19:30–21:00, Sat 13:00–14:30)",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 5000,
+            "max": null,
+            "currency": "KZT",
+            "check_site": true
+          },
+          "source_url": "https://velotrek.kz/en/sections/velosport/",
+          "evidence": "Single session fee: 5,000 (currency not printed on page; Kazakhstan tenge assumed); applies to the Cycling Enthusiasts group section only",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://velotrek.kz/en/about-us/about-center/",
+        "evidence": "The sports complex operates year-round",
+        "confidence": "medium",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "booking_url",
+        "opening_hours"
+      ],
+      "notes": "Contacts page URL is /en/contacts/ (also /en/contacts/); phone/email shown under 'Reception'. Price page does not print a currency."
+    },
+    {
+      "seed_name": "Beijing - Laoshan Velodrome",
+      "seed_values": {
+        "country_code": "CHN",
+        "length_m": 250,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {},
+      "operating_status": {
+        "value": "unknown",
+        "source_url": null,
+        "evidence": "No official operator/owner page located",
+        "confidence": "low",
+        "source_kind": "other",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "operator",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "No official venue/operator website found (search surfaced only Trip.com, Tripadvisor, The Beijinger, visitbeijing - not acceptable sources). Venue sits at the national cycling/fencing training base; nothing recorded rather than guessed."
+    },
+    {
+      "seed_name": "Brno - Favorit",
+      "seed_values": {
+        "country_code": "CZE",
+        "length_m": 400,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.favoritbrno.cz/velodrom/",
+          "source_url": "https://www.favoritbrno.cz/velodrom/",
+          "evidence": "Velodrom TJ Favorit Brno je nejstarším velodromem na světě",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "TJ Favorit Brno, spolek",
+          "source_url": "https://www.favoritbrno.cz/velodrom/",
+          "evidence": "Tělovýchovné jednoty Favorit Brno, do jejíhož majetku velodrom patří",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1889,
+          "source_url": "https://www.favoritbrno.cz/velodrom/",
+          "evidence": "1889 – 21.7.1889 - slavnostní otevření původní hliněné dráhy",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@favoritbrno.cz",
+          "source_url": "https://www.favoritbrno.cz/kontakt",
+          "evidence": "E-mail: info@favoritbrno.cz",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "https://www.favoritbrno.cz/velodrom/",
+        "evidence": "Velodrom TJ Favorit Brno je nejstarším velodromem na světě",
+        "confidence": "low",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "booking_url",
+        "phone",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "1889 is the original clay track; the present concrete 400 m track dates from 1957-1969 (same page). Contact page mixes office and named-person phone numbers, so no phone recorded. velodrombrno.cz is a campaign site, not the operator, and was not used. Length 400 m matches seed."
+    },
+    {
+      "seed_name": "Cambridge - Avantidrome",
+      "seed_values": {
+        "country_code": "NZL",
+        "length_m": 250,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://avantidrome.co.nz/",
+          "source_url": "https://avantidrome.co.nz/",
+          "evidence": "Home of Cycling is a New Zealand operated Charitable Trust",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "booking_url": {
+          "value": "https://avantidrome.co.nz/track/programmes/trackschedule/",
+          "source_url": "https://avantidrome.co.nz/track/programmes/trackschedule/",
+          "evidence": "Track Bookings | Avantidrome (schedule page with per-session booking)",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Home of Cycling Charitable Trust",
+          "source_url": "https://avantidrome.co.nz/about/history",
+          "evidence": "The Home of Cycling (HoC) Charitable Trust was established ... to build, own and operate the National Centre of Excellence",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2014,
+          "source_url": "https://avantidrome.co.nz/about/history",
+          "evidence": "Construction of the Avantidrome began in June 2012 and was completed in February 2014",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://avantidrome.co.nz/track/programmes/track-sessions/",
+          "source_url": "https://avantidrome.co.nz/track/programmes/track-sessions/",
+          "evidence": "Prices listed are casual rates per hour e.g. if there is a two hour session this will be twice the listed price.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 10,
+            "max": 25,
+            "currency": "NZD",
+            "check_site": true
+          },
+          "source_url": "https://avantidrome.co.nz/track/programmes/track-sessions/",
+          "evidence": "Adult $15 / Youth $10 (also '$25 including bike hire' Have-a-Go and '$22.50 per session' coached; currency symbol only '$', NZ site)",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://avantidrome.co.nz/track/programmes/trackschedule/",
+        "evidence": "Track Bookings (schedule page with bookable sessions; no closure notice found)",
+        "confidence": "low",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "phone",
+        "email",
+        "opening_hours"
+      ],
+      "notes": "Phone/email are injected by JavaScript and absent from fetched HTML. /hours page is a stale 2019/2020 snapshot (mentions 'November - January 2020'), so hours are not recorded. Pages without www redirect target; www redirects to apex."
+    },
+    {
+      "seed_name": "Dalmine - Velodromo di Dalmine",
+      "seed_values": {
+        "country_code": "ITA",
+        "length_m": 374,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.comune.dalmine.bg.it/it/vivere/754205",
+          "source_url": "https://www.comune.dalmine.bg.it/it/vivere/754205",
+          "evidence": "Campo di calcio e pista di ciclismo (Comune di Dalmine, owner municipality page)",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "operator": {
+          "value": "Comune di Dalmine (municipal facility)",
+          "source_url": "https://www.comune.dalmine.bg.it/it/vivere/754205",
+          "evidence": "Velodromo Comunale - Comune di Dalmine",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "year_built": {
+          "value": 1926,
+          "source_url": "https://www.lombardiabeniculturali.it/blog/percorsi/i-luoghi-del-ciclismo/velodromo-di-dalmine/",
+          "evidence": "La storia del Velodromo di Dalmine si apre nel giorno dell’ inaugurazione, 15 Agosto 1926",
+          "confidence": "high",
+          "source_kind": "other"
+        }
+      },
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "https://www.comune.dalmine.bg.it/it/vivere/754205",
+        "evidence": "Velodromo Comunale (municipal page; no opening/closure statement)",
+        "confidence": "low",
+        "source_kind": "owner",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "booking_url",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "WARNING: velodromodalmine.it (guessable domain) is a hijacked casino site; never use. Municipal page lists phone 035.62247 and a gmail address (not clearly organisational, not recorded). Length on source 374,40 m matches seed."
+    },
+    {
+      "seed_name": "Erfurt - Radrennbahn Andreasried",
+      "seed_values": {
+        "country_code": "GER",
+        "length_m": 250,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.radrennbahn-andreasried.de/",
+          "source_url": "https://www.radrennbahn-andreasried.de/impressum",
+          "evidence": "ANBIETER RSC Turbine Erfurt e.V. Riethstr. 29a 99089 Erfurt",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "RSC Turbine Erfurt e.V.",
+          "source_url": "https://www.radrennbahn-andreasried.de/impressum",
+          "evidence": "ANBIETER RSC Turbine Erfurt e.V. Riethstr. 29a 99089 Erfurt",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+49 361 731887510",
+          "source_url": "https://www.radrennbahn-andreasried.de/impressum",
+          "evidence": "KONTAKT Telefon +49 361 731887510",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "https://www.radrennbahn-andreasried.de/",
+        "evidence": "Die für diesen Sommer geplanten Sanierungsarbeiten am Fahrbahnbelag der Radrennbahn Andreasried laufen derzeit auf Hochtouren. (30 Jul 2026)",
+        "confidence": "medium",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [
+        {
+          "field": "length_m",
+          "old_value": 250,
+          "new_value": 454.4,
+          "source_url": "https://www.radrennbahn-andreasried.de/historie",
+          "evidence": "Mitte der goldenen 20er Jahre kam es zum Umbau der Rennbahn auf 454,4 m. (2006-08 rebuild length not stated)",
+          "confidence": "low"
+        }
+      ],
+      "not_found": [
+        "booking_url",
+        "email",
+        "year_built",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "Only event ticket prices (15/12 EUR, Steherrennen) published, not a session price, so not recorded as price_range. Email is JS-obfuscated. Track history: rebuilt 2006-2008; current length not stated (seed 250 m possibly wrong; historic 454.4 m)."
+    },
+    {
+      "seed_name": "Grenoble - Palais des Sports",
+      "seed_values": {
+        "country_code": "FRA",
+        "length_m": 210,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {},
+      "operating_status": {
+        "value": "unknown",
+        "source_url": null,
+        "evidence": "No official page about the velodrome located",
+        "confidence": "low",
+        "source_kind": "other",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "operator",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "grenoble.fr/179-palais-des-sports.htm is the Palais des Sports Pierre Mendes France concert-hall site (no velodrome mention) so its address/phone were not recorded. No official velodrome page found."
+    },
+    {
+      "seed_name": "Invercargill - SIT Zero Fees Velodrome",
+      "seed_values": {
+        "country_code": "NZL",
+        "length_m": 250,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.stadiumsouth.co.nz/",
+          "source_url": "https://www.stadiumsouth.co.nz/about-us-2",
+          "evidence": "Velodrome, which opened in 2006 as New Zealand's first indoor velodrome",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Southland Indoor Leisure Centre Charitable Trust (ILT Stadium Southland)",
+          "source_url": "https://www.stadiumsouth.co.nz/about-us-2",
+          "evidence": "ILT Stadium Southland is governed by the Southland Indoor Leisure Centre Charitable Trust as owners of the building",
+          "confidence": "high",
+          "source_kind": "owner"
+        },
+        "year_built": {
+          "value": 2006,
+          "source_url": "https://www.stadiumsouth.co.nz/about-us-2",
+          "evidence": "Velodrome, which opened in 2006 as New Zealand's first indoor velodrome",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+64 3 219 9310",
+          "source_url": "https://www.stadiumsouth.co.nz/contact-us-1",
+          "evidence": "(03) 219 9310",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "reception@stadiumsouth.co.nz",
+          "source_url": "https://www.stadiumsouth.co.nz/contact-us-1",
+          "evidence": "reception@stadiumsouth.co.nz",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.stadiumsouth.co.nz/about-us-2",
+        "evidence": "has been in use every day since then",
+        "confidence": "medium",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "booking_url",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "Phone/email are the stadium reception (organisational). Cycling Southland's velodrome page shows only dated prices, not used."
+    },
+    {
+      "seed_name": "Leipzig - Radrennbahn Leipzig",
+      "seed_values": {
+        "country_code": "GER",
+        "length_m": 400,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "http://www.skr-leipzig.de/",
+          "source_url": "http://www.skr-leipzig.de/kontakt",
+          "evidence": "Stadt und Kreisfachverband Radsport Leipzig e.V. Windorfer Str. 63",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Stadt- und Kreisfachverband Radsport Leipzig e.V.",
+          "source_url": "http://www.skr-leipzig.de/kontakt",
+          "evidence": "Stadt und Kreisfachverband Radsport Leipzig e.V. Windorfer Str. 63",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "info@skr-leipzig.de",
+          "source_url": "http://www.skr-leipzig.de/kontakt",
+          "evidence": "info@skr-leipzig.de",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "http://www.skr-leipzig.de/kontakt",
+        "evidence": "Sie möchten die Bahn",
+        "confidence": "low",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "booking_url",
+        "phone",
+        "year_built",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "City page for the venue is JavaScript-rendered and could not be read; council phone not recorded. cd@skr-leipzig.de is a sponsor mailbox, not recorded."
+    },
+    {
+      "seed_name": "Lyon - Vélodrome du Parc de la Tête d'Or",
+      "seed_values": {
+        "country_code": "FRA",
+        "length_m": 333.3,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.lyon.fr/lieu/stade/velodrome-georges-preveral-du-parc-de-la-tete-dor",
+          "source_url": "https://www.lyon.fr/lieu/stade/velodrome-georges-preveral-du-parc-de-la-tete-dor",
+          "evidence": "1 piste cyclisme",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "year_built": {
+          "value": 1894,
+          "source_url": "https://www.archives-lyon.fr/pages/velodrome",
+          "evidence": "27 mai 1894 : inauguration du vélodrome",
+          "confidence": "high",
+          "source_kind": "owner"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.lyon.fr/lieu/stade/velodrome-georges-preveral-du-parc-de-la-tete-dor",
+        "evidence": "Réservé aux adhérents du club, hors manifestation exceptionnelle.",
+        "confidence": "medium",
+        "source_kind": "owner",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "booking_url",
+        "operator",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "Original 1894 velodrome; a new velodrome was inaugurated on 5 September 1933 (Archives de Lyon page). Access is club members only, so no public price. The page phone is the Ville de Lyon general line and is not recorded."
+    },
+    {
+      "seed_name": "Mexico City - Velódromo Agustín Melgar",
+      "seed_values": {
+        "country_code": "MEX",
+        "length_m": 333,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "year_built": {
+          "value": 1968,
+          "source_url": "https://mexicocity.cdmx.gob.mx/venues/agustin-melgar-olympic-velodrome/",
+          "evidence": "El velódromo se abrió a tiempo para los Juegos Olímpicos de 1968 y ha estado en uso desde entonces.",
+          "confidence": "medium",
+          "source_kind": "other"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://mexicocity.cdmx.gob.mx/venues/agustin-melgar-olympic-velodrome/",
+        "evidence": "ha estado en uso desde entonces",
+        "confidence": "low",
+        "source_kind": "other",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "operator",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "Only the city tourism page was verifiable. It lists a gmail address, which is not recorded as organisational."
+    },
+    {
+      "seed_name": "Nilai - National Velodrome",
+      "seed_values": {
+        "country_code": "MAS",
+        "length_m": 250,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "operator": {
+          "value": "Majlis Sukan Negara Malaysia",
+          "source_url": "https://www.kbs.gov.my/ms/component/joodb/10:direktori-kemudahan-kbs/1327-velodrom-track?Itemid=825&format=html",
+          "evidence": "Velodrom Nasional Malaysia(Majlis Sukan Negara Malaysia) Persiaran Perbandaran 71800 Nilai",
+          "confidence": "medium",
+          "source_kind": "owner"
+        },
+        "opening_hours": {
+          "value": "Mon-Sun 08:00-22:00",
+          "source_url": "https://www.kbs.gov.my/ms/component/joodb/10:direktori-kemudahan-kbs/1327-velodrom-track?Itemid=825&format=html",
+          "evidence": "ISNIN - AHAD (8.00 PAGI HINGGA 10.00 MALAM)",
+          "confidence": "medium",
+          "source_kind": "owner"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.kbs.gov.my/ms/component/joodb/10:direktori-kemudahan-kbs/1327-velodrom-track?Itemid=825&format=html",
+        "evidence": "Status Kemudahan: BAIK",
+        "confidence": "medium",
+        "source_kind": "owner",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "year_built",
+        "phone",
+        "email",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "Ministry of Youth and Sports facility directory. The listed phone belongs to a named officer (not recorded); rental rates are blank."
+    },
+    {
+      "seed_name": "Olympic Oval (Calgary)",
+      "seed_values": {
+        "country_code": "CAN",
+        "length_m": 450,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {},
+      "operating_status": {
+        "value": "unknown",
+        "source_url": "https://oval.ucalgary.ca/",
+        "evidence": "Oval (no cycling track mentioned on the site)",
+        "confidence": "low",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "operator",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "FLAG: the University of Calgary Olympic Oval site (oval.ucalgary.ca) describes a speed-skating/multi-sport venue; no cycling or velodrome track found, so this seed row may not be a velodrome. Nothing recorded; manual check suggested before showing this row."
+    },
+    {
+      "seed_name": "Plovdiv - Kolodruma",
+      "seed_values": {
+        "country_code": "BUL",
+        "length_m": 250,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.kolodrumplovdiv.com/",
+          "source_url": "https://www.kolodrumplovdiv.com/bg/zalata/pistata",
+          "evidence": "250 м дължина и 7 м широчина",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "ОП „Многофункционална спортна зала“ (Plovdiv municipal enterprise)",
+          "source_url": "https://www.kolodrumplovdiv.com/bg/cenorazpis",
+          "evidence": "МНОГОФУНКЦИОНАЛНА СПОРТНА ЗАЛА",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2015,
+          "source_url": "https://www.kolodrumplovdiv.com/bg/zalata/istoriya",
+          "evidence": "На 30 август Колодрум Пловдив официално отвори врати",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+359 882 468 624",
+          "source_url": "https://www.kolodrumplovdiv.com/bg/kontakti",
+          "evidence": "Телефон: +359 (0) 882468624",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "kolodruma@plovdiv.bg",
+          "source_url": "https://www.kolodrumplovdiv.com/bg/kontakti",
+          "evidence": "kolodruma@plovdiv.bg",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.kolodrumplovdiv.com/",
+        "evidence": "дата: 14.11.2026",
+        "confidence": "low",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "booking_url",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "Price list (bg/cenorazpis, EUR) covers hall/track rental (e.g. 122.71 EUR for up to 2 h), not individual session prices, so not recorded. Contacts page also lists staff direct lines (excluded)."
+    },
+    {
+      "seed_name": "Rio de Janeiro - Velódromo Olímpico",
+      "seed_values": {
+        "country_code": "BRA",
+        "length_m": 250,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {},
+      "operating_status": {
+        "value": "unknown",
+        "source_url": null,
+        "evidence": "Official sites blocked",
+        "confidence": "low",
+        "source_kind": "other",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "website_url",
+        "booking_url",
+        "operator",
+        "year_built",
+        "phone",
+        "email",
+        "opening_hours",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "parqueolimpico.rio.br and museuolimpico.rio returned 403 (Cloudflare) so no official page could be fetched and verified; web-search summary values (hours, phone) were not recorded."
+    },
+    {
+      "seed_name": "San Jose - Hellyer Park Velodrome",
+      "seed_values": {
+        "country_code": "USA",
+        "length_m": 333.3,
+        "surface": "Concrete"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://hellyervelodrome.com/",
+          "source_url": "https://hellyervelodrome.com/about/quick-facts/",
+          "evidence": "Northern California Velodrome Association, 501c(3) operates the Hellyer Velodrome in partnership with Santa Clara County Parks.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Northern California Velodrome Association (NCVA)",
+          "source_url": "https://hellyervelodrome.com/about/quick-facts/",
+          "evidence": "Northern California Velodrome Association, 501c(3) operates the Hellyer Velodrome in partnership with Santa Clara County Parks.",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1963,
+          "source_url": "https://hellyervelodrome.com/about/quick-facts/",
+          "evidence": "Built in 1963 for the Pan Am Games",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "pricing_url": {
+          "value": "https://hellyervelodrome.com/about/hellyer-history/",
+          "source_url": "https://hellyervelodrome.com/about/hellyer-history/",
+          "evidence": "Adults typically pay as little as $5 for training and $5 for bike rentals for most beginner events.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "price_range": {
+          "value": {
+            "min": 5,
+            "max": null,
+            "currency": "USD",
+            "check_site": true
+          },
+          "source_url": "https://hellyervelodrome.com/about/hellyer-history/",
+          "evidence": "Adults typically pay as little as $5 for training and $5 for bike rentals for most beginner events.",
+          "confidence": "medium",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://hellyervelodrome.com/",
+        "evidence": "2026 Race Results",
+        "confidence": "low",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [
+        {
+          "field": "length_m",
+          "old_value": 333.3,
+          "new_value": 335,
+          "source_url": "https://hellyervelodrome.com/about/quick-facts/",
+          "evidence": "Size: 335 meters",
+          "confidence": "high"
+        }
+      ],
+      "not_found": [
+        "booking_url",
+        "phone",
+        "email",
+        "opening_hours"
+      ],
+      "notes": "Operator site: juniors (under 18) ride free; spectating free. Registration is through the operator's session pages. No email or phone found in page text."
+    },
+    {
+      "seed_name": "Sylvan Adams Velodrome (Tel Aviv)",
+      "seed_values": {
+        "country_code": "ISR",
+        "length_m": 250,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+          "source_url": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+          "evidence": "הוולודרום הלאומי הוא מסלול רכיבת אופניים אליפטי מקורה בתקן אולימפי, באורך 250 מטר",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Tel Aviv Sports Halls Company (חברת היכלי הספורט)",
+          "source_url": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+          "evidence": "חברת היכלי הספורט",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 2020,
+          "source_url": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+          "evidence": "מאז פתיחתו ב-2020",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+972 3 649 6464",
+          "source_url": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+          "evidence": "טלפון: 03-6496464",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "email": {
+          "value": "office@nsc.org.il",
+          "source_url": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+          "evidence": "אימייל: office@nsc.org.il",
+          "confidence": "medium",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Sun-Sat 06:00-22:00 (not all hours open to the public)",
+          "source_url": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+          "evidence": "ימי א' עד שבת, בין השעות 06.00 בבוקר ועד 22.00 בלילה",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+        "evidence": "המסלול פועל לאורך השבוע",
+        "confidence": "high",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "booking_url",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "Phone/email are the National Sports Center general contacts shown on the facility page footer (the Halls Company line 03-6376000 / office@sportp.co.il is also listed). Prices are only shown inside the registration system. Length 250 m matches seed."
+    },
+    {
+      "seed_name": "Valencia - Velódromo Luis Puig",
+      "seed_values": {
+        "country_code": "ESP",
+        "length_m": 250,
+        "surface": "Wood"
+      },
+      "info_verified_at": "2026-11-05",
+      "fields": {
+        "website_url": {
+          "value": "https://www.fdmvalencia.es/es/instalaciones/palau-velodrom-lluis-puig/",
+          "source_url": "https://www.fdmvalencia.es/es/instalaciones/palau-velodrom-lluis-puig/",
+          "evidence": "1 Pista velódromo",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "operator": {
+          "value": "Fundación Deportiva Municipal de Valencia",
+          "source_url": "https://www.fdmvalencia.es/es/instalaciones/palau-velodrom-lluis-puig/",
+          "evidence": "Fundación Deportiva Municipal",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "year_built": {
+          "value": 1992,
+          "source_url": "https://www.fdmvalencia.es/es/instalaciones/palau-velodrom-lluis-puig/",
+          "evidence": "1992",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "phone": {
+          "value": "+34 96 390 26 40",
+          "source_url": "https://www.fdmvalencia.es/es/instalaciones/palau-velodrom-lluis-puig/",
+          "evidence": "TEL 96 390 26 40",
+          "confidence": "high",
+          "source_kind": "operator"
+        },
+        "opening_hours": {
+          "value": "Mon-Sun 08:00-22:00",
+          "source_url": "https://www.fdmvalencia.es/es/instalaciones/palau-velodrom-lluis-puig/",
+          "evidence": "Lunes a Domingo: 8-22'00 h.",
+          "confidence": "high",
+          "source_kind": "operator"
+        }
+      },
+      "operating_status": {
+        "value": "open",
+        "source_url": "https://www.fdmvalencia.es/es/instalaciones/palau-velodrom-lluis-puig/",
+        "evidence": "Lunes a Domingo: 8-22'00 h.",
+        "confidence": "medium",
+        "source_kind": "operator",
+        "checked_at": "2026-11-05"
+      },
+      "corrections": [],
+      "not_found": [
+        "booking_url",
+        "email",
+        "pricing_url",
+        "price_range"
+      ],
+      "notes": "Official facility page of the municipal foundation (it is the facility's 'Palau Velòdrom Lluís Puig'); the page's year field reads 'Año de contrucción 1992'. A 2023-24 activity/price PDF exists but is dated and mixes courses, so no price recorded."
+    }
+  ]
+}

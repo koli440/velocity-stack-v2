@@ -1,0 +1,1226 @@
+{
+ "reviewed_at": "2026-11-05",
+ "method": "Every cited source_url re-fetched with curl (Chrome UA) and fragment-matched, then each item read manually for semantic support, domain trust, organisational contact and price sanity. Independent searches (web_search/web_fetch, Wayback for blocked city site) for the least-covered tracks: Rock Hill, Valencia, Helsinki, Portsmouth; Aguascalientes, Lima, Fiorenzuola, Maebashi, San Juan not independently researched (blocked or time-limited). Search summaries used only as leads.",
+ "counts": {
+  "total": 113,
+  "verified": 108,
+  "unverifiable": 2,
+  "rejected": 3
+ },
+ "missed_info": [
+  {
+   "track": "Rock Hill - Giordana Velodrome",
+   "field": "operator",
+   "value": "City of Rock Hill Parks, Recreation and Tourism Department",
+   "source_url": "https://www.cityofrockhill.com/departments/parks-recreation-tourism/parks-facilities/regional-parks/rock-hill-velodrome",
+   "quote": "This facility is owned, operated and maintained by the City of Rock Hill Parks, Recreation and Tourism Department.",
+   "confidence": "high",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Rock Hill - Giordana Velodrome",
+   "field": "phone",
+   "value": "803-326-2453",
+   "source_url": "https://www.cityofrockhill.com/departments/parks-recreation-tourism/parks-facilities/regional-parks/rock-hill-velodrome",
+   "quote": "1000 Riverwalk Pkwy 803-326-2453",
+   "confidence": "medium",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Rock Hill - Giordana Velodrome",
+   "field": "length_m",
+   "value": "250 (conflicts with researcher correction 240)",
+   "source_url": "https://www.cityofrockhill.com/departments/parks-recreation-tourism/parks-facilities/regional-parks/rock-hill-velodrome",
+   "quote": "Our outdoor 250m concrete oval track with banked straights and corners meets Olympic standards.",
+   "confidence": "high",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Portsmouth - Mountbatten Centre",
+   "field": "phone",
+   "value": "023 9320 0401",
+   "source_url": "https://www.bhliveactive.org.uk/centres/mountbatten-leisure-centre/",
+   "quote": "(web-search lead only; not seen in my own fetch)",
+   "confidence": "low",
+   "source_kind": "operator"
+  },
+  {
+   "track": "Valencia - Velódromo Máximo Viloria",
+   "field": "operator",
+   "value": "Fundacion Deportiva Municipal de Valencia",
+   "source_url": "https://www.fdmvalencia.es/es/velodromo-luis-puig2/",
+   "quote": "Velodromo Luis Puig2 (page exists on FDM Valencia site; no detail text in static HTML)",
+   "confidence": "low",
+   "source_kind": "owner"
+  },
+  {
+   "track": "Helsinki Velodrome",
+   "field": "website_url",
+   "value": "https://palvelukartta.hel.fi/fi/unit/41334",
+   "source_url": "https://palvelukartta.hel.fi/fi/unit/41334",
+   "quote": "Käpylän liikuntapuisto / Velodromi / Pyöräilystadion (municipal listing; owner Helsingin kaupunki, upkeep liikuntapalvelut per search lead)",
+   "confidence": "low",
+   "source_kind": "owner"
+  }
+ ],
+ "records": [
+  {
+   "track": "Athens - Olympic Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+   "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Athens - Olympic Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Ο.Α.Κ.Α. (Ολυμπιακό Αθλητικό Κέντρο Αθηνών «Σπύρος Λούης»)",
+   "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Athens - Olympic Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1991,
+   "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Athens - Olympic Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@oaka.gr",
+   "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Athens - Olympic Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Mon-Fri 07:30-22:00",
+   "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Athens - Olympic Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Athens - Olympic Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://oaka.com.gr/egkatastaseis/olybiako-podilatodromio/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Berlin - Velodrom Berlin",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.velodrom.de/",
+   "source_url": "https://www.velodrom.de/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Berlin - Velodrom Berlin",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Velomax Berlin Hallenbetriebs GmbH",
+   "source_url": "https://www.velodrom.de/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Berlin - Velodrom Berlin",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1997,
+   "source_url": "https://www.velodrom.de/location/daten-fakten",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Berlin - Velodrom Berlin",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@velomax.de",
+   "source_url": "https://www.velodrom.de/impressum/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Berlin - Velodrom Berlin",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.velodrom.de/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Berlin - Velodrom Berlin",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.velodrom.de/location/daten-fakten",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Berlin - Velodrom Berlin",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.velodrom.de/location/daten-fakten",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://centrenationalbromont.com/",
+   "source_url": "https://centrenationalbromont.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://activitymessenger.com/org/828/page/heljhU1/velodrome",
+   "source_url": "https://centrenationalbromont.com/acces-journalier/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Centre National de Cyclisme de Bromont (CNCB)",
+   "source_url": "https://centrenationalbromont.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2022,
+   "source_url": "https://centrenationalbromont.com/mission-et-historique/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "450 534-3333",
+   "source_url": "https://centrenationalbromont.com/nous-joindre/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@cncb.ca",
+   "source_url": "https://centrenationalbromont.com/nous-joindre/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Mon-Fri 07:00-21:00; Sat-Sun 08:00-21:00 (whole centre; velodrome session times are in the booking schedule)",
+   "source_url": "https://centrenationalbromont.com/nous-joindre/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Whole-centre hours."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://centrenationalbromont.com/acces-journalier/",
+   "source_url": "https://centrenationalbromont.com/acces-journalier/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 32.5,
+    "max": 35.0,
+    "currency": "CAD",
+    "check_site": true
+   },
+   "source_url": "https://activitymessenger.com/org/828/page/heljhU1/velodrome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Source is activitymessenger platform page (from-prices 32.50/35 CAD); source_kind other, linked from operator page."
+  },
+  {
+   "track": "Bromont - Centre National de Cyclisme",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://centrenationalbromont.com/abonnement/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Cardiff - Maindy Stadium",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+   "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Cardiff - Maindy Stadium",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Better (GLL - Greenwich Leisure Limited)",
+   "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Cardiff - Maindy Stadium",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1958,
+   "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Cardiff - Maindy Stadium",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "Maindy@gll.org",
+   "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Cardiff - Maindy Stadium",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Cycle track: Mon 06:00-18:00; Tue 06:00-16:00; Wed 06:00-14:00; Thu 06:00-17:00; Fri 06:30-17:30; Sat 07:30-09:00; Sun 07:30-16:30",
+   "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Cardiff - Maindy Stadium",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/prices",
+   "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/prices",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Cardiff - Maindy Stadium",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 3.85,
+    "max": 7.3,
+    "currency": "GBP",
+    "check_site": true
+   },
+   "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/prices",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Cardiff - Maindy Stadium",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Cardiff - Maindy Stadium",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 460,
+   "source_url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.derbyarena.co.uk/",
+   "source_url": "https://www.derbyarena.co.uk/get-involved/contact-us/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.derbyarena.co.uk/cycling/track-cycling/programme-prices/",
+   "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/accredited-rider/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Derby City Council",
+   "source_url": "https://www.derbyarena.co.uk/get-involved/contact-us/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+44 1332 640011",
+   "source_url": "https://www.derbyarena.co.uk/get-involved/contact-us/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "derbyarena@derby.gov.uk",
+   "source_url": "https://www.derbyarena.co.uk/get-involved/contact-us/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Arena-wide (not track-specific): Mon-Fri 06:00-22:00; Sat-Sun 07:00-19:00; subject to early closure at some events. Track sessions follow a separate weekly programme.",
+   "source_url": "https://www.derbyarena.co.uk/plan-a-visit/opening-hours/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.derbyarena.co.uk/cycling/track-cycling/accredited-rider/",
+   "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/accredited-rider/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 17.45,
+    "max": 41.6,
+    "currency": "GBP",
+    "check_site": true
+   },
+   "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/accredited-rider/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Min 17.45 GBP is on cited page; max 41.60 GBP (2h stage 3/4) is on /cycling/track-cycling/accreditation/. Verified with both URLs.",
+   "source_url_fix": "https://www.derbyarena.com/cycling/track-cycling/accreditation/"
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/programme-prices/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.derbyarena.co.uk/cycling/track-cycling/about-the-track/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Derby - Derby Arena",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.derbyarena.co.uk/plan-a-visit/about-the-arena/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Fiorenzuola d'Arda - Velodromo Attilio Pavesi",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1929,
+   "source_url": "https://visitpiacenza.it/natura/velodromo-attilio-pavesi/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Tourism site (source_kind other); \"risale al 1929\" is the origin, not necessarily the current structure."
+  },
+  {
+   "track": "Fiorenzuola d'Arda - Velodromo Attilio Pavesi",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+39 0523 892838",
+   "source_url": "https://visitpiacenza.it/natura/velodromo-attilio-pavesi/",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Visitpiacenza tourism page does not state whose number it is; not confirmed as the venue/operator line."
+  },
+  {
+   "track": "Fiorenzuola d'Arda - Velodromo Attilio Pavesi",
+   "kind": "confirmation",
+   "field": "length_m/surface",
+   "proposed_value": "394 m, cemento (Concrete)",
+   "source_url": "https://www.federciclismo.it/pista/velodromi/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Helsinki Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://palvelukartta.hel.fi/fi/unit/41334",
+   "source_url": "https://palvelukartta.hel.fi/fi/unit/41334",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Page is the municipal palvelukartta listing which itself says no home page is declared; value is an owner-municipality page, not an operator site. Needs attention, not auto-apply."
+  },
+  {
+   "track": "Helsinki Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "City of Helsinki (Culture and Leisure Division)",
+   "source_url": "https://palvelukartta.hel.fi/fi/unit/41334",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Helsinki Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+358 9 310 87990",
+   "source_url": "https://palvelukartta.hel.fi/fi/unit/41334",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Number appears on the municipal listing but is not confirmed as venue-specific (may be a general sports-services line); needs attention."
+  },
+  {
+   "track": "Helsinki Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://pyoraily.fi/lajit/rata/ratapyorailyn-velodromit/",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Izu Velodrome (Shizuoka)",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+   "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Izu Velodrome (Shizuoka)",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "一般財団法人日本サイクルスポーツセンター (Japan Cycle Sports Center)",
+   "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Izu Velodrome (Shizuoka)",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+81 558 79 0001",
+   "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Izu Velodrome (Shizuoka)",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@csc.or.jp",
+   "source_url": "https://www.csc.or.jp/foundation-overview/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Izu Velodrome (Shizuoka)",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Park-wide (not velodrome-specific): closed Wed and Thu (open on public holidays); hours vary by season, e.g. 2026 weekdays 10:00-16:30, Sat/Sun/holidays 09:30-16:30. Velodrome general use is currently suspended; camp use follows park hours.",
+   "source_url": "https://www.csc.or.jp/about/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Park-wide hours."
+  },
+  {
+   "track": "Izu Velodrome (Shizuoka)",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.csc.or.jp/about/",
+   "source_url": "https://www.csc.or.jp/about/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Park admission page, not velodrome-specific."
+  },
+  {
+   "track": "Izu Velodrome (Shizuoka)",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "closed",
+   "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Closed to general use only; camps continue; likely temporary."
+  },
+  {
+   "track": "Izu Velodrome (Shizuoka)",
+   "kind": "confirmation",
+   "field": "length_m/surface",
+   "proposed_value": "250 m, wood",
+   "source_url": "https://www.csc.or.jp/attraction-ride/attraction-ride-786/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Lima - Velódromo de la Videna",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Instituto Peruano del Deporte (IPD)",
+   "source_url": "https://www.gob.pe/institucion/ipd/noticias/1166848-velodromo-de-la-videna-luce-espectacular-luego-de-los-trabajos-realizados-por-el-ipd",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Lima - Velódromo de la Videna",
+   "kind": "confirmation",
+   "field": "length_m/surface",
+   "proposed_value": "250 m, wood",
+   "source_url": "https://www.gob.pe/institucion/ipd/noticias/1166848-velodromo-de-la-videna-luce-espectacular-luego-de-los-trabajos-realizados-por-el-ipd",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Maebashi - Green Dome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.maebashi-keirin.jp/",
+   "source_url": "https://www.maebashi-keirin.jp/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Maebashi - Green Dome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+81 27-231-4508",
+   "source_url": "https://greendome.jp/access",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "027-231-4508 is the keirin enquiries line on greendome.jp, not the main line (027-235-2000); needs attention."
+  },
+  {
+   "track": "Maebashi - Green Dome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Gates open 10:00 on keirin race days (not a general public track-riding schedule)",
+   "source_url": "https://www.maebashi-keirin.jp/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Hours are keirin race-day gate times, not general track use; needs attention."
+  },
+  {
+   "track": "Maebashi - Green Dome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.maebashi-keirin.jp/",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Middlesbrough - Sports Village",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.necycling.com/copy-of-cycle-circuit",
+   "source_url": "https://www.necycling.com/copy-of-cycle-circuit",
+   "original_confidence": "high",
+   "verdict": "rejected",
+   "reason": "Cited URL is the Wix draft slug /copy-of-cycle-circuit, not a stable page.",
+   "source_url_fix": "https://www.necycling.com/"
+  },
+  {
+   "track": "Middlesbrough - Sports Village",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.necycling.com/bookings",
+   "source_url": "https://www.necycling.com/bookings",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Middlesbrough - Sports Village",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "NE Cycling CIC (North East Cycling Academy)",
+   "source_url": "https://www.necycling.com/copy-of-cycle-circuit",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Middlesbrough - Sports Village",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://goteamup.com/p/7640998-north-east-cycling-academ/memberships/",
+   "source_url": "https://goteamup.com/p/7640998-north-east-cycling-academ/memberships/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Page is the TeamUp membership page (35 GBP/month), not session pricing; needs attention."
+  },
+  {
+   "track": "Middlesbrough - Sports Village",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://www.necycling.com/copy-of-cycle-circuit",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Middlesbrough - Sports Village",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.necycling.com/copy-of-cycle-circuit",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://northeastvelodrome.wordpress.com/",
+   "source_url": "https://northeastvelodrome.wordpress.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://northeastvelodrome.wordpress.com/event-schedule/",
+   "source_url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "New England Track Cycling (501(c)(3) nonprofit)",
+   "source_url": "https://northeastvelodrome.wordpress.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2007,
+   "source_url": "https://northeastvelodrome.wordpress.com/about/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "2007 is start of operation."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+1 978-621-7725",
+   "source_url": "https://northeastvelodrome.wordpress.com/",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Quote present but area code 978 is Massachusetts for a New Hampshire venue and the page does not show it is an organisational line."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@newenglandtrackcycling.com",
+   "source_url": "https://northeastvelodrome.wordpress.com/contact/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Seasonal (mid-April to mid-September). Tuesday mass-start racing: gates 17:00, racing 18:00",
+   "source_url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://northeastvelodrome.wordpress.com/event-schedule/",
+   "source_url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 20,
+    "max": 30,
+    "currency": "USD",
+    "check_site": true
+   },
+   "source_url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Prices are race-entry fees for events, not general track admission; needs attention."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://northeastvelodrome.wordpress.com/about/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Open seasonally mid-April to mid-September; currently off-season (2026-11-05)."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 333,
+   "source_url": "https://northeastvelodrome.wordpress.com/about/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Northeast Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Asphalt",
+   "source_url": "https://northeastvelodrome.wordpress.com/2026-nev-summer-championship-series/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Palma de Mallorca - Velòdrom Illes Balears",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://velodromillesbalears.com/es",
+   "source_url": "https://velodromillesbalears.com/es",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Palma de Mallorca - Velòdrom Illes Balears",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Fundació per a l'Esport Balear (site published by Consorci Velòdrom Illes Balears)",
+   "source_url": "https://velodromillesbalears.com/es/sobre-nosotros",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Palma de Mallorca - Velòdrom Illes Balears",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2007,
+   "source_url": "https://velodromillesbalears.com/es/sobre-nosotros",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Palma de Mallorca - Velòdrom Illes Balears",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+34 971 763 299",
+   "source_url": "https://velodromillesbalears.com/es/contacto",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Palma de Mallorca - Velòdrom Illes Balears",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@velodromillesbalears.com",
+   "source_url": "https://velodromillesbalears.com/es/contacto",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Palma de Mallorca - Velòdrom Illes Balears",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://velodromillesbalears.com/es/sobre-nosotros",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Evidence weak (\"actualmente cuenta con...\"); site looks stale (c 2019, COVID notices). Low confidence."
+  },
+  {
+   "track": "Palma de Mallorca - Velòdrom Illes Balears",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://velodromillesbalears.com/es",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Portsmouth - Mountbatten Centre",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://bhliveactive.org.uk/mountbatten",
+   "source_url": "https://bhliveactive.org.uk/mountbatten",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Portsmouth - Mountbatten Centre",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "BH Live (BH Live Active), under agency agreement with Portsmouth City Council",
+   "source_url": "https://bhliveactive.org.uk/mountbatten",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Portsmouth - Mountbatten Centre",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Centre-wide (not track-specific): Mon-Fri 05:00-21:00, Sat-Sun 06:00-19:00",
+   "source_url": "https://bhliveactive.org.uk/mountbatten",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Centre-wide hours, not velodrome-specific."
+  },
+  {
+   "track": "Portsmouth - Mountbatten Centre",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://bhliveactive.org.uk/mountbatten",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "BH Live page lists \"an outdoor velodrome\" among facilities (re-fetched); low confidence."
+  },
+  {
+   "track": "Rock Hill - Giordana Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+   "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Rock Hill - Giordana Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "803-326-2453",
+   "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Rock Hill - Giordana Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Tue-Fri 12:00-20:00; Sat 09:00-17:00; Sun 13:00-17:00",
+   "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Rock Hill - Giordana Velodrome",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Rock Hill - Giordana Velodrome",
+   "kind": "correction",
+   "field": "length_m",
+   "proposed_value": 240,
+   "source_url": "https://www.visitrockhillsc.com/location/rock-hill-velodrome/",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Conflicts with owner/operator source: archived City of Rock Hill velodrome page (web.archive.org 20260617) says \"Our outdoor 250m concrete oval track ... meets Olympic standards\". Seed 250 is correct; 240 from tourism site is wrong/no-go.",
+   "source_url_fix": "https://www.cityofrockhill.com/departments/parks-recreation-tourism/parks-facilities/regional-parks/rock-hill-velodrome"
+  },
+  {
+   "track": "San Juan - Velódromo Vicente Alejo Chancay",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+   "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "San Juan - Velódromo Vicente Alejo Chancay",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2023,
+   "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "San Juan - Velódromo Vicente Alejo Chancay",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "San Juan - Velódromo Vicente Alejo Chancay",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "San Juan - Velódromo Vicente Alejo Chancay",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://sanjuan.tur.ar/atractivos/deportivos/velodromo-provincial-vicente-chancay",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Tafalla - Velódromo Miguel Induráin",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://cdtafalla.com/",
+   "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Tafalla - Velódromo Miguel Induráin",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Instalaciones Deportivas Masquatro SL (Ciudad Deportiva Tafalla)",
+   "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Tafalla - Velódromo Miguel Induráin",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "948 70 44 91",
+   "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Tafalla - Velódromo Miguel Induráin",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info.cdtafalla@masquatro.com",
+   "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Tafalla - Velódromo Miguel Induráin",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://cdtafalla.com/portal/seccion.aspx?N=215",
+   "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=215",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Tafalla - Velódromo Miguel Induráin",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 2.8,
+    "max": 10.9,
+    "currency": "EUR",
+    "check_site": true
+   },
+   "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=215",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Range 2.80-10.90 EUR mixes combined pool+gym+velodrome tickets and a disabled concession; the velodrome-only \"velodromo cicloturista\" price is a flat 6.25 EUR."
+  },
+  {
+   "track": "Tafalla - Velódromo Miguel Induráin",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "open",
+   "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=215",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Tafalla - Velódromo Miguel Induráin",
+   "kind": "correction",
+   "field": "surface",
+   "proposed_value": "Concrete",
+   "source_url": "https://cdtafalla.com/portal/seccion.aspx?N=81",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  },
+  {
+   "track": "Valencia - Velódromo Máximo Viloria",
+   "kind": "field",
+   "field": "operating_status",
+   "proposed_value": "unknown",
+   "source_url": "https://fundadeporte.gob.ve/carabobo/velodromo-maximo-romero/",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Own fetch of cited URL: verbatim quote found and supports value; domain is operator/official."
+  }
+ ]
+}
