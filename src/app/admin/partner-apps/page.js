@@ -25,7 +25,7 @@ export default function AdminPartnerAppsPage() {
   if (!state.ok) return <p className="p-6 text-sm text-slate-500">Admins only.</p>
   const names = Object.fromEntries(state.apps.map((a) => [a.id, a.name]))
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-4">
+    <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Partner apps</h1>
         <Link href="/admin" className="text-xs underline text-slate-500">Dashboard</Link>
