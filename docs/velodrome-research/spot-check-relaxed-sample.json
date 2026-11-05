@@ -1,0 +1,381 @@
+{
+ "seed": "velodrome-research-2026-11-05|relaxed",
+ "sample": [
+  {
+   "batch": "pilot",
+   "name": "London - Herne Hill Velodrome",
+   "field": "pricing_url",
+   "value": "https://www.hernehillvelodrome.com/faq",
+   "url": "https://www.hernehillvelodrome.com/faq",
+   "quote": "\"Adult Sessions: £6.60 (+£0.93 booking fee)\"; \"Adult Track Tasters and Accreditations: £6.60 (+£1.58 booking fee)\"",
+   "relax": [
+    "source_kind"
+   ]
+  },
+  {
+   "batch": "pilot",
+   "name": "Valley Preferred Cycling Center",
+   "field": "year_built",
+   "value": "1975",
+   "url": "https://thevelodrome.com/pages/history",
+   "quote": "\"The first race was held on October 12, 1975\" (construction began 1974; rebuilt 1995)",
+   "relax": [
+    "source_kind"
+   ]
+  },
+  {
+   "batch": "pilot",
+   "name": "Sydney - Dunc Gray Velodrome",
+   "field": "website_url",
+   "value": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome",
+   "url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome",
+   "quote": "Owner council page (no standalone venue site)",
+   "relax": [
+    "source_kind"
+   ]
+  },
+  {
+   "batch": "pilot",
+   "name": "Valley Preferred Cycling Center",
+   "field": "pricing_url",
+   "value": "https://thevelodrome.com/pages/training",
+   "url": "https://thevelodrome.com/pages/training",
+   "quote": "\"All VPCC training sessions have a $10 per-day, per-session fee\"",
+   "relax": [
+    "source_kind"
+   ]
+  },
+  {
+   "batch": "pilot",
+   "name": "Valley Preferred Cycling Center",
+   "field": "booking_url",
+   "value": "https://thevelodrome.com/pages/try-the-track",
+   "url": "https://thevelodrome.com/pages/try-the-track",
+   "quote": "Try-the-track page",
+   "relax": [
+    "medium",
+    "source_kind"
+   ]
+  },
+  {
+   "batch": "pilot",
+   "name": "London - Lee Valley VeloPark",
+   "field": "price_range",
+   "value": "GBP 12.25-47.2",
+   "url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/track-cycling/sessions",
+   "quote": "\"£12.25 for 60 minutes | £24.50 for 120 minutes\" (drop-in); prices page: Flying Lap £47.20, Track Taster £34.50; note of increases from 1 April 2026",
+   "relax": [
+    "medium",
+    "source_kind"
+   ]
+  },
+  {
+   "batch": "batch-0",
+   "name": "Plovdiv - Kolodruma",
+   "field": "operator",
+   "value": "ОП „Многофункционална спортна зала“ (Plovdiv municipal enterprise)",
+   "url": "https://www.kolodrumplovdiv.com/bg/cenorazpis",
+   "quote": "МНОГОФУНКЦИОНАЛНА СПОРТНА ЗАЛА",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-0",
+   "name": "Lyon - Vélodrome du Parc de la Tête d'Or",
+   "field": "website_url",
+   "value": "https://www.lyon.fr/lieu/stade/velodrome-georges-preveral-du-parc-de-la-tete-dor",
+   "url": "https://www.lyon.fr/lieu/stade/velodrome-georges-preveral-du-parc-de-la-tete-dor",
+   "quote": "1 piste cyclisme",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-0",
+   "name": "Sylvan Adams Velodrome (Tel Aviv)",
+   "field": "operator",
+   "value": "Tel Aviv Sports Halls Company (חברת היכלי הספורט)",
+   "url": "https://nsc.org.il/tlv-faclities/national-sport-center/national-wellodrom",
+   "quote": "חברת היכלי הספורט",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-0",
+   "name": "Leipzig - Radrennbahn Leipzig",
+   "field": "operator",
+   "value": "Stadt- und Kreisfachverband Radsport Leipzig e.V.",
+   "url": "http://www.skr-leipzig.de/kontakt",
+   "quote": "Stadt und Kreisfachverband Radsport Leipzig e.V. Windorfer Str. 63",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-0",
+   "name": "Cambridge - Avantidrome",
+   "field": "booking_url",
+   "value": "https://avantidrome.co.nz/track/programmes/trackschedule/",
+   "url": "https://avantidrome.co.nz/track/programmes/trackschedule/",
+   "quote": "Track Bookings | Avantidrome (schedule page with per-session booking)",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-1",
+   "name": "Northeast Velodrome",
+   "field": "pricing_url",
+   "value": "https://northeastvelodrome.wordpress.com/event-schedule/",
+   "url": "https://northeastvelodrome.wordpress.com/event-schedule/",
+   "quote": "Cost is $20 or included with Grassroots or Velodrome membership.",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-1",
+   "name": "Portsmouth - Mountbatten Centre",
+   "field": "operator",
+   "value": "BH Live (BH Live Active), under agency agreement with Portsmouth City Council",
+   "url": "https://bhliveactive.org.uk/mountbatten",
+   "quote": "Read about our Agency agreement with Portsmouth City Council",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-1",
+   "name": "Cardiff - Maindy Stadium",
+   "field": "operator",
+   "value": "Better (GLL - Greenwich Leisure Limited)",
+   "url": "https://www.better.org.uk/leisure-centre/cardiff/maindy-leisure-centre/cycling",
+   "quote": "Better is a registered trademark and trading name of GLL (Greenwich Leisure Limited)",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-1",
+   "name": "Tafalla - Velódromo Miguel Induráin",
+   "field": "operator",
+   "value": "Instalaciones Deportivas Masquatro SL (Ciudad Deportiva Tafalla)",
+   "url": "https://cdtafalla.com/portal/seccion.aspx?N=11",
+   "quote": "bajo la responsabilidad de INSTALACIONES DEPORTIVAS MASQUATRO SL",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-1",
+   "name": "Bromont - Centre National de Cyclisme",
+   "field": "booking_url",
+   "value": "https://activitymessenger.com/org/828/page/heljhU1/velodrome",
+   "url": "https://centrenationalbromont.com/acces-journalier/",
+   "quote": "Procurez-vous votre accès journalier et venez rouler sur le vélodrome!",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-2",
+   "name": "Heusden-Zolder - Velodroom",
+   "field": "operator",
+   "value": "Sport Vlaanderen",
+   "url": "https://www.sport.vlaanderen/onze-centra/heusden-zolder/tickets-piste/",
+   "quote": "Sport Vlaanderen Heusden-Zolder Velodroom Limburg",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-2",
+   "name": "Frankfurt (Oder) - Oderlandhalle",
+   "field": "booking_url",
+   "value": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/Buchungsanfrage.php?object=tx,3248.3&ModID=6&FID=3248.553.1&NavID=3248.37",
+   "url": "https://www.sport-in-frankfurt.de/Sportanlagen/Oderlandhalle-Radsport/",
+   "quote": "Online-Buchungsanfrage Sporteigenbetrieb",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-2",
+   "name": "Alkmaar - Sportpaleis",
+   "field": "opening_hours",
+   "value": "Free training 2026/27: Mon 20:00-22:30 (Nov-22 Feb); Wed 19:30-22:00 (Sep-24 Mar); Thu 19:00-21:30 (Sep-25 Mar); not track-wide opening hours",
+   "url": "https://sportpaleis-alkmaar.nl/activiteiten/vrij-trainen/",
+   "quote": "Woensdag 19.30 – 22.00 uur",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-2",
+   "name": "Carson - Velo Sports Center",
+   "field": "operator",
+   "value": "AEG (Dignity Health Sports Park)",
+   "url": "https://www.dignityhealthsportspark.com/about/about-us",
+   "quote": "managed by AEG",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-2",
+   "name": "Augsburg - Peter-Krauss-Velodrom",
+   "field": "opening_hours",
+   "value": "Winter (Okt-Mär): Mi 17-20, Fr 17-20, Sa 14-17, So 17-20; Sommer reduziert; August Bahnschließung",
+   "url": "https://www.rsg-augsburg.de/radrennbahn/trainingszeiten/",
+   "quote": "August: Bahnschließung",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-3",
+   "name": "Dick Lane Velodrome",
+   "field": "booking_url",
+   "value": "https://dicklanevelodrome.com/shop/",
+   "url": "https://dicklanevelodrome.com/fees/",
+   "quote": "All fees can be paid through online in our online store.",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-3",
+   "name": "Galapagar - Velódromo Municipal",
+   "field": "website_url",
+   "value": "https://galapagar.es/areas-municipales/deportes/",
+   "url": "https://galapagar.es/areas-municipales/deportes/",
+   "quote": "Velódromo pista de ciclismo uso individual",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-3",
+   "name": "Juan de Fuca Velodrome",
+   "field": "pricing_url",
+   "value": "https://gvva.bc.ca/product/drop-in-track-pass/",
+   "url": "https://gvva.bc.ca/product/drop-in-track-pass/",
+   "quote": "Drop-in Track Pass $ 20.00 One day track pass",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-3",
+   "name": "Bourges - Vélodrome de Bourges",
+   "field": "website_url",
+   "value": "https://www.creps-cvl.fr/",
+   "url": "https://www.creps-cvl.fr/accueil.tarifs-reservation",
+   "quote": "Vélodrome - Séance tout public de 2h30 - Personne adulte - 1 séance 9.00 €",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-3",
+   "name": "Paris - Vélodrome National (SQY)",
+   "field": "price_range",
+   "value": "EUR 16-49",
+   "url": "https://www.ucpa.com/centres-sportifs/velodrome-national/tarifs-velodrome",
+   "quote": "Baptême - 60min Catégorie Tarifaire* Tarif Réduit / Tarif Plein 39,20€ / 49,00€",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-4",
+   "name": "Penrose Park Velodrome",
+   "field": "website_url",
+   "value": "https://www.penroseparkvelodrome.com/",
+   "url": "https://www.penroseparkvelodrome.com/",
+   "quote": "Site 'Penrose Park Velodrome – Event Calendar Since 1962', address 4200 North Kingshighway Boulevard, St. Louis",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-4",
+   "name": "Barcelona - Velòdrom d'Horta",
+   "field": "pricing_url",
+   "value": "https://velodrombcn.cat/pista",
+   "url": "https://velodrombcn.cat/pista",
+   "quote": "Track page: group training priced per quarter (82.11 / 136.86 / 191.59 EUR); no per-session price",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-4",
+   "name": "Reading - Palmer Park",
+   "field": "pricing_url",
+   "value": "https://www.better.org.uk/leisure-centre/reading/palmer-park/prices",
+   "url": "https://www.better.org.uk/leisure-centre/reading/palmer-park/prices",
+   "quote": "Official prices page",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-5",
+   "name": "Redmond - Marymoor Velodrome",
+   "field": "booking_url",
+   "value": "https://velodrome.org/race-reg-portal/",
+   "url": "https://velodrome.org/race-reg-portal/",
+   "quote": "Register for upcoming races at the Jerry Baker Memorial Velodrome using the links below.",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-5",
+   "name": "Bassano del Grappa - Velodromo Rino Mercante",
+   "field": "operator",
+   "value": "A.S.D. Velodromo Mercante",
+   "url": "https://www.federciclismo.it/pista/centri-territoriali-pista/informazioni-e-contatti/veneto-2/",
+   "quote": "Società di Gestione: A.S.D. VELODROMO MERCANTE",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-5",
+   "name": "Dudenhofen - Badewanne (The Bathtub)",
+   "field": "opening_hours",
+   "value": "Landesverband training in summer months: Wednesdays from 18:00; other usage by arrangement with the track warden",
+   "url": "https://www.rv08dudenhofen.de/bahn-training",
+   "quote": "in den Sommermonaten auf der Radrennbahn Dudenhofen Mittwochs ab 18:00 Uhr statt",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-5",
+   "name": "Brisbane - Anna Meares Velodrome",
+   "field": "booking_url",
+   "value": "https://auscycling.org.au/events?discipline=track&state=qld",
+   "url": "https://auscycling.org.au/about/facilities/anna-meares-velodrome",
+   "quote": "Open and Coach Led Sessions",
+   "relax": [
+    "medium"
+   ]
+  },
+  {
+   "batch": "batch-5",
+   "name": "Třebešín Velodrome",
+   "field": "booking_url",
+   "value": "https://shop.kovopraha.cz/",
+   "url": "https://www.kovopraha.cz/",
+   "quote": "E-shop a rezervace",
+   "relax": [
+    "medium"
+   ]
+  }
+ ]
+}

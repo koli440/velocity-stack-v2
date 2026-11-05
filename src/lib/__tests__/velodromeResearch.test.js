@@ -23,9 +23,40 @@ test('rejected and unverifiable values are excluded', () => {
 
 test('missing review, medium confidence and non-official kinds are held', () => {
   assert.equal(decide(cand({ review: null })).code, 'not_reviewed')
-  assert.equal(decide(cand({ confidence: 'medium' })).code, 'confidence')
+  assert.equal(decide(cand({ confidence: 'medium' }), 'strict').code, 'confidence')
+  assert.equal(decide(cand({ confidence: 'low' })).code, 'confidence')
   assert.equal(decide(cand({ source_kind: 'aggregator' })).code, 'source_kind')
   assert.equal(decide(cand({ source_kind: null })).code, 'source_kind')
+  assert.equal(decide(cand({ source_kind: null }), 'strict').code, 'source_kind')
+})
+
+test('relaxed: medium confidence applies when verified, but never for contacts', () => {
+  assert.equal(decide(cand({ confidence: 'medium' })).decision, 'apply')
+  assert.equal(decide(cand({ confidence: 'medium', review: rec({ verdict: 'unverifiable' }) })).decision, 'exclude')
+  const email = { field: 'email', value: 'info@t.example', confidence: 'medium', organisational: true, review: rec({ contact_is_organisational_check: 'confirmed' }) }
+  assert.equal(decide(cand(email)).decision, 'hold')
+})
+
+test('relaxed: other/missing source_kind is reclassified only for official venue pages', () => {
+  const lv = 'https://www.better.org.uk/leisure-centre/lee-valley/velopark/track-cycling'
+  const d = decide(cand({ source_kind: null, source_url: lv }))
+  assert.equal(d.decision, 'apply')
+  assert.equal(d.reclassified.to, 'operator')
+  assert.equal(decide(cand({ source_kind: 'other', source_url: lv })).decision, 'apply')
+  assert.equal(decide(cand({ source_kind: 'other', source_url: 'https://www.better.org.uk/leisure-centre/elsewhere' })).code, 'source_kind')
+  for (const u of ['https://en.wikipedia.org/wiki/Lee_Valley_VeloPark', 'https://www.visitlondon.com/x', 'https://someclub.example/track']) {
+    assert.equal(decide(cand({ source_kind: 'other', source_url: u })).code, 'source_kind')
+  }
+})
+
+test('relaxed: hours caveat needs scope stated in the value; price needs per-session evidence', () => {
+  const hrs = (value) => cand({ field: 'opening_hours', value, review: rec({ reason: 'Verified, but the page is venue-wide and hours may differ for the velodrome.' }) })
+  assert.equal(decide(hrs('Whole venue: Mon-Fri 6am-10pm (velodrome sessions may differ)')).decision, 'apply')
+  assert.equal(decide(hrs('Mon-Fri 6am-10pm')).code, 'reviewer_caveat')
+  assert.equal(decide(hrs('Whole venue: Mon-Fri 6am-10pm (velodrome sessions may differ)'), 'strict').code, 'reviewer_caveat')
+  const price = (evidence) => cand({ field: 'price_range', value: { min: 12.25, max: 47.2, currency: 'GBP' }, confidence: 'medium', evidence })
+  assert.equal(decide(price('Price: 12.25 for 60 minutes; 24.50 for 120 minutes')).decision, 'apply')
+  assert.notEqual(decide(price('Club membership fee 12.25')).decision, 'apply')
 })
 
 test('reviewer caveats and reviewer fixes are held', () => {
@@ -94,6 +125,13 @@ test('evaluate: duplicate equal values collapse, differing values conflict', () 
   assert.deepEqual(same.items.map((i) => i.decision).sort(), ['apply', 'duplicate'])
   const diff = evaluate([...input([track('T', { operator: f('City') })], [r('City')]), ...input([track('T', { operator: f('Club') })], [r('Club')])])
   assert.ok(diff.items.every((i) => i.code === 'conflict'))
+})
+
+test('relaxed sampling uses a higher rate with a minimum of 5', () => {
+  const items = Array.from({ length: 40 }, (_, i) => ({ batch: 'a', name: `N${i}`, field: 'operator' }))
+  assert.equal(sampleApplied(items, 'seed', { rate: 0.2, min: 5 }).a.length, 8)
+  assert.equal(sampleApplied(items.slice(0, 10), 'seed', { rate: 0.2, min: 5 }).a.length, 5)
+  assert.equal(sampleApplied(items.slice(0, 3), 'seed', { rate: 0.2, min: 5 }).a.length, 3)
 })
 
 test('sampling is deterministic, at least 3 and about 10% per batch', () => {

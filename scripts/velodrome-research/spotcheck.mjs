@@ -1,4 +1,5 @@
-// Usage: node scripts/velodrome-research/spotcheck.mjs
+// Usage: node scripts/velodrome-research/spotcheck.mjs [--relaxed]
+// --relaxed checks spot-check-relaxed-sample.json (the newly relaxed values) and writes spot-check-relaxed-fetch.json.
 // Independent re-fetch of every URL in docs/velodrome-research/spot-check-sample.json and a fuzzy check that the
 // quote (and the exact value) appear on the page. Writes spot-check-fetch.json for human/agent review of misses.
 import fs from 'node:fs'
@@ -6,7 +7,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../docs/velodrome-research')
-const { sample } = JSON.parse(fs.readFileSync(path.join(dir, 'spot-check-sample.json'), 'utf8'))
+const rel = process.argv.includes('--relaxed') ? '-relaxed' : ''
+const { sample } = JSON.parse(fs.readFileSync(path.join(dir, `spot-check${rel}-sample.json`), 'utf8'))
 
 const strip = (h) => h.replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ')
   .replace(/&nbsp;|&#160;/g, ' ').replace(/&amp;/g, '&').replace(/&#8211;|&ndash;/g, '-').replace(/&euro;/g, '€')
@@ -27,4 +29,4 @@ for (const s of sample) {
   out.push({ ...s, http: status, quoteFound })
   console.log(`${quoteFound ? 'OK  ' : '??  '} [${s.batch}] ${s.name} / ${s.field} (${status})`)
 }
-fs.writeFileSync(path.join(dir, 'spot-check-fetch.json'), JSON.stringify(out, null, 1) + '\n')
+fs.writeFileSync(path.join(dir, `spot-check${rel}-fetch.json`), JSON.stringify(out, null, 1) + '\n')
