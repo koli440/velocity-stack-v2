@@ -91,7 +91,7 @@ export default function VelodromePicker({
     }
   }
 
-  const pad = compact ? 'p-2.5 text-xs' : 'px-3.5 py-2.5 text-sm'
+  const pad = compact ? 'px-3 py-2.5 text-sm' : 'px-3.5 py-3 text-base sm:text-sm'
   const shown = open ? query : selected ? selected.name : ''
 
   return (
@@ -119,19 +119,19 @@ export default function VelodromePicker({
             type="button"
             aria-label="Clear velodrome"
             onClick={() => choose('')}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+            className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-slate-500 hover:text-slate-800 dark:hover:text-white"
           >
             <Icon name="close" size={16} />
           </button>
         )}
       </div>
       {selected && !open && (
-        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{formatTrackMeta(selected)}</p>
+        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{formatTrackMeta(selected)}</p>
       )}
       {open && (
         <ul
           role="listbox"
-          className="glass-popover absolute z-40 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
+          className="glass-popover absolute z-40 mt-1 w-full max-h-72 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
         >
           {emptyLabel && (
             <li
@@ -139,13 +139,13 @@ export default function VelodromePicker({
               aria-selected={!value}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => choose('')}
-              className="px-3.5 py-2 text-xs font-semibold text-slate-500 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="px-3.5 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               {emptyLabel}
             </li>
           )}
           {results.length === 0 && (
-            <li className="px-3.5 py-3 text-xs text-slate-400">No velodromes match “{query}”.</li>
+            <li className="px-3.5 py-3 text-sm text-slate-600 dark:text-slate-300">No velodromes match “{query}”.</li>
           )}
           {results.map((t, i) => (
             <li
@@ -155,15 +155,15 @@ export default function VelodromePicker({
               onMouseDown={(e) => e.preventDefault()}
               onMouseEnter={() => setActive(i)}
               onClick={() => choose(t.id)}
-              className={`px-3.5 py-2 cursor-pointer ${
+              className={`px-3.5 py-2.5 min-h-[44px] cursor-pointer ${
                 i === active ? 'bg-emerald-500/10' : ''
               } ${t.id === value ? 'font-black' : ''}`}
             >
-              <div className="text-xs font-bold text-slate-900 dark:text-white">
+              <div className="text-sm font-bold text-slate-900 dark:text-white">
                 {t.id === favorite?.id && <span title="Your home velodrome"><Icon name="star" size={12} /> </span>}
                 {t.name}
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400">{formatTrackMeta(t)}</div>
+              <div className="text-xs text-slate-600 dark:text-slate-300">{formatTrackMeta(t)}</div>
             </li>
           ))}
         </ul>
