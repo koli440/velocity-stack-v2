@@ -1,0 +1,816 @@
+{
+ "reviewed_at": "2026-11-05",
+ "method": "Every cited source_url re-fetched with curl and text-matched; extra official-source searches for Gent, Ballerup, Cochabamba, Sineu, Milton, Sydney; web-search summaries used only as leads.",
+ "counts": {
+  "total": 69,
+  "verified": 62,
+  "unverifiable": 2,
+  "rejected": 5
+ },
+ "missed_info": [
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "field": "website_url",
+   "value": "https://www.sport.vlaanderen/onze-centra/gent/aanbod/sporten/baanwielrennen/",
+   "source_url": "https://www.sport.vlaanderen/onze-centra/gent/aanbod/sporten/baanwielrennen/",
+   "evidence": "Operator site loads (200) and states 'De houten wielerpiste ... is 250 meter lang en is internationaal gehomologeerd'."
+  },
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "field": "pricing_url",
+   "value": "https://www.sport.vlaanderen/onze-centra/gent/praktische-info/tarieven/",
+   "source_url": "https://www.sport.vlaanderen/onze-centra/gent/praktische-info/tarieven/",
+   "evidence": "Wielerpiste Recreant € 13,00 per sessie; Vergunninghouder € 9,50 per sessie; Jaarkaart € 200,00 (bike hire € 11 / € 6,50)."
+  },
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "field": "opening_hours",
+   "value": "Operator publishes per-season opening hours (school period Mon-Fri 08:00-22:00, Sat 08:00-18:00, Sun 08:00-13:00 for the centre); track free-training times are in a yearly calendar.",
+   "source_url": "https://www.sport.vlaanderen/onze-centra/gent/praktische-info/openingsuren/",
+   "evidence": "Openingsuren page, school period 1 Sept - 30 June."
+  },
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "field": "phone",
+   "value": "+32 9 244 72 22",
+   "source_url": "https://www.sport.vlaanderen/onze-centra/gent/praktische-info/contacteer-ons/",
+   "evidence": "'Onthaal Algemene informatie +32 9 244 72 22'."
+  },
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "field": "length_m",
+   "value": 250,
+   "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx/wielerpiste",
+   "evidence": "'Afmetingen lengte baan (in meter) : 250' (also operator site)."
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "field": "pricing_url",
+   "value": "https://ballerupsuperarena.dk/proev-cykelbanen/proev-cykelbanen-event/",
+   "source_url": "https://ballerupsuperarena.dk/proev-cykelbanen/proev-cykelbanen-event/",
+   "evidence": "'Priser og tilmelding i 2026: Åbne hold: 850 kr. pr. person' (2-hour try-the-track event; DKK). Network cycling season fee 3.200 kr. Researcher recorded pricing as not found."
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "field": "booking_url",
+   "value": "https://ballerup.nemtilmeld.dk/1165/",
+   "source_url": "https://ballerupsuperarena.dk/proev-cykelbanen/proev-cykelbanen-event/",
+   "evidence": "Official page links to nemtilmeld.dk sign-up pages titled 'Prøv cykelbanen - åbent event | Ballerup Kommune'."
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "field": "email",
+   "value": "provcykelbanen@balk.dk",
+   "source_url": "https://ballerupsuperarena.dk/proev-cykelbanen/proev-cykelbanen-event/",
+   "evidence": "Generic functional mailbox for try-the-track; better than named-staff phone."
+  },
+  {
+   "track": "Milton",
+   "field": "booking_url",
+   "value": "https://townofmilton.perfectmind.com/23453/Clients/BookMe4BookingPages/BookingCoursesPage?calendarId=334e5f3d-f20a-409c-b1c1-1090b2c02bed&widgetId=15f6af07-39c5-473e-b053-96653f77a406&embed=False",
+   "source_url": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/",
+   "evidence": "Booking widget link present on cited page; sub-pages /track-cycling/, /bike-and-locker-rentals/ exist. Researcher listed booking_url/pricing as not found; prices not text-visible in static HTML (likely JS), so unconfirmed."
+  },
+  {
+   "track": "Cochabamba - Velódromo de Cochabamba",
+   "field": "status",
+   "value": "Reported closed/structurally damaged since ~2022",
+   "source_url": "(non-official: lostiempos.com, opinion.com.bo, reduno.com.bo; lead only)",
+   "evidence": "News reports of cordoned-off, damaged velodrome and Ministry audit. The only official source used (2019 COPACI PDF) predates this. Needs a Ministerio de Deportes / Federación Boliviana confirmation and an 'operational status' concept before the data is shown as current."
+  },
+  {
+   "track": "Sineu - Pista d'atletisme",
+   "field": "identity",
+   "value": "Voltadora Francesc Alomar / Velòdrom Francesc Alomar, 333 m concrete, outdoor (matches seed)",
+   "source_url": "(non-official: Wikipedia, Totpla; lead only)",
+   "evidence": "Consistent with seed length/surface; official confirmation still absent."
+  }
+ ],
+ "records": [
+  {
+   "track": "London - Lee Valley VeloPark",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.better.org.uk/leisure-centre/lee-valley/velopark",
+   "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Lee Valley VeloPark",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/track-cycling/sessions",
+   "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/track-cycling/sessions",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Lee Valley VeloPark",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Better (GLL) for Lee Valley Regional Park Authority",
+   "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "GLL trading name in footer and 'Working in partnership with Lee Valley Regional Park Authority' confirmed; the 'for LVRPA' relationship is a mild inference."
+  },
+  {
+   "track": "London - Lee Valley VeloPark",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Whole venue: Mon-Fri 06:00-22:00; Sat-Sun 07:00-20:00 (velodrome sessions may differ)",
+   "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Venue-wide 06:00-22:00 / 07:00-20:00 confirmed, with the page's own caveat; not velodrome-specific."
+  },
+  {
+   "track": "London - Lee Valley VeloPark",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/prices",
+   "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/prices",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Lee Valley VeloPark",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 12.25,
+    "max": 47.2,
+    "currency": "GBP",
+    "check_site": true
+   },
+   "source_url": "https://www.better.org.uk/leisure-centre/lee-valley/velopark/track-cycling/sessions",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "£12.25/60 min drop-in and £47.20 Flying Lap confirmed. Prices page says 'price increases will take effect from 1 April 2026' (today is Nov 2026) so the numbers may be pre- or post-increase; ambiguous."
+  },
+  {
+   "track": "Mattamy National Cycling Centre (Milton)",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/",
+   "source_url": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Mattamy National Cycling Centre (Milton)",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Town of Milton",
+   "source_url": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Mattamy National Cycling Centre (Milton)",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "905-864-4132",
+   "source_url": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "905-864-4132 is the Town's 'Contact Recreation' number, not a venue line."
+  },
+  {
+   "track": "Mattamy National Cycling Centre (Milton)",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2015,
+   "source_url": "https://www.milton.ca/explore-play/mattamy-national-cycling-centre/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Page says 'constructed in preparation for the 2015 Pan American Games'; it states no opening year. Acceptable as construction year, weak as 'year_built'."
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome",
+   "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "City of Canterbury Bankstown (owner); Bankstown Sports Cycling Club runs sessions",
+   "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Cited council page contains no statement of ownership/operation (only © footer, phone, history mentioning the former Bankstown Council funded nearby works). Club role is visible on the club site, but 'owner' is not on the cited page."
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1999,
+   "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "02 9707 9000",
+   "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Club sessions: summer training Mon 18:00-20:30, Wed 19:00-21:00; winter competition Sat 14:00-16:00, Wed 19:00-21:00",
+   "source_url": "https://www.bankstownsportscycling.com/",
+   "original_confidence": "low",
+   "verdict": "verified",
+   "reason": "Value matches club Training and Contact-us pages (Mon 6PM-8:30PM; Wed 7PM-9PM summer; Sat 2PM-4PM and Wed 7PM-9PM winter). Cited URL (home page) does not contain it. Club hours, not venue hours; Friday track sessions are omitted.",
+   "source_url_fix": "https://www.bankstownsportscycling.com/training/"
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.bankstownsportscycling.com/",
+   "source_url": "https://www.bankstownsportscycling.com/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "'Fee $12 / $6 BSCC Junior Rider' appears on /training/, not on the cited home page (home page only shows a $15 race entry fee). Club training fee, not a venue price list.",
+   "source_url_fix": "https://www.bankstownsportscycling.com/training/"
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 12,
+    "max": 12,
+    "currency": "AUD",
+    "check_site": true
+   },
+   "source_url": "https://www.bankstownsportscycling.com/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "$12 single training entry confirmed on /training/ (not on cited home page). Club session fee, so only a lower bound for public use; low/medium at best.",
+   "source_url_fix": "https://www.bankstownsportscycling.com/training/"
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.cbcity.nsw.gov.au/dunc-gray-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://auscycling.org.au/about/facilities/dunc-gray-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Sydney - Dunc Gray Velodrome",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://auscycling.org.au/about/facilities/dunc-gray-velodrome",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Valley Preferred Cycling Center",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://thevelodrome.com/",
+   "source_url": "https://thevelodrome.com/pages/contact",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Valley Preferred Cycling Center",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "610-395-7000",
+   "source_url": "https://thevelodrome.com/pages/contact",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Valley Preferred Cycling Center",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@thevelodrome.com",
+   "source_url": "https://thevelodrome.com/pages/try-the-track",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Valley Preferred Cycling Center",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1975,
+   "source_url": "https://thevelodrome.com/pages/history",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Valley Preferred Cycling Center",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://thevelodrome.com/pages/training",
+   "source_url": "https://thevelodrome.com/pages/training",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Valley Preferred Cycling Center",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 10,
+    "max": null,
+    "currency": "USD",
+    "check_site": true
+   },
+   "source_url": "https://thevelodrome.com/pages/training",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Valley Preferred Cycling Center",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://thevelodrome.com/pages/try-the-track",
+   "source_url": "https://thevelodrome.com/pages/try-the-track",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Herne Hill Velodrome",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.hernehillvelodrome.com/",
+   "source_url": "https://www.hernehillvelodrome.com/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Herne Hill Velodrome",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.hernehillvelodrome.com/sessions",
+   "source_url": "https://www.hernehillvelodrome.com/faq",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Herne Hill Velodrome",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "0207 274 2135",
+   "source_url": "https://www.hernehillvelodrome.com/contact",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Herne Hill Velodrome",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@hernehillvelodrome.com",
+   "source_url": "https://www.hernehillvelodrome.com/contact",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Herne Hill Velodrome",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1891,
+   "source_url": "https://www.hernehillvelodrome.com/history",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Herne Hill Velodrome",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.hernehillvelodrome.com/faq",
+   "source_url": "https://www.hernehillvelodrome.com/faq",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "London - Herne Hill Velodrome",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 6.6,
+    "max": 8.18,
+    "currency": "GBP",
+    "check_site": true
+   },
+   "source_url": "https://www.hernehillvelodrome.com/faq",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "6.60 + 1.58 = 8.18 confirmed. Note min excludes booking fee while max includes it (kids pay 6.60+0.60=7.20); inconsistent fee handling."
+  },
+  {
+   "track": "London - Herne Hill Velodrome",
+   "kind": "correction",
+   "field": "surface",
+   "proposed_value": "Tarmac (all-weather); needs reviewer decision on lookup value",
+   "source_url": "https://www.hernehillvelodrome.com/history",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Quote is real (2011 tarmac resurfacing) but the correction is moot: migration 20261111000000_central_lookups.sql already normalises 'Bitumen'/'Tarmac' to 'Asphalt'. new_value is prose ('needs reviewer decision'), not a lookup value, so it cannot be auto-applied. Not an official disagreement, just a synonym.",
+   "reason_type": "synonym_already_normalised"
+  },
+  {
+   "track": "London - Herne Hill Velodrome",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 450,
+   "source_url": "https://www.hernehillvelodrome.com/history",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://ballerupsuperarena.dk/",
+   "source_url": "https://ballerupsuperarena.dk/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "kind": "field",
+   "field": "booking_url",
+   "proposed_value": "https://www.wannasport.dk/sb/ballerup",
+   "source_url": "https://ballerupsuperarena.dk/proev-cykelbanen/",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Cited page https://ballerupsuperarena.dk/proev-cykelbanen/ contains no wannasport link (0 occurrences in HTML). wannasport.dk/sb/ballerup is the municipality's generic court-booking portal (badminton, padel...), not the velodrome. Real sign-up links on /proev-cykelbanen/proev-cykelbanen-event/: https://ballerup.nemtilmeld.dk/1165/ (open event).",
+   "better_value": "https://ballerupsuperarena.dk/proev-cykelbanen/proev-cykelbanen-event/"
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Ballerup Kommune",
+   "source_url": "https://ballerupsuperarena.dk/om-arenaen",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2001,
+   "source_url": "https://ballerupsuperarena.dk/om-arenaen",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "ballerupsuperarena@balk.dk",
+   "source_url": "https://ballerupsuperarena.dk/kontakt/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "ballerupsuperarena@balk.dk appears on /kontakt/ as the general mail address."
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+45 2516 9713",
+   "source_url": "https://ballerupsuperarena.dk/kontakt/",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Quote exists but is the mobile number of a named staff member (booking coordinator); it is personal data for a public table and not the venue line. No generic phone is published; leave null.",
+   "reason_type": "policy_pii"
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://ballerupsuperarena.dk/om-arenaen",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Ballerup Super Arena",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://ballerupsuperarena.dk/om-arenaen",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx",
+   "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Value is a City of Ghent listing page, not the venue/operator site. The operator's own site loads fine (HTTP 200) and was available; the researcher's '503' note is stale.",
+   "better_value": "https://www.sport.vlaanderen/onze-centra/gent/aanbod/sporten/baanwielrennen/"
+  },
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Sport Vlaanderen",
+   "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "'Sport Vlaanderen exploiteert het Vlaams Wielercentrum Eddy Merckx' present on city page; corroborated by sport.vlaanderen."
+  },
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 2006,
+   "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "+32 9 245 75 08",
+   "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx",
+   "original_confidence": "medium",
+   "verdict": "rejected",
+   "reason": "Quote is accurate on the city page, but the operator (Sport Vlaanderen) publishes +32 9 244 72 22 as its reception/reservation number on its Contacteer-ons page. Two official numbers conflict; the operator's should win.",
+   "better_value": "+32 9 244 72 22",
+   "better_source": "https://www.sport.vlaanderen/onze-centra/gent/praktische-info/contacteer-ons/"
+  },
+  {
+   "track": "Gent - Vlaams Wielercentrum Eddy Merckx",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://stad.gent/nl/sport/aanbod/sportlocaties/vlaams-wielercentrum-eddy-merckx",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "source_url": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Zavod Novo mesto",
+   "source_url": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "041 372 576",
+   "source_url": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "info@olimpijskicenter-nm.si",
+   "source_url": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "field",
+   "field": "opening_hours",
+   "proposed_value": "Mon-Fri 08:00-21:00; Sat 10:00-20:00; Sun closed",
+   "source_url": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "field",
+   "field": "year_built",
+   "proposed_value": 1996,
+   "source_url": "https://www.olimpijskicenter-nm.si/en/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote 'The velodrome was built in 1996 for the needs of the Junior World Cycling Championship. In 2018, it underwent a...' is on https://www.olimpijskicenter-nm.si/en/ (home page), not on the cited /en/velodrom/ page.",
+   "source_url_fix": "https://www.olimpijskicenter-nm.si/en/"
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "field",
+   "field": "pricing_url",
+   "proposed_value": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "source_url": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "field",
+   "field": "price_range",
+   "proposed_value": {
+    "min": 15,
+    "max": 25,
+    "currency": "EUR",
+    "check_site": true
+   },
+   "source_url": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.olimpijskicenter-nm.si/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Novo Mesto - Velodrom Novo Mesto",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://www.olimpijskicenter-nm.si/en/velodrom/",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Sineu - Pista d'atletisme",
+   "kind": "field",
+   "field": "website_url",
+   "proposed_value": "https://ajsineu.net/ca/installacions-esportives",
+   "source_url": "https://ajsineu.net/ca/installacions-esportives",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Municipal sports-facilities page exists and lists the Voltadora; it is a listing page, not a dedicated venue page."
+  },
+  {
+   "track": "Sineu - Pista d'atletisme",
+   "kind": "field",
+   "field": "operator",
+   "proposed_value": "Ajuntament de Sineu",
+   "source_url": "https://ajsineu.net/ca/installacions-esportives",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Sineu - Pista d'atletisme",
+   "kind": "field",
+   "field": "phone",
+   "proposed_value": "971 520 027",
+   "source_url": "https://ajsineu.net/ca/contacte",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Sineu - Pista d'atletisme",
+   "kind": "field",
+   "field": "email",
+   "proposed_value": "ajuntament@ajsineu.net",
+   "source_url": "https://ajsineu.net/ca/contacte",
+   "original_confidence": "medium",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Sineu - Pista d'atletisme",
+   "kind": "correction",
+   "field": "name",
+   "proposed_value": "Sineu - Voltadora Francesc Alomar (Poliesportiu de Son Matgí)",
+   "source_url": "https://ajsineu.net/ca/installacions-esportives",
+   "original_confidence": "medium",
+   "verdict": "unverifiable",
+   "reason": "Official page only lists 'Voltadora Francesc Alomar' under Poliesportiu de Son Matgí; it does not say it is a cycling track, 333 m, or the same facility as the seed coordinates. Non-official sources (Wikipedia, Totpla) say it is the Sineu cycling track, so the rename is probably right but cannot be official-verified. A rename is also outside the 'info' fields."
+  },
+  {
+   "track": "Cochabamba - Velódromo de Cochabamba",
+   "kind": "confirmation",
+   "field": "length_m",
+   "proposed_value": 250,
+   "source_url": "https://www.copaci.org/wp-content/uploads/2019/05/ConvCPP2019ES.pdf",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "COPACI 2019 convocatoria PDF confirms; document predates reported structural closure."
+  },
+  {
+   "track": "Cochabamba - Velódromo de Cochabamba",
+   "kind": "confirmation",
+   "field": "surface",
+   "proposed_value": "Wood",
+   "source_url": "https://www.copaci.org/wp-content/uploads/2019/05/ConvCPP2019ES.pdf",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Cochabamba - Velódromo de Cochabamba",
+   "kind": "confirmation",
+   "field": "is_indoor",
+   "proposed_value": true,
+   "source_url": "https://www.copaci.org/wp-content/uploads/2019/05/ConvCPP2019ES.pdf",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  },
+  {
+   "track": "Cochabamba - Velódromo de Cochabamba",
+   "kind": "confirmation",
+   "field": "elevation_m",
+   "proposed_value": 2558,
+   "source_url": "https://www.copaci.org/wp-content/uploads/2019/05/ConvCPP2019ES.pdf",
+   "original_confidence": "high",
+   "verdict": "verified",
+   "reason": "Quote/value found on cited source (live fetch 2026-11-05) and supports the proposed value."
+  }
+ ]
+}

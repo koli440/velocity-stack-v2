@@ -4,6 +4,7 @@ import { SITE_URL, trackTitle, fitDescription } from '../../../lib/seo'
 import { isIndexableTrack } from '../../../lib/trackSlug'
 import { disciplineFitsTrack } from '../../../lib/lookups'
 import { trackJsonLd, trackDescription, jsonLdString } from '../../../lib/geo'
+import { isClosed, formatPriceRange, formatVerifiedDate } from '../../../lib/trackInfo'
 import { loadPublicTracks, loadCountryNames, loadDisciplines } from '../../../lib/server/publicTracks'
 
 export const revalidate = 60
@@ -50,6 +51,10 @@ export default async function TrackPage({ params }) {
   const country = countries[t.country_code] || t.country_code
   const fitting = disciplines.filter((d) => disciplineFitsTrack(d, Number(t.length_m)))
   const indexable = isIndexableTrack(t)
+  const closed = isClosed(t)
+  const price = formatPriceRange(t)
+  const verified = formatVerifiedDate(t.info_verified_at)
+  const statusChecked = formatVerifiedDate(t.operating_status_checked_at)
 
   return (
     <article className="max-w-3xl mx-auto space-y-6">
@@ -60,6 +65,11 @@ export default async function TrackPage({ params }) {
         <Link href="/velodromes" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Velodromes</Link>
       </nav>
       <h1 className="text-3xl font-black text-slate-900 dark:text-white">{t.name} velodrome: length, surface and location</h1>
+      {closed && (
+        <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 px-4 py-3 text-sm font-semibold text-amber-900 dark:text-amber-200">
+          This velodrome appears to be closed{statusChecked ? ` (status checked ${statusChecked})` : ''}. Check with the operator before travelling.
+        </div>
+      )}
       <p className="text-sm text-slate-600 dark:text-slate-300">{trackDescription(t, country)}</p>
       <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-5">
         <Row label="Track length">{t.length_m ? `${Number(t.length_m)} m` : 'Unknown'}</Row>
@@ -71,6 +81,10 @@ export default async function TrackPage({ params }) {
         {t.latitude != null && t.longitude != null && (
           <Row label="Coordinates">{Number(t.latitude).toFixed(4)}, {Number(t.longitude).toFixed(4)}</Row>
         )}
+        {t.operator && <Row label="Operator">{t.operator}</Row>}
+        {t.year_built && <Row label="Year built">{t.year_built}</Row>}
+        {!closed && t.opening_hours && <Row label="Opening hours">{t.opening_hours}</Row>}
+        {price && <Row label="Typical price">{price} <span className="block text-[11px] font-normal text-slate-500">Rough per-session range: check their site for current prices.</span></Row>}
       </dl>
       {t.notes && <p className="text-sm italic text-slate-500">{t.notes}</p>}
       {fitting.length > 0 && (
@@ -86,9 +100,10 @@ export default async function TrackPage({ params }) {
       )}
       <div className="flex flex-wrap gap-4 text-sm">
         {[['website_url', 'Website'], ['pricing_url', 'Pricing'], ['booking_url', 'Book a session']].map(([k, label]) =>
-          t[k] ? <a key={k} href={t[k]} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 dark:text-brand-neon underline">{label}</a> : null,
+          t[k] && !(closed && k === 'booking_url') ? <a key={k} href={t[k]} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 dark:text-brand-neon underline">{label}</a> : null,
         )}
       </div>
+      {verified && <p className="text-xs text-slate-500">Venue details last verified against official sources on {verified}.</p>}
       <p className="text-sm text-slate-500">
         Analyse your own rides on this track with <Link href="/how-it-works" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">VelocityStack</Link>.
         Canonical page: {SITE_URL}/velodromes/{t.slug}
