@@ -1,5 +1,6 @@
 // Structured data and shared copy for GEO (generative engine optimization).
 import { SITE_URL, SITE_NAME } from './seo.js'
+import { priceRangeLd, publicPhone, openingHoursLd } from './trackInfo.js'
 
 export const POSITIONING =
   'VelocityStack is an alternative to TrainingPeaks and an addition to Strava for training and coaching, focused on track cycling and a unique approach to coaching with analytic templates.'
@@ -49,6 +50,15 @@ export function trackJsonLd(t, countryName, disciplines = []) {
     ld.geo = { '@type': 'GeoCoordinates', latitude: Number(t.latitude), longitude: Number(t.longitude) }
   }
   if (t.website_url) ld.sameAs = [t.website_url]
+  // Researched info: optional, each only when known (closed venues export no hours/price/phone).
+  if (t.operating_status !== 'closed') {
+    const phone = publicPhone(t)
+    const hours = openingHoursLd(t)
+    const price = priceRangeLd(t)
+    if (phone) ld.telephone = phone
+    if (hours) ld.openingHours = hours
+    if (price) ld.priceRange = price
+  }
   if (disciplines.length) ld.amenityFeature = disciplines.map((d) => ({ '@type': 'LocationFeatureSpecification', name: d.name, value: true }))
   return ld
 }

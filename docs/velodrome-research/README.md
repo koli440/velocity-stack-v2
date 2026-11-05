@@ -20,5 +20,5 @@
 ## Reviewer reproduction
 Re-fetch each `source_url`, confirm the quote still appears, and check the value matches. Flag anything not verifiable. Sport Vlaanderen (Gent) returned 503 at research time.
 
-## Draft migration
-`draft-migration/track_info_fields.sql` is intentionally outside `supabase/migrations` so it does not auto-deploy. Copy it there with a new timestamp when approved.
+## Production schema
+The draft migration was superseded by `supabase/migrations/20270135000000_velodrome_track_info.sql` (incorporates the reviewer's schema concerns). The pipeline rules are in [PROCESS.md](PROCESS.md). The pilot files are research artefacts only; nothing in them is applied.
