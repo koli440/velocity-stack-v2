@@ -29,7 +29,7 @@ export async function GET(_req, { params }) {
       >
         <CoverArt />
         <div style={{ display: 'flex', fontSize: 48, fontWeight: 900, position: 'relative' }}>
-          Velocity<span style={{ color: '#fb923c' }}>Stack</span>
+          Velocity<span style={{ color: '#00F5A0' }}>Stack</span>
           <span style={{ marginLeft: 20, color: '#e2e8f0', fontWeight: 500 }}>Blog</span>
         </div>
         <div style={{ display: 'flex', fontSize: size, fontWeight: 900, lineHeight: 1.15, position: 'relative', maxWidth: 900, textShadow: '0 2px 16px rgba(2,6,23,0.8)' }}>{post.title}</div>
