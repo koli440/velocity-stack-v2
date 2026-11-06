@@ -39,7 +39,7 @@ function RespectTile({ count, reacted, canReact, busy, onToggle, large }) {
       ? `${large ? 'bg-slate-900 dark:bg-white/10' : 'bg-slate-950/55'} border-orange-400/60 hover:bg-orange-500/25`
       : `${large ? 'bg-slate-900 dark:bg-white/10' : 'bg-slate-950/55'} border-white/15`
   const cls = `relative z-10 shrink-0 self-stretch flex flex-col items-center justify-center rounded-xl overflow-hidden backdrop-blur-sm border text-white text-center leading-none ${
-    large ? 'px-3.5 py-2 min-w-[64px]' : 'px-2 py-1 min-w-[44px] gap-px'
+    large ? 'px-3 py-2 min-w-[72px]' : 'px-1.5 py-1 min-w-[56px] gap-px'
   } ${tone}`
   const inner = (
     <>
@@ -49,7 +49,7 @@ function RespectTile({ count, reacted, canReact, busy, onToggle, large }) {
       </b>
       <span className={`block ${large ? 'mt-0.5 text-[11px]' : 'text-[9px]'} font-bold uppercase tracking-widest`}>Respect</span>
       {level && (
-        <span data-testid="respect-level" className={`hidden ${large ? 'mt-0.5 min-[420px]:block text-[10px]' : 'sm:block text-[8px]'} font-black uppercase tracking-widest text-orange-300`}>
+        <span data-testid="respect-level" className={`block whitespace-nowrap ${large ? 'mt-0.5 text-[10px]' : 'text-[8px]'} font-black uppercase tracking-wide text-orange-300`}>
           {level}
         </span>
       )}
