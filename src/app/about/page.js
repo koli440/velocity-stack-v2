@@ -63,6 +63,7 @@ const GROUPS = [
     title: 'Staying up to date',
     items: [
       { name: 'What\u2019s new', text: 'Every notable feature and fix is listed, newest first.', href: '/whats-new', cta: 'See what\u2019s new' },
+      { name: 'Blog', text: 'A plain journal from the person who builds VelocityStack: why it exists and what is being built next.', href: '/blog', cta: 'Read the blog' },
       { name: 'Getting started', text: 'Reopen the welcome tour any time from Help in the top-right menu.' },
     ],
   },

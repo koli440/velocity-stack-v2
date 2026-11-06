@@ -2,6 +2,10 @@
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from './seo.js'
 import { POSITIONING, FAQ } from './geo.js'
 import { isIndexableTrack } from './trackSlug.js'
+import { postUrl } from './blog.js'
+
+const blogLines = (posts) =>
+  posts.length ? ['## Blog', '', ...posts.map((p) => `- [${p.title}](${postUrl(p)}): ${p.summary}`), ''] : []
 
 const PAGES = [
   ['How it works', '/how-it-works', 'What VelocityStack measures, analytic coaching templates, comparison with TrainingPeaks and Strava, FAQ'],
@@ -11,6 +15,7 @@ const PAGES = [
   ['Template syntax guide', '/dsl-guide', 'How to write interval templates'],
   ['About', '/about', 'Feature overview and coaching privacy model'],
   ["What's new", '/whats-new', 'Recent features and improvements'],
+  ['Blog', '/blog', 'A journal from the person who builds VelocityStack'],
 ]
 
 const head = () => [
@@ -25,11 +30,12 @@ const head = () => [
   ...PAGES.map(([n, p, d]) => `- [${n}](${SITE_URL}${p}): ${d}`),
 ]
 
-export function llmsTxt(tracks = []) {
+export function llmsTxt(tracks = [], posts = []) {
   const indexable = tracks.filter(isIndexableTrack)
   return [
     ...head(),
     '',
+    ...blogLines(posts),
     '## Velodromes',
     '',
     ...indexable.map((t) => `- [${t.name}](${SITE_URL}/velodromes/${t.slug}): ${Number(t.length_m)} m ${t.surface}, ${t.country_code}`),
@@ -41,11 +47,12 @@ export function llmsTxt(tracks = []) {
   ].join('\n')
 }
 
-export function llmsFullTxt(tracks = [], countries = {}) {
+export function llmsFullTxt(tracks = [], countries = {}, posts = []) {
   const indexable = tracks.filter(isIndexableTrack)
   return [
     ...head(),
     '',
+    ...blogLines(posts),
     '## FAQ',
     '',
     ...FAQ.flatMap(([q, a]) => [`### ${q}`, '', a, '']),

@@ -16,6 +16,7 @@ import { PROFILE_UPDATED_EVENT } from '../lib/navigation'
 import { parseCoachPath } from '../lib/coachContext'
 import { isLegalPath } from '../lib/legal'
 import { isLandingPath } from '../lib/trackLanding'
+import { isBlogPath } from '../lib/blog'
 import { isPublicContentPath, isPublicToolPath } from '../lib/publicPaths'
 import { AuthStateContext } from './AuthState'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
@@ -38,7 +39,7 @@ export default function AppShell({ children }) {
   const isPublicTool = isPublicToolPath(pathname)
   const isPublicPage = isPublicTool || isPublicContentPath(pathname)
   // Legal pages are always public and render without waiting for the session (crawlers, Google's reviewers).
-  const isLegalPage = isLegalPath(pathname) || isLandingPath(pathname)
+  const isLegalPage = isLegalPath(pathname) || isLandingPath(pathname) || isBlogPath(pathname)
 
   useEffect(() => {
     setGlassEnabled(readGlassPref())
@@ -143,9 +144,13 @@ export default function AppShell({ children }) {
             <Link href="/" className="font-extrabold text-slate-800 dark:text-slate-200">
               Velocity<span className="text-emerald-500 dark:text-brand-neon">Stack</span>
             </Link>
-            <Link href={user ? '/' : '/login'} className="text-xs font-bold text-emerald-600 dark:text-brand-neon hover:underline">
-              {user ? 'Open the app' : 'Sign in'}
-            </Link>
+            <nav aria-label="Public" className="flex items-center gap-4 text-xs font-bold">
+              <Link href="/blog" className="text-slate-600 dark:text-slate-300 hover:underline">Blog</Link>
+              <Link href="/track" className="hidden sm:inline text-slate-600 dark:text-slate-300 hover:underline">For track riders</Link>
+              <Link href={user ? '/' : '/login'} className="text-emerald-600 dark:text-brand-neon hover:underline">
+                {user ? 'Open the app' : 'Sign in'}
+              </Link>
+            </nav>
           </div>
         </header>
         <main className="flex-1 w-full px-4 sm:px-6 py-6 sm:py-10">{children}</main>

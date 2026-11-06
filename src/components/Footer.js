@@ -43,6 +43,10 @@ export default function Footer() {
           </Link>
           </>}
 
+          <Link href="/blog" className="hover:text-slate-900 dark:hover:text-white transition">
+            Blog
+          </Link>
+
           <Link href="/track" className="hover:text-slate-900 dark:hover:text-white transition">
             For track riders
           </Link>

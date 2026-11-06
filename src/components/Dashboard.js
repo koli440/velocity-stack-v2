@@ -35,6 +35,7 @@ export default function Dashboard({ initialActivities = [] }) {
   const [activitiesLoaded, setActivitiesLoaded] = useState(initialActivities.length > 0)
   const [stravaNotice, setStravaNotice] = useState(null)
   const [ownProfile, setOwnProfile] = useState(null)
+  const [blogCards, setBlogCards] = useState([])
 
   // Result of the Strava OAuth round trip when it started from the welcome card (?strava=...).
   useEffect(() => {
@@ -58,6 +59,18 @@ export default function Dashboard({ initialActivities = [] }) {
       cancelled = true
     }
   }, [activities, followingActivities])
+
+  // Published blog posts (public content) shown as timeline cards in the own feed; failures just hide them.
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/blog-cards')
+      .then((r) => (r.ok ? r.json() : { cards: [] }))
+      .then((j) => !cancelled && setBlogCards(Array.isArray(j.cards) ? j.cards : []))
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Own profile so the rider avatar/name also show on the own feed.
   useEffect(() => {
@@ -215,6 +228,7 @@ export default function Dashboard({ initialActivities = [] }) {
             activities={activities}
             onAddWorkout={() => window.dispatchEvent(new Event(OPEN_ADD_SESSION_EVENT))}
             coverPhotos={coverPhotos}
+            blogCards={activitiesLoaded ? blogCards : null}
             hasMore={hasMoreActivities}
             isLoadingMore={isLoadingMore}
             onLoadMore={loadMoreActivities}
