@@ -20,18 +20,18 @@ export default function BlogFeedCard({ card }) {
           <>
             <CoverArt />
             <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-4xl sm:text-5xl font-black tracking-tight text-white select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-              Velocity<span className="text-orange-400">Stack</span>
+              Velocity<span className="text-brand-neon">Stack</span>
             </div>
           </>
         )}
         <div className={`absolute inset-0 pointer-events-none ${card.cover ? 'bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/30' : 'bg-gradient-to-t from-slate-950/60 via-transparent to-transparent'}`} />
-        <span className="absolute top-2.5 left-2.5 z-[2] text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-500 text-slate-950">
+        <span className="absolute top-2.5 left-2.5 z-[2] text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-neon text-slate-950">
           New on the blog
         </span>
         <CalendarTile date={`${card.date}T12:00:00Z`} className="absolute top-2.5 right-2.5 z-[2]" />
-        <div className="absolute left-4 bottom-0 translate-y-1/2 z-10">
-          <Avatar url={card.avatarUrl} name={BLOG_AUTHOR.name} size="w-14 h-14" textSize="text-lg" className="ring-2 ring-orange-500 ring-offset-2 ring-offset-white dark:ring-offset-surface-darkCard" />
-        </div>
+      </div>
+      <div className="absolute left-4 top-36 sm:top-40 -translate-y-1/2 z-10">
+        <Avatar url={card.avatarUrl} name={BLOG_AUTHOR.name} size="w-14 h-14" textSize="text-lg" className="ring-2 ring-orange-500 ring-offset-2 ring-offset-white dark:ring-offset-surface-darkCard" />
       </div>
       <div className="p-4 pb-4 pt-9">
         <div className="text-sm font-black text-slate-900 dark:text-white">{BLOG_AUTHOR.name}</div>
