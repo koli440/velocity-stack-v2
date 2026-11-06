@@ -79,7 +79,7 @@ export default function PushNotificationsToggle() {
     setBusy(true)
     setMessage('')
     try {
-      const res = await fetch('/api/notifications/push/test', { method: 'POST', headers: await getAuthHeader() })
+      const res = await fetch('/api/notifications/push/send-test', { method: 'POST', headers: await getAuthHeader() })
       const json = await res.json().catch(() => ({}))
       setMessage(res.ok ? 'Test notification sent.' : json.error || 'Could not send the test notification')
     } catch {

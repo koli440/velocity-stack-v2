@@ -1,4 +1,4 @@
-// POST /api/notifications/push/test: sends a test notification to the signed-in caller's own devices.
+// POST /api/notifications/push/send-test: sends a test notification to the signed-in caller's own devices.
 
 import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../../lib/supabaseServer'

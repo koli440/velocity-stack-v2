@@ -20,7 +20,7 @@ Nothing else is needed: the database migration, trigger and cron job deploy with
 3. The endpoint claims unread rows (`pushed_at`), builds the payload (`src/lib/push.js`: generic title, the bell's one-line text, deep link from `notificationHref`), sends with `web-push` and deletes subscriptions that answer 404/410. Notifications older than 24 h are skipped.
 4. `public/sw.js` shows the notification; tapping focuses an existing window and navigates to the link (or opens one).
 
-"Send test notification" (`POST /api/notifications/push/test`, signed-in caller only) sends to the caller's own devices.
+"Send test notification" (`POST /api/notifications/push/send-test`, signed-in caller only) sends to the caller's own devices.
 
 ## Privacy
 Push is a user-initiated, strictly functional feature (no consent banner category needed); the payload holds only a short sentence and a path, never ride data. Turning the toggle off deletes the device row.
