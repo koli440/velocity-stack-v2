@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Avatar from './Avatar'
 import CalendarTile from './CalendarTile'
+import CoverArt, { COVER_BACKGROUND } from './blog/CoverArt'
 import { BLOG_AUTHOR } from '../lib/blog'
 
 // Timeline card for a published blog post (placed by publish date in the rider's own feed, see lib/blogFeed).
@@ -11,16 +12,19 @@ export default function BlogFeedCard({ card }) {
       data-testid="feed-blog-card"
       className="glass-card group relative overflow-hidden rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder hover:border-orange-500/60 hover:-translate-y-0.5 transition duration-200"
     >
-      <div className="relative h-36 sm:h-40 bg-gradient-to-br from-slate-800 via-teal-900 to-slate-950">
+      <div className="relative h-36 sm:h-40 overflow-hidden" style={card.cover ? undefined : { background: COVER_BACKGROUND }}>
         {card.cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={card.cover} alt={card.coverAlt} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
-          <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-5xl font-black tracking-tight text-white/10 select-none">
-            Velocity<span className="text-brand-neon/20">Stack</span>
-          </div>
+          <>
+            <CoverArt />
+            <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-4xl sm:text-5xl font-black tracking-tight text-white select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
+              Velocity<span className="text-orange-400">Stack</span>
+            </div>
+          </>
         )}
-        <div className={`absolute inset-0 pointer-events-none ${card.cover ? 'bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/30' : 'bg-gradient-to-t from-slate-950/75 via-transparent to-transparent'}`} />
+        <div className={`absolute inset-0 pointer-events-none ${card.cover ? 'bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/30' : 'bg-gradient-to-t from-slate-950/60 via-transparent to-transparent'}`} />
         <span className="absolute top-2.5 left-2.5 z-[2] text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-500 text-slate-950">
           New on the blog
         </span>

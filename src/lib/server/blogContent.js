@@ -37,7 +37,7 @@ export function bundledAuthorAvatar(publicDir = path.join(process.cwd(), 'public
  * The author's public profile image: looked up by nickname through the anon-callable RPC blog_author_avatar
  * (returns only the already-public image URL), cached for 15 minutes. Falls back to a bundled copy, then null (initials).
  */
-export async function authorAvatar(fetchImpl = fetch, env = process.env) {
+export async function authorAvatar(fetchImpl = fetch, env = process.env, { fresh = false } = {}) {
   const base = env.NEXT_PUBLIC_SUPABASE_URL
   const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (base && key) {
@@ -46,7 +46,7 @@ export async function authorAvatar(fetchImpl = fetch, env = process.env) {
         method: 'POST',
         headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ p_nickname: BLOG_AUTHOR.name }),
-        next: { revalidate: 900 },
+        ...(fresh ? { cache: 'no-store' } : { next: { revalidate: 900 } }),
       })
       if (res.ok) {
         const url = safeAvatarUrl(await res.json(), base)

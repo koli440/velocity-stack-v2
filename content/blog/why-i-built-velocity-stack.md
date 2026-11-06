@@ -3,10 +3,6 @@ title: Why I built Velocity Stack (it started with a spreadsheet)
 date: 2026-11-06
 summary: How a spreadsheet of gears and race records turned into an app for track cyclists, and why I rebuilt it around one idea.
 tags: story, track-cycling, templates
-cover: /about-photo.jpg
-coverAlt: A team pursuit squad and a rider on the steep wooden boards of an indoor velodrome
-coverWidth: 1200
-coverHeight: 800
 ---
 When I started riding the track, I realised quickly that I had to think about a completely different set of things than on the road. Gears. Pacing. Aero. Which track I was riding, and how to shave a few tenths of a second off an effort.
 

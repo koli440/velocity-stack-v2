@@ -22,7 +22,7 @@ import {
   feedCardData,
   isBlogPath,
 } from '../blog.js'
-import { loadAllPosts, loadPublishedPosts, getPublishedPost, BLOG_DIR } from '../server/blogContent.js'
+import { loadAllPosts, loadPublishedPosts, getPublishedPost, authorAvatar, BLOG_DIR } from '../server/blogContent.js'
 import { llmsTxt, llmsFullTxt } from '../llms.js'
 import { PUBLIC_PATHS } from '../seo.js'
 
@@ -169,10 +169,24 @@ test('every post in content/blog is valid', () => {
   assert.ok(fs.existsSync(BLOG_DIR))
 })
 
-test('the first post has a cover image', () => {
+test('the first post uses the generated cover (no cover front matter)', () => {
   const first = loadAllPosts().find((p) => p.slug === 'why-i-built-velocity-stack')
-  assert.equal(first.cover, '/about-photo.jpg')
-  assert.equal(postImage(first).url, '/about-photo.jpg')
+  assert.equal(first.cover, undefined)
+  assert.match(postImage(first).url, /og-image$/)
+})
+
+test('authorAvatar reads the RPC, never caches failures and falls back', async () => {
+  const env = { NEXT_PUBLIC_SUPABASE_URL: 'https://x.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'k' }
+  const good = 'https://x.supabase.co/storage/v1/object/public/avatars/u/a.webp'
+  const ok = async () => ({ ok: true, json: async () => good })
+  assert.equal(await authorAvatar(ok, env, { fresh: true }), good)
+  let opts
+  await authorAvatar(async (_u, o) => ((opts = o), { ok: true, json: async () => good }), env, { fresh: true })
+  assert.equal(opts.cache, 'no-store')
+  const bad = async () => ({ ok: false })
+  const fallback = await authorAvatar(bad, env, { fresh: true })
+  assert.ok(fallback === null || fallback.startsWith('/avatars/'))
+  assert.equal(await authorAvatar(async () => { throw new Error('x') }, {}, {}), fallback)
 })
 
 test('the launch post exists, is published and never future-dated', () => {
