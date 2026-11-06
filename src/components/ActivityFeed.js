@@ -299,9 +299,20 @@ export default function ActivityFeed({
                   <HeroCardVisual activity={act} gymSets={gymSets.get(act.id)} className="absolute inset-0 w-full h-full p-3" />
                 )}
                 <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-slate-950/75 to-transparent pointer-events-none" />
-                <CalendarTile date={when} className="absolute top-2.5 right-2.5 z-[2]" />
+                <div className="absolute top-2.5 right-2.5 z-[2] flex items-stretch gap-1.5">
+                  {reactions.get(act.id) && (
+                    <ReactionButton
+                      size="card"
+                      count={reactions.get(act.id).reaction_count}
+                      reacted={reactions.get(act.id).i_reacted}
+                      canReact={reactions.get(act.id).can_react}
+                      onToggle={(e) => { e?.stopPropagation?.(); toggleReaction(act.id) }}
+                    />
+                  )}
+                  <CalendarTile date={when} />
+                </div>
                 {badges.length > 0 && (
-                  <div className="absolute top-2.5 left-2.5 right-16 z-[2]">
+                  <div className="absolute top-2.5 left-2.5 right-28 z-[2]">
                     <BadgeRow badges={badges} />
                   </div>
                 )}
@@ -328,15 +339,6 @@ export default function ActivityFeed({
                     </div>
                   </div>
                   <TemplateRunsBadge runs={runsByActivity.get(act.id)} />
-                  {reactions.get(act.id) && (
-                    <ReactionButton
-                      size="card"
-                      count={reactions.get(act.id).reaction_count}
-                      reacted={reactions.get(act.id).i_reacted}
-                      canReact={reactions.get(act.id).can_react}
-                      onToggle={(e) => { e?.stopPropagation?.(); toggleReaction(act.id) }}
-                    />
-                  )}
                   {commentCounts.get(act.id) > 0 && (
                     <Link
                       href={withReturnTo(`${activityHref(act)}#comments`, returnTo)}
