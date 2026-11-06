@@ -40,3 +40,13 @@ export function mergeBlogCards(activities, cards, { hasMore = false, now = new D
   for (const card of queue) out.push({ kind: 'blog', card })
   return out
 }
+
+/**
+ * Fills a missing card avatar from the signed-in rider's own profile when the viewer is the post author
+ * (the avatar is the author's, never the viewer's, so other riders are untouched).
+ */
+export function withOwnAuthorAvatar(cards, profile, authorName) {
+  const url = profile?.avatar_url
+  if (!url || !authorName || String(profile.nickname || '').toLowerCase() !== authorName.toLowerCase()) return cards
+  return cards.map((c) => (c.avatarUrl ? c : { ...c, avatarUrl: url }))
+}

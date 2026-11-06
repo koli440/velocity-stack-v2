@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mergeBlogCards, cardTime } from '../blogFeed.js'
+import { mergeBlogCards, cardTime, withOwnAuthorAvatar } from '../blogFeed.js'
 
 const act = (id, date) => ({ id, activity_date: date })
 const card = (slug, date) => ({ slug, date })
@@ -60,4 +60,12 @@ test('ties: a card goes after activities of the same instant, bad dates are igno
 test('cards carry no rider data', () => {
   const rows = mergeBlogCards([], [card('p', '2026-10-25')], { now: NOW })
   assert.deepEqual(Object.keys(rows[0]).sort(), ['card', 'kind'])
+})
+
+test('own avatar fills a missing author avatar only for the author', () => {
+  const cards = [{ slug: 'a', avatarUrl: null }, { slug: 'b', avatarUrl: '/x.webp' }]
+  const mine = { nickname: 'Koli440', avatar_url: 'https://s/avatars/me.webp' }
+  assert.deepEqual(withOwnAuthorAvatar(cards, mine, 'koli440').map((c) => c.avatarUrl), ['https://s/avatars/me.webp', '/x.webp'])
+  assert.equal(withOwnAuthorAvatar(cards, { nickname: 'other', avatar_url: 'https://s/o.webp' }, 'koli440'), cards)
+  assert.equal(withOwnAuthorAvatar(cards, null, 'koli440'), cards)
 })

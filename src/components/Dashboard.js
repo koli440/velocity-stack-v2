@@ -16,6 +16,8 @@ import PowerProfileCard from './PowerProfileCard'
 import WeekStatsCard from './WeekStatsCard'
 import FitnessCard from './FitnessCard'
 import OnboardingChecklist from './OnboardingChecklist'
+import { withOwnAuthorAvatar } from '../lib/blogFeed'
+import { BLOG_AUTHOR } from '../lib/blog'
 
 export default function Dashboard({ initialActivities = [] }) {
   const [user, setUser] = useState(null)
@@ -228,7 +230,7 @@ export default function Dashboard({ initialActivities = [] }) {
             activities={activities}
             onAddWorkout={() => window.dispatchEvent(new Event(OPEN_ADD_SESSION_EVENT))}
             coverPhotos={coverPhotos}
-            blogCards={activitiesLoaded ? blogCards : null}
+            blogCards={activitiesLoaded ? withOwnAuthorAvatar(blogCards, ownProfile, BLOG_AUTHOR.name) : null}
             hasMore={hasMoreActivities}
             isLoadingMore={isLoadingMore}
             onLoadMore={loadMoreActivities}
