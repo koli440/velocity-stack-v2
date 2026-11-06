@@ -9,7 +9,7 @@
 import { PushError } from './intervalsEvents.js'
 import { createGarminPlanClient } from './garminPlans.js'
 import { getFreshAccessToken } from './garminProvider.js'
-import { buildGarminWorkout, garminPushHash, GARMIN_PUSH_DISCIPLINES } from '../garminPlan.js'
+import { buildGarminWorkout, garminPushHash, normalizePowerTarget, GARMIN_PUSH_DISCIPLINES } from '../garminPlan.js'
 import { CLAIM_TTL_MS, RETRY_SAME_ERROR_MS, PUSH_WINDOW_DAYS, TIME_BUDGET_MS, RIDERS_PER_RUN, PUSHES_PER_RIDER, RIDER_CLAIM_MS } from './plannedPush.js'
 
 const TABLE = 'planned_workout_garmin_pushes'
@@ -29,7 +29,7 @@ const isNotFound = (e) => e instanceof PushError && e.code === 'not_found'
 export async function requireGarminConnection(service, riderId) {
   const { data } = await service
     .from('connections')
-    .select('id, user_id, status, external_athlete_id, access_token, refresh_token, token_expires_at')
+    .select('id, user_id, status, external_athlete_id, access_token, refresh_token, token_expires_at, push_power_target')
     .eq('user_id', riderId)
     .eq('provider', 'garmin')
     .maybeSingle()
@@ -101,7 +101,8 @@ export async function pushPlannedWorkoutToGarmin({ service, workout, now = Date.
   const row = await getRow(service, workout.id)
   await claim(service, workout, row, now)
 
-  const hash = garminPushHash(workout)
+  const powerTarget = normalizePowerTarget(connection.push_power_target)
+  const hash = garminPushHash(workout, powerTarget)
   const stamp = iso(now)
   const date = String(workout.workout_date).slice(0, 10)
   let workoutId = row?.garmin_workout_id || null
@@ -110,7 +111,7 @@ export async function pushPlannedWorkoutToGarmin({ service, workout, now = Date.
   let built
 
   try {
-    built = buildGarminWorkout(workout, { ftp: await riderFtp(service, workout.rider_id) })
+    built = buildGarminWorkout(workout, { ftp: await riderFtp(service, workout.rider_id), powerTarget })
     if (!built.workout) {
       throw new PushError('unsupported', 'This workout has no steps, so it cannot be sent to Garmin. Add structured steps first.', { status: 409 })
     }
@@ -251,7 +252,7 @@ export async function pushGarminRider({ service, riderId, conn, client, now, dea
   for (const w of workouts || []) {
     if (!ready()) break
     const row = rowById.get(w.id)
-    const hash = garminPushHash(w)
+    const hash = garminPushHash(w, conn?.push_power_target)
     if (row?.garmin_workout_id && row.pushed_hash === hash && row.push_status === 'pushed') continue
     if (row?.push_status === 'error' && row.attempted_hash === hash && row.last_attempt_at && now - Date.parse(row.last_attempt_at) < RETRY_SAME_ERROR_MS) continue
     budget -= 1

@@ -99,3 +99,8 @@ export async function setGarminAutoPush(client, enabled) {
   const { error } = await client.rpc('set_garmin_push_enabled', { p_enabled: !!enabled })
   return error ? new Error(error.message) : null
 }
+
+export async function setGarminPowerTarget(client, target) {
+  const { error } = await client.rpc('set_garmin_power_target', { p_target: target })
+  return error ? new Error(error.message) : null
+}
