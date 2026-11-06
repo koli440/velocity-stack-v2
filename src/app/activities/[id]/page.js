@@ -439,7 +439,8 @@ function ActivityDetail() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 sm:self-center">
+        <div className="flex flex-wrap items-center gap-3 sm:self-center">
+          <ActivityReactions activityId={activityId} />
           <CalendarTile date={actWhen} large className="!bg-slate-900 dark:!bg-white/10" />
         {!sharedView && (
           <div className="flex items-center gap-2">
@@ -619,7 +620,6 @@ function ActivityDetail() {
       )}
 
       {/* 4c. Comments: owner, coach and every rider who can see the activity (issues #222-#224) */}
-      <ActivityReactions activityId={activityId} />
       <ActivityComments activityId={activityId} />
 
       {/* 5. Bottom panel: velodrome, ride type, gears and gear segments (own activities only) */}

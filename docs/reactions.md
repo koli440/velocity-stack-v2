@@ -1,6 +1,6 @@
 # Activity reactions ("Respect")
 
-A lightweight +1 on activities. Migration `20270138000000_activity_reactions.sql`; UI in `ReactionButton` / `ActivityReactions` (activity page) and `ActivityFeed` (cards,
+A lightweight +1 on activities. Migration `20270138000000_activity_reactions.sql`; UI in `ReactionButton` / `ActivityReactions` (activity page header, next to the date tile) and `ActivityFeed` (cards,
 also in coach athlete views); helpers `src/lib/activityReactions.js`. The icon is `flame` from the shared icon set (`src/lib/iconSet.js`).
 
 - **Who:** anyone who can see the activity (same helper as comments: public, followers, active coach, blocks win). Not your own activity; bots cannot react.
