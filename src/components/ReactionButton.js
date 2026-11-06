@@ -38,18 +38,18 @@ function RespectTile({ count, reacted, canReact, busy, onToggle, large }) {
     : canReact
       ? `${large ? 'bg-slate-900 dark:bg-white/10' : 'bg-slate-950/55'} border-orange-400/60 hover:bg-orange-500/25`
       : `${large ? 'bg-slate-900 dark:bg-white/10' : 'bg-slate-950/55'} border-white/15`
-  const cls = `relative z-10 shrink-0 self-stretch flex flex-col items-center justify-center rounded-xl backdrop-blur-sm border text-white text-center leading-none ${
-    large ? 'px-3.5 py-2 min-w-[64px]' : 'px-2.5 py-1 min-w-[44px]'
+  const cls = `relative z-10 shrink-0 self-stretch flex flex-col items-center justify-center rounded-xl overflow-hidden backdrop-blur-sm border text-white text-center leading-none ${
+    large ? 'px-3.5 py-2 min-w-[64px]' : 'px-2 py-1 min-w-[44px] gap-px'
   } ${tone}`
   const inner = (
     <>
-      <b className={`flex items-center justify-center gap-1 font-black tracking-tight ${large ? 'text-3xl' : 'text-xl'}`}>
+      <b className={`flex items-center justify-center gap-1 font-black tracking-tight ${large ? 'text-3xl' : 'text-lg'}`}>
         {reacted ? <Icon name="check" size={large ? 20 : 14} /> : <Icon name={REACTION_ICON} size={large ? 20 : 14} />}
         {count}
       </b>
-      <span className={`block mt-0.5 font-bold uppercase tracking-widest ${large ? 'text-[11px]' : 'text-[9px]'}`}>Respect</span>
+      <span className={`block ${large ? 'mt-0.5 text-[11px]' : 'text-[9px]'} font-bold uppercase tracking-widest`}>Respect</span>
       {level && (
-        <span data-testid="respect-level" className={`hidden mt-0.5 font-black uppercase tracking-widest text-orange-300 ${large ? 'min-[420px]:block text-[10px]' : 'sm:block text-[8px]'}`}>
+        <span data-testid="respect-level" className={`hidden ${large ? 'mt-0.5 min-[420px]:block text-[10px]' : 'sm:block text-[8px]'} font-black uppercase tracking-widest text-orange-300`}>
           {level}
         </span>
       )}
