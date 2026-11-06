@@ -440,7 +440,6 @@ function ActivityDetail() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 sm:self-center">
-          <ActivityReactions activityId={activityId} />
           <CalendarTile date={actWhen} large className="!bg-slate-900 dark:!bg-white/10" />
         {!sharedView && (
           <div className="flex items-center gap-2">
@@ -475,6 +474,8 @@ function ActivityDetail() {
       {activity.description && (
         <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{activity.description}</p>
       )}
+
+      <ActivityReactions activityId={activityId} />
 
       {showDeleteConfirm && (
         <Portal><div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
