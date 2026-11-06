@@ -102,3 +102,12 @@ test('cron cycle stops a rider on a fatal error and ignores riders without auto 
   const off = db({ connections: [conn({ push_planned_workouts: false })], planned_workouts: [wk('w1', '2026-11-04')] })
   assert.equal((await runGarminPushCycle({ service: off, now: NOW, makeClient: async () => fakeGarminClient() })).riders, 0)
 })
+
+test('push uses the connection power target and stores a matching hash', async () => {
+  const sb = db()
+  const client = fakeGarminClient()
+  const w = wk('w1', '2026-11-04')
+  await pushPlannedWorkoutToGarmin({ service: sb, workout: w, now: NOW, conn: conn({ push_power_target: 'POWER_10S' }), client })
+  assert.equal(client.calls[0][1].segments[0].steps[0].targetType, 'POWER_10S')
+  assert.equal(sb.db.planned_workout_garmin_pushes[0].pushed_hash, garminPushHash(w, 'POWER_10S'))
+})

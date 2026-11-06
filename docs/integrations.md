@@ -56,6 +56,9 @@ Data model details: [data-model.md](data-model.md).
   steps becomes a Garmin workout (`POST /workoutportal/workout/v2`, `PUT/DELETE /training-api/workout/v2/{id}`; updates read the workout's `ownerId` first) plus a schedule entry (`/training-api/schedule/`); `workoutProvider` = `workoutSourceId` = `VelocityStack`, at most 100 steps; %FTP/zone targets are converted to watts
   from `profiles.ftp_w`; workouts without steps are not sent. Manual push in the workout dialog (`/api/planned-workouts/:id/garmin`), opt-in auto push on the Garmin
   card, mapping in `planned_workout_garmin_pushes`; the existing push cron runs `runGarminPushCycle`. Needs the rider's workout-import permission.
+  Power targets use the rider's **power target type** (`connections.push_power_target`, set on the Garmin card; default `POWER_LAP` = interval average; also `POWER` = current,
+  `POWER_3S`/`POWER_10S`/`POWER_30S`). The type decides which power field the Edge shows for a step, and it is part of the push hash (changing it re-sends pushed workouts, as does `GARMIN_CONVERTER_VERSION`).
+  Warm-up/cool-down are OPEN time steps; steps carry one target only (no secondary target); cadence/HR data fields on the device are configured on the Garmin, not in the workout.
   Starter limits: 100 calls/min per app and 200 calls/day per rider. Endpoint URLs are configured at https://apis.garmin.com/tools/endpoints; the URLs are env-overridable (`GARMIN_TOKEN_URL`, `GARMIN_AUTHORIZE_URL`, `GARMIN_API_BASE`). Historical backfill is not available on Starter.
 - **Disconnect** clears all credentials/tokens (Strava access is also deauthorized at Strava) and stops syncing; imported
   rides stay. Revoking the app at Strava is detected via webhook and disconnects automatically.
