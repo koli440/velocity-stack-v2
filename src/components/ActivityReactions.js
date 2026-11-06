@@ -13,7 +13,7 @@ import {
 } from '../lib/activityReactions'
 import ReactionButton from './ReactionButton'
 
-// Respect button + count on the activity page; the owner also sees who reacted.
+// Respect tile (sits next to the date tile) on the activity page; the owner also sees who reacted.
 export default function ActivityReactions({ activityId }) {
   const [info, setInfo] = useState(null)
   const [reactors, setReactors] = useState([])
@@ -59,14 +59,14 @@ export default function ActivityReactions({ activityId }) {
   const names = reactors.map((r) => authorName(r.profile))
 
   return (
-    <div data-testid="activity-reactions" className="flex flex-wrap items-center gap-3 [&>button]:w-full sm:[&>button]:w-auto">
+    <>
       <ReactionButton size="md" count={count} reacted={info.i_reacted} canReact={info.can_react} busy={busy} onToggle={toggle} />
       {info.is_owner && count > 0 && (
-        <p className="text-xs text-slate-500 dark:text-slate-400" data-testid="reactors-line">
+        <p className="basis-full text-xs text-slate-500 dark:text-slate-400" data-testid="reactors-line">
           {reactorSummary(names, count)} gave respect
         </p>
       )}
-      {error && <p role="alert" className="text-xs text-red-500">{error}</p>}
-    </div>
+      {error && <p role="alert" className="basis-full text-xs text-red-500">{error}</p>}
+    </>
   )
 }
