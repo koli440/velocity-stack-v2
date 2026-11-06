@@ -18,6 +18,7 @@ import CoachEditsList from '../../components/CoachEditsList'
 import { PROFILE_UPDATED_EVENT } from '../../lib/navigation'
 import Icon from '../../components/Icon'
 import Avatar from '../../components/Avatar'
+import PushNotificationsToggle from '../../components/PushNotificationsToggle'
 import GearPicker from '../../components/GearPicker'
 import { RIDE_TYPES, DEFAULT_RIDE_TYPE, effectiveRideType } from '../../lib/rideType'
 import { parseGear, toGearField } from '../../lib/gear'
@@ -315,6 +316,8 @@ export default function SettingsPage() {
             />
             <span>Email me about new notifications (followers, comments, mentions)</span>
           </label>
+
+          <PushNotificationsToggle />
 
           <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
             <input

@@ -1,7 +1,7 @@
 // Minimal service worker: caches static assets only; offline fallback for navigations.
 // Kill switch: set KILL_SWITCH = true (or visit /?sw-off=1) to unregister and clear caches.
 const KILL_SWITCH = false
-const VERSION = 'v1'
+const VERSION = 'v2'
 const STATIC_CACHE = `vs-static-${VERSION}`
 const OFFLINE_CACHE = `vs-offline-${VERSION}`
 const OFFLINE_URL = '/offline.html'
@@ -60,4 +60,37 @@ self.addEventListener('fetch', (event) => {
       })
     )
   }
+})
+
+// Web Push: short payload {title, body, url, tag}; tapping opens (or focuses) the deep link.
+self.addEventListener('push', (event) => {
+  let data = {}
+  try { data = event.data ? event.data.json() : {} } catch (e) { data = {} }
+  const title = data.title || 'Velocity Stack'
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      tag: data.tag || undefined,
+      data: { url: typeof data.url === 'string' && data.url.startsWith('/') && !data.url.startsWith('//') ? data.url : '/' },
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const target = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin).href
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      for (const w of windows) {
+        if (new URL(w.url).origin === self.location.origin) {
+          if ('navigate' in w) await w.navigate(target).catch(() => {})
+          return w.focus()
+        }
+      }
+      return self.clients.openWindow(target)
+    })()
+  )
 })

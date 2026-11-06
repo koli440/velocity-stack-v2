@@ -190,3 +190,6 @@ The public key lives in `public/<key>.txt` (served at `https://velocity-stack.ap
 ## Partner apps
 
 Third-party apps (first: pedalmania.cc) connect through our own OAuth 2.0 provider and upload rides via `/api/v1`. They appear on the Connections page under Connected apps with a Disconnect button. Full reference: `docs/partner-api.md` and `public/openapi/v1.yaml`.
+
+## Web Push (system notifications for the installed app)
+Standards-based Web Push with VAPID (no third-party service). Env settings on the host (Vercel): `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, optional `VAPID_SUBJECT` (`mailto:` or https URL). Without the public key the Settings toggle is hidden; without the private key the sender endpoints no-op. See docs/push-notifications.md.
