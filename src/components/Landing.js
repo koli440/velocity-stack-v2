@@ -39,7 +39,8 @@ export default function Landing() {
       <p className="text-sm text-slate-500">
         <Link href="/about" className="hover:underline">About</Link> ·{' '}
         <Link href="/dsl-guide" className="hover:underline">DSL guide</Link> ·{' '}
-        <Link href="/whats-new" className="hover:underline">What&apos;s new</Link>
+        <Link href="/whats-new" className="hover:underline">What&apos;s new</Link> ·{' '}
+        <Link href="/blog" className="hover:underline">Blog</Link>
       </p>
     </section>
   )

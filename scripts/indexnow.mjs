@@ -1,8 +1,11 @@
 // Submit all sitemap URLs to IndexNow. The key is public by design (served from public/<key>.txt).
-// Usage: npm run indexnow [-- --sitemap https://velocity-stack.app/sitemap.xml] [--dry-run]
+// Usage: npm run indexnow [-- --sitemap https://velocity-stack.app/sitemap.xml] [--blog] [--dry-run]
+// --blog submits only /blog and the published post URLs (read from content/blog), e.g. right after publishing a post.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { loadPublishedPosts } from '../src/lib/server/blogContent.js'
+import { postUrl } from '../src/lib/blog.js'
 
 const HOST = 'velocity-stack.app'
 const ORIGIN = `https://${HOST}`
@@ -21,13 +24,18 @@ if (fs.readFileSync(path.join(root, 'public', keyFile), 'utf8').trim() !== key) 
   throw new Error('Key file content does not match its name')
 }
 
-const xml = sitemap.startsWith('http')
-  ? await (await fetch(sitemap)).text()
-  : fs.readFileSync(sitemap, 'utf8')
-const urlList = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)]
-  .map((m) => m[1].replace(/&amp;/g, '&'))
-  .filter((u) => u.startsWith(`${ORIGIN}/`) || u === ORIGIN)
-if (!urlList.length) throw new Error(`No URLs found in ${sitemap}`)
+let urlList
+if (args.includes('--blog')) {
+  urlList = [`${ORIGIN}/blog`, ...loadPublishedPosts().map(postUrl)]
+} else {
+  const xml = sitemap.startsWith('http')
+    ? await (await fetch(sitemap)).text()
+    : fs.readFileSync(sitemap, 'utf8')
+  urlList = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)]
+    .map((m) => m[1].replace(/&amp;/g, '&'))
+    .filter((u) => u.startsWith(`${ORIGIN}/`) || u === ORIGIN)
+}
+if (!urlList.length) throw new Error(`No URLs found`)
 
 const body = { host: HOST, key, keyLocation: `${ORIGIN}/${keyFile}`, urlList }
 if (dryRun) {

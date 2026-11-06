@@ -12,6 +12,8 @@ import BadgePill from './BadgePill'
 import RaceBadge from './RaceBadge'
 import SourceBadge from './SourceBadge'
 import HeroCardVisual from './HeroCardVisual'
+import BlogFeedCard from './BlogFeedCard'
+import { mergeBlogCards } from '../lib/blogFeed'
 import { BADGE_CONFIG, hydrateBadges } from '../lib/activityBadges'
 import { authorName } from '../lib/social'
 import { PREFETCH_ROOT_MARGIN, canAutoLoad, didLoadFail } from '../lib/infiniteScroll'
@@ -111,6 +113,7 @@ export default function ActivityFeed({
   isLoadingMore = false,
   onLoadMore,
   activityHref = (act) => `/activities/${act.id}`,
+  blogCards = null,
 }) {
   const returnTo = currentReturnTo(usePathname())
   const sentinelRef = useRef(null)
@@ -119,6 +122,8 @@ export default function ActivityFeed({
   const [supported] = useState(() => typeof IntersectionObserver !== 'undefined')
   const [hasFailed, setHasFailed] = useState(false)
   const count = activities.length
+  // Blog posts are timeline items merged by date; they never count as activities (pagination, ids and stats ignore them).
+  const rows = mergeBlogCards(activities, blogCards || [], { hasMore })
   const [commentCounts, setCommentCounts] = useState(new Map())
   const [unread, setUnread] = useState(new Map())
   const [reactions, setReactions] = useState(new Map())
@@ -260,12 +265,14 @@ export default function ActivityFeed({
         )}
       </div>
 
-      {activities.length === 0 && emptyMessage && (
+      {rows.length === 0 && emptyMessage && (
         <p className="text-xs text-slate-400 py-6 text-center">{emptyMessage}</p>
       )}
 
       <div className="grid grid-cols-1 gap-4">
-        {activities.map((act) => {
+        {rows.map((row) => {
+          if (row.kind === 'blog') return <BlogFeedCard key={`blog-${row.card.slug}`} card={row.card} />
+          const act = row.activity
           const badges = hydrateBadges(act.badges)
           const cover = coverPhotos?.get(act.id)
           const dist = formatDistance(act.distance_m)
