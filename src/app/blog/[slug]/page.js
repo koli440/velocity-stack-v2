@@ -61,14 +61,14 @@ export function generateMetadata({ params }) {
 
 const navCls = 'block rounded-xl border border-slate-200 dark:border-surface-darkBorder p-4 hover:bg-slate-100 dark:hover:bg-white/5'
 
-export default function BlogPostPage({ params }) {
+export default async function BlogPostPage({ params }) {
   const post = getPublishedPost(params.slug)
   if (!post) notFound()
   const published = loadPublishedPosts()
   const { newer, older } = prevNext(published, post.slug)
   const related = relatedPosts(published, post)
   const toc = tocFor(post)
-  const avatarUrl = authorAvatar()
+  const avatarUrl = await authorAvatar()
 
   return (
     <article className="max-w-2xl mx-auto">
@@ -82,7 +82,10 @@ export default function BlogPostPage({ params }) {
       <header className="space-y-4">
         <h1 className="text-3xl sm:text-5xl font-black leading-tight text-slate-900 dark:text-white">{post.title}</h1>
         <p className="text-lg text-slate-600 dark:text-slate-300">{post.summary}</p>
-        <Byline avatarUrl={avatarUrl} date={post.date} updated={post.updated} minutes={post.minutes} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Byline avatarUrl={avatarUrl} date={post.date} updated={post.updated} minutes={post.minutes} />
+          <ShareRow links={shareLinks(post)} url={postUrl(post)} title={post.title} />
+        </div>
         <TagList tags={post.tags} />
       </header>
 
@@ -117,8 +120,9 @@ export default function BlogPostPage({ params }) {
         <BlogBody body={post.body} />
       </div>
 
-      <div className="mt-10 pt-6 border-t border-slate-200 dark:border-surface-darkBorder">
-        <ShareRow links={shareLinks(post)} url={postUrl(post)} />
+      <div className="mt-10 pt-6 border-t border-slate-200 dark:border-surface-darkBorder flex items-center justify-between gap-3">
+        <span className="text-sm text-slate-600 dark:text-slate-400">Enjoyed this? Share it.</span>
+        <ShareRow links={shareLinks(post)} url={postUrl(post)} title={post.title} placement="bottom" />
       </div>
 
       {(newer || older) && (

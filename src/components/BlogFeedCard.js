@@ -20,7 +20,7 @@ export default function BlogFeedCard({ card }) {
             Velocity<span className="text-brand-neon/20">Stack</span>
           </div>
         )}
-        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-slate-950/75 to-transparent pointer-events-none" />
+        <div className={`absolute inset-0 pointer-events-none ${card.cover ? 'bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/30' : 'bg-gradient-to-t from-slate-950/75 via-transparent to-transparent'}`} />
         <span className="absolute top-2.5 left-2.5 z-[2] text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-500 text-slate-950">
           New on the blog
         </span>
