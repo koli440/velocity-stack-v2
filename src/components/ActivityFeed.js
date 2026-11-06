@@ -330,10 +330,11 @@ export default function ActivityFeed({
                   <TemplateRunsBadge runs={runsByActivity.get(act.id)} />
                   {reactions.get(act.id) && (
                     <ReactionButton
+                      size="card"
                       count={reactions.get(act.id).reaction_count}
                       reacted={reactions.get(act.id).i_reacted}
                       canReact={reactions.get(act.id).can_react}
-                      onToggle={() => toggleReaction(act.id)}
+                      onToggle={(e) => { e?.stopPropagation?.(); toggleReaction(act.id) }}
                     />
                   )}
                   {commentCounts.get(act.id) > 0 && (
