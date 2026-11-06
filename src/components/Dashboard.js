@@ -1,7 +1,7 @@
 'use client'
 
 import SegmentedTabs from './SegmentedTabs'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
 import Link from 'next/link'
@@ -10,6 +10,7 @@ import { syncFeedData, syncFeedDataIfNeeded } from '../lib/feedSync'
 import { fetchCoverPhotos } from '../lib/activityPhotos'
 import { OPEN_ADD_SESSION_EVENT, ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
 import ActivityFeed from './ActivityFeed'
+import { scopeFromSearch, feedPath, snapshotKey, buildSnapshot, parseSnapshot } from '../lib/feedRestore'
 import EmptyFeedCard from './EmptyFeedCard'
 import { stravaFlagMessage } from '../lib/emptyFeed'
 import PowerProfileCard from './PowerProfileCard'
@@ -30,6 +31,10 @@ export default function Dashboard({ initialActivities = [] }) {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   // Feed scope: own sessions or sessions shared by followed riders (issue #49).
   const [scope, setScope] = useState('mine')
+  // Tab, loaded depth and scroll to restore when coming back from an activity (see lib/feedRestore).
+  const restoreRef = useRef({ depth: { mine: 0, following: 0 }, scrollY: 0, scope: 'mine', pending: false })
+  const liveRef = useRef({})
+  const followingInit = useRef(false)
   const [followingActivities, setFollowingActivities] = useState([])
   const [hasMoreFollowing, setHasMoreFollowing] = useState(false)
   const [isLoadingFollowing, setIsLoadingFollowing] = useState(false)
@@ -80,14 +85,38 @@ export default function Dashboard({ initialActivities = [] }) {
     fetchProfilesByIds(supabase, [user.id]).then(({ profiles }) => setOwnProfile(profiles.get(user.id) || null))
   }, [user?.id])
 
+  // Loads further pages after the first until `target` items are present (used to restore feed depth).
+  const loadToDepth = async (first, target, fetchPage) => {
+    let data = first.data
+    let hasMore = first.hasMore
+    while (hasMore && data.length < target) {
+      const next = await fetchPage(Math.floor(data.length / DEFAULT_ACTIVITIES_PAGE_SIZE))
+      if (next.error) break
+      data = [...data, ...next.data]
+      hasMore = next.hasMore
+    }
+    return { data, hasMore }
+  }
+
+  // Scrolls back to the saved position once, after the restored feed has rendered.
+  const applyScrollRestore = (forScope) => {
+    const r = restoreRef.current
+    if (!r.pending || r.scope !== forScope) return
+    r.pending = false
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, r.scrollY)))
+  }
+
   const reloadFollowingFeed = async (userId) => {
     const targetId = userId || user?.id
     if (!targetId) return
     setIsLoadingFollowing(true)
-    const { data, hasMore, error } = await fetchFollowingFeedPage(supabase, { userId: targetId, page: 0 })
-    if (!error) {
+    const fetchPage = (page) => fetchFollowingFeedPage(supabase, { userId: targetId, page })
+    const first = await fetchPage(0)
+    if (!first.error) {
+      const { data, hasMore } = await loadToDepth(first, restoreRef.current.depth.following, fetchPage)
       setFollowingActivities(data)
       setHasMoreFollowing(hasMore)
+      applyScrollRestore('following')
     }
     setIsLoadingFollowing(false)
   }
@@ -114,14 +143,14 @@ export default function Dashboard({ initialActivities = [] }) {
     }
 
     const loadFirstPage = async () => {
-      const { data, hasMore, error } = await fetchActivitiesPage(supabase, {
-        userId: targetId,
-        page: 0,
-      })
-      if (!error) {
+      const fetchPage = (page) => fetchActivitiesPage(supabase, { userId: targetId, page })
+      const first = await fetchPage(0)
+      if (!first.error) {
+        const { data, hasMore } = await loadToDepth(first, restoreRef.current.depth.mine, fetchPage)
         setActivities(data)
         setHasMoreActivities(hasMore)
         setActivitiesLoaded(true)
+        applyScrollRestore('mine')
       }
     }
 
@@ -160,6 +189,43 @@ export default function Dashboard({ initialActivities = [] }) {
     window.addEventListener(ACTIVITIES_CHANGED_EVENT, handler)
     return () => window.removeEventListener(ACTIVITIES_CHANGED_EVENT, handler)
   })
+
+  liveRef.current = { scope, count: scope === 'following' ? followingActivities.length : activities.length }
+
+  // Tab from the URL + saved snapshot (read before the first feed load so depth is restored).
+  useEffect(() => {
+    const initial = scopeFromSearch(window.location.search)
+    const snap = parseSnapshot(window.sessionStorage.getItem(snapshotKey(initial)))
+    restoreRef.current = {
+      depth: { mine: 0, following: 0, [initial]: snap ? snap.count : 0 },
+      scrollY: snap ? snap.scrollY : 0,
+      scope: initial,
+      pending: Boolean(snap),
+    }
+    if (initial !== 'mine') setScope(initial)
+    window.sessionStorage.removeItem(snapshotKey(initial))
+  }, [])
+
+  useEffect(() => {
+    if (scope === 'following' && user?.id && !followingInit.current) {
+      followingInit.current = true
+      reloadFollowingFeed(user.id)
+    }
+  }, [scope, user?.id])
+
+  // Remember depth + scroll of the current tab when an activity is opened from the feed.
+  useEffect(() => {
+    const onClick = (e) => {
+      const a = e.target?.closest?.('a[href^="/activities/"]')
+      if (!a) return
+      const { scope: s, count } = liveRef.current
+      try {
+        window.sessionStorage.setItem(snapshotKey(s), buildSnapshot({ count, scrollY: window.scrollY }))
+      } catch {}
+    }
+    document.addEventListener('click', onClick, true)
+    return () => document.removeEventListener('click', onClick, true)
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -209,7 +275,12 @@ export default function Dashboard({ initialActivities = [] }) {
           value={scope}
           onChange={(value) => {
             setScope(value)
-            if (value === 'following') reloadFollowingFeed()
+            window.sessionStorage.removeItem(snapshotKey(value))
+            window.history.replaceState(window.history.state, '', feedPath(value))
+            if (value === 'following') {
+              followingInit.current = true
+              reloadFollowingFeed()
+            }
           }}
         />
 
@@ -226,6 +297,7 @@ export default function Dashboard({ initialActivities = [] }) {
           )}
           <ActivityFeed
             key="mine"
+            returnTo={feedPath('mine')}
             author={ownProfile}
             activities={activities}
             onAddWorkout={() => window.dispatchEvent(new Event(OPEN_ADD_SESSION_EVENT))}
@@ -239,6 +311,7 @@ export default function Dashboard({ initialActivities = [] }) {
         ) : (
           <ActivityFeed
             key="following"
+            returnTo={feedPath('following')}
             title="Following"
             coverPhotos={coverPhotos}
             activities={followingActivities}

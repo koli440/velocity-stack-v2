@@ -114,8 +114,10 @@ export default function ActivityFeed({
   onLoadMore,
   activityHref = (act) => `/activities/${act.id}`,
   blogCards = null,
+  returnTo: returnToProp = null,
 }) {
-  const returnTo = currentReturnTo(usePathname())
+  const pathname = usePathname()
+  const returnTo = returnToProp || currentReturnTo(pathname)
   const sentinelRef = useRef(null)
   const latest = useRef({})
   const pending = useRef(null)
