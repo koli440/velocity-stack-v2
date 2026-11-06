@@ -59,7 +59,7 @@ export default function ActivityReactions({ activityId }) {
   const names = reactors.map((r) => authorName(r.profile))
 
   return (
-    <div data-testid="activity-reactions" className="flex flex-wrap items-center gap-3">
+    <div data-testid="activity-reactions" className="flex flex-wrap items-center gap-3 [&>button]:w-full sm:[&>button]:w-auto">
       <ReactionButton size="md" count={count} reacted={info.i_reacted} canReact={info.can_react} busy={busy} onToggle={toggle} />
       {info.is_owner && count > 0 && (
         <p className="text-xs text-slate-500 dark:text-slate-400" data-testid="reactors-line">
