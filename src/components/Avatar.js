@@ -23,7 +23,7 @@ export default function Avatar({ url, name, size = 'w-8 h-8', textSize = 'text-x
   return (
     <span
       aria-hidden="true"
-      className={`${base} bg-orange-500/20 text-orange-500 ${textSize} font-black flex items-center justify-center`}
+      className={`${base} bg-orange-100 dark:bg-slate-800 text-orange-700 dark:text-orange-400 ${textSize} font-black flex items-center justify-center`}
     >
       {avatarInitials(name)}
     </span>
