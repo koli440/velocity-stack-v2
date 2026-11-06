@@ -23,7 +23,9 @@ export async function run(c) {
     await c.query(`INSERT INTO auth.users(id,email) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [u, u + '@x.test'])
     await c.query(`INSERT INTO public.profiles(id) VALUES ($1) ON CONFLICT DO NOTHING`, [u])
   }
+  await c.query('SET session_replication_role = replica')
   await c.query(`UPDATE profiles SET is_bot = true WHERE id = $1`, [bot])
+  await c.query('SET session_replication_role = origin')
   const act = async (vis) => (await c.query(`INSERT INTO activities(user_id, visibility) VALUES ($1,$2) RETURNING id`, [owner, vis])).rows[0].id
   const pub = await act('public'), priv = await act('private'), fol = await act('followers')
   const react = (u, a, on = true) => as(c, u, `SELECT set_activity_reaction($1,$2)`, [a, on])
