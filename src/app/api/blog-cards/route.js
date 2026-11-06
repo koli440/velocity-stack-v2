@@ -6,7 +6,7 @@ import { feedCardData } from '../../../lib/blog'
 // filtered at render time and the response is refreshed at most every 15 minutes.
 export const revalidate = 900
 
-export function GET() {
-  const avatar = authorAvatar()
+export async function GET() {
+  const avatar = await authorAvatar()
   return NextResponse.json({ cards: loadPublishedPosts().map((p) => feedCardData(p, avatar)) })
 }

@@ -15,6 +15,7 @@ import {
   relatedPosts,
   rssXml,
   shareLinks,
+  safeAvatarUrl,
   blogPostingJsonLd,
   breadcrumbJsonLd,
   postImage,
@@ -105,7 +106,7 @@ test('RSS lists only the given posts, escaped, newest first', () => {
 test('share links, JSON-LD and feed card data', () => {
   const p = post()
   const links = Object.fromEntries(shareLinks(p))
-  assert.deepEqual(Object.keys(links), ['Reddit', 'LinkedIn', 'X', 'WhatsApp'])
+  assert.deepEqual(Object.keys(links), ['LinkedIn', 'X', 'Facebook', 'WhatsApp', 'Reddit', 'Email'])
   assert.ok(links.Reddit.includes(encodeURIComponent('https://velocity-stack.app/blog/demo')))
   const ld = blogPostingJsonLd(p)
   assert.equal(ld['@type'], 'BlogPosting')
@@ -117,6 +118,15 @@ test('share links, JSON-LD and feed card data', () => {
   assert.deepEqual(Object.keys(card).sort(), ['avatarUrl', 'cover', 'coverAlt', 'date', 'href', 'slug', 'summary', 'title'])
   assert.equal(card.href, '/blog/demo')
 })
+
+test('safeAvatarUrl accepts only the own storage bucket or bundled avatars', () => {
+  const base = 'https://abc.supabase.co'
+  assert.equal(safeAvatarUrl(`${base}/storage/v1/object/public/avatars/u1/avatar-1.webp`, base), `${base}/storage/v1/object/public/avatars/u1/avatar-1.webp`)
+  assert.equal(safeAvatarUrl('/avatars/bots/x.png', base), '/avatars/bots/x.png')
+  assert.equal(safeAvatarUrl('https://evil.test/a.png', base), null)
+  assert.equal(safeAvatarUrl(`${base}/storage/v1/object/public/other/a.png`, base), null)
+  assert.equal(safeAvatarUrl(null, base), null)
+  })
 
 test('isBlogPath and sitemap paths', () => {
   assert.ok(isBlogPath('/blog') && isBlogPath('/blog/x') && !isBlogPath('/blogger'))
@@ -157,6 +167,12 @@ test('every post in content/blog is valid', () => {
     for (const m of p.body.matchAll(/\]\((\/[^)\s]*)\)/g)) assert.match(m[1], /^\/[\w\-./?#=&%]*$/)
   }
   assert.ok(fs.existsSync(BLOG_DIR))
+})
+
+test('the first post has a cover image', () => {
+  const first = loadAllPosts().find((p) => p.slug === 'why-i-built-velocity-stack')
+  assert.equal(first.cover, '/about-photo.jpg')
+  assert.equal(postImage(first).url, '/about-photo.jpg')
 })
 
 test('the launch post exists, is published and never future-dated', () => {

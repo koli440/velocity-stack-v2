@@ -12,7 +12,7 @@ date: 2026-11-06            # real YYYY-MM-DD; the day it goes public (UTC)
 summary: One line, max 200 characters. Used as the list text, meta description and feed card text.
 tags: story, track-cycling  # optional, up to 6 lowercase words
 updated: 2026-11-20         # optional, shown as "updated" and used for dateModified / sitemap lastmod
-cover: /blog/my-cover.webp  # optional image in public/
+cover: /blog/my-cover.webp  # optional image in public/ (any existing app image works, e.g. /landing/*.webp)
 coverAlt: Describe the image
 coverWidth: 1600            # required with cover (avoids layout shift)
 coverHeight: 900
@@ -33,7 +33,13 @@ No secrets, cron or deploy are needed. The pages are static with time-based reva
 After a post goes live, optionally `npm run indexnow -- --blog` pings search engines for `/blog` and the published post URLs (`--dry-run` prints the body).
 
 ## Author and avatar
-Posts are written by `koli440` ("Written by koli440, who builds Velocity Stack"). Rider avatars live in the public `avatars` bucket and their URL is stored in `profiles.avatar_url` (`src/lib/avatars.js`); profiles are not readable without signing in, so the blog uses a bundled copy: put the image at `public/avatars/koli440.webp` and the byline, feed card and JSON-LD use it. Without the file the byline shows the initials.
+Posts are written by `koli440` ("Written by koli440, who builds Velocity Stack"). Rider avatars live in the public `avatars` bucket and their URL is stored in `profiles.avatar_url` (`src/lib/avatars.js`). Profiles are not readable without signing in, so the server looks the author's image up by nickname through the anon-callable RPC `blog_author_avatar` (migration `20270139000000`; it returns only that already-public URL), cached for 15 minutes (`authorAvatar` in `src/lib/server/blogContent.js`). The URL is validated (`safeAvatarUrl`: own storage bucket or `/avatars/...` only). The byline, feed card and JSON-LD use it. Fallbacks: an optional bundled `public/avatars/koli440.webp`, then initials.
+
+## Cover images
+`cover` (plus `coverAlt`, `coverWidth`, `coverHeight`) is shown on the post, used as `og:image` / Twitter card and as the feed card cover with a dark gradient overlay so text stays readable. Without a cover the generated gradient/wordmark and `/blog/<slug>/og-image` are used.
+
+## Sharing
+`ShareRow` is a share-icon button shown at the top (next to the byline) and bottom of a post. With `navigator.share` (mobile) it opens the native sheet; otherwise a popover offers Copy link, LinkedIn, X, Facebook, WhatsApp, Reddit and Email (`aria-expanded`, arrow keys, Escape and outside click close it).
 
 ## Feed cards
 Every published post appears as a "New on the blog" card in the rider's own activity feed (dashboard, "My sessions"), as a timeline item at the post's publish date (midday UTC):

@@ -146,16 +146,24 @@ export function relatedPosts(posts, post, limit = 3) {
     .map((x) => x.p)
 }
 
-export const authorAvatarUrl = (hasFile) => (hasFile ? `/${BLOG_AUTHOR.avatarFile}` : null)
+/** Only the app's own storage bucket (or a bundled /avatars path) is accepted as an avatar source. */
+export function safeAvatarUrl(v, supabaseUrl = '') {
+  if (typeof v !== 'string' || v.length > 500) return null
+  if (/^\/avatars\/[\w\-./]+\.(?:png|jpe?g|webp)$/i.test(v)) return v
+  const prefix = `${String(supabaseUrl).replace(/\/+$/, '')}/storage/v1/object/public/avatars/`
+  return supabaseUrl && v.startsWith(prefix) && /^https:\/\/[^\s<>"']+$/.test(v) ? v : null
+}
 
 export function shareLinks(post) {
   const url = encodeURIComponent(postUrl(post))
   const title = encodeURIComponent(post.title)
   return [
-    ['Reddit', `https://www.reddit.com/submit?url=${url}&title=${title}`],
     ['LinkedIn', `https://www.linkedin.com/sharing/share-offsite/?url=${url}`],
     ['X', `https://twitter.com/intent/tweet?url=${url}&text=${title}`],
+    ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${url}`],
     ['WhatsApp', `https://wa.me/?text=${encodeURIComponent(`${post.title} ${postUrl(post)}`)}`],
+    ['Reddit', `https://www.reddit.com/submit?url=${url}&title=${title}`],
+    ['Email', `mailto:?subject=${title}&body=${url}`],
   ]
 }
 
