@@ -41,6 +41,7 @@ import { buildActivityUpdates } from '../../../lib/activityEdit'
 import { updateActivityGear } from '../../../lib/coaching'
 import { computeDurationalCurve } from '../../../lib/streamAnalysis'
 import ActivityComments from '../../../components/ActivityComments'
+import ActivityReactions from '../../../components/ActivityReactions'
 import GymSessionSection from '../../../components/GymSessionSection'
 import { isTrackActivity, isRunActivity } from '../../../lib/activityType'
 import { activitySport, isSportFlavour, SPORT_TEXT_CLASS } from '../../../lib/sportType'
@@ -618,6 +619,7 @@ function ActivityDetail() {
       )}
 
       {/* 4c. Comments: owner, coach and every rider who can see the activity (issues #222-#224) */}
+      <ActivityReactions activityId={activityId} />
       <ActivityComments activityId={activityId} />
 
       {/* 5. Bottom panel: velodrome, ride type, gears and gear segments (own activities only) */}

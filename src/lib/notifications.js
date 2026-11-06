@@ -4,6 +4,7 @@
 import { fetchProfilesByIds, authorName } from './social.js'
 import { reviewPath } from './suggestions.js'
 import { fetchCommentInfo, activityCommentsHref } from './activityComments.js'
+import { reactionNotificationText } from './activityReactions.js'
 
 export const NOTIFICATION_PAGE_SIZE = 20
 
@@ -51,6 +52,8 @@ export function describeNotification(notification, actor) {
         ? `${name} mentioned you in a comment on ${athlete.label} activity`
         : `${name} mentioned you in a comment`
     }
+    case 'activity_reaction':
+      return reactionNotificationText(name, notification.event_count)
     case 'suggestion_submitted':
       return `${name} submitted a suggestion for review`
     case 'suggestion_approved':
@@ -86,6 +89,8 @@ export function notificationHref(notification) {
       return '/settings#physiology'
     case 'suggestion_submitted':
       return n.suggestion_id ? reviewPath(n.suggestion_id) : null
+    case 'activity_reaction':
+      return n.activity_info && n.activity_id ? `/activities/${n.activity_id}` : null
     case 'activity_comment':
     case 'comment_mention':
       // Only set when the activity is still visible to the recipient.
@@ -103,7 +108,7 @@ export async function fetchNotifications(client, userId, limit = NOTIFICATION_PA
   if (!userId) return { notifications: [], error: null }
   const { data, error } = await client
     .from('notifications')
-    .select('id, type, actor_id, suggestion_id, activity_id, created_at, read_at')
+    .select('id, type, actor_id, suggestion_id, activity_id, event_count, created_at, read_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)
