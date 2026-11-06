@@ -269,6 +269,13 @@ RLS only (no coach/admin read, no client INSERT/DELETE); column-level UPDATE gra
 who can see the activity (owner, active coach incl. private activities, others per `visibility`, blocks win); written **only** via
 SECURITY DEFINER RPCs. Notifications `activity_comment` / `comment_mention` (one unread per user + activity). Details: docs/comments.md.
 
+## Activity reactions (`20270138000000`)
+`activity_reactions(activity_id, user_id, type, created_at)`, PK (activity, user, type), `type` CHECK list (only `respect` today; extend the CHECK for more).
+No client table access; writes only via `set_activity_reaction(activity, on, type)` (SECURITY DEFINER: needs `user_can_view_activity`, never own activity, no bots,
+owner's `profiles.reactions_enabled`, 60/hour and 300/day via `activity_reaction_log`). Reads: `activity_reaction_info(ids)` (counts for visible activities only, so coach
+views and private activities do not leak) and `activity_reactors(activity)` (owner only). Notification `activity_reaction` (`notifications.event_count`; one unread per owner +
+activity, at most once per reactor via `activity_reaction_notified`; skipped when `profiles.reaction_notifications` is off). Details: docs/reactions.md.
+
 ## Gear inputs (chainring x cog)
 Every gear input uses one component, `src/components/GearPicker.js`, and the helpers in `src/lib/gear.js` (one shared range of 8-100 teeth, parse/validate/ratio/gear inches/development). There are no presets.
 - Gear is optional wherever it is stored (`activities`, `personal_bests`, `profiles.default_*`): empty is valid and means "no gear"; one field without the other is a validation error. Nothing falls back to 58/14 for stored data, including server-side imports.

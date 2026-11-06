@@ -51,6 +51,8 @@ export default function SettingsPage() {
   const [avatarError, setAvatarError] = useState('')
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [includeGym, setIncludeGym] = useState(true)
+  const [reactionsEnabled, setReactionsEnabled] = useState(true)
+  const [reactionNotifications, setReactionNotifications] = useState(true)
   const [requireApproval, setRequireApproval] = useState(false)
   const [glassEnabled, setGlassEnabled] = useState(true)
 
@@ -82,6 +84,8 @@ export default function SettingsPage() {
         setThemePref(data.theme_preference || 'dark')
         setDiscoverableByEmail(data.discoverable_by_email !== false)
         setEmailNotifications(data.email_notifications !== false)
+        setReactionsEnabled(data.reactions_enabled !== false)
+        setReactionNotifications(data.reaction_notifications !== false)
         setIncludeGym(data.include_gym_in_fitness !== false)
         setAvatarUrl(data.avatar_url || null)
       }
@@ -155,6 +159,8 @@ export default function SettingsPage() {
       theme_preference: themePref,
       discoverable_by_email: discoverableByEmail,
       email_notifications: emailNotifications,
+      reactions_enabled: reactionsEnabled,
+      reaction_notifications: reactionNotifications,
       include_gym_in_fitness: includeGym,
       updated_at: new Date().toISOString(),
     }
@@ -315,6 +321,26 @@ export default function SettingsPage() {
               onChange={(e) => setEmailNotifications(e.target.checked)}
             />
             <span>Email me about new notifications (followers, comments, mentions)</span>
+          </label>
+
+          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={reactionsEnabled}
+              onChange={(e) => setReactionsEnabled(e.target.checked)}
+              data-testid="reactions-enabled"
+            />
+            <span>Let riders who can see my activities give them respect (existing ones are kept)</span>
+          </label>
+
+          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={reactionNotifications}
+              onChange={(e) => setReactionNotifications(e.target.checked)}
+              data-testid="reaction-notifications"
+            />
+            <span>Notify me when someone gives respect (in the app, push and email)</span>
           </label>
 
           <PushNotificationsToggle />

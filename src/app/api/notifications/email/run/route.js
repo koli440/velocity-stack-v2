@@ -23,7 +23,7 @@ export async function POST(req) {
   const origin = appOrigin(req)
   const { data: rows } = await service
     .from('notifications')
-    .select('id, user_id, actor_id, type, activity_id, suggestion_id, created_at')
+    .select('id, user_id, actor_id, type, activity_id, suggestion_id, event_count, created_at')
     .is('emailed_at', null)
     .is('read_at', null)
     .order('created_at')

@@ -20,6 +20,8 @@ import { usePathname } from 'next/navigation'
 import { currentReturnTo, withReturnTo } from '../lib/returnTo'
 import { supabase } from '../lib/supabase'
 import { fetchGymSetsByActivity } from '../lib/gymHeroSets'
+import ReactionButton from './ReactionButton'
+import { fetchReactionInfo, setActivityReaction, toggledState } from '../lib/activityReactions'
 import { fetchCommentInfo, fetchUnreadCounts, commentCountLabel } from '../lib/activityComments'
 import { rideTypeHasGear } from '../lib/rideType'
 import { isTrackActivity, isRunActivity } from '../lib/activityType'
@@ -119,6 +121,7 @@ export default function ActivityFeed({
   const count = activities.length
   const [commentCounts, setCommentCounts] = useState(new Map())
   const [unread, setUnread] = useState(new Map())
+  const [reactions, setReactions] = useState(new Map())
   const [runsByActivity, setRunsByActivity] = useState(new Map())
   const idsKey = activities.map((a) => a.id).join(',')
   const [gymSets, setGymSets] = useState(new Map())
@@ -148,6 +151,9 @@ export default function ActivityFeed({
         return next
       })
     })
+    fetchReactionInfo(supabase, idsKey.split(',')).then(({ info }) => {
+      if (!cancelled) setReactions((prev) => new Map([...prev, ...info]))
+    })
     fetchActivityRuns(supabase, idsKey.split(',')).then((runs) => {
       if (cancelled) return
       setRunsByActivity((prev) => new Map([...prev, ...runs]))
@@ -164,6 +170,18 @@ export default function ActivityFeed({
       cancelled = true
     }
   }, [idsKey])
+
+  // Optimistic toggle; rolls back when the database refuses (rate limit, reactions turned off).
+  const toggleReaction = async (id) => {
+    const cur = reactions.get(id)
+    if (!cur) return
+    const next = toggledState({ count: cur.reaction_count, reacted: cur.i_reacted })
+    const apply = (c, r) => setReactions((prev) => new Map(prev).set(id, { ...prev.get(id), reaction_count: c, i_reacted: r }))
+    apply(next.count, next.reacted)
+    const { count: real, error } = await setActivityReaction(supabase, { activityId: id, on: next.reacted })
+    if (error) apply(cur.reaction_count, cur.i_reacted)
+    else if (typeof real === 'number') apply(real, next.reacted)
+  }
 
   // Always expose the freshest props to the observer callback.
   latest.current = { hasMore, isLoadingMore, onLoadMore, count, hasFailed, supported }
@@ -303,6 +321,14 @@ export default function ActivityFeed({
                     </div>
                   </div>
                   <TemplateRunsBadge runs={runsByActivity.get(act.id)} />
+                  {reactions.get(act.id) && (
+                    <ReactionButton
+                      count={reactions.get(act.id).reaction_count}
+                      reacted={reactions.get(act.id).i_reacted}
+                      canReact={reactions.get(act.id).can_react}
+                      onToggle={() => toggleReaction(act.id)}
+                    />
+                  )}
                   {commentCounts.get(act.id) > 0 && (
                     <Link
                       href={withReturnTo(`${activityHref(act)}#comments`, returnTo)}
