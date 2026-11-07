@@ -25,3 +25,7 @@ DB test: `scripts/db-harness/admin-dashboard-adversarial.mjs` (see its README).
 ## Third-party app stats
 
 The dashboard's "Third-party apps" panel is fed by `admin_partner_stats(p_days)` (`20270134000000_admin_partner_stats.sql`), a separate admin-only SECURITY DEFINER function (raises `Admin only`). It returns app counts by status, connected riders, a per-app table (riders, uploads 24h/7d/30d/all, imported/duplicate/failed, failure rate, activities, 429s, refreshes, refresh-reuse revocations, last upload), a daily upload series and recent failure texts. Aggregates only; no rider identities. Rows link to `/admin/partner-apps`.
+
+## Respect stats
+
+The "Respect" panel is fed by `admin_respect_stats(p_days)` (`20270140000000_admin_respect_stats.sql`), another admin-only SECURITY DEFINER function (raises `Admin only`) that follows the 7/30/90-day period buttons. It returns total respects (period and all time), distinct reactors, receivers and reacted-to activities, average per reacted activity, a daily series, the share of active users (signed in or uploaded in the window) who gave / received a Respect, splits by activity type and public vs non-public, reaction notifications sent (and respects they cover), and how many users turned reactions or reaction notifications off. Bots are excluded; aggregates only, no rider identities. Rate-limit hits are not shown because they are not recorded.
