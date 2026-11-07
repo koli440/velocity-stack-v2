@@ -33,10 +33,21 @@ This short tour takes about a minute. You can skip it now and reopen it any time
     id: 'features',
     title: 'What you can do',
     body: `- **Dashboard:** your sessions, this week's numbers and your power profile.
-- **Calendar:** see your rides, plan workouts, add notes and races.
+- **Calendar:** rides, runs and gym sessions with their training load, plus planned workouts, notes and races.
+- **Fitness:** fitness, fatigue and form over time, with a forecast.
 - **Personal Best Vault:** every best, by distance and discipline.
-- **Gear Architect, Pursuit Strategist, Aero Lab, Velodromes:** track tools that work without any data.
-- **Riders:** follow other riders and see their shared sessions.`,
+- **Gear Architect, Pursuit Strategist, Aero Lab, Velodromes:** track tools you can try without any data of your own.
+- **Riders:** follow other riders, comment and give respect.`,
+    links: [{ label: 'Open the calendar', href: '/calendar' }],
+  },
+  {
+    id: 'plan',
+    title: 'Plan and follow your training',
+    body: `Add a **planned workout** on any day of the calendar, with steps if you like, or build it from a template.
+
+- Ride and track workouts with steps can be sent to **Garmin**, **Wahoo** or **Intervals.icu** from the workout, or automatically if you switch that on for the connection.
+- A completed ride is matched to its plan, so you see planned against done, per day, week and month.
+- Gym sessions and runs count towards your training load too.`,
     links: [{ label: 'Open the calendar', href: '/calendar' }],
   },
   {
@@ -65,19 +76,21 @@ recovery 90sec @ <150W
     body: `Any account can coach, or be coached. A rider has at most one coach, and accepting the invitation is the consent.
 
 - A coach can read your data and edit your FTP, weight and training settings. Changes are labelled **set by coach**, and you are notified.
-- Coaches can plan workouts and races on your calendar.
+- Coaches can plan workouts and races on your calendar and follow your fitness and training load.
 - You can end coaching at any time.`,
     links: [{ label: 'Coaching settings', href: '/settings' }],
   },
   {
     id: 'privacy',
-    title: 'Your privacy',
+    title: 'Notifications, privacy and the app',
     body: `You decide who sees what.
 
 - Set a **privacy zone** around home: rides are masked inside it for other riders.
 - Your raw GPS file and your connection keys are never shared.
-- Coaches can see your data only while coaching is active.`,
-    links: [{ label: 'Set a privacy zone', href: '/settings' }],
+- Coaches can see your data only while coaching is active.
+
+Install Velocity Stack as an app (add it to your Home Screen on iPhone) and turn on **pop-up notifications** in Settings to be told about followers, comments and coaching, even when the app is closed.`,
+    links: [{ label: 'Open settings', href: '/settings' }],
   },
 ]
 

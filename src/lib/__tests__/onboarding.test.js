@@ -44,9 +44,10 @@ test('welcome appears once for new accounts only', () => {
 
 test('welcome copy covers the required topics and only uses safe links', () => {
   const text = WELCOME_STEPS.map((s) => `${s.title} ${s.body}`).join(' ').toLowerCase()
-  for (const w of ['intervals.icu', 'ftp', 'weight', 'coach', 'privacy', 'template', 'personal best']) assert.ok(text.includes(w), w)
+  for (const w of ['intervals.icu', 'ftp', 'weight', 'coach', 'privacy', 'template', 'personal best', 'garmin', 'wahoo', 'planned workout', 'notification', 'fitness']) assert.ok(text.includes(w), w)
   const hrefs = WELCOME_STEPS.flatMap((s) => (s.links || []).map((l) => l.href))
   assert.ok(hrefs.includes('/dsl-guide'))
+  assert.ok(WELCOME_STEPS.length >= 7 && WELCOME_STEPS.length <= 9, 'tour stays short')
   for (const h of hrefs) assert.match(h, /^\//)
 })
 
