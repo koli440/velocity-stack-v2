@@ -41,3 +41,5 @@ Velodrome track info (provenance, contact privacy, open/closed status): `node ha
 Velodrome info data migrations (helper + strict/relaxed chunks + penrose; tolerant, fill-only, idempotent, skip log). The test re-applies the whole `20270136*` set, so run it against a copy of the migrations plus a throw-away `CREATE UNIQUE INDEX tracks_name_uq ON public.tracks(name)` migration (versioned `20260924000001`) so the v1 track import applies on the stub: `node harness.mjs <copy-of-migrations> ./velodrome-info-data-adversarial.mjs` (`MIGDIR=<repo>/supabase/migrations` if the test file was copied out of the repo).
 
 Web Push: `MIG=<repo>/supabase/migrations/20270137000000_web_push.sql node harness.mjs <repo>/supabase/migrations ./web-push-adversarial.mjs`
+
+Admin Respect stats RPC: `MIG=<repo>/supabase/migrations/20270140000000_admin_respect_stats.sql node harness.mjs <repo>/supabase/migrations ./admin-respect-adversarial.mjs`

@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import { reviewPath } from '../../lib/suggestions'
 import { formatDateTime } from '../../lib/dateFormat'
-import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth } from '../../lib/adminDashboard'
+import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth, respectSummary } from '../../lib/adminDashboard'
 import SegmentedTabs from '../../components/SegmentedTabs'
 import Icon from '../../components/Icon'
 
@@ -101,6 +101,7 @@ export default function AdminDashboardPage() {
   const [state, setState] = useState({ loading: true, admin: false, data: null, error: '' })
   const [days, setDays] = useState(30)
   const [partner, setPartner] = useState(null)
+  const [respect, setRespect] = useState(null)
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser()
@@ -110,6 +111,8 @@ export default function AdminDashboardPage() {
     const { data, error } = await supabase.rpc('admin_dashboard_stats', { p_days: days })
     const pr = await supabase.rpc('admin_partner_stats', { p_days: days })
     setPartner(pr.data || null)
+    const rs = await supabase.rpc('admin_respect_stats', { p_days: days })
+    setRespect(rs.data || null)
     setState({ loading: false, admin: true, data: data || null, error: error?.message || '' })
   }, [days])
 
@@ -240,6 +243,37 @@ export default function AdminDashboardPage() {
               <Bars series={t.created_by_day} label="Templates created" tone="bg-sky-500" />
               <Bars series={t.runs_by_day} label="Template runs" tone="bg-emerald-500" />
             </Panel>
+
+            {respect && (() => {
+              const k = respectSummary(respect)
+              return (
+                <Panel title="Respect" id="p-respect">
+                  <StatGrid cols="sm:grid-cols-4">
+                    <Stat label={`Respects ${respect.days}d`} value={respect.total} hint={`${respect.total_all_time} all time`} />
+                    <Stat label="Reactors" value={respect.reactors} hint={`${respect.receivers} receivers`} />
+                    <Stat label="Activities reacted to" value={respect.activities} />
+                    <Stat label="Avg per activity" value={k.perActivity} />
+                  </StatGrid>
+                  <Bars series={respect.by_day} label="Respects" tone="bg-rose-500" />
+                  <StatGrid cols="sm:grid-cols-2">
+                    <Stat label="Active users who gave" value={`${k.gavePct}%`} hint={`${respect.active_gave} of ${respect.active_users}`} />
+                    <Stat label="Active users who received" value={`${k.receivedPct}%`} hint={`${respect.active_received} of ${respect.active_users}`} />
+                  </StatGrid>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div><h3 className={subheading}>By activity type</h3>
+                      <Breakdown rows={respect.by_type.map((x) => ({ key: x.type, count: x.count }))} labelOf={(key) => TYPE_LABELS[key] || key} /></div>
+                    <div><h3 className={subheading}>Public vs not public</h3>
+                      <Breakdown rows={[{ key: 'public', count: respect.by_visibility.public }, { key: 'non_public', count: respect.by_visibility.non_public }].filter((x) => x.count > 0)} labelOf={(key) => (key === 'public' ? 'Public' : 'Followers / private')} /></div>
+                  </div>
+                  <StatGrid cols="sm:grid-cols-4">
+                    <Stat label="Notifications sent" value={respect.notifications_sent} hint={`covering ${respect.notified_reactions} respects`} />
+                    <Stat label="Notifications off" value={respect.opt_out_notifications} hint={`of ${respect.users_total} users`} />
+                    <Stat label="Reactions off" value={respect.opt_out_reactions} hint={`of ${respect.users_total} users`} />
+                  </StatGrid>
+                  <p className={`text-xs ${muted}`}>Rate-limit hits are not recorded, so they are not shown.</p>
+                </Panel>
+              )
+            })()}
 
             {partner && (
               <div className="lg:col-span-2">

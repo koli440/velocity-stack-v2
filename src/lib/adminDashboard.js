@@ -72,3 +72,21 @@ export function partnerAppHealth(app) {
   if (Number(app.reuse_revocations) > 0 || (Number(app.failed) >= 3 && failureRate(app) >= 20)) return 'warn'
   return 'ok'
 }
+
+/** Average with one decimal (e.g. reactions per reacted activity); 0 when the divisor is 0. */
+export function average(total, count) {
+  const c = Number(count) || 0
+  return c > 0 ? Math.round(((Number(total) || 0) / c) * 10) / 10 : 0
+}
+
+/** Respect panel figures derived from admin_respect_stats(): shares of active users and per-activity average. */
+export function respectSummary(stats) {
+  const s = stats || {}
+  return {
+    perActivity: average(s.total, s.activities),
+    gavePct: pct(s.active_gave, s.active_users),
+    receivedPct: pct(s.active_received, s.active_users),
+    publicPct: pct(s.by_visibility?.public, (Number(s.by_visibility?.public) || 0) + (Number(s.by_visibility?.non_public) || 0)),
+    notifiedPct: pct(s.notified_reactions, s.total),
+  }
+}

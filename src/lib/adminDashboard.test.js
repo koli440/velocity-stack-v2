@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { dayLabel, maxCount, orderProviders, pct, providerHealth, providerLabel, sumSeries, trend, withAllProviders } from './adminDashboard.js'
+import { average, respectSummary, dayLabel, maxCount, orderProviders, pct, providerHealth, providerLabel, sumSeries, trend, withAllProviders } from './adminDashboard.js'
 
 const S = [1, 2, 3, 4].map((count, i) => ({ day: `2027-01-0${i + 1}`, count }))
 
@@ -49,4 +49,16 @@ test('partner failure rate and health', () => {
   assert.equal(partnerAppHealth({ status: 'approved', imported: 5, failed: 5 }), 'warn')
   assert.equal(partnerAppHealth({ status: 'approved', imported: 5, failed: 0, reuse_revocations: 1 }), 'warn')
   assert.equal(partnerAppHealth({ status: 'suspended' }), 'suspended')
+})
+
+test('average rounds to one decimal and is safe on zero', () => {
+  assert.equal(average(7, 3), 2.3)
+  assert.equal(average(5, 0), 0)
+  assert.equal(average(undefined, 2), 0)
+})
+
+test('respectSummary derives shares from the RPC payload', () => {
+  const r = respectSummary({ total: 10, activities: 4, active_users: 8, active_gave: 2, active_received: 4, by_visibility: { public: 3, non_public: 1 }, notified_reactions: 5 })
+  assert.deepEqual(r, { perActivity: 2.5, gavePct: 25, receivedPct: 50, publicPct: 75, notifiedPct: 50 })
+  assert.deepEqual(respectSummary(null), { perActivity: 0, gavePct: 0, receivedPct: 0, publicPct: 0, notifiedPct: 0 })
 })
