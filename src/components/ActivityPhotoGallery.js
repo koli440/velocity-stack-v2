@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Portal from './Portal'
+import Icon from './ActivityIcons'
+import { canNavigate, nextIndex, prevIndex, positionLabel, adjacentIndices, keyAction, swipeAction } from '../lib/lightboxNav'
 import { supabase } from '../lib/supabase'
 import {
   MAX_PHOTOS_PER_ACTIVITY,
@@ -35,7 +37,8 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
   const [currentUserId, setCurrentUserId] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const [lightbox, setLightbox] = useState(null)
+  const [lightboxId, setLightboxId] = useState(null)
+  const touchStart = useRef(null)
   const inputRef = useRef(null)
 
   const load = async () => {
@@ -47,6 +50,49 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
     supabase.auth.getSession().then(({ data: { session } }) => setCurrentUserId(session?.user?.id ?? null))
     if (activityId) load()
   }, [activityId])
+
+  const lightboxIndex = lightboxId ? photos.findIndex((p) => p.id === lightboxId) : -1
+  const lightbox = lightboxIndex >= 0 ? photos[lightboxIndex] : null
+  const multi = canNavigate(photos.length)
+
+  const go = (action) => {
+    if (action === 'close') setLightboxId(null)
+    else if (action === 'next') setLightboxId(photos[nextIndex(lightboxIndex, photos.length)].id)
+    else if (action === 'prev') setLightboxId(photos[prevIndex(lightboxIndex, photos.length)].id)
+  }
+
+  useEffect(() => {
+    if (!lightbox) return undefined
+    const onKey = (e) => {
+      const action = keyAction(e.key, photos.length)
+      if (action) {
+        e.preventDefault()
+        go(action)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  useEffect(() => {
+    if (!lightbox) return
+    adjacentIndices(lightboxIndex, photos.length).forEach((i) => {
+      new Image().src = photos[i].url
+    })
+  }, [lightboxIndex, photos])
+
+  const onTouchStart = (e) => {
+    const t = e.touches[0]
+    touchStart.current = { x: t.clientX, y: t.clientY }
+  }
+  const onTouchEnd = (e) => {
+    const start = touchStart.current
+    touchStart.current = null
+    if (!start) return
+    const t = e.changedTouches[0]
+    const action = swipeAction(t.clientX - start.x, t.clientY - start.y, photos.length)
+    if (action) go(action)
+  }
 
   const isOwner = currentUserId && currentUserId === ownerId
 
@@ -89,7 +135,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
     if (!window.confirm('Delete this photo?')) return
     const { error: deleteError } = await deleteActivityPhoto(supabase, photo)
     if (deleteError) setError(deleteError.message)
-    setLightbox(null)
+    setLightboxId(null)
     await load()
   }
 
@@ -130,7 +176,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
           <button
             key={photo.id}
             type="button"
-            onClick={() => setLightbox(photo)}
+            onClick={() => setLightboxId(photo.id)}
             className="aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -144,15 +190,48 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
           className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 p-4 bg-slate-950/90"
           role="dialog"
           aria-modal="true"
-          onClick={() => setLightbox(null)}
+          onClick={() => setLightboxId(null)}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox.url} alt="Activity photo" className="max-h-[80vh] max-w-full rounded-xl" />
+          <img
+            src={lightbox.url}
+            alt={`Activity photo ${lightboxIndex + 1}`}
+            className="max-h-[80vh] max-w-full rounded-xl select-none"
+            onClick={(e) => e.stopPropagation()}
+          />
+          {multi && (
+            <>
+              {[['prev', 'chevronLeft', 'Previous photo', 'left-2'], ['next', 'chevronRight', 'Next photo', 'right-2']].map(
+                ([action, icon, label, side]) => (
+                  <button
+                    key={action}
+                    type="button"
+                    aria-label={label}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      go(action)
+                    }}
+                    className={`glass-popover absolute ${side} top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center bg-slate-900 text-white border border-white/20 shadow-lg hover:bg-slate-800`}
+                  >
+                    <Icon name={icon} size={24} />
+                  </button>
+                )
+              )}
+              <span
+                aria-live="polite"
+                className="glass-popover px-3 py-1 rounded-full text-xs font-bold bg-slate-900 text-white border border-white/20"
+              >
+                {positionLabel(lightboxIndex, photos.length)}
+              </span>
+            </>
+          )}
           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
-              onClick={() => setLightbox(null)}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-white"
+              onClick={() => setLightboxId(null)}
+              className="min-h-[44px] px-4 rounded-xl text-xs font-bold bg-slate-800 text-white"
             >
               Close
             </button>
@@ -160,7 +239,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
               <button
                 type="button"
                 onClick={() => handleDelete(lightbox)}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/20 text-rose-400"
+                className="min-h-[44px] px-4 rounded-xl text-xs font-bold bg-slate-900 text-rose-400 border border-rose-400/40"
               >
                 Delete
               </button>
