@@ -171,3 +171,91 @@ export function addLoadToRows(rows, { today = new Date(), ltHistory = [], includ
     summary: { ...row.summary, tl: weekLoad(row.cells.flatMap((c) => c.events), opts) },
   }))
 }
+
+/**
+ * Over-plan geometry of a "completed vs planned" bar (time in seconds or TL, any unit).
+ * The bar scale is max(completed, planned): the planned tick sits at planned/scale, the excess is an extra segment beyond it.
+ * Decisions: planned <= 0 / missing -> never "over" (nothing to exceed), just completed. A partial plan (some workouts
+ * have no estimate / duration) is only a lower bound: the excess is then labelled "over known plan" (no % claim),
+ * because the unestimated workouts could account for it. `measured` splits the planned part into solid + hatched estimate.
+ * @returns { over, excess, overPct (excess vs planned, null when partial), label, scale, tickPct, measuredPct, estimatedPct, overBarPct, fillPct }
+ *  all *Pct are percent of the bar width.
+ */
+export function overPlan(completed, planned, { measured = completed, partial = false } = {}) {
+  const c = Math.max(0, Number(completed) || 0)
+  const p = Math.max(0, Number(planned) || 0)
+  const m = Math.min(c, Math.max(0, Number(measured) || 0))
+  const hasPlan = p > 0
+  const over = hasPlan && c > p
+  const scale = Math.max(c, p) || 1
+  const inPlan = hasPlan ? Math.min(c, p) : c
+  const mIn = Math.min(m, inPlan)
+  const pc = (v) => (v / scale) * 100
+  const excess = over ? c - p : 0
+  const overPct = over && !partial ? Math.round((excess / p) * 100) : null
+  return {
+    over,
+    excess,
+    overPct,
+    partialPlan: over && partial,
+    scale,
+    tickPct: hasPlan ? pc(p) : null,
+    measuredPct: pc(mIn),
+    estimatedPct: pc(inPlan - mIn),
+    overBarPct: pc(excess),
+    fillPct: hasPlan ? Math.min(100, Math.round((c / p) * 100)) : 0,
+    label: over ? (partial ? 'over known plan' : 'over plan') : null,
+  }
+}
+
+/**
+ * Totals of the DISPLAYED month from rows built by addLoadToRows. Only cells of the month (`inMonth`) count: leading/trailing
+ * grid days of the neighbouring months are ignored. Same rules as the day/week totals:
+ *  - completed time / distance / count / TL: completed activities only (past, today, future); linked plans are never added;
+ *  - planned target: every non-skipped planned workout of the month (linked ones too, as the target), like the week summary;
+ *  - `tl.projected` = completed TL + the REMAINING plan of today and the future (past misses add 0).
+ * @returns { count, durationS, distanceM, byDiscipline, planned: { count, durationS, durationPartial, load, loadPartial }, tl: { completed, measured, estimated, unscored, excludedGym, projected, plannedRemainingUnknown } }
+ */
+export function monthTotals(rows) {
+  const t = {
+    count: 0,
+    durationS: 0,
+    distanceM: 0,
+    byDiscipline: { ride: 0, run: 0, gym: 0, other: 0 },
+    planned: { count: 0, durationS: 0, durationPartial: false, load: 0, loadPartial: false },
+    tl: { completed: 0, measured: 0, estimated: 0, unscored: 0, excludedGym: 0, projected: 0, plannedRemainingUnknown: 0 },
+  }
+  for (const row of rows || []) {
+    for (const c of row.cells || []) {
+      if (!c.inMonth) continue
+      for (const e of c.events || []) {
+        if (e.kind === 'planned') {
+          if (e.status === 'skipped') continue
+          t.planned.count += 1
+          t.planned.durationS += e.durationS || 0
+          if (!e.durationS || e.durationPartial) t.planned.durationPartial = true
+          const l = plannedEventLoad(e)
+          if (l === null) t.planned.loadPartial = true
+          else t.planned.load += l
+          continue
+        }
+        t.count += 1
+        t.durationS += e.durationS || 0
+        t.distanceM += e.distanceM || 0
+        const d = e.discipline === 'run' ? 'run' : e.discipline === 'gym' ? 'gym' : e.discipline === 'ride' || e.discipline === 'track' ? 'ride' : 'other'
+        t.byDiscipline[d] += 1
+      }
+      if (c.tl) {
+        t.tl.completed += c.tl.completed
+        t.tl.measured += c.tl.measured
+        t.tl.estimated += c.tl.estimated
+        t.tl.unscored += c.tl.unscored
+        t.tl.excludedGym += c.tl.excludedGym
+        t.tl.projected += c.tl.completed + c.tl.plannedRemaining
+        t.tl.plannedRemainingUnknown += c.tl.plannedRemainingUnknown
+      }
+    }
+  }
+  t.planned.load = round(t.planned.load)
+  return t
+}

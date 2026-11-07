@@ -241,6 +241,14 @@ completed activities only; planned workouts are counted separately. The week sum
 a trailing `+` / "some durations unknown" marks a partial total (workouts without a structure or with distance-based steps). Same on the own calendar, in athlete (coach) context, and in the compact mobile layout. Not included: running the planned structure's
 template on the linked activity (would need the template definition; the snapshot is not a template).
 
+**Over plan and month summary.** Both week bars (time and TL) use `overPlan()` (`src/lib/calendarLoad.js`): the bar scale is max(done, planned),
+a tick marks the plan and the excess is an extra amber, striped segment with a "+N% over" label (not colour-only; tooltip and `aria-valuetext` carry it too).
+No or zero plan = never "over". A **partial plan** (some workouts without TL estimate / duration) is only a lower bound, so the excess is labelled
+"+N over known plan" with no percentage. The calendar header shows a month summary (`monthTotals()`): time, distance, activities, TL (measured + estimated),
+ride/run/gym counts and planned-vs-done time/TL chips + compact bars with the same over indicator. Only days of the displayed month count (grid days of
+neighbouring months are ignored); same rules as day totals (completed only, linked plans never double counted, planned target = non-skipped planned workouts of the month;
+projected TL in the tooltip adds today's/future remaining plan). On mobile the header collapses to time / activities with a More toggle. Rider and coach views share it (no extra queries).
+
 ### Workout preview
 
 The planned workout dialog shows a preview chart (`WorkoutPreviewChart`, SVG, theme-aware) rendered live from the DSL box (last valid version kept while the

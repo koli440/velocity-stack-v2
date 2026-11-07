@@ -51,7 +51,7 @@ import { useRiderLoadContext } from './useRiderLoadContext'
 import { fetchProfilesByIds } from '../lib/social'
 import { shouldAutoScrollToToday, todayScrollBehavior } from '../lib/calendarScroll'
 import { isShownOnMobile, isEmptyDay } from '../lib/calendarMobileDays'
-import { addLoadToRows, completedEventLoad, unscoredReason, UNSCORED_REASONS } from '../lib/calendarLoad'
+import { addLoadToRows, completedEventLoad, unscoredReason, UNSCORED_REASONS, overPlan, monthTotals } from '../lib/calendarLoad'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
 import {
   buildMonthGrid,
@@ -275,14 +275,50 @@ function DayTl({ tl }) {
 
 // Planned vs done training load of the week, same style as the time bar. Planned = ~TL of every non-skipped
 // workout (done ones as the target); "+" / note when some workouts have no estimate.
+// Done-vs-planned bar. Scale = max(done, planned): a tick marks the plan, the excess is an extra "over" segment (amber,
+// diagonal stripes in the other direction so it is not colour-only) and a "+N over" label. See overPlan() in calendarLoad.js.
+function PlanBar({ done, planned, measured = done, partial = false, label, valueText, testId, overText }) {
+  const o = overPlan(done, planned, { measured, partial })
+  if (!(planned > 0)) return null
+  return (
+    <div className="relative" data-testid={testId} data-over={o.over ? 'true' : 'false'}>
+      <div className="h-1.5 rounded-full bg-sky-500/20 overflow-hidden" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={o.fillPct} aria-valuetext={`${valueText}${o.over ? `, ${overText}` : ''}`}>
+        <div className="h-full flex">
+          <div className="h-full bg-emerald-500" style={{ width: `${o.measuredPct}%` }} />
+          <div
+            className="h-full bg-emerald-400/60 dark:bg-emerald-400/50"
+            data-testid={`${testId}-estimated`}
+            style={{ width: `${o.estimatedPct}%`, backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.55) 0 2px, transparent 2px 5px)' }}
+          />
+          {o.over && (
+            <div
+              className="h-full bg-amber-500 dark:bg-amber-400"
+              data-testid={`${testId}-over`}
+              style={{ width: `${o.overBarPct}%`, backgroundImage: 'repeating-linear-gradient(-45deg, rgba(0,0,0,0.35) 0 2px, transparent 2px 5px)' }}
+            />
+          )}
+        </div>
+      </div>
+      {o.over && <span aria-hidden className="absolute -top-0.5 h-2.5 w-0.5 bg-slate-900 dark:bg-white rounded" style={{ left: `calc(${o.tickPct}% - 1px)` }} data-testid={`${testId}-tick`} />}
+    </div>
+  )
+}
+
+function overBadge(o, unit, testId) {
+  if (!o.over) return null
+  const text = o.partialPlan ? `+${Math.round(o.excess)}${unit} over known plan` : `+${o.overPct}% over`
+  return <span className="ml-1 rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400" data-testid={testId}>{text}</span>
+}
+
+// Planned vs done training load of the week, same style as the time bar. Planned = ~TL of every non-skipped
+// workout (done ones as the target); "+" / note when some workouts have no estimate.
 function PlannedLoad({ tl }) {
   if (!tl.hasPlanned && tl.completed === 0 && !(tl.unscored > 0)) return null
-  const pct = tl.planned > 0 ? Math.min(100, Math.round((tl.completed / tl.planned) * 100)) : 0
-  const mPct = tl.planned > 0 ? Math.min(100, Math.round((tl.measured / tl.planned) * 100)) : 0
-  const ePct = Math.max(0, pct - mPct)
-  const tip = `Completed TL ${tl.completed}${tl.estimated > 0 ? ` (${tl.measured} measured + ~${tl.estimated} estimated from heart rate or gym model, hatched)` : ''} vs planned ~TL (estimate)${tl.excludedGym ? `; gym TL ${tl.excludedGym} not counted (excluded from fitness)` : ''}`
+  const o = overPlan(tl.completed, tl.planned, { measured: tl.measured, partial: tl.plannedPartial })
+  const overTxt = o.over ? (o.partialPlan ? `${Math.round(o.excess)} TL over the known plan (some workouts have no estimate)` : `${Math.round(o.excess)} TL (${o.overPct}%) over plan`) : ''
+  const tip = `Completed TL ${tl.completed}${tl.estimated > 0 ? ` (${tl.measured} measured + ~${tl.estimated} estimated from heart rate or gym model, hatched)` : ''} vs planned ~TL (estimate)${overTxt ? `; ${overTxt}` : ''}${tl.excludedGym ? `; gym TL ${tl.excludedGym} not counted (excluded from fitness)` : ''}`
   return (
-    <div className="col-span-3 lg:col-span-1 space-y-1" data-testid="week-tl" data-partial={tl.plannedPartial ? 'true' : 'false'} title={tip}>
+    <div className="col-span-3 lg:col-span-1 space-y-1" data-testid="week-tl" data-partial={tl.plannedPartial ? 'true' : 'false'} data-over={o.over ? 'true' : 'false'} title={tip}>
       <div className="text-[10px] font-bold text-center lg:text-left">
         <span className="text-emerald-700 dark:text-brand-neon">TL {tl.completed}{tl.estimated > 0 ? ` (${tl.measured} + ~${tl.estimated} est.)` : ''}</span>
         {tl.hasPlanned && (
@@ -291,19 +327,9 @@ function PlannedLoad({ tl }) {
             {tl.plannedPartial && tl.planned > 0 ? ' (some estimates missing)' : ''}
           </span>
         )}
+        {overBadge(o, ' TL', 'week-tl-over-label')}
       </div>
-      {tl.planned > 0 && (
-        <div className="h-1.5 rounded-full bg-sky-500/20 overflow-hidden" role="progressbar" aria-label="Done vs planned training load" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-          <div className="h-full flex">
-            <div className="h-full bg-emerald-500" style={{ width: `${mPct}%` }} />
-            <div
-              className="h-full bg-emerald-400/60 dark:bg-emerald-400/50"
-              data-testid="week-tl-estimated-bar"
-              style={{ width: `${ePct}%`, backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.55) 0 2px, transparent 2px 5px)' }}
-            />
-          </div>
-        </div>
-      )}
+      <PlanBar done={tl.completed} planned={tl.planned} measured={tl.measured} partial={tl.plannedPartial} label="Done vs planned training load" valueText={`TL ${tl.completed} of ${tl.planned} planned`} overText={overTxt} testId="week-tl-bar" />
       {tl.unscored > 0 && (
         <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400" data-testid="week-tl-unscored" title="Completed runs/rides without TL: no average HR, too short, or no LT2 HR in Physiology">
           {tl.unscored} {tl.unscored === 1 ? 'activity' : 'activities'} not scored
@@ -315,18 +341,59 @@ function PlannedLoad({ tl }) {
 
 // Planned vs done time of the week: "planned 8:00 h" (with "+" when some durations are unknown) and a thin progress bar.
 function PlannedTime({ summary }) {
-  const pct = summary.plannedDurationS > 0 ? Math.min(100, Math.round((summary.durationS / summary.plannedDurationS) * 100)) : 0
+  const o = overPlan(summary.durationS, summary.plannedDurationS, { partial: summary.plannedPartial })
+  const overTxt = o.over ? (o.partialPlan ? `${formatDuration(o.excess)} h over the known plan (some durations unknown)` : `${formatDuration(o.excess)} h (${o.overPct}%) over plan`) : ''
   return (
-    <div className="col-span-3 lg:col-span-1 space-y-1" data-testid="week-planned-time" data-partial={summary.plannedPartial ? 'true' : 'false'}>
+    <div className="col-span-3 lg:col-span-1 space-y-1" data-testid="week-planned-time" data-partial={summary.plannedPartial ? 'true' : 'false'} data-over={o.over ? 'true' : 'false'} title={overTxt || undefined}>
       <div className="text-[10px] font-bold text-sky-700 dark:text-sky-300 text-center lg:text-left">
         {summary.plannedDurationS > 0
           ? `planned ${formatDuration(summary.plannedDurationS)} h${summary.plannedPartial ? '+' : ''}`
           : 'planned time unknown'}
         {summary.plannedPartial && summary.plannedDurationS > 0 ? ' (some durations unknown)' : ''}
+        {o.over && <span className="ml-1 rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400" data-testid="week-time-over-label">{o.partialPlan ? `+${formatDuration(o.excess)} h over known plan` : `+${o.overPct}% over`}</span>}
       </div>
-      {summary.plannedDurationS > 0 && (
-        <div className="h-1.5 rounded-full bg-sky-500/20 overflow-hidden" role="progressbar" aria-label="Done vs planned time" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-          <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+      <PlanBar done={summary.durationS} planned={summary.plannedDurationS} partial={summary.plannedPartial} label="Done vs planned time" valueText={`${formatDuration(summary.durationS)} h of ${formatDuration(summary.plannedDurationS)} h planned`} overText={overTxt} testId="week-time-bar" />
+    </div>
+  )
+}
+
+// Totals of the displayed month for the calendar header (only the month's own days, see monthTotals()).
+function MonthSummary({ rows }) {
+  const t = useMemo(() => monthTotals(rows), [rows])
+  const [open, setOpen] = useState(false)
+  if (t.count === 0 && t.planned.count === 0) return null
+  const tlO = overPlan(t.tl.completed, t.planned.load, { measured: t.tl.measured, partial: t.planned.loadPartial })
+  const timeO = overPlan(t.durationS, t.planned.durationS, { partial: t.planned.durationPartial })
+  const types = [['ride', 'ride'], ['run', 'run'], ['gym', 'gym']].filter(([k]) => t.byDiscipline[k] > 0).map(([k, l]) => `${t.byDiscipline[k]} ${l}`).join(' · ')
+  const chip = 'rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[11px] font-bold text-slate-700 dark:text-slate-200'
+  const overChip = (o, unit) => o.over && <span className="rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400">{o.partialPlan ? `+${unit(o.excess)} over known plan` : `+${o.overPct}% over`}</span>
+  const tlText = `TL ${t.tl.completed}${t.tl.estimated > 0 ? ` (${t.tl.measured} + ~${t.tl.estimated} est.)` : ''}`
+  const tlTip = `Completed TL of the month ${t.tl.completed}${t.tl.estimated > 0 ? ` (${t.tl.measured} measured + ~${t.tl.estimated} estimated)` : ''}; projected with the remaining plan ~${t.tl.projected}${t.tl.unscored ? `; ${t.tl.unscored} not scored` : ''}`
+  return (
+    <div data-testid="month-summary" className="flex flex-wrap items-center justify-center gap-1.5 text-[11px]" aria-label="Month summary">
+      <span className={`${chip} text-emerald-700 dark:text-brand-neon`} data-testid="month-time">{formatDuration(t.durationS)} h</span>
+      <span className={`${chip} hidden sm:inline`}>{formatKm(t.distanceM)}</span>
+      <span className={chip} data-testid="month-count">{t.count} {t.count === 1 ? 'activity' : 'activities'}</span>
+      <button type="button" className={`${chip} sm:hidden`} aria-expanded={open} onClick={() => setOpen((v) => !v)} data-testid="month-summary-toggle">{open ? 'Less' : 'More'}</button>
+      <div className={`${open ? 'flex' : 'hidden sm:flex'} flex-wrap items-center justify-center gap-1.5 basis-full sm:basis-auto`} data-testid="month-summary-more">
+        <span className={`${chip} sm:hidden`}>{formatKm(t.distanceM)}</span>
+        {t.tl.completed > 0 && <span className={`${chip} text-emerald-700 dark:text-brand-neon`} title={tlTip} data-testid="month-tl">{tlText}</span>}
+        {types && <span className={chip} data-testid="month-types">{types}</span>}
+        {t.planned.durationS > 0 && (
+          <span className={`${chip} text-sky-700 dark:text-sky-300`} data-testid="month-planned-time" data-over={timeO.over ? 'true' : 'false'} title={`Done ${formatDuration(t.durationS)} h of ${formatDuration(t.planned.durationS)} h planned this month`}>
+            time {formatDuration(t.durationS)} / {formatDuration(t.planned.durationS)} h{t.planned.durationPartial ? '+' : ''} {overChip(timeO, (v) => `${formatDuration(v)} h`)}
+          </span>
+        )}
+        {t.planned.load > 0 && (
+          <span className={`${chip} text-sky-700 dark:text-sky-300`} data-testid="month-planned-tl" data-over={tlO.over ? 'true' : 'false'} title={`Completed TL ${t.tl.completed} of ~${t.planned.load} planned this month`}>
+            TL {t.tl.completed} / ~{t.planned.load}{t.planned.loadPartial ? '+' : ''} {overChip(tlO, (v) => `${Math.round(v)} TL`)}
+          </span>
+        )}
+      </div>
+      {(t.planned.durationS > 0 || t.planned.load > 0) && (
+        <div className="basis-full grid grid-cols-2 gap-2 max-w-md mx-auto w-full">
+          {t.planned.durationS > 0 ? <PlanBar done={t.durationS} planned={t.planned.durationS} partial={t.planned.durationPartial} label="Month: done vs planned time" valueText={`${formatDuration(t.durationS)} h of ${formatDuration(t.planned.durationS)} h planned`} overText={timeO.over ? `${formatDuration(timeO.excess)} h over` : ''} testId="month-time-bar" /> : <span />}
+          {t.planned.load > 0 ? <PlanBar done={t.tl.completed} planned={t.planned.load} measured={t.tl.measured} partial={t.planned.loadPartial} label="Month: done vs planned training load" valueText={`TL ${t.tl.completed} of ${t.planned.load} planned`} overText={tlO.over ? `${Math.round(tlO.excess)} TL over` : ''} testId="month-tl-bar" /> : <span />}
         </div>
       )}
     </div>
@@ -627,6 +694,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
         <h2 className="text-base font-extrabold text-slate-900 dark:text-white capitalize">{title}</h2>
         <span className="hidden sm:block w-[7.5rem]" aria-hidden />
       </div>
+      <MonthSummary rows={rows} />
       <div className="hidden lg:grid grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5 text-[10px] uppercase tracking-widest font-bold text-slate-400">
         {weekdayLabels.map((l, i) => <div key={i} className="px-1">{l}</div>)}
         <div className="px-1">Week total</div>

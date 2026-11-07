@@ -114,3 +114,78 @@ test('unscoredReason explains why a completed run/ride has no TL', () => {
   assert.equal(unscoredReason(act('s', '2027-03-08')), null)
   assert.equal(unscoredReason(act('g', '2027-03-08', { training_load: null, activity_type: 'gym' })), null)
 })
+
+import { overPlan, monthTotals } from '../calendarLoad.js'
+
+test('overPlan: under plan, no over', () => {
+  const o = overPlan(60, 100)
+  assert.equal(o.over, false)
+  assert.equal(o.label, null)
+  assert.equal(o.fillPct, 60)
+  assert.equal(o.tickPct, 100)
+  assert.equal(o.overBarPct, 0)
+})
+
+test('overPlan: over plan adds an excess segment beyond the planned tick', () => {
+  const o = overPlan(120, 100, { measured: 90 })
+  assert.equal(o.over, true)
+  assert.equal(o.excess, 20)
+  assert.equal(o.overPct, 20)
+  assert.equal(o.label, 'over plan')
+  assert.equal(o.fillPct, 100)
+  assert.ok(Math.abs(o.tickPct - (100 / 120) * 100) < 1e-9)
+  assert.ok(Math.abs(o.measuredPct + o.estimatedPct + o.overBarPct - 100) < 1e-9)
+  assert.ok(Math.abs(o.measuredPct - 75) < 1e-9)
+})
+
+test('overPlan: no or zero plan never reports over', () => {
+  for (const p of [0, null, undefined, NaN]) {
+    const o = overPlan(50, p)
+    assert.equal(o.over, false)
+    assert.equal(o.tickPct, null)
+    assert.equal(o.fillPct, 0)
+  }
+})
+
+test('overPlan: partial plan is "over known plan" without a percentage', () => {
+  const o = overPlan(120, 100, { partial: true })
+  assert.equal(o.over, true)
+  assert.equal(o.overPct, null)
+  assert.equal(o.partialPlan, true)
+  assert.equal(o.label, 'over known plan')
+})
+
+test('monthTotals counts only days of the displayed month', () => {
+  const anchor = new Date('2027-03-15T00:00:00')
+  const events = [
+    act('feb', '2027-02-28'), // grid day of the previous month
+    act('m1', '2027-03-01'),
+    act('m2', '2027-03-31', { distance_m: 10000 }),
+    act('apr', '2027-04-01'),
+    plan('p1', '2027-03-20', 70, { durationS: 3600 }),
+    plan('p2', '2027-03-21', 50, { status: 'skipped' }),
+    plan('pOut', '2027-04-02', 99),
+  ]
+  const rows = addLoadToRows(buildCalendarRows(buildMonthGrid(anchor), events, { anchor }), { today: new Date('2027-03-10T12:00:00') })
+  const t = monthTotals(rows)
+  assert.equal(t.count, 2)
+  assert.equal(t.durationS, 7200)
+  assert.equal(t.distanceM, 10000)
+  assert.equal(t.byDiscipline.ride, 2)
+  assert.equal(t.tl.completed, 170)
+  assert.equal(t.tl.projected, 170 + 70)
+  assert.equal(t.planned.count, 1)
+  assert.equal(t.planned.load, 70)
+  assert.equal(t.planned.durationS, 3600)
+})
+
+test('monthTotals: linked plan is not double counted in completed, past plan not done adds no completed', () => {
+  const anchor = new Date('2027-03-15T00:00:00')
+  const events = [act('a', '2027-03-08'), plan('p', '2027-03-08', 90, { status: 'completed', activityId: 'a' }), plan('missed', '2027-03-05', 60, { status: 'missed' })]
+  const rows = addLoadToRows(buildCalendarRows(buildMonthGrid(anchor), events, { anchor }), { today: new Date('2027-03-10T12:00:00') })
+  const t = monthTotals(rows)
+  assert.equal(t.count, 1)
+  assert.equal(t.tl.completed, 85)
+  assert.equal(t.tl.projected, 85)
+  assert.equal(t.planned.load, 150)
+})
