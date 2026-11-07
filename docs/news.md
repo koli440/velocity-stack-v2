@@ -34,8 +34,8 @@ Rules:
 - **Help** (user menu): *Getting started* (reopens the tour), *What's new*, *Template syntax guide*.
 
 ## Onboarding
-- Welcome tour (`WELCOME_STEPS` in `src/lib/onboarding.js`): skippable, reopenable from Help, shown once to new accounts.
-- Getting-started checklist on the dashboard (`CHECKLIST_ITEMS`): connected source, first ride, FTP, weight, first template run, privacy zone. Ticks are **derived from real data**
+- Welcome tour (`WELCOME_STEPS` in `src/lib/onboarding.js`): skippable, reopenable from Help, shown once to new accounts. Keep it to ~7-9 steps; when shipping a notable user-facing feature, update the matching step (data sources, plan/calendar, notifications/app) in the same PR. Existing accounts are never re-shown the tour automatically (Help reopens it).
+- Getting-started checklist on the dashboard (`CHECKLIST_ITEMS`): connected source, first ride, FTP, weight, first template run, privacy zone. Adding checklist items makes finished-but-undismissed checklists reappear, so only add items sparingly. Ticks are **derived from real data**
   (`fetchOnboardingFacts`, every query filtered by the signed-in user) and are never stored. The card stays until complete or dismissed.
 - Existing accounts at the time of the migration are *not* put through onboarding (tour done, checklist dismissed) and have all older news marked seen; they can open the tour from Help.
 

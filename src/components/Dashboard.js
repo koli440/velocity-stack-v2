@@ -12,7 +12,7 @@ import { OPEN_ADD_SESSION_EVENT, ACTIVITIES_CHANGED_EVENT } from '../lib/navigat
 import ActivityFeed from './ActivityFeed'
 import { scopeFromSearch, feedPath, snapshotKey, buildSnapshot, parseSnapshot } from '../lib/feedRestore'
 import EmptyFeedCard from './EmptyFeedCard'
-import { stravaFlagMessage } from '../lib/emptyFeed'
+import { connectFlagNotice } from '../lib/emptyFeed'
 import PowerProfileCard from './PowerProfileCard'
 import WeekStatsCard from './WeekStatsCard'
 import FitnessCard from './FitnessCard'
@@ -44,13 +44,13 @@ export default function Dashboard({ initialActivities = [] }) {
   const [ownProfile, setOwnProfile] = useState(null)
   const [blogCards, setBlogCards] = useState([])
 
-  // Result of the Strava OAuth round trip when it started from the welcome card (?strava=...).
+  // Result of the OAuth round trip when it started from the welcome card (?garmin|wahoo|intervals|strava=...).
   useEffect(() => {
     const url = new URL(window.location.href)
-    const flag = url.searchParams.get('strava')
-    if (!flag) return
-    setStravaNotice(stravaFlagMessage(flag))
-    url.searchParams.delete('strava')
+    const notice = connectFlagNotice(url.searchParams)
+    if (!notice) return
+    setStravaNotice(notice)
+    for (const k of ['garmin', 'wahoo', 'intervals', 'strava']) url.searchParams.delete(k)
     window.history.replaceState({}, '', url.pathname + url.search + url.hash)
   }, [])
 

@@ -60,6 +60,17 @@ export function intervalsFlagMessage(flag) {
   return { text, isError }
 }
 
+const FLAG_MESSAGES = { garmin: garminFlagMessage, wahoo: wahooFlagMessage, intervals: intervalsFlagMessage, strava: stravaFlagMessage }
+
+/** First OAuth result flag in the URL as { provider, text, isError }, or null. Garmin and Wahoo come first. */
+export function connectFlagNotice(searchParams) {
+  for (const provider of Object.keys(FLAG_MESSAGES)) {
+    const flag = searchParams.get(provider)
+    if (flag) return { provider, ...FLAG_MESSAGES[provider](flag) }
+  }
+  return null
+}
+
 /**
  * Which welcome-card state to show.
  * - 'hidden': feed has activities, or connections are not loaded yet (avoids flashing the connect buttons)

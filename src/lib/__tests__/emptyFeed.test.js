@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { emptyFeedState, stravaFlagMessage } from '../emptyFeed.js'
+import { emptyFeedState, stravaFlagMessage, connectFlagNotice } from '../emptyFeed.js'
 import { signState, verifyState, stravaReturnPath } from '../strava.js'
 
 const base = { activityCount: 0, activitiesLoaded: true }
@@ -40,4 +40,17 @@ test('strava state carries the dashboard return target', () => {
   const plain = verifyState({ state: signState({ userId: 'u', secret }), secret })
   assert.deepEqual(plain, { ok: true, userId: 'u' })
   assert.equal(stravaReturnPath(plain.returnTo), '/connections')
+})
+
+test('OAuth return flags map to a provider notice, Garmin and Wahoo included', () => {
+  assert.deepEqual(connectFlagNotice(new URLSearchParams('garmin=connected')), { provider: 'garmin', text: 'Garmin connected. New activities will be imported automatically.', isError: false })
+  assert.equal(connectFlagNotice(new URLSearchParams('wahoo=denied')).isError, true)
+  assert.equal(connectFlagNotice(new URLSearchParams('intervals=connected')).provider, 'intervals')
+  assert.equal(connectFlagNotice(new URLSearchParams('strava=connected')).provider, 'strava')
+  assert.equal(connectFlagNotice(new URLSearchParams('x=1')), null)
+})
+
+test('a connected Garmin or Wahoo moves the card out of the connect state', () => {
+  assert.equal(emptyFeedState({ ...base, connections: [{ provider: 'garmin', status: 'active', last_synced_at: null }] }), 'importing')
+  assert.equal(emptyFeedState({ ...base, connections: [{ ...synced, provider: 'wahoo' }] }), 'connected')
 })
