@@ -1,6 +1,8 @@
 // Pure helpers for the admin dashboard (/admin). Data comes from the admin-only RPC admin_dashboard_stats()
 // (supabase/migrations/20270128000000_admin_dashboard.sql): aggregates only, never user identities.
 
+import { RESPECT_LEVELS } from './respectLevel.js'
+
 export const PROVIDER_LABELS = { garmin: 'Garmin', wahoo: 'Wahoo', intervals: 'Intervals.icu', strava: 'Strava', manual: 'Upload', bot: 'Bot' }
 export const TYPE_LABELS = { ride: 'Ride', run: 'Run', gym: 'Gym' }
 
@@ -89,4 +91,19 @@ export function respectSummary(stats) {
     publicPct: pct(s.by_visibility?.public, (Number(s.by_visibility?.public) || 0) + (Number(s.by_visibility?.non_public) || 0)),
     notifiedPct: pct(s.notified_reactions, s.total),
   }
+}
+
+/** Buckets admin_respect_histogram() rows ({count, activities}) into tiers: exclusive (highest tier reached) and cumulative (at least). */
+export function respectTiers(histogram, levels = RESPECT_LEVELS) {
+  const rows = levels.map((l) => ({ ...l, exact: 0, atLeast: 0 }))
+  for (const h of Array.isArray(histogram) ? histogram : []) {
+    const n = Number(h?.count)
+    const c = Number(h?.activities) || 0
+    if (!(n >= 1) || c <= 0) continue
+    rows.forEach((r) => { if (n >= r.min) r.atLeast += c })
+    let top = -1
+    rows.forEach((r, i) => { if (n >= r.min) top = i })
+    if (top >= 0) rows[top].exact += c
+  }
+  return rows
 }

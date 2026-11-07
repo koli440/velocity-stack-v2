@@ -29,3 +29,7 @@ The dashboard's "Third-party apps" panel is fed by `admin_partner_stats(p_days)`
 ## Respect stats
 
 The "Respect" panel is fed by `admin_respect_stats(p_days)` (`20270140000000_admin_respect_stats.sql`), another admin-only SECURITY DEFINER function (raises `Admin only`) that follows the 7/30/90-day period buttons. It returns total respects (period and all time), distinct reactors, receivers and reacted-to activities, average per reacted activity, a daily series, the share of active users (signed in or uploaded in the window) who gave / received a Respect, splits by activity type and public vs non-public, reaction notifications sent (and respects they cover), and how many users turned reactions or reaction notifications off. Bots are excluded; aggregates only, no rider identities. Rate-limit hits are not shown because they are not recorded.
+
+### Respect tiers
+
+The Respect panel also lists each tier (names/thresholds from `RESPECT_LEVELS` in `src/lib/respectLevel.js`, the single source of truth) with how many activities currently sit in it (highest tier reached) and how many reached at least that tier. Data comes from `admin_respect_histogram()` (`20270141000000_admin_respect_histogram.sql`, admin-only SECURITY DEFINER): an all-time histogram "N Respects → number of activities", bucketed in JS by `respectTiers()`. Same rules as above: aggregates only, bots excluded.

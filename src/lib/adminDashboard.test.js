@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { average, respectSummary, dayLabel, maxCount, orderProviders, pct, providerHealth, providerLabel, sumSeries, trend, withAllProviders } from './adminDashboard.js'
+import { average, respectSummary, respectTiers, dayLabel, maxCount, orderProviders, pct, providerHealth, providerLabel, sumSeries, trend, withAllProviders } from './adminDashboard.js'
 
 const S = [1, 2, 3, 4].map((count, i) => ({ day: `2027-01-0${i + 1}`, count }))
 
@@ -61,4 +61,15 @@ test('respectSummary derives shares from the RPC payload', () => {
   const r = respectSummary({ total: 10, activities: 4, active_users: 8, active_gave: 2, active_received: 4, by_visibility: { public: 3, non_public: 1 }, notified_reactions: 5 })
   assert.deepEqual(r, { perActivity: 2.5, gavePct: 25, receivedPct: 50, publicPct: 75, notifiedPct: 50 })
   assert.deepEqual(respectSummary(null), { perActivity: 0, gavePct: 0, receivedPct: 0, publicPct: 0, notifiedPct: 0 })
+})
+
+test('respectTiers buckets a per-activity histogram by RESPECT_LEVELS', () => {
+  const t = respectTiers([{ count: 1, activities: 4 }, { count: 2, activities: 1 }, { count: 3, activities: 2 }, { count: 25, activities: 1 }, { count: 1500, activities: 1 }])
+  const by = Object.fromEntries(t.map((r) => [r.word, r]))
+  assert.equal(t.length, 10)
+  assert.deepEqual([by.Nod.exact, by.Nod.atLeast], [5, 9])
+  assert.deepEqual([by.Props.exact, by.Props.atLeast], [2, 4])
+  assert.deepEqual([by.Beast.exact, by.Beast.atLeast], [1, 2])
+  assert.deepEqual([by.Godlike.exact, by.Godlike.atLeast], [1, 1])
+  assert.deepEqual(respectTiers(null).map((r) => r.exact), Array(10).fill(0))
 })
