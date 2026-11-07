@@ -51,6 +51,7 @@ import { useRiderLoadContext } from './useRiderLoadContext'
 import { fetchProfilesByIds } from '../lib/social'
 import { shouldAutoScrollToToday, todayScrollBehavior } from '../lib/calendarScroll'
 import { isShownOnMobile, isEmptyDay } from '../lib/calendarMobileDays'
+import { addLoadToRows, completedEventLoad } from '../lib/calendarLoad'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
 import {
   buildMonthGrid,
@@ -88,14 +89,32 @@ function ChipBody({ icon, iconClass, label, extras, name, stats }) {
       <span className="block mt-0.5 text-xs font-bold leading-snug break-words line-clamp-2" data-testid="calendar-chip-name">{name}</span>
       {items.length > 0 && (
         <span className="mt-0.5 flex flex-wrap gap-x-1.5 text-[10px] font-semibold opacity-80" data-testid="calendar-chip-stats">
-          {items.map((t, i) => <span key={i} className={i === 0 ? 'font-bold' : undefined}>{t}</span>)}
+          {items.map((t, i) => <span key={i} className={i === 0 && typeof t === 'string' ? 'font-bold' : undefined}>{t}</span>)}
         </span>
       )}
     </>
   )
 }
 
-function EventChip({ event, race, returnTo }) {
+// Completed load: solid pill "TL 85" ("TL ~85" for HR / gym estimates). Gym excluded from fitness is dimmed and not counted.
+function TlBadge({ tl }) {
+  if (!tl) return null
+  const label = `TL ${tl.estimated ? '~' : ''}${Math.round(tl.load)}`
+  const title = [tl.estimated ? 'Estimated training load' : 'Training load', tl.excluded ? 'not counted in fitness (gym excluded in settings)' : null].filter(Boolean).join(' - ')
+  return (
+    <span
+      data-testid="calendar-tl"
+      data-estimated={tl.estimated ? 'true' : 'false'}
+      data-excluded={tl.excluded ? 'true' : 'false'}
+      title={title}
+      className={`rounded px-1 font-bold bg-emerald-600 text-white dark:bg-emerald-500/90 dark:text-slate-900 ${tl.excluded ? 'opacity-50 line-through decoration-1' : ''}`}
+    >
+      {label}
+    </span>
+  )
+}
+
+function EventChip({ event, race, returnTo, tl }) {
   const { riderId } = parseCoachPath(usePathname())
   const planned = event.kind === 'planned'
   const pushed = event.pushState && event.pushState !== 'not_pushed'
@@ -134,7 +153,7 @@ function EventChip({ event, race, returnTo }) {
           </>
         )}
         name={race ? race.name : event.title}
-        stats={[event.distanceM ? formatKm(event.distanceM) : null, event.durationS ? formatDuration(event.durationS) : null, event.metric?.value]}
+        stats={[event.distanceM ? formatKm(event.distanceM) : null, event.durationS ? formatDuration(event.durationS) : null, event.metric?.label === 'TL' ? null : event.metric?.value, tl ? <TlBadge key="tl" tl={tl} /> : null]}
       />
     </Link>
   )
@@ -165,7 +184,14 @@ function PlannedChip({ event, onOpen }) {
           </span>
         )}
         name={event.title}
-        stats={[event.durationS ? formatDuration(event.durationS) : null, event.metric?.value]}
+        stats={[
+          event.durationS ? formatDuration(event.durationS) : null,
+          event.load != null ? (
+            <span key="tl" data-testid="calendar-planned-tl" title={event.metric?.title || 'Planned training load (estimate)'} className="rounded px-1 font-bold border border-dashed border-sky-500/70 text-sky-700 dark:text-sky-300">
+              {event.metric?.value} planned
+            </span>
+          ) : null,
+        ]}
       />
     </button>
   )
@@ -213,6 +239,46 @@ function RaceChip({ race, onOpen, form }) {
   )
 }
 
+// Day total: past/completed days show completed TL only; today mixes done + remaining plan; future days show the plan.
+function DayTl({ tl }) {
+  if (!tl || tl.mode === 'none') return null
+  const done = tl.mode !== 'planned'
+  const plan = tl.plannedRemaining > 0
+  return (
+    <span className="flex items-center gap-1 text-[10px] font-bold" data-testid="day-tl" data-mode={tl.mode} title={done && plan ? 'Completed TL + remaining planned TL (estimate)' : done ? 'Completed training load' : 'Planned training load (estimate)'}>
+      {done && <span className="rounded px-1 bg-emerald-600 text-white dark:bg-emerald-500/90 dark:text-slate-900">TL {tl.completedEstimated ? '~' : ''}{tl.completed}</span>}
+      {done && plan && <span className="opacity-60">+</span>}
+      {plan && <span className="rounded px-1 border border-dashed border-sky-500/70 text-sky-700 dark:text-sky-300">~TL {tl.plannedRemaining}{done ? '' : ' planned'}{tl.plannedRemainingUnknown ? '+' : ''}</span>}
+    </span>
+  )
+}
+
+// Planned vs done training load of the week, same style as the time bar. Planned = ~TL of every non-skipped
+// workout (done ones as the target); "+" / note when some workouts have no estimate.
+function PlannedLoad({ tl }) {
+  if (!tl.hasPlanned && tl.completed === 0) return null
+  const pct = tl.planned > 0 ? Math.min(100, Math.round((tl.completed / tl.planned) * 100)) : 0
+  const tip = `Completed TL${tl.completedEstimated ? ' (includes estimates)' : ''} vs planned ~TL (estimate)${tl.excludedGym ? `; gym TL ${tl.excludedGym} not counted (excluded from fitness)` : ''}`
+  return (
+    <div className="col-span-3 lg:col-span-1 space-y-1" data-testid="week-tl" data-partial={tl.plannedPartial ? 'true' : 'false'} title={tip}>
+      <div className="text-[10px] font-bold text-center lg:text-left">
+        <span className="text-emerald-700 dark:text-brand-neon">TL {tl.completedEstimated ? '~' : ''}{tl.completed}</span>
+        {tl.hasPlanned && (
+          <span className="text-sky-700 dark:text-sky-300">
+            {' '}/ planned {tl.planned > 0 ? `~${tl.planned}${tl.plannedPartial ? '+' : ''}` : 'unknown'}
+            {tl.plannedPartial && tl.planned > 0 ? ' (some estimates missing)' : ''}
+          </span>
+        )}
+      </div>
+      {tl.planned > 0 && (
+        <div className="h-1.5 rounded-full bg-sky-500/20 overflow-hidden" role="progressbar" aria-label="Done vs planned training load" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+          <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Planned vs done time of the week: "planned 8:00 h" (with "+" when some durations are unknown) and a thin progress bar.
 function PlannedTime({ summary }) {
   const pct = summary.plannedDurationS > 0 ? Math.min(100, Math.round((summary.durationS / summary.plannedDurationS) * 100)) : 0
@@ -254,6 +320,7 @@ function WeekSummary({ summary }) {
         </span>
       )}
       {summary.plannedCount > 0 && <PlannedTime summary={summary} />}
+      {summary.tl && <PlannedLoad tl={summary.tl} />}
       {summary.races?.length > 0 && (
         <span className="col-span-3 lg:col-span-1 text-[10px] font-bold text-rose-600 dark:text-rose-300 text-center lg:text-left" data-testid="week-races">
           {summary.races.map((r, i) => (
@@ -371,12 +438,25 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     return () => clearInterval(id)
   }, [])
   const loadContext = useRiderLoadContext(riderId)
+  // The rider's "include gym in fitness" choice (default on). Gym TL stays visible when off, but is dimmed and not counted.
+  const [includeGym, setIncludeGym] = useState(true)
+  useEffect(() => {
+    if (!riderId) return undefined
+    let cancelled = false
+    supabase.from('profiles').select('include_gym_in_fitness').eq('id', riderId).maybeSingle()
+      .then(({ data }) => !cancelled && setIncludeGym(data?.include_gym_in_fitness !== false))
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [riderId])
   const ftpHistory = loadContext?.ftpHistory || EMPTY
   const rows = useMemo(() => {
     const today = new Date()
-    return buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => ({ ...plannedToEvent(w, today, loadContext), pushState: pushState(w, pushRows.get(w.id)) }))], { anchor, notes, races })
+    const base = buildCalendarRows(buildMonthGrid(anchor), [...events, ...planned.map((w) => ({ ...plannedToEvent(w, today, loadContext), pushState: pushState(w, pushRows.get(w.id)) }))], { anchor, notes, races })
+    return addLoadToRows(base, { today, ltHistory: loadContext?.ltHistory || EMPTY, includeGym })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchor, events, notes, races, planned, pushRows, todayKey, loadContext])
+  }, [anchor, events, notes, races, planned, pushRows, todayKey, loadContext, includeGym])
   const raceForms = useRaceForms(riderId, races, { coach: Boolean(riderIdProp && riderIdProp !== sessionUserId), loadContext })
   const raceByActivity = useMemo(() => racesByActivity(races), [races])
 
@@ -546,6 +626,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                       <span className="lg:hidden">{formatDate(cell.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                       <span className="hidden lg:inline">{cell.date.getDate()}</span>
                     </span>
+                    <DayTl tl={cell.tl} />
                     <span className="flex items-center">
                     <button
                       type="button"
@@ -580,7 +661,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                   {cell.races.map((r) => <RaceChip key={r.id} race={r} form={raceForms.get(r.id)} onOpen={(race) => setRdialog({ day: cell.date, race })} />)}
                   {cell.events.map((e) => (e.kind === 'planned'
                     ? <PlannedChip key={`planned-${e.id}`} event={e} onOpen={(id) => openPlanned(cell.date, id)} />
-                    : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} returnTo={returnTo} />))}
+                    : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} returnTo={returnTo} tl={completedEventLoad(e, { ltHistory: loadContext?.ltHistory || EMPTY, includeGym })} />))}
                 </div>
               )
             })}

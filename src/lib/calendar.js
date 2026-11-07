@@ -23,10 +23,15 @@ export const CALENDAR_ACTIVITY_COLUMNS = [
   'avg_speed_kmh',
   'training_load',
   'gym_load_model',
+  'avg_hr',
+  'elapsed_time_s',
   'is_race',
   'activity_type',
   'ride_type',
 ].join(', ')
+
+// The masked shared_activities view (coach reads) has no lt2_hr_at_activity; the owner's table does.
+export const CALENDAR_OWN_EXTRA_COLUMNS = 'lt2_hr_at_activity'
 
 export function dayKey(date) {
   const y = date.getFullYear()
@@ -121,6 +126,17 @@ export function activityToEvent(row) {
     durationS: Number(row.moving_time_s) || 0,
     metric,
     isRace: row.is_race === true,
+    // Fields activityLoad() (fitnessForm.js) reads: the calendar scores activities exactly like the Fitness page.
+    loadSource: {
+      activity_date: row.activity_date,
+      activity_type: row.activity_type,
+      training_load: row.training_load,
+      gym_load_model: row.gym_load_model,
+      moving_time_s: row.moving_time_s,
+      elapsed_time_s: row.elapsed_time_s,
+      avg_hr: row.avg_hr,
+      lt2_hr_at_activity: row.lt2_hr_at_activity,
+    },
     href: `/activities/${row.id}`,
   }
 }
@@ -217,7 +233,7 @@ export async function fetchActivitiesInRange(client, { riderId, startISO, endISO
   // A coach reads an athlete through the masked view (never the raw table with GPS).
   const { data, error } = await client
     .from(shared ? 'shared_activities' : 'activities')
-    .select(CALENDAR_ACTIVITY_COLUMNS)
+    .select(shared ? CALENDAR_ACTIVITY_COLUMNS : `${CALENDAR_ACTIVITY_COLUMNS}, ${CALENDAR_OWN_EXTRA_COLUMNS}`)
     .eq('user_id', riderId)
     .gte('activity_date', startISO)
     .lt('activity_date', endISO)
