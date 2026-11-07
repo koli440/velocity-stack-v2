@@ -7,4 +7,6 @@ linkLabel: Back to the dashboard
 ---
 The getting-started tour now covers planning workouts (incl. sending them to Garmin, Wahoo or Intervals.icu), the calendar and Fitness page, and notifications and installing the app.
 
-Reopen it any time from **Help → Getting started**.
+The empty dashboard card now has **Connect Garmin** and **Connect Wahoo** buttons, first in the list.
+
+Reopen the tour any time from **Help → Getting started**.

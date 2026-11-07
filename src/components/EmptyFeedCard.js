@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { callIntervals, startStravaAuthorize, startIntervalsAuthorize, runProviderSync, fetchConnection } from '../lib/connectionsClient'
+import { callIntervals, startGarminAuthorize, startWahooAuthorize, startStravaAuthorize, startIntervalsAuthorize, runProviderSync, fetchConnection } from '../lib/connectionsClient'
 import { emptyFeedState } from '../lib/emptyFeed'
 import { backfillProgressText, describeSyncResult } from '../lib/syncPlan'
-import { syncHealth } from '../lib/connections'
+import { syncHealth, isConnected } from '../lib/connections'
 import { OPEN_ADD_SESSION_EVENT } from '../lib/navigation'
 
 const POLL_MS = 15000
-const PROVIDERS = ['strava', 'intervals']
+const PROVIDERS = ['garmin', 'wahoo', 'strava', 'intervals']
 
 const inputCls =
   'w-full bg-white/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500 font-mono'
@@ -67,7 +67,7 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
   useEffect(() => {
     if (kicked.current || !notice || notice.isError || !userId) return
     kicked.current = true
-    syncProviders(['strava'])
+    syncProviders([notice.provider || 'strava'])
   }, [notice, userId, syncProviders])
 
   const run = async (fn) => {
@@ -81,6 +81,10 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
       setBusy(false)
     }
   }
+
+  const connectGarmin = () => run(() => startGarminAuthorize({ returnTo: 'home' }))
+
+  const connectWahoo = () => run(() => startWahooAuthorize({ returnTo: 'home' }))
 
   const connectStrava = () => run(() => startStravaAuthorize({ returnTo: 'home' }))
 
@@ -104,6 +108,8 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
     })
 
   if (state === 'hidden') return null
+
+  const isLinked = (p) => (connections || []).some((c) => c.provider === p && isConnected(c))
 
   const openAdd = () => window.dispatchEvent(new Event(OPEN_ADD_SESSION_EVENT))
   const progress = connections?.map(backfillProgressText).find(Boolean)
@@ -137,9 +143,19 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
             </Link>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Garmin, Wahoo and SRM come first: Garmin and Wahoo connect directly, SRM and others import .fit files. Zwift or MyWhoosh? Use Intervals.icu as the bridge.
+            Garmin and Wahoo connect directly and also let you send planned workouts to your device. SRM has no cloud sync: import its .fit files. Zwift or MyWhoosh? Use Intervals.icu as the bridge.
           </p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {!isLinked('garmin') && (
+              <button type="button" disabled={busy} onClick={connectGarmin} className={linkBtn}>
+                Connect Garmin
+              </button>
+            )}
+            {!isLinked('wahoo') && (
+              <button type="button" disabled={busy} onClick={connectWahoo} className={linkBtn}>
+                Connect Wahoo
+              </button>
+            )}
             <button type="button" disabled={busy} onClick={connectIntervalsOAuth} className={linkBtn}>
               Connect Intervals.icu
             </button>
