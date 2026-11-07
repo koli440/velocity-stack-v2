@@ -7,9 +7,13 @@
 //  - today: completed TL plus the REMAINING planned workouts (not linked, not skipped), kept separate;
 //  - future days: remaining planned workouts (a day with a completed activity shows that activity as done);
 //  - gym sessions are shown, but when the rider excludes gym from fitness they do not count in totals.
+// Completed load is split like the Fitness page (estimateShare / estimatedLoad): `measured` = stored training_load,
+// `estimated` = HR estimate + gym model. Totals count both; completed = measured + estimated.
+// Completed runs/rides that can't be scored are counted as `unscored` (reason: no HR / too short / no LT2 HR). No pace-based rTSS.
 // Week: planned target = ~TL of every non-skipped planned workout (linked ones too, as the target), completed = sum of days.
 
-import { activityLoad } from './fitnessForm.js'
+import { activityLoad, localDayKey } from './fitnessForm.js'
+import { resolveLtAt } from './lactateThresholds.js'
 import { dayKey } from './calendar.js'
 
 const round = (n) => Math.round(n)
@@ -22,6 +26,25 @@ export function completedEventLoad(event, { ltHistory = [], includeGym = true } 
   return { load: r.load, estimated: r.estimated, excluded: event.discipline === 'gym' && !includeGym }
 }
 
+const numOrNull = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v))
+export const UNSCORED_REASONS = Object.freeze({
+  noHr: 'No HR data',
+  tooShort: 'Too short to score (under 5 min)',
+  noLt2: 'Set LT2 HR in Physiology',
+})
+
+/** Why a completed run/ride has no TL: 'noHr' | 'tooShort' | 'noLt2', or null when scored / not applicable (gym, planned). */
+export function unscoredReason(event, { ltHistory = [] } = {}) {
+  if (!event || event.kind === 'planned' || event.discipline === 'gym') return null
+  const src = event.loadSource || {}
+  if (activityLoad(src, ltHistory)) return null
+  const avgHr = numOrNull(src.avg_hr)
+  if (avgHr === null || avgHr < 40 || avgHr > 230) return 'noHr'
+  const secs = numOrNull(src.moving_time_s) ?? numOrNull(src.elapsed_time_s) ?? numOrNull(src.duration_sec) ?? 0
+  if (!(secs >= 300 && secs <= 86400)) return 'tooShort'
+  return 'noLt2'
+}
+
 /** Planned ~TL of a planned event: number or null (no estimate). Skipped workouts have no target. */
 export function plannedEventLoad(event) {
   if (event?.kind !== 'planned' || event.status === 'skipped') return null
@@ -32,13 +55,15 @@ const isRemainingPlanned = (e) => e.kind === 'planned' && !e.activityId && e.sta
 
 /**
  * TL of one day. `dayKeyStr` / `todayKey` are "YYYY-MM-DD".
- * @returns { completed, completedEstimated, excludedGym, plannedRemaining, plannedRemainingUnknown, mode }
+ * @returns { completed, measured, estimated, completedEstimated, excludedGym, unscored, plannedRemaining, plannedRemainingUnknown, mode }
  *  mode: 'completed' (past or only completed activities), 'mixed' (completed + remaining plan), 'planned' (plan only), 'none'
  */
 export function dayLoad(events, dayKeyStr, todayKey, opts = {}) {
   let completed = 0
+  let estimated = 0
   let completedEstimated = false
   let excludedGym = 0
+  let unscored = 0
   let scored = 0
   let plannedRemaining = 0
   let plannedRemainingUnknown = 0
@@ -51,21 +76,30 @@ export function dayLoad(events, dayKeyStr, todayKey, opts = {}) {
       continue
     }
     const l = completedEventLoad(e, opts)
-    if (!l) continue
+    if (!l) {
+      if (unscoredReason(e, opts)) unscored += 1
+      continue
+    }
     if (l.excluded) {
       excludedGym += l.load
       continue
     }
     completed += l.load
     scored += 1
-    if (l.estimated) completedEstimated = true
+    if (l.estimated) {
+      completedEstimated = true
+      estimated += l.load
+    }
   }
   const hasPlanned = plannedRemaining > 0
   const mode = scored > 0 ? (hasPlanned ? 'mixed' : 'completed') : hasPlanned ? 'planned' : 'none'
   return {
     completed: round(completed),
+    estimated: round(estimated),
+    measured: round(completed) - round(estimated),
     completedEstimated,
     excludedGym: round(excludedGym),
+    unscored,
     plannedRemaining: round(plannedRemaining),
     plannedRemainingUnknown,
     mode,
@@ -74,12 +108,14 @@ export function dayLoad(events, dayKeyStr, todayKey, opts = {}) {
 
 /**
  * TL of a week from all its events (any day). plannedPartial: a counted planned workout without estimate.
- * @returns { completed, completedEstimated, planned, plannedPartial, hasPlanned, excludedGym }
+ * @returns { completed (= measured + estimated), measured, estimated, completedEstimated, unscored, planned, plannedPartial, hasPlanned, excludedGym }
  */
 export function weekLoad(events, opts = {}) {
   let completed = 0
+  let estimated = 0
   let completedEstimated = false
   let excludedGym = 0
+  let unscored = 0
   let planned = 0
   let plannedCount = 0
   let plannedPartial = false
@@ -93,16 +129,25 @@ export function weekLoad(events, opts = {}) {
       continue
     }
     const l = completedEventLoad(e, opts)
-    if (!l) continue
+    if (!l) {
+      if (unscoredReason(e, opts)) unscored += 1
+      continue
+    }
     if (l.excluded) excludedGym += l.load
     else {
       completed += l.load
-      if (l.estimated) completedEstimated = true
+      if (l.estimated) {
+        completedEstimated = true
+        estimated += l.load
+      }
     }
   }
   return {
     completed: round(completed),
+    estimated: round(estimated),
+    measured: round(completed) - round(estimated),
     completedEstimated,
+    unscored,
     planned: round(planned),
     plannedPartial,
     hasPlanned: plannedCount > 0,
