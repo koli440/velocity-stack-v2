@@ -21,7 +21,10 @@ export function parseInline(text) {
   return out
 }
 
-export function parseMarkdown(src) {
+const IMAGE_LINE = /^!\[([^\]]*)\]\((\/(?!\/)[\w\-./]+\.(?:png|jpe?g|webp|avif|gif))\)$/i
+
+// `images: true` (blog only) turns a line that is just `![alt](/public/path.webp)` into an image block.
+export function parseMarkdown(src, { images = false } = {}) {
   const blocks = []
   let list = null
   let para = []
@@ -45,6 +48,13 @@ export function parseMarkdown(src) {
     }
     if (fence) {
       fence.push(line)
+      continue
+    }
+    const img = images ? IMAGE_LINE.exec(t) : null
+    if (img) {
+      flushPara()
+      list = null
+      blocks.push({ type: 'img', alt: img[1], src: img[2] })
       continue
     }
     const li = /^[-*]\s+(.*)$/.exec(t)
