@@ -163,6 +163,7 @@ test('every post in content/blog is valid', () => {
     assert.ok(!slugs.has(p.slug))
     slugs.add(p.slug)
     if (p.cover) assert.ok(fs.existsSync(path.join(process.cwd(), 'public', p.cover)), `${p.slug}: cover file missing`)
+    for (const m of p.body.matchAll(/^!\[[^\]]+\]\((\/[^)\s]+)\)$/gm)) assert.ok(fs.existsSync(path.join(process.cwd(), 'public', m[1])), `${p.slug}: image ${m[1]} missing`)
     // Internal links in the body must point at real in-app paths.
     for (const m of p.body.matchAll(/\]\((\/[^)\s]*)\)/g)) assert.match(m[1], /^\/[\w\-./?#=&%]*$/)
   }
@@ -195,4 +196,19 @@ test('the launch post exists, is published and never future-dated', () => {
   assert.equal(p.title, 'Why I built Velocity Stack (it started with a spreadsheet)')
   assert.equal(isPublished(p), true)
   assert.ok(p.body.includes('(/dsl-guide)') && p.body.includes('(/track)'))
+})
+
+test('body images render only with the blog option, with alt text', async () => {
+  const { parseMarkdown } = await import('../markdownLite.js')
+  const src = 'Hi\n\n![Alt text](/landing/gear-architect.webp)\n\n![x](https://evil.example/a.png)'
+  assert.deepEqual(parseMarkdown(src, { images: true }).filter((b) => b.type === 'img'), [{ type: 'img', alt: 'Alt text', src: '/landing/gear-architect.webp' }])
+  assert.equal(parseMarkdown(src).some((b) => b.type === 'img'), false)
+})
+
+test('the gear/pursuit post is scheduled for 2026-11-20 and hidden before', () => {
+  const p = loadAllPosts().find((x) => x.slug === 'gear-architect-and-pursuit-strategist')
+  assert.equal(p.date, '2026-11-20')
+  assert.equal(loadPublishedPosts(new Date('2026-11-19T23:59:59Z')).some((x) => x.slug === p.slug), false)
+  assert.equal(loadPublishedPosts(new Date('2026-11-20T00:00:00Z')).some((x) => x.slug === p.slug), true)
+  assert.equal(getPublishedPost(p.slug, new Date('2026-11-19T12:00:00Z')), null)
 })

@@ -19,7 +19,8 @@ coverHeight: 900
 canonicalUrl: https://...   # optional, only when the post was first published elsewhere
 ---
 Body in markdown: paragraphs, `## Headings` (h2) and `###` (h3), `- lists`, **bold**, `code`, ``` code blocks ``` and
-[links](/dsl-guide). No HTML, no images in the body.
+[links](/dsl-guide). No HTML.
+Images: a line of its own, `![Alt text](/landing/gear-architect.webp)`, with any image in `public/`; alt text is required for accessibility, it renders centred (max 24rem wide) and lazy-loaded.
 ```
 
 Link naturally to features the post mentions (`/track`, `/dsl-guide`, `/gears`, `/velodromes`). Every `##`/`###` heading gets a stable anchor (`#version-one`); posts of 3+ minutes with 3+ headings get a table of contents. Reading time is words / 220.

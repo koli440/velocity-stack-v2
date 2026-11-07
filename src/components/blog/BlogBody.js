@@ -37,6 +37,20 @@ export default function BlogBody({ body }) {
             </ul>
           )
         }
+        if (b.type === 'img') {
+          return (
+            <figure key={i} className="my-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={b.src}
+                alt={b.alt}
+                loading="lazy"
+                decoding="async"
+                className="mx-auto h-auto w-full max-w-sm rounded-2xl border border-slate-200 dark:border-white/10"
+              />
+            </figure>
+          )
+        }
         if (b.type === 'pre') {
           return (
             <pre key={i} className="font-mono text-sm bg-slate-100 dark:bg-slate-900 rounded-xl p-4 overflow-x-auto">

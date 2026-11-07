@@ -119,7 +119,7 @@ export function headingsWithIds(blocks) {
 }
 
 export function renderBlocks(body) {
-  return headingsWithIds(parseMarkdown(body))
+  return headingsWithIds(parseMarkdown(body, { images: true }))
 }
 
 export function tocFor(post) {
