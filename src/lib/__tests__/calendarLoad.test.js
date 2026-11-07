@@ -2,7 +2,7 @@
 process.env.TZ = 'Europe/Prague'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { dayLoad, weekLoad, activityTlLabel, completedEventLoad, addLoadToRows } from '../calendarLoad.js'
+import { dayLoad, weekLoad, activityTlLabel, completedEventLoad, addLoadToRows, unscoredReason } from '../calendarLoad.js'
 import { activityToEvent, buildCalendarRows, buildMonthGrid } from '../calendar.js'
 import { plannedToEvent } from '../plannedWorkouts.js'
 
@@ -88,4 +88,29 @@ test('addLoadToRows attaches day and week load', () => {
   assert.equal(week.cells.find((c) => c.key === '2027-03-08').tl.completed, 85)
   assert.equal(week.cells.find((c) => c.key === '2027-03-12').tl.plannedRemaining, 70)
   assert.deepEqual([week.summary.tl.completed, week.summary.tl.planned], [85, 70])
+})
+
+test('day and week split measured / estimated (HR + gym) / unscored', () => {
+  const events = [
+    act('m', '2027-03-08', { training_load: 85 }),
+    act('h', '2027-03-08', { training_load: null, avg_hr: 170, lt2_hr_at_activity: 170, activity_type: 'run' }),
+    act('g', '2027-03-08', { activity_type: 'gym', gym_load_model: 1, training_load: 30 }),
+    act('u', '2027-03-08', { training_load: null, activity_type: 'run' }),
+  ]
+  const d = dayLoad(events, '2027-03-08', TODAY)
+  assert.deepEqual([d.completed, d.measured, d.estimated, d.unscored], [215, 85, 130, 1])
+  const w = weekLoad(events)
+  assert.deepEqual([w.completed, w.measured, w.estimated, w.unscored], [215, 85, 130, 1])
+  const off = weekLoad(events, { includeGym: false })
+  assert.deepEqual([off.completed, off.estimated, off.excludedGym], [185, 100, 30])
+})
+
+test('unscoredReason explains why a completed run/ride has no TL', () => {
+  const run = (extra) => act('r', '2027-03-08', { training_load: null, activity_type: 'run', ...extra })
+  assert.equal(unscoredReason(run({})), 'noHr')
+  assert.equal(unscoredReason(run({ avg_hr: 150 })), 'noLt2')
+  assert.equal(unscoredReason(run({ avg_hr: 150, moving_time_s: 60 })), 'tooShort')
+  assert.equal(unscoredReason(run({ avg_hr: 150, lt2_hr_at_activity: 170 })), null)
+  assert.equal(unscoredReason(act('s', '2027-03-08')), null)
+  assert.equal(unscoredReason(act('g', '2027-03-08', { training_load: null, activity_type: 'gym' })), null)
 })

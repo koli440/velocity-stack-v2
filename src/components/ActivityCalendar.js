@@ -51,7 +51,7 @@ import { useRiderLoadContext } from './useRiderLoadContext'
 import { fetchProfilesByIds } from '../lib/social'
 import { shouldAutoScrollToToday, todayScrollBehavior } from '../lib/calendarScroll'
 import { isShownOnMobile, isEmptyDay } from '../lib/calendarMobileDays'
-import { addLoadToRows, completedEventLoad } from '../lib/calendarLoad'
+import { addLoadToRows, completedEventLoad, unscoredReason, UNSCORED_REASONS } from '../lib/calendarLoad'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
 import {
   buildMonthGrid,
@@ -97,7 +97,14 @@ function ChipBody({ icon, iconClass, label, extras, name, stats }) {
 }
 
 // Completed load: solid pill "TL 85" ("TL ~85" for HR / gym estimates). Gym excluded from fitness is dimmed and not counted.
-function TlBadge({ tl }) {
+function TlBadge({ tl, hint }) {
+  if (!tl && hint) {
+    return (
+      <span data-testid="calendar-no-tl" title={hint} className="rounded px-1 font-semibold border border-slate-400/60 text-slate-500 dark:text-slate-400 dark:border-slate-500/60">
+        no TL
+      </span>
+    )
+  }
   if (!tl) return null
   const label = `TL ${tl.estimated ? '~' : ''}${Math.round(tl.load)}`
   const title = [tl.estimated ? 'Estimated training load' : 'Training load', tl.excluded ? 'not counted in fitness (gym excluded in settings)' : null].filter(Boolean).join(' - ')
@@ -107,14 +114,14 @@ function TlBadge({ tl }) {
       data-estimated={tl.estimated ? 'true' : 'false'}
       data-excluded={tl.excluded ? 'true' : 'false'}
       title={title}
-      className={`rounded px-1 font-bold bg-emerald-600 text-white dark:bg-emerald-500/90 dark:text-slate-900 ${tl.excluded ? 'opacity-50 line-through decoration-1' : ''}`}
+      className={`rounded px-1 font-bold ${tl.estimated ? 'bg-emerald-600/60 text-white dark:bg-emerald-500/50 dark:text-emerald-50 ring-1 ring-inset ring-emerald-700/40' : 'bg-emerald-600 text-white dark:bg-emerald-500/90 dark:text-slate-900'} ${tl.excluded ? 'opacity-50 line-through decoration-1' : ''}`}
     >
       {label}
     </span>
   )
 }
 
-function EventChip({ event, race, returnTo, tl }) {
+function EventChip({ event, race, returnTo, tl, tlHint }) {
   const { riderId } = parseCoachPath(usePathname())
   const planned = event.kind === 'planned'
   const pushed = event.pushState && event.pushState !== 'not_pushed'
@@ -153,7 +160,7 @@ function EventChip({ event, race, returnTo, tl }) {
           </>
         )}
         name={race ? race.name : event.title}
-        stats={[event.distanceM ? formatKm(event.distanceM) : null, event.durationS ? formatDuration(event.durationS) : null, event.metric?.label === 'TL' ? null : event.metric?.value, tl ? <TlBadge key="tl" tl={tl} /> : null]}
+        stats={[event.distanceM ? formatKm(event.distanceM) : null, event.durationS ? formatDuration(event.durationS) : null, event.metric?.label === 'TL' ? null : event.metric?.value, tl || tlHint ? <TlBadge key="tl" tl={tl} hint={tlHint} /> : null]}
       />
     </Link>
   )
@@ -239,6 +246,11 @@ function RaceChip({ race, onOpen, form }) {
   )
 }
 
+const tlHintFor = (e, opts) => {
+  const r = unscoredReason(e, opts)
+  return r ? UNSCORED_REASONS[r] : null
+}
+
 // Day total: past/completed days show completed TL only; today mixes done + remaining plan; future days show the plan.
 function DayTl({ tl }) {
   if (!tl || tl.mode === 'none') return null
@@ -246,7 +258,15 @@ function DayTl({ tl }) {
   const plan = tl.plannedRemaining > 0
   return (
     <span className="mt-auto flex flex-wrap items-center justify-end gap-1 pt-0.5 text-[10px] font-bold" data-testid="day-tl" data-mode={tl.mode} title={done && plan ? 'Completed TL + remaining planned TL (estimate)' : done ? 'Completed training load' : 'Planned training load (estimate)'}>
-      {done && <span className="rounded px-1 bg-emerald-600 text-white dark:bg-emerald-500/90 dark:text-slate-900">TL {tl.completedEstimated ? '~' : ''}{tl.completed}</span>}
+      {done && (
+        <span className="rounded px-1 bg-emerald-600 text-white dark:bg-emerald-500/90 dark:text-slate-900" data-testid="day-tl-completed" title={tl.estimated > 0 ? `${tl.measured} measured + ~${tl.estimated} estimated (heart rate or gym model)` : undefined}>
+          TL {tl.completed}
+          {tl.estimated > 0 && (
+            <span className="ml-0.5 font-semibold opacity-80" data-testid="day-tl-estimated">({tl.measured} + ~{tl.estimated} est.)</span>
+          )}
+        </span>
+      )}
+      {tl.unscored > 0 && <span className="rounded px-1 font-semibold border border-slate-400/60 text-slate-500 dark:text-slate-400" data-testid="day-tl-unscored" title="Completed activities without TL (no HR data, too short or no LT2 HR)">{tl.unscored} no TL</span>}
       {done && plan && <span className="opacity-60">+</span>}
       {plan && <span className="rounded px-1 border border-dashed border-sky-500/70 text-sky-700 dark:text-sky-300">~TL {tl.plannedRemaining}{done ? '' : ' planned'}{tl.plannedRemainingUnknown ? '+' : ''}</span>}
     </span>
@@ -256,13 +276,15 @@ function DayTl({ tl }) {
 // Planned vs done training load of the week, same style as the time bar. Planned = ~TL of every non-skipped
 // workout (done ones as the target); "+" / note when some workouts have no estimate.
 function PlannedLoad({ tl }) {
-  if (!tl.hasPlanned && tl.completed === 0) return null
+  if (!tl.hasPlanned && tl.completed === 0 && !(tl.unscored > 0)) return null
   const pct = tl.planned > 0 ? Math.min(100, Math.round((tl.completed / tl.planned) * 100)) : 0
-  const tip = `Completed TL${tl.completedEstimated ? ' (includes estimates)' : ''} vs planned ~TL (estimate)${tl.excludedGym ? `; gym TL ${tl.excludedGym} not counted (excluded from fitness)` : ''}`
+  const mPct = tl.planned > 0 ? Math.min(100, Math.round((tl.measured / tl.planned) * 100)) : 0
+  const ePct = Math.max(0, pct - mPct)
+  const tip = `Completed TL ${tl.completed}${tl.estimated > 0 ? ` (${tl.measured} measured + ~${tl.estimated} estimated from heart rate or gym model, hatched)` : ''} vs planned ~TL (estimate)${tl.excludedGym ? `; gym TL ${tl.excludedGym} not counted (excluded from fitness)` : ''}`
   return (
     <div className="col-span-3 lg:col-span-1 space-y-1" data-testid="week-tl" data-partial={tl.plannedPartial ? 'true' : 'false'} title={tip}>
       <div className="text-[10px] font-bold text-center lg:text-left">
-        <span className="text-emerald-700 dark:text-brand-neon">TL {tl.completedEstimated ? '~' : ''}{tl.completed}</span>
+        <span className="text-emerald-700 dark:text-brand-neon">TL {tl.completed}{tl.estimated > 0 ? ` (${tl.measured} + ~${tl.estimated} est.)` : ''}</span>
         {tl.hasPlanned && (
           <span className="text-sky-700 dark:text-sky-300">
             {' '}/ planned {tl.planned > 0 ? `~${tl.planned}${tl.plannedPartial ? '+' : ''}` : 'unknown'}
@@ -272,7 +294,19 @@ function PlannedLoad({ tl }) {
       </div>
       {tl.planned > 0 && (
         <div className="h-1.5 rounded-full bg-sky-500/20 overflow-hidden" role="progressbar" aria-label="Done vs planned training load" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-          <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+          <div className="h-full flex">
+            <div className="h-full bg-emerald-500" style={{ width: `${mPct}%` }} />
+            <div
+              className="h-full bg-emerald-400/60 dark:bg-emerald-400/50"
+              data-testid="week-tl-estimated-bar"
+              style={{ width: `${ePct}%`, backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.55) 0 2px, transparent 2px 5px)' }}
+            />
+          </div>
+        </div>
+      )}
+      {tl.unscored > 0 && (
+        <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400" data-testid="week-tl-unscored" title="Completed runs/rides without TL: no average HR, too short, or no LT2 HR in Physiology">
+          {tl.unscored} {tl.unscored === 1 ? 'activity' : 'activities'} not scored
         </div>
       )}
     </div>
@@ -660,7 +694,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                   {cell.races.map((r) => <RaceChip key={r.id} race={r} form={raceForms.get(r.id)} onOpen={(race) => setRdialog({ day: cell.date, race })} />)}
                   {cell.events.map((e) => (e.kind === 'planned'
                     ? <PlannedChip key={`planned-${e.id}`} event={e} onOpen={(id) => openPlanned(cell.date, id)} />
-                    : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} returnTo={returnTo} tl={completedEventLoad(e, { ltHistory: loadContext?.ltHistory || EMPTY, includeGym })} />))}
+                    : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} returnTo={returnTo} tl={completedEventLoad(e, { ltHistory: loadContext?.ltHistory || EMPTY, includeGym })} tlHint={tlHintFor(e, { ltHistory: loadContext?.ltHistory || EMPTY })} />))}
                   <DayTl tl={cell.tl} />
                 </div>
               )
