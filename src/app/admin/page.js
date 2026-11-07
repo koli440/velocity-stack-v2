@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import { reviewPath } from '../../lib/suggestions'
 import { formatDateTime } from '../../lib/dateFormat'
-import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth, respectSummary } from '../../lib/adminDashboard'
+import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth, respectSummary, respectTiers } from '../../lib/adminDashboard'
 import SegmentedTabs from '../../components/SegmentedTabs'
 import Icon from '../../components/Icon'
 
@@ -102,6 +102,7 @@ export default function AdminDashboardPage() {
   const [days, setDays] = useState(30)
   const [partner, setPartner] = useState(null)
   const [respect, setRespect] = useState(null)
+  const [respectHist, setRespectHist] = useState([])
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser()
@@ -113,6 +114,8 @@ export default function AdminDashboardPage() {
     setPartner(pr.data || null)
     const rs = await supabase.rpc('admin_respect_stats', { p_days: days })
     setRespect(rs.data || null)
+    const rh = await supabase.rpc('admin_respect_histogram')
+    setRespectHist(rh.data || [])
     setState({ loading: false, admin: true, data: data || null, error: error?.message || '' })
   }, [days])
 
@@ -264,6 +267,17 @@ export default function AdminDashboardPage() {
                       <Breakdown rows={respect.by_type.map((x) => ({ key: x.type, count: x.count }))} labelOf={(key) => TYPE_LABELS[key] || key} /></div>
                     <div><h3 className={subheading}>Public vs not public</h3>
                       <Breakdown rows={[{ key: 'public', count: respect.by_visibility.public }, { key: 'non_public', count: respect.by_visibility.non_public }].filter((x) => x.count > 0)} labelOf={(key) => (key === 'public' ? 'Public' : 'Followers / private')} /></div>
+                  </div>
+                  <div>
+                    <h3 className={subheading}>Respect tiers (activities, all time)</h3>
+                    <table className="w-full text-sm" data-testid="respect-tiers">
+                      <thead><tr className={`text-left text-xs ${muted}`}><th className="py-1">Tier</th><th className="py-1">Respect</th><th className="py-1 text-right">Activities</th><th className="py-1 text-right">Reached at least</th></tr></thead>
+                      <tbody>
+                        {respectTiers(respectHist).map((t) => (
+                          <tr key={t.word}><td className="py-0.5">{t.word}</td><td className={muted}>{t.min}+</td><td className="text-right">{t.exact}</td><td className="text-right">{t.atLeast}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                   <StatGrid cols="sm:grid-cols-4">
                     <Stat label="Notifications sent" value={respect.notifications_sent} hint={`covering ${respect.notified_reactions} respects`} />
