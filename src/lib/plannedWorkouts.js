@@ -432,6 +432,8 @@ export function defaultDuplicateDay(workout) {
  */
 export function plannedToEvent(workout, today = new Date(), loadContext = null) {
   const summary = workoutSummary(workout, loadContext)
+  // Same rule as fitnessProjection.plannedLoad(): runs have no (FTP based) estimate.
+  const load = workout.discipline !== 'run' && Number.isFinite(summary?.load) && summary.load >= 0 ? summary.load : null
   return {
     id: workout.id,
     kind: 'planned',
@@ -441,7 +443,8 @@ export function plannedToEvent(workout, today = new Date(), loadContext = null) 
     distanceM: 0,
     durationS: summary?.durationS || 0,
     durationPartial: !!summary?.partial,
-    metric: summary?.load ? { label: 'TL', value: `~TL ${summary.load}`, ...(summary.loadAssumed ? { title: 'Estimate assumes LT1 = 75% and LT2 = 100% of FTP (no lactate thresholds set)' } : {}) } : null,
+    load,
+    metric: load ? { label: 'TL', value: `~TL ${load}`, ...(summary.loadAssumed ? { title: 'Estimate assumes LT1 = 75% and LT2 = 100% of FTP (no lactate thresholds set)' } : {}) } : null,
     status: plannedStatus(workout, today),
     plannedId: workout.id,
     activityId: workout.activity_id || null,

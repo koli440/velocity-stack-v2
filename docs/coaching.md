@@ -291,3 +291,12 @@ Coaches read an athlete's gym load only through coach-safe paths: `shared_activi
 - Not included: the optional what-if ("add a hypothetical load") is a follow-up.
 
 Coaches read the catalogue through RLS (`is_coach_of(owner_id)`), so a rider's private exercises are visible to their coach; coach edits can pick catalogue exercises but only the owner can suggest new ones.
+
+## Training load in the calendar (`src/lib/calendarLoad.js`)
+The calendar shows TL for completed and planned items. No migration.
+- **Completed** activities use `activityLoad()` from `fitnessForm.js` (same as Fitness): stored `training_load`, else the HR estimate; gym uses the stored model estimate. Estimates are marked `~` (`TL ~85`), stored loads are plain (`TL 85`). Chips show a solid green pill. The HR estimate needs `avg_hr` / `elapsed_time_s` (added to the calendar columns, also present in `shared_activities`) and the rider's lactate-threshold history (`useRiderLoadContext`); the owner's query also reads `lt2_hr_at_activity` (not in the coach view, where the history is used).
+- **Planned** workouts keep `~TL` (`plannedToEvent().load`; runs / no estimate = none) and are drawn as a dashed sky outline with "planned".
+- **Day total** (`dayLoad`, same rules as `fitnessProjection`: the past only counts real activities): completed days count ONLY completed activities (a linked planned workout is never added; missed/skipped plans add 0); future days show the remaining planned `~TL`; today shows `completed + ~remaining planned`.
+- **Week** (`weekLoad`): bar of completed TL vs planned `~TL` (every non-skipped planned workout of the week, done ones as the target), like the time bar; planned shows `+` and "(some estimates missing)" when a workout has no estimate.
+- **Gym**: the calendar still shows gym TL, but when the rider's "Include gym sessions in fitness" setting is off the badge is dimmed/struck through and gym is not counted in day/week totals (consistent with Fitness). A coach whose view cannot read that setting sees gym as included.
+- **Data access**: rider values only (activities owner-filtered or via `shared_activities` for coaches; FTP/LT histories of the shown rider).
