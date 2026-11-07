@@ -147,12 +147,12 @@ test('overPlan: no or zero plan never reports over', () => {
   }
 })
 
-test('overPlan: partial plan is "over known plan" without a percentage', () => {
+test('overPlan: partial plan is "over" without a percentage', () => {
   const o = overPlan(120, 100, { partial: true })
   assert.equal(o.over, true)
   assert.equal(o.overPct, null)
   assert.equal(o.partialPlan, true)
-  assert.equal(o.label, 'over known plan')
+  assert.equal(o.label, 'over')
 })
 
 test('monthTotals counts only days of the displayed month', () => {

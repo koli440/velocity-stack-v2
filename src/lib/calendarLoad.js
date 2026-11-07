@@ -176,7 +176,7 @@ export function addLoadToRows(rows, { today = new Date(), ltHistory = [], includ
  * Over-plan geometry of a "completed vs planned" bar (time in seconds or TL, any unit).
  * The bar scale is max(completed, planned): the planned tick sits at planned/scale, the excess is an extra segment beyond it.
  * Decisions: planned <= 0 / missing -> never "over" (nothing to exceed), just completed. A partial plan (some workouts
- * have no estimate / duration) is only a lower bound: the excess is then labelled "over known plan" (no % claim),
+ * have no estimate / duration) is only a lower bound: the excess is then labelled "over" (no % claim),
  * because the unestimated workouts could account for it. `measured` splits the planned part into solid + hatched estimate.
  * @returns { over, excess, overPct (excess vs planned, null when partial), label, scale, tickPct, measuredPct, estimatedPct, overBarPct, fillPct }
  *  all *Pct are percent of the bar width.
@@ -204,7 +204,7 @@ export function overPlan(completed, planned, { measured = completed, partial = f
     estimatedPct: pc(inPlan - mIn),
     overBarPct: pc(excess),
     fillPct: hasPlan ? Math.min(100, Math.round((c / p) * 100)) : 0,
-    label: over ? (partial ? 'over known plan' : 'over plan') : null,
+    label: over ? (partial ? 'over' : 'over plan') : null,
   }
 }
 

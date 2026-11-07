@@ -306,7 +306,7 @@ function PlanBar({ done, planned, measured = done, partial = false, label, value
 
 function overBadge(o, unit, testId) {
   if (!o.over) return null
-  const text = o.partialPlan ? `+${Math.round(o.excess)}${unit} over known plan` : `+${o.overPct}% over`
+  const text = o.partialPlan ? `+${Math.round(o.excess)}${unit} over` : `+${o.overPct}% over`
   return (
     <div className="text-[10px] font-bold text-left">
       <span className="inline-block whitespace-nowrap rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400" data-testid={testId}>{text}</span>
@@ -358,7 +358,7 @@ function PlannedTime({ summary }) {
       <PlanBar done={summary.durationS} planned={summary.plannedDurationS} partial={summary.plannedPartial} label="Done vs planned time" valueText={`${formatDuration(summary.durationS)} h of ${formatDuration(summary.plannedDurationS)} h planned`} overText={overTxt} testId="week-time-bar" />
       {o.over && (
         <div className="text-[10px] font-bold text-left">
-          <span className="inline-block whitespace-nowrap rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400" data-testid="week-time-over-label">{o.partialPlan ? `+${formatDuration(o.excess)} h over known plan` : `+${o.overPct}% over`}</span>
+          <span className="inline-block whitespace-nowrap rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400" data-testid="week-time-over-label" title={o.partialPlan ? 'Over the known part of the plan; some workouts have no estimate' : undefined}>{o.partialPlan ? `+${formatDuration(o.excess)} h over` : `+${o.overPct}% over`}</span>
         </div>
       )}
     </div>
@@ -374,7 +374,7 @@ function MonthSummary({ rows }) {
   const timeO = overPlan(t.durationS, t.planned.durationS, { partial: t.planned.durationPartial })
   const types = [['ride', 'ride'], ['run', 'run'], ['gym', 'gym']].filter(([k]) => t.byDiscipline[k] > 0).map(([k, l]) => `${t.byDiscipline[k]} ${l}`).join(' · ')
   const chip = 'rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[11px] font-bold text-slate-700 dark:text-slate-200'
-  const overChip = (o, unit) => o.over && <span className="rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400">{o.partialPlan ? `+${unit(o.excess)} over known plan` : `+${o.overPct}% over`}</span>
+  const overChip = (o, unit) => o.over && <span title={o.partialPlan ? 'Over the known part of the plan; some workouts have no estimate' : undefined} className="rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400">{o.partialPlan ? `+${unit(o.excess)} over` : `+${o.overPct}% over`}</span>
   const tlText = `TL ${t.tl.completed}${t.tl.estimated > 0 ? ` (${t.tl.measured} + ~${t.tl.estimated} est.)` : ''}`
   const tlTip = `Completed TL of the month ${t.tl.completed}${t.tl.estimated > 0 ? ` (${t.tl.measured} measured + ~${t.tl.estimated} estimated)` : ''}; projected with the remaining plan ~${t.tl.projected}${t.tl.unscored ? `; ${t.tl.unscored} not scored` : ''}`
   return (
