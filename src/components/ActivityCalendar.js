@@ -245,7 +245,7 @@ function DayTl({ tl }) {
   const done = tl.mode !== 'planned'
   const plan = tl.plannedRemaining > 0
   return (
-    <span className="flex items-center gap-1 text-[10px] font-bold" data-testid="day-tl" data-mode={tl.mode} title={done && plan ? 'Completed TL + remaining planned TL (estimate)' : done ? 'Completed training load' : 'Planned training load (estimate)'}>
+    <span className="mt-auto flex flex-wrap items-center justify-end gap-1 pt-0.5 text-[10px] font-bold" data-testid="day-tl" data-mode={tl.mode} title={done && plan ? 'Completed TL + remaining planned TL (estimate)' : done ? 'Completed training load' : 'Planned training load (estimate)'}>
       {done && <span className="rounded px-1 bg-emerald-600 text-white dark:bg-emerald-500/90 dark:text-slate-900">TL {tl.completedEstimated ? '~' : ''}{tl.completed}</span>}
       {done && plan && <span className="opacity-60">+</span>}
       {plan && <span className="rounded px-1 border border-dashed border-sky-500/70 text-sky-700 dark:text-sky-300">~TL {tl.plannedRemaining}{done ? '' : ' planned'}{tl.plannedRemainingUnknown ? '+' : ''}</span>}
@@ -615,7 +615,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                   data-today={cell.isToday ? 'true' : undefined}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => dropOnDay(e, cell.date)}
-                  className={`scroll-mt-24 lg:scroll-mt-44 rounded-xl border p-1.5 ${slimOnMobile ? 'min-h-[1.75rem] py-0.5 opacity-80 lg:py-1.5 lg:opacity-100' : 'min-h-[3rem]'} lg:min-h-[6.5rem] space-y-1 ${hideOnMobile ? 'hidden lg:block' : ''} ${
+                  className={`scroll-mt-24 lg:scroll-mt-44 rounded-xl border p-1.5 ${slimOnMobile ? 'min-h-[1.75rem] py-0.5 opacity-80 lg:py-1.5 lg:opacity-100' : 'min-h-[3rem]'} lg:min-h-[6.5rem] flex flex-col gap-1 ${hideOnMobile ? 'hidden lg:flex' : ''} ${
                     cell.isToday
                       ? 'border-emerald-500 bg-emerald-500/5'
                       : 'border-slate-200 dark:border-slate-800'
@@ -626,7 +626,6 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                       <span className="lg:hidden">{formatDate(cell.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                       <span className="hidden lg:inline">{cell.date.getDate()}</span>
                     </span>
-                    <DayTl tl={cell.tl} />
                     <span className="flex items-center">
                     <button
                       type="button"
@@ -662,6 +661,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                   {cell.events.map((e) => (e.kind === 'planned'
                     ? <PlannedChip key={`planned-${e.id}`} event={e} onOpen={(id) => openPlanned(cell.date, id)} />
                     : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} returnTo={returnTo} tl={completedEventLoad(e, { ltHistory: loadContext?.ltHistory || EMPTY, includeGym })} />))}
+                  <DayTl tl={cell.tl} />
                 </div>
               )
             })}
