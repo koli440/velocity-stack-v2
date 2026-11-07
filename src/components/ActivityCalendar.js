@@ -307,7 +307,11 @@ function PlanBar({ done, planned, measured = done, partial = false, label, value
 function overBadge(o, unit, testId) {
   if (!o.over) return null
   const text = o.partialPlan ? `+${Math.round(o.excess)}${unit} over known plan` : `+${o.overPct}% over`
-  return <span className="ml-1 rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400" data-testid={testId}>{text}</span>
+  return (
+    <div className="text-[10px] font-bold text-left">
+      <span className="inline-block whitespace-nowrap rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400" data-testid={testId}>{text}</span>
+    </div>
+  )
 }
 
 // Planned vs done training load of the week, same style as the time bar. Planned = ~TL of every non-skipped
@@ -327,9 +331,9 @@ function PlannedLoad({ tl }) {
             {tl.plannedPartial && tl.planned > 0 ? ' (some estimates missing)' : ''}
           </span>
         )}
-        {overBadge(o, ' TL', 'week-tl-over-label')}
       </div>
       <PlanBar done={tl.completed} planned={tl.planned} measured={tl.measured} partial={tl.plannedPartial} label="Done vs planned training load" valueText={`TL ${tl.completed} of ${tl.planned} planned`} overText={overTxt} testId="week-tl-bar" />
+      {overBadge(o, ' TL', 'week-tl-over-label')}
       {tl.unscored > 0 && (
         <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400" data-testid="week-tl-unscored" title="Completed runs/rides without TL: no average HR, too short, or no LT2 HR in Physiology">
           {tl.unscored} {tl.unscored === 1 ? 'activity' : 'activities'} not scored
@@ -350,9 +354,13 @@ function PlannedTime({ summary }) {
           ? `planned ${formatDuration(summary.plannedDurationS)} h${summary.plannedPartial ? '+' : ''}`
           : 'planned time unknown'}
         {summary.plannedPartial && summary.plannedDurationS > 0 ? ' (some durations unknown)' : ''}
-        {o.over && <span className="ml-1 rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400" data-testid="week-time-over-label">{o.partialPlan ? `+${formatDuration(o.excess)} h over known plan` : `+${o.overPct}% over`}</span>}
       </div>
       <PlanBar done={summary.durationS} planned={summary.plannedDurationS} partial={summary.plannedPartial} label="Done vs planned time" valueText={`${formatDuration(summary.durationS)} h of ${formatDuration(summary.plannedDurationS)} h planned`} overText={overTxt} testId="week-time-bar" />
+      {o.over && (
+        <div className="text-[10px] font-bold text-left">
+          <span className="inline-block whitespace-nowrap rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400" data-testid="week-time-over-label">{o.partialPlan ? `+${formatDuration(o.excess)} h over known plan` : `+${o.overPct}% over`}</span>
+        </div>
+      )}
     </div>
   )
 }
