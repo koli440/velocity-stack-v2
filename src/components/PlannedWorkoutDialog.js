@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Portal from './Portal'
+import useScrollLock from './useScrollLock'
 import WorkoutPreviewChart from './WorkoutPreviewChart'
 import { ftpAt } from '../lib/ftpHistory'
 import PlannedTemplatePicker from './PlannedTemplatePicker'
@@ -61,6 +63,7 @@ function RunResult({ run }) {
 export default function PlannedWorkoutDialog({
   workout, day, names, viewerId, activities, workouts, countByDay, suggestedActivityId, run, actions, onClose, ftpHistory = [], loadContext = null,
 }) {
+  useScrollLock()
   const creating = !workout
   const [title, setTitle] = useState(workout?.title || '')
   const [description, setDescription] = useState(workout?.description || '')
@@ -133,7 +136,8 @@ export default function PlannedWorkoutDialog({
     const choice = 'rounded-xl border border-slate-200 dark:border-slate-700 p-3 text-left hover:border-emerald-500 transition'
     return (
       <>
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3" role="dialog" aria-modal="true" aria-label="Plan workout" onClick={onClose}>
+        <Portal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Plan workout" onClick={onClose}>
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm space-y-3 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 shadow-xl">
             <div>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Plan workout</h3>
@@ -150,6 +154,7 @@ export default function PlannedWorkoutDialog({
             <button type="button" onClick={onClose} className={btn}>Cancel</button>
           </div>
         </div>
+        </Portal>
         {picking && <PlannedTemplatePicker userId={viewerId} onPick={pick} onClose={() => setPicking(false)} />}
       </>
     )
@@ -157,8 +162,9 @@ export default function PlannedWorkoutDialog({
 
   return (
     <>
+    <Portal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 overflow-y-auto" role="dialog" aria-modal="true" aria-label={creating ? 'Plan workout' : 'Planned workout'} onClick={onClose}>
-      <form onSubmit={save} onClick={(e) => e.stopPropagation()} className="w-full max-w-lg space-y-3 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 shadow-xl max-h-[90vh] overflow-y-auto">
+      <form onSubmit={save} onClick={(e) => e.stopPropagation()} className="w-full max-w-lg space-y-3 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 shadow-xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
         <div>
           <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{creating ? 'Plan workout' : 'Planned workout'}</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -323,6 +329,7 @@ export default function PlannedWorkoutDialog({
         </div>
       </form>
     </div>
+    </Portal>
     {picking && <PlannedTemplatePicker userId={viewerId} onPick={pick} onClose={() => setPicking(false)} />}
     </>
   )

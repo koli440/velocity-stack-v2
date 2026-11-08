@@ -1,6 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Portal from './Portal'
+import useScrollLock from './useScrollLock'
 import {
   RACE_NAME_MAX,
   RACE_LOCATION_MAX,
@@ -23,6 +25,7 @@ import { formatDuration, formatKm } from '../lib/calendar'
 // Add / view / edit / delete dialog of a race. `race` is null when adding. Both the rider and the rider's active
 // coach may edit and delete any race (the database decides). A race can be linked to an activity of its day.
 export default function CalendarRaceDialog({ race, day, dayLabel, names, viewerId, activities, races, onSave, onDelete, onClose }) {
+  useScrollLock()
   const [date, setDate] = useState(day)
   const [name, setName] = useState(race?.name || '')
   const [discipline, setDiscipline] = useState(race?.discipline || 'ride')
@@ -65,6 +68,7 @@ export default function CalendarRaceDialog({ race, day, dayLabel, names, viewerI
   const timeLabel = raceTimeLabel(race)
 
   return (
+    <Portal>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto"
       role="dialog"
@@ -75,7 +79,7 @@ export default function CalendarRaceDialog({ race, day, dayLabel, names, viewerI
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md space-y-3 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 shadow-xl"
+        className="w-full max-w-md space-y-3 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 shadow-xl max-h-[calc(100dvh-2rem)] overflow-y-auto"
       >
         <div>
           <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{race ? 'Race' : 'Add race'}</h3>
@@ -173,5 +177,6 @@ export default function CalendarRaceDialog({ race, day, dayLabel, names, viewerI
         </div>
       </form>
     </div>
+    </Portal>
   )
 }
