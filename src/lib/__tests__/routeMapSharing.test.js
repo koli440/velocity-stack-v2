@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import { routeSegments, normalizeRouteMapSharing, ROUTE_MAP_SHARING } from '../routeMapSharing.js'
 import { haversineMeters } from '../privacyZone.js'
 
-const migration = fs.readFileSync(new URL('../../../supabase/migrations/20270142000000_shared_route_map.sql', import.meta.url), 'utf8')
+const migration = fs.readFileSync(new URL('../../../supabase/migrations/20270144000000_shared_route_map_reship.sql', import.meta.url), 'utf8')
 
 test('routeSegments splits at hidden (null) samples instead of bridging them', () => {
   const s = routeSegments([1, 2, null, 4, 5, 6], [1, 2, null, 4, 5, 6])
