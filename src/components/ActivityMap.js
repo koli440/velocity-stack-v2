@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { MAP_TILES } from '@/lib/mapTiles'
 import Icon from './Icon'
+import { routeSegments } from '@/lib/routeMapSharing'
 
 // Leaflet renders the marker shadow with an empty alt; Bing flags that as missing
 class AltIcon extends L.Icon {
@@ -38,19 +39,10 @@ const finishIcon = new AltIcon({
 })
 
 export default function ActivityMap({ latitude = [], longitude = [] }) {
-  // Build the array of [lat, lng] points; discard invalid/zero coordinates (0,0)
-  const points = []
-  const len = Math.min(latitude.length, longitude.length)
-  for (let i = 0; i < len; i++) {
-    const lat = latitude[i]
-    const lng = longitude[i]
-    if (typeof lat === 'number' && typeof lng === 'number' && (lat !== 0 || lng !== 0)) {
-      points.push([lat, lng])
-    }
-  }
-
-  if (points.length < 2) return null
-
+  // Continuous segments only: samples hidden by a privacy zone (null) must not be bridged by a line.
+  const segments = routeSegments(latitude, longitude)
+  if (!segments.length) return null
+  const points = segments.flat()
   const start = points[0]
   const finish = points[points.length - 1]
 
@@ -71,7 +63,7 @@ export default function ActivityMap({ latitude = [], longitude = [] }) {
           maxZoom={MAP_TILES.maxZoom}
           alt="Map tile"
         />
-        <Polyline positions={points} pathOptions={{ color: '#f97316', weight: 4, opacity: 0.9 }} />
+        <Polyline positions={segments} pathOptions={{ color: '#f97316', weight: 4, opacity: 0.9 }} />
         <Marker position={start} icon={startIcon}>
           <Popup>
             <div className="text-slate-900 text-xs font-bold"><Icon name="flag" /> Start</div>

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { fetchPrivacyZone, savePrivacyZone } from '../lib/social'
 import { backfillRoutePreviews } from '../lib/feedSync'
 import { ACTIVITIES_CHANGED_EVENT } from '../lib/navigation'
+import { ROUTE_MAP_SHARING, normalizeRouteMapSharing } from '../lib/routeMapSharing'
 import { DEFAULT_ZONE_RADIUS_M, MIN_ZONE_RADIUS_M, MAX_ZONE_RADIUS_M, validateZone } from '../lib/privacyZone'
 
 // GPS privacy zone settings (issue #49). Other riders never get raw GPS (restricted view);
@@ -16,9 +17,12 @@ export default function PrivacyZonePanel({ userId, onChanged }) {
   const [radius, setRadius] = useState(String(DEFAULT_ZONE_RADIUS_M))
   const [status, setStatus] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [sharing, setSharing] = useState('public')
 
   useEffect(() => {
     if (!userId) return
+    supabase.from('profiles').select('route_map_sharing').eq('id', userId).maybeSingle()
+      .then(({ data }) => setSharing(normalizeRouteMapSharing(data?.route_map_sharing)))
     fetchPrivacyZone(supabase, userId).then(({ zone }) => {
       if (!zone) return
       setEnabled(true)
@@ -55,6 +59,18 @@ export default function PrivacyZonePanel({ userId, onChanged }) {
     window.dispatchEvent(new Event(ACTIVITIES_CHANGED_EVENT))
   }
 
+  const changeSharing = async (value) => {
+    const previous = sharing
+    setSharing(value)
+    setStatus(null)
+    const { error } = await supabase.from('profiles').update({ route_map_sharing: value }).eq('id', userId)
+    if (error) {
+      setSharing(previous)
+      return setStatus({ error: error.message })
+    }
+    setStatus({ ok: 'Route map sharing saved' })
+  }
+
   const save = () => {
     const zone = { lat, lng, radius }
     const problem = validateZone(zone)
@@ -68,9 +84,22 @@ export default function PrivacyZonePanel({ userId, onChanged }) {
     <div className="glass-dense p-4 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder space-y-3">
       <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 dark:text-white">Privacy zone</h3>
       <p className="text-[11px] text-slate-500">
-        Other riders never receive raw GPS, and the route shown in shared feeds hides everything inside this circle
-        (e.g. your home). Your own detail page still shows the full route.
+        Riders you share the route map with never receive points inside this circle (e.g. your home): they are removed
+        on the server before anything is sent. Your own detail page still shows the full route.
       </p>
+      <label className="block text-[11px] text-slate-600 dark:text-slate-300">
+        <span className="font-bold">Who can see the route map</span>
+        <select
+          value={sharing}
+          onChange={(e) => changeSharing(e.target.value)}
+          aria-label="Who can see the route map"
+          data-testid="route-map-sharing"
+          className="ml-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent px-1 py-0.5"
+        >
+          {Object.entries(ROUTE_MAP_SHARING).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+        </select>
+        <span className="block text-slate-400">{ROUTE_MAP_SHARING[sharing].hint} Only applies to activities others may already see (activity visibility).</span>
+      </label>
       <label className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
         <input
           type="checkbox"

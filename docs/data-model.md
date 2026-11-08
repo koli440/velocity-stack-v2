@@ -3,7 +3,7 @@
 | Layer | Contents | Who can read |
 |-------|----------|--------------|
 | `auth.users` | Credentials only (email, password, metadata used once at signup) | Auth service |
-| `public.profiles` | Identity (`first_name`, `last_name`, `nickname`), training defaults, `theme_preference`, privacy zone, `require_follow_approval`, `discoverable_by_email`, `avatar_url`, `is_bot`, `bot_persona` | Own row only (RLS); legacy, kept for backward compatibility (see Connections) |
+| `public.profiles` | Identity (`first_name`, `last_name`, `nickname`), training defaults, `theme_preference`, privacy zone, `route_map_sharing` (off/coach/followers/public, default public, opt-out in Settings), `require_follow_approval`, `discoverable_by_email`, `avatar_url`, `is_bot`, `bot_persona` | Own row only (RLS); legacy, kept for backward compatibility (see Connections) |
 | `public.profile_secrets` | `intervals_athlete_id`, `intervals_api_key` | Own row only (RLS) |
 | `public.public_profiles` (view) | `id, display_name, nickname, first_name, last_name, require_follow_approval, is_bot, avatar_url` (blocked riders filtered out) | Authenticated riders |
 | `search_riders` / `get_rider_profile` (SECURITY DEFINER RPCs) | Ranked search and profile with follow state, ride counts, last ride | Authenticated riders |

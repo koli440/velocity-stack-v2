@@ -18,7 +18,7 @@ The controller of your personal data is **Jan Kolář**, an individual based in 
 
 **Training data**
 - Activity files you upload (FIT files) and rides imported from Strava, Intervals.icu, Wahoo or Garmin, with the metrics we derive from them: power, speed, cadence, heart rate and other sensor streams, distance, time, curves, training load and similar telemetry.
-- **Location data:** activities may contain GPS coordinates and routes. They are shown on maps in the app. You can set a privacy zone around your home so that other riders see the route masked inside that zone.
+- **Location data:** activities may contain GPS coordinates and routes. They are shown on maps in the app. By default, riders who are allowed to see an activity can also see its route map; you can turn this off, or limit it to your coach or followers, in Settings → Privacy zone. You can also set a privacy zone around your home: points inside it are removed on our servers before any route is shown to other riders.
 - **Health-related data:** heart rate and other physiological measurements, weight, FTP and other threshold values (for example lactate thresholds) and the power zones derived from them.
 - Gear, templates and run results, personal bests, aero tests, planned workouts, calendar notes and races, comments, photos you attach to rides, and the feedback or bug reports you send us.
 
