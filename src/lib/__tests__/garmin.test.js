@@ -20,7 +20,7 @@ import {
   NO_WORKOUT_PERMISSION_MESSAGE,
 } from '../garmin.js'
 import { handleGarminPush } from '../server/garminWebhook.js'
-import { buildGarminWorkout, garminPushState, garminPushHash } from '../garminPlan.js'
+import { buildGarminWorkout, garminPushState, garminPushHash, GARMIN_POWER_TARGETS, normalizePowerTarget } from '../garminPlan.js'
 import { createGarminPlanClient } from '../server/garminPlans.js'
 import { createGarminProvider } from '../server/garminProvider.js'
 import { sourcePriority } from '../activityDuplicates.js'
@@ -153,7 +153,7 @@ test('garmin plan: steps, repeats, watts from FTP and warnings', () => {
   assert.equal(steps[0].intensity, 'WARMUP')
   assert.equal(steps[1].type, 'WorkoutRepeatStep')
   assert.equal(steps[1].repeatValue, 3)
-  assert.equal(steps[1].steps[0].targetType, 'POWER')
+  assert.equal(steps[1].steps[0].targetType, 'POWER_LAP')
   assert.equal(steps[1].steps[0].targetValueLow, 200)
   assert.equal(steps[1].steps[1].targetType, 'OPEN')
   assert.equal(steps.at(-1).intensity, 'COOLDOWN')
@@ -171,6 +171,30 @@ test('garmin plan: no FTP keeps the length and warns; no steps gives no workout'
   assert.equal(r.workout.segments[0].steps[0].targetType, 'OPEN')
   assert.ok(r.warnings.some((x) => /FTP/.test(x)))
   assert.equal(buildGarminWorkout({ id: 'w2', title: 'x' }).workout, null)
+})
+
+test('garmin plan: power target type follows the rider setting, default lap average', () => {
+  const w = { id: 'w1', workout_date: '2026-11-04', title: 't', structure_manifest: { steps: [
+    { role: 'work', keyBy: 'time', targetDurationSec: 60, bandType: 'pct_ftp', powerMin: 90, powerMax: 100 },
+    { role: 'work', keyBy: 'time', targetDurationSec: 60, bandType: 'watts', powerMin: 150, powerMax: 160 },
+    { role: 'work', keyBy: 'time', targetDurationSec: 60, bandType: 'cadence_rpm', powerMin: 90, powerMax: 100 },
+  ] } }
+  const types = (opts) => buildGarminWorkout(w, { ftp: 200, ...opts }).workout.segments[0].steps.map((s) => s.targetType)
+  assert.deepEqual(types(), ['POWER_LAP', 'POWER_LAP', 'CADENCE'])
+  assert.deepEqual(types({ powerTarget: 'POWER' }), ['POWER', 'POWER', 'CADENCE'])
+  assert.deepEqual(types({ powerTarget: 'POWER_3S' }), ['POWER_3S', 'POWER_3S', 'CADENCE'])
+  assert.deepEqual(types({ powerTarget: 'bogus' }), ['POWER_LAP', 'POWER_LAP', 'CADENCE'])
+  assert.deepEqual(Object.keys(GARMIN_POWER_TARGETS), ['POWER', 'POWER_3S', 'POWER_10S', 'POWER_30S', 'POWER_LAP'])
+  assert.equal(normalizePowerTarget(undefined), 'POWER_LAP')
+})
+
+test('garmin push hash and state depend on the power target', () => {
+  const w = { id: 'w1', workout_date: '2026-11-04', title: 't' }
+  assert.notEqual(garminPushHash(w, 'POWER'), garminPushHash(w, 'POWER_LAP'))
+  assert.equal(garminPushHash(w), garminPushHash(w, 'POWER_LAP'))
+  const row = { garmin_workout_id: '1', pushed_hash: garminPushHash(w, 'POWER_LAP'), push_status: 'pushed' }
+  assert.equal(garminPushState(w, row, { power_target: 'POWER_LAP' }), 'pushed')
+  assert.equal(garminPushState(w, row, { power_target: 'POWER' }), 'out_of_date')
 })
 
 test('garmin push state', () => {

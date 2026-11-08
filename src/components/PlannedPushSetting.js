@@ -2,7 +2,8 @@
 // Settings -> Connections -> Intervals.icu: opt-in for the scheduled push of planned workouts.
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { setAutoPush, setWahooAutoPush, setGarminAutoPush } from '../lib/plannedPushClient'
+import { setAutoPush, setWahooAutoPush, setGarminAutoPush, setGarminPowerTarget } from '../lib/plannedPushClient'
+import { GARMIN_POWER_TARGETS, normalizePowerTarget } from '../lib/garminPlan'
 
 export default function PlannedPushSetting({ userId, provider = 'intervals' }) {
   const wahoo = provider === 'wahoo'
@@ -21,7 +22,7 @@ export default function PlannedPushSetting({ userId, provider = 'intervals' }) {
   const load = async () => {
     const { data } = await supabase
       .from('connections')
-      .select('push_planned_workouts, planned_push_at, planned_push_error')
+      .select(garmin ? 'push_planned_workouts, planned_push_at, planned_push_error, push_power_target' : 'push_planned_workouts, planned_push_at, planned_push_error')
       .eq('user_id', userId)
       .eq('provider', provider)
       .maybeSingle()
@@ -42,6 +43,15 @@ export default function PlannedPushSetting({ userId, provider = 'intervals' }) {
     setBusy(false)
   }
 
+  const changeTarget = async (target) => {
+    setBusy(true)
+    setError(null)
+    const err = await setGarminPowerTarget(supabase, target)
+    if (err) setError(err.message)
+    await load()
+    setBusy(false)
+  }
+
   return (
     <div className="space-y-1" data-testid={provider === 'intervals' ? 'planned-push-setting' : `planned-push-setting-${provider}`}>
       <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
@@ -53,6 +63,23 @@ export default function PlannedPushSetting({ userId, provider = 'intervals' }) {
           </span>
         </span>
       </label>
+      {garmin && (
+        <label className="block text-[11px] text-slate-600 dark:text-slate-300">
+          <span className="font-bold">Power shown on your Garmin for workout steps</span>
+          <select
+            className="ml-2 rounded border border-slate-300 dark:border-slate-600 bg-transparent px-1 py-0.5"
+            value={normalizePowerTarget(row.push_power_target)}
+            disabled={busy}
+            onChange={(e) => changeTarget(e.target.value)}
+            data-testid="garmin-power-target"
+          >
+            {Object.entries(GARMIN_POWER_TARGETS).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+          </select>
+          <span className="block text-slate-400">
+            Lap average is what Intervals.icu workouts show on an Edge; Current is instantaneous power (TrainingPeaks style). Changing it re-sends your planned workouts.
+          </span>
+        </label>
+      )}
       {row.push_planned_workouts && row.planned_push_error && <p className="text-[11px] text-red-500">{row.planned_push_error}</p>}
       {error && <p className="text-[11px] text-red-500">{error}</p>}
     </div>

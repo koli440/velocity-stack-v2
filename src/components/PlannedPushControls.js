@@ -49,7 +49,7 @@ export default function PlannedPushControls({ workout, onChanged, provider = 'in
   if (ctx === undefined || ctx === null) return null
   // Wahoo and Garmin are optional: stay out of the way unless the rider connected them.
   if (provider !== 'intervals' && (!ctx.connected || !['ride', 'track'].includes(workout.discipline || 'ride'))) return null
-  const state = P.state(workout, row)
+  const state = P.state(workout, row, ctx)
   const status = plannedStatus(workout)
   const skipped = status === 'skipped'
   const completed = status === 'completed'
