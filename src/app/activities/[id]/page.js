@@ -571,7 +571,7 @@ function ActivityDetail() {
         </div>
       )}
 
-      {/* 2b. GPS route map (only for activities with a satellite recording, e.g. road rides) */}
+      {/* 2b. GPS route map (only for activities with a satellite recording; other riders get it only if the owner shares it, trimmed server-side) */}
       {Array.isArray(activity.time_series?.latitude) && activity.time_series.latitude.length > 1 && (
         <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
           <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -581,6 +581,11 @@ function ActivityDetail() {
             latitude={activity.time_series.latitude}
             longitude={activity.time_series.longitude}
           />
+          {sharedView && (
+            <p className="mt-2 text-[11px] text-slate-400">
+              Shared by the rider. Parts of the route inside their privacy zone are hidden.
+            </p>
+          )}
         </div>
       )}
 
