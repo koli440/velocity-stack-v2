@@ -17,7 +17,7 @@ export default function PrivacyZonePanel({ userId, onChanged }) {
   const [radius, setRadius] = useState(String(DEFAULT_ZONE_RADIUS_M))
   const [status, setStatus] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [sharing, setSharing] = useState('followers')
+  const [sharing, setSharing] = useState('public')
 
   useEffect(() => {
     if (!userId) return

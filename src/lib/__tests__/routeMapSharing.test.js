@@ -30,9 +30,9 @@ test('zone leak: after server trimming no drawn point is inside the zone', () =>
   for (const [a, b] of pts) assert.ok(haversineMeters(a, b, zone.lat, zone.lng) > zone.r)
 })
 
-test('normalizeRouteMapSharing defaults to the privacy-preserving followers mode', () => {
-  assert.equal(normalizeRouteMapSharing('nonsense'), 'followers')
-  assert.equal(normalizeRouteMapSharing(null), 'followers')
+test('normalizeRouteMapSharing defaults to the default (public, opt-out) mode', () => {
+  assert.equal(normalizeRouteMapSharing('nonsense'), 'public')
+  assert.equal(normalizeRouteMapSharing(null), 'public')
   for (const k of Object.keys(ROUTE_MAP_SHARING)) assert.equal(normalizeRouteMapSharing(k), k)
 })
 
@@ -43,5 +43,5 @@ test('migration: shared_activities only exposes GPS via shared_route_gps, never 
   assert.match(view, /can_view_route_map\(/)
   assert.doesNotMatch(view, /a\.time_series,/)
   assert.match(migration, /trim_gps_to_zone\(/)
-  assert.match(migration, /DEFAULT 'followers'/)
+  assert.match(migration, /DEFAULT 'public'/)
 })

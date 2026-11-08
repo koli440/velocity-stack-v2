@@ -4,15 +4,16 @@
 --   activity visibility (private / followers / public) which still decides who can open the activity at all:
 --     'off'       nobody but the owner
 --     'coach'     the owner's active coach
---     'followers' coach + followers (DEFAULT: privacy-preserving, strangers on a public activity get no map)
---     'public'    everyone who can view the activity
+--     'followers' coach + followers
+--     'public'    everyone who can view the activity (DEFAULT, also for existing riders; opt out in Settings;
+--                 the privacy zone is always trimmed server-side)
 -- * shared_route_gps(): the ONLY place GPS leaves the owner's row. Returns NULL (no GPS) unless the viewer is allowed,
 --   and removes every sample inside the owner's privacy zone (replaced by null, arrays stay index aligned).
 --   Untrimmed coordinates are never returned to anyone but the owner.
 -- * shared_activities (view): time_series carries the trimmed GPS; route_preview obeys the same setting.
 -- Other functions returning a rider's streams (coach_template_run_inputs) keep stripping GPS: they do not need it.
 
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS route_map_sharing TEXT NOT NULL DEFAULT 'followers';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS route_map_sharing TEXT NOT NULL DEFAULT 'public';
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_route_map_sharing_valid;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_route_map_sharing_valid
     CHECK (route_map_sharing IN ('off', 'coach', 'followers', 'public'));

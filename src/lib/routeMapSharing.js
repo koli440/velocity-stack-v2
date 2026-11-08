@@ -7,7 +7,7 @@ export const ROUTE_MAP_SHARING = Object.freeze({
   followers: { label: 'Coach and followers', hint: 'Followers who can see the activity (and your coach) see the route.' },
   public: { label: 'Everyone who can see the activity', hint: 'Also riders who are not following you, on public activities.' },
 })
-export const DEFAULT_ROUTE_MAP_SHARING = 'followers'
+export const DEFAULT_ROUTE_MAP_SHARING = 'public'
 
 export const normalizeRouteMapSharing = (v) => (Object.hasOwn(ROUTE_MAP_SHARING, v) ? v : DEFAULT_ROUTE_MAP_SHARING)
 

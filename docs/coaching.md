@@ -20,7 +20,7 @@ Follow notifications are deduplicated (one unread per recipient + actor + type, 
 ## Privacy rules
 - Coaches read everything of the athlete, including private activities, curves, templates, PBs and histories.
 - Activities are read only via `shared_activities`. GPS (route map) is returned only if `can_view_route_map()` allows it
-  (`profiles.route_map_sharing`: off / coach / followers (default) / public; an active coach always qualifies unless `off`)
+  (`profiles.route_map_sharing`: off / coach / followers / public (default); an active coach always qualifies unless `off`)
   and is trimmed server-side to the owner's privacy zone (`shared_route_gps`, `trim_gps_to_zone`); otherwise latitude/longitude
   are stripped. Raw GPS and `raw_file_url` never leave the owner-only `activities` table. `route_preview` follows the same rule.
 - Never exposed: connection tokens, `profile_secrets`, email. `get_athlete_profile` returns training fields only.
