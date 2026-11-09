@@ -330,7 +330,7 @@ function BulkImportModalInner({
 
 export default function BulkImportModal(props) {
   return (
-    <Portal>
+    <Portal lockScroll>
       <BulkImportModalInner {...props} />
     </Portal>
   )

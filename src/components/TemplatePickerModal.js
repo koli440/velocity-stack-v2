@@ -234,12 +234,12 @@ export default function TemplatePickerModal({
   const heading = 'text-[10px] font-black uppercase tracking-wider text-slate-400'
 
   return (
-    <Portal>
+    <Portal lockScroll>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose} onKeyDown={onKeyDown}>
         <div
           role="dialog"
           aria-label={title}
-          className="w-full max-w-4xl h-[80vh] flex flex-col bg-white dark:bg-surface-darkCard rounded-3xl border border-slate-200 dark:border-surface-darkBorder"
+          className="w-full max-w-4xl h-[80dvh] flex flex-col bg-white dark:bg-surface-darkCard rounded-3xl border border-slate-200 dark:border-surface-darkBorder"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-5 pb-3 space-y-3">

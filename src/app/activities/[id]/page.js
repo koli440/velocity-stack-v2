@@ -479,7 +479,7 @@ function ActivityDetail() {
       )}
 
       {showDeleteConfirm && (
-        <Portal><div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
+        <Portal lockScroll><div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
           <div className="w-full max-w-sm space-y-4 bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl">
             <h2 className="text-base font-black text-slate-900 dark:text-white">Delete this activity?</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">

@@ -186,7 +186,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
       </div>
 
       {lightbox && (
-        <Portal><div
+        <Portal lockScroll><div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 p-4 bg-slate-950/90"
           role="dialog"
           aria-modal="true"

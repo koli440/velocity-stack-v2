@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import Portal from './Portal'
+import useScrollLock from './useScrollLock'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX, noteAuthorLabel, noteEditedLabel, validateNote } from '../lib/calendarNotes'
 
 // Add / view / edit / delete dialog of a calendar note. `note` is null when adding.
 // Both the rider and the rider's active coach may edit and delete any note (the database decides).
 export default function CalendarNoteDialog({ note, dayLabel, names, viewerId, onSave, onDelete, onClose }) {
+  useScrollLock()
   const [title, setTitle] = useState(note?.title || '')
   const [body, setBody] = useState(note?.body || '')
   const [busy, setBusy] = useState(false)
@@ -34,8 +37,9 @@ export default function CalendarNoteDialog({ note, dayLabel, names, viewerId, on
   const edited = note ? noteEditedLabel(note, names, viewerId) : null
 
   return (
+    <Portal>
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label={note ? 'Calendar note' : 'Add calendar note'}
@@ -44,7 +48,7 @@ export default function CalendarNoteDialog({ note, dayLabel, names, viewerId, on
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md space-y-3 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 shadow-xl"
+        className="w-full max-w-md space-y-3 rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-4 shadow-xl max-h-[calc(100dvh-2rem)] overflow-y-auto"
       >
         <div>
           <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{note ? 'Note' : 'Add note'}</h3>
@@ -92,5 +96,6 @@ export default function CalendarNoteDialog({ note, dayLabel, names, viewerId, on
         </div>
       </form>
     </div>
+    </Portal>
   )
 }

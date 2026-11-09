@@ -236,7 +236,7 @@ function LoginFeaturesModalInner({ open, onClose }) {
         aria-modal="true"
         aria-labelledby="login-features-title"
         tabIndex={-1}
-        className="bg-white/15 dark:bg-white/10 backdrop-blur-2xl backdrop-saturate-150 border border-white/20 rounded-3xl w-full max-w-4xl h-[min(640px,92vh)] flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_8px_32px_rgba(0,0,0,0.35)] text-white focus:outline-none"
+        className="bg-white/15 dark:bg-white/10 backdrop-blur-2xl backdrop-saturate-150 border border-white/20 rounded-3xl w-full max-w-4xl h-[min(640px,92dvh)] flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_8px_32px_rgba(0,0,0,0.35)] text-white focus:outline-none"
       >
         <div className="flex justify-between items-center px-6 py-4 border-b border-white/15">
           <h2 id="login-features-title" className="text-[15px] font-black uppercase text-white">

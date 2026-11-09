@@ -159,7 +159,7 @@ function Inner({ template, metricKeys, filter = 'all', rider = null, athleteName
 
 export default function TemplateRunsModal(props) {
   return (
-    <Portal>
+    <Portal lockScroll>
       <Inner {...props} />
     </Portal>
   )
