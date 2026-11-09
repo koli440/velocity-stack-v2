@@ -234,7 +234,7 @@ export default function PursuitPage() {
 
   const personalCurve =
     userId && usePersonal && pbRecords && lapsInfo.valid && lapsInfo.laps > 1
-      ? buildPacingCurve(pbRecords, lapsInfo.laps)
+      ? buildPacingCurve(pbRecords, lapsInfo.laps, { trackLengthM })
       : null
 
   const strategyParams =
@@ -256,7 +256,7 @@ export default function PursuitPage() {
     strategyParams && personalCurve?.ok
       ? calculatePursuitStrategy({
           ...strategyParams,
-          lapTimesS: applyPacingShape(personalCurve.shape, targetSeconds),
+          lapTimesS: applyPacingShape(personalCurve.shape, targetSeconds, personalCurve.firstLap?.seconds),
         })
       : null
   const strategy = personalStrategy || genericStrategy
@@ -489,6 +489,13 @@ export default function PursuitPage() {
                 <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                   Based on {personalCurve.recordsUsed} of {personalCurve.recordsTotal} record
                   {personalCurve.recordsTotal === 1 ? '' : 's'} with lap splits.
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {personalCurve.firstLap
+                    ? `Lap 1: ${personalStrategy.laps[0].lapTimeS.toFixed(1)} s, weighted average of ${personalCurve.firstLap.used} record${
+                        personalCurve.firstLap.used === 1 ? '' : 's'
+                      }, newer weigh more.`
+                    : `Lap 1: ${personalStrategy.laps[0].lapTimeS.toFixed(1)} s, from your typical pacing shape (no record with matching laps).`}
                 </p>
                 <PacingChangeChart
                   mine={personalStrategy.laps.map((l) => l.lapTimeS)}

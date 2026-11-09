@@ -9,6 +9,9 @@ import {
   applyPacingShape,
   fallbackMessage,
   lapDeltas,
+  weightedFirstLap,
+  FIRST_LAP_HALF_LIFE_MONTHS,
+  MAX_FIRST_LAP_SHARE,
   FALLBACK_REASONS,
 } from '../pacingCurve.js'
 
@@ -96,4 +99,62 @@ test('lapDeltas gives change vs previous lap, null for lap 1', () => {
   assert.ok(Math.abs(d[2] - 0.5) < 1e-9)
   assert.ok(Math.abs(d[3] - 0.5) < 1e-9)
   assert.deepEqual(lapDeltas([]), [])
+})
+
+const NOW = new Date('2026-11-09')
+const rec = (first, date, extra = {}) => ({
+  lap_times: [first, 19, 19, 19, 19],
+  time_seconds: first + 76,
+  achieved_date: date,
+  ...extra,
+})
+
+test('weightedFirstLap weights newer records more (half weight per half-life)', () => {
+  const r = weightedFirstLap([rec(24, '2026-11-09'), rec(21, '2025-11-09')], 5, { now: NOW })
+  assert.equal(r.used, 2)
+  assert.ok(r.seconds > 22.5 && r.seconds < 24)
+  assert.ok(FIRST_LAP_HALF_LIFE_MONTHS === 12)
+  const eq = weightedFirstLap([rec(24, '2026-11-09'), rec(21, '2026-11-09')], 5, { now: NOW })
+  assert.ok(Math.abs(eq.seconds - 22.5) < 1e-9)
+})
+
+test('weightedFirstLap skips records with a different lap count or lap length', () => {
+  const records = [
+    rec(24, '2026-11-01'),
+    { lap_times: [12, 10, 10, 10, 10, 10, 10, 10, 10, 10], time_seconds: 102, achieved_date: '2026-11-01' },
+    rec(30, '2026-11-01', { split_distance_m: 333 }),
+  ]
+  const r = weightedFirstLap(records, 5, { trackLengthM: 250, now: NOW })
+  assert.equal(r.used, 1)
+  assert.equal(r.seconds, 24)
+  assert.equal(weightedFirstLap([records[1]], 5, { trackLengthM: 250, now: NOW }), null)
+})
+
+test('buildPacingCurve exposes firstLap and falls back to null when none match', () => {
+  const ok = buildPacingCurve([rec(23, '2026-10-01')], 5, { now: NOW })
+  assert.equal(ok.firstLap.used, 1)
+  const none = buildPacingCurve([{ lap_times: [10, 9, 9, 10], time_seconds: 38 }], 8, { now: NOW })
+  assert.equal(none.ok, true)
+  assert.equal(none.firstLap, null)
+})
+
+test('applyPacingShape with a first lap keeps the total and the shape of laps 2..N', () => {
+  const shape = [0.1, -0.05, -0.02, -0.03]
+  const base = applyPacingShape(shape, 100)
+  const laps = applyPacingShape(shape, 100, 30)
+  assert.equal(laps[0], 30)
+  assert.ok(Math.abs(sum(laps) - 100) < 1e-9)
+  assert.ok(Math.abs(laps[1] / laps[2] - base[1] / base[2]) < 1e-9)
+})
+
+test('applyPacingShape clamps the first lap and ignores unusable values', () => {
+  const shape = [0.1, -0.05, -0.02, -0.03]
+  const hi = applyPacingShape(shape, 100, 90)
+  assert.ok(Math.abs(hi[0] - 100 * MAX_FIRST_LAP_SHARE) < 1e-9)
+  const lo = applyPacingShape(shape, 100, 5)
+  assert.ok(Math.abs(lo[0] - 25) < 1e-9)
+  assert.ok(Math.abs(sum(hi) - 100) < 1e-9 && Math.abs(sum(lo) - 100) < 1e-9)
+  for (const bad of [null, undefined, NaN, 0, -3]) {
+    assert.deepEqual(applyPacingShape(shape, 100, bad), applyPacingShape(shape, 100))
+  }
 })
