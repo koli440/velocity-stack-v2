@@ -9,6 +9,7 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  Legend,
 } from 'recharts'
 import { supabase } from '../../lib/supabase'
 import DisciplineSuggest from '../../components/DisciplineSuggest'
@@ -24,7 +25,7 @@ import VelodromePicker from '../../components/VelodromePicker'
 import Icon from '../../components/Icon'
 import GearPicker, { useGearState } from '../../components/GearPicker'
 import { LockedExtra, LockedHint, SignupBanner } from '../../components/SignupCatch'
-import { buildPacingCurve, applyPacingShape, fallbackMessage, lapDeltas, chartScale, barShare } from '../../lib/pacingCurve'
+import { buildPacingCurve, applyPacingShape, fallbackMessage, lapTimeRange } from '../../lib/pacingCurve'
 import { parseGear, PURSUIT_GEAR_START } from '../../lib/gear'
 
 import ChartTooltip from '@/components/ChartTooltip'
@@ -50,82 +51,116 @@ const STRATEGY_BANNER = {
 
 // "Pursuit Strategist" - migrated from v1's pages/10_pursuit.py. Account-free: AppShell lists it in
 // the public tool paths (src/lib/publicPaths.js). Home track and saved gear are signed-in extras.
-function fmtDelta(d) {
-  return `${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d).toFixed(2)}s`
-}
+const MINE_COLOR = '#10b981'
+const GENERIC_COLOR = '#f59e0b'
 
-function PacingChangeChart({ mine, generic }) {
-  const myD = lapDeltas(mine)
-  const genD = lapDeltas(generic)
-  const { max, clipped } = chartScale([myD, genD])
-  const anyClipped = clipped.some(Boolean)
-  // Bars use at most 80% of the half-height so the value labels fit next to the bar end.
-  const pos = (d) => barShare(d, max) * 80
-  const faster = myD.slice(1).filter((d) => d < 0).length
-  const summary = `Change vs previous lap, ${myD.length - 1} laps after the start: ${faster} faster, ${
-    myD.length - 1 - faster
-  } slower. ${myD
-    .map((d, i) => (d === null ? 'Lap 1 start' : `Lap ${i + 1} ${fmtDelta(d)}`))
-    .join(', ')}.`
+function PacingLineChart({ mine, generic }) {
+  const range = lapTimeRange([mine, generic])
+  const data = mine.map((t, i) => ({
+    lap: i + 1,
+    mine: range.clamp(t),
+    generic: range.clamp(generic[i]),
+    mineReal: t,
+    genericReal: generic[i],
+  }))
+  const cut = range.clipped[0] || generic[0] > range.max
+  const summary = `Lap times by lap, ${mine.length} laps. My pacing: ${mine
+    .map((t, i) => `lap ${i + 1} ${t.toFixed(2)} s`)
+    .join(', ')}. Generic plan: ${generic.map((t, i) => `lap ${i + 1} ${t.toFixed(2)} s`).join(', ')}.`
+  const renderDot = (key, color, realKey) => (props) => {
+    const { cx, cy, payload, index } = props
+    if (cx == null || cy == null) return <g key={`${key}-${index}`} />
+    const isCut = index === 0 && payload[realKey] > range.max
+    return (
+      <g key={`${key}-${index}`}>
+        <circle cx={cx} cy={cy} r={3.5} fill={color} stroke="#fff" strokeWidth={1} />
+        {isCut && (
+          <>
+            <path d={`M${cx - 6} ${cy + 2} l4 -4 l4 4 l4 -4`} stroke={color} strokeWidth={1.5} fill="none" />
+            <text
+              x={cx + 8}
+              y={cy + (key === 'mine' ? 12 : 0)}
+              fontSize={10}
+              fill={color}
+              fontWeight={600}
+            >
+              {`${payload[realKey].toFixed(1)} s`}
+            </text>
+          </>
+        )}
+      </g>
+    )
+  }
   return (
     <div className="space-y-1">
-      <div role="img" aria-label={summary} className="flex gap-0.5 sm:gap-1">
-        {myD.map((d, i) => {
-          const up = d !== null && d < 0
-          const label = d === null ? '' : fmtDelta(d)
-          return (
-            <div key={i} className="flex-1 min-w-0 text-center">
-              <div
-                className="relative h-36 sm:h-48"
-                title={d === null ? 'Lap 1: start' : `Lap ${i + 1}: ${label} vs previous lap`}
-              >
-                <div className="absolute inset-x-0 top-1/2 border-t border-slate-300 dark:border-slate-600" />
-                {d === null ? (
-                  <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-[9px] sm:text-[10px] text-slate-400">
-                    start
-                  </span>
-                ) : (
-                  <>
-                    <div
-                      style={{ height: `${pos(d) / 2}%` }}
-                      className={`absolute inset-x-[15%] rounded-sm ${
-                        up ? 'bottom-1/2 bg-emerald-500' : 'top-1/2 bg-amber-400'
-                      }`}
-                    >
-                      {clipped[i] && (
-                        <div
-                          className={`absolute inset-x-[-10%] h-1 -rotate-6 bg-white dark:bg-slate-900 ${
-                            up ? 'top-1/3' : 'bottom-1/3'
-                          }`}
-                        />
-                      )}
-                    </div>
-                    <div
-                      style={up ? { bottom: `calc(50% + ${pos(d) / 2}%)` } : { top: `calc(50% + ${pos(d) / 2}%)` }}
-                      className="absolute inset-x-0 text-[9px] sm:text-[10px] leading-3 text-slate-600 dark:text-slate-300 whitespace-nowrap"
-                    >
-                      {clipped[i] ? `${label} ✂` : label}
-                    </div>
-                    {genD[i] !== null && (
-                      <div
-                        style={{ top: `${50 - (Math.sign(-genD[i]) * Math.min(100, barShare(genD[i], max) * 100) * 0.4)}%` }}
-                        className="absolute inset-x-0 border-t-2 border-slate-500/50 dark:border-slate-300/50"
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-              <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">{i + 1}</div>
-            </div>
-          )
-        })}
+      <div role="img" aria-label={summary} className="h-40 sm:h-56 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 14, right: 12, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.25} />
+            <XAxis dataKey="lap" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={8} />
+            <YAxis
+              domain={[range.min, range.max]}
+              ticks={range.ticks}
+              allowDataOverflow
+              width={38}
+              tick={{ fontSize: 10 }}
+              tickFormatter={(v) => `${Number(v).toFixed(1)}`}
+              unit=""
+            />
+            <Tooltip
+              cursor={TOOLTIP_CURSOR_LINE}
+              content={
+                <ChartTooltip
+                  labelFormatter={(l) => `Lap ${l}`}
+                  render={({ payload }) => {
+                    const d = payload[0]?.payload
+                    if (!d) return null
+                    return (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: MINE_COLOR }} />
+                          <span className="text-slate-500 dark:text-slate-400">My pacing</span>
+                          <span className="ml-auto pl-3 font-bold tabular-nums">{d.mineReal.toFixed(2)} s</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: GENERIC_COLOR }} />
+                          <span className="text-slate-500 dark:text-slate-400">Generic plan</span>
+                          <span className="ml-auto pl-3 font-bold tabular-nums">{d.genericReal.toFixed(2)} s</span>
+                        </div>
+                      </>
+                    )
+                  }}
+                />
+              }
+            />
+            <Legend wrapperStyle={{ fontSize: 11 }} verticalAlign="bottom" height={20} />
+            <Line
+              type="linear"
+              dataKey="generic"
+              name="Generic plan"
+              stroke={GENERIC_COLOR}
+              strokeWidth={2}
+              dot={renderDot('generic', GENERIC_COLOR, 'genericReal')}
+              activeDot={{ r: 5 }}
+              isAnimationActive={false}
+            />
+            <Line
+              type="linear"
+              dataKey="mine"
+              name="My pacing"
+              stroke={MINE_COLOR}
+              strokeWidth={2}
+              dot={renderDot('mine', MINE_COLOR, 'mineReal')}
+              activeDot={{ r: 5 }}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
       <p className="text-[11px] text-slate-400">
-        Change vs the previous lap, by lap number. Green = faster than the previous lap (speeding up), amber =
-        slower. The grey line shows the generic plan for comparison.
-        {anyClipped
-          ? ' Scale is set by laps 3 onwards so small changes stay visible; the big lap 2 bar is cut (✂), its label shows the real value.'
-          : ''}
+        Lap time (s) by lap number.
+        {cut ? ' Y axis zoomed on laps 2-N so small differences show; lap 1 is cut off (the zigzag marks it, with its real time).' : ''}{' '}
+        Tap or hover a lap for both times.
       </p>
     </div>
   )
@@ -519,7 +554,7 @@ export default function PursuitPage() {
                       }, newer weigh more.`
                     : `Lap 1: ${personalStrategy.laps[0].lapTimeS.toFixed(1)} s, from your typical pacing shape (no record with matching laps).`}
                 </p>
-                <PacingChangeChart
+                <PacingLineChart
                   mine={personalStrategy.laps.map((l) => l.lapTimeS)}
                   generic={genericStrategy.laps.map((l) => l.lapTimeS)}
                 />

@@ -8,9 +8,7 @@ import {
   buildPacingCurve,
   applyPacingShape,
   fallbackMessage,
-  lapDeltas,
-  chartScale,
-  barShare,
+  lapTimeRange,
   weightedFirstLap,
   FIRST_LAP_HALF_LIFE_MONTHS,
   MAX_FIRST_LAP_SHARE,
@@ -94,15 +92,6 @@ test('fallbackMessage mentions the reason', () => {
   assert.match(fallbackMessage(FALLBACK_REASONS.NO_LAPS, { disciplineName: 'X', distanceM: 3000 }), /no usable lap splits/)
 })
 
-test('lapDeltas gives change vs previous lap, null for lap 1', () => {
-  const d = lapDeltas([20, 18, 18.5, 19])
-  assert.equal(d[0], null)
-  assert.ok(Math.abs(d[1] + 2) < 1e-9)
-  assert.ok(Math.abs(d[2] - 0.5) < 1e-9)
-  assert.ok(Math.abs(d[3] - 0.5) < 1e-9)
-  assert.deepEqual(lapDeltas([]), [])
-})
-
 const NOW = new Date('2026-11-09')
 const rec = (first, date, extra = {}) => ({
   lap_times: [first, 19, 19, 19, 19],
@@ -161,24 +150,20 @@ test('applyPacingShape clamps the first lap and ignores unusable values', () => 
   }
 })
 
-test('chartScale uses laps 3..N and clips a dominant lap 2', () => {
-  const d = [null, -5.45, 0.2, -0.1, 0.25]
-  const { max, clipped } = chartScale([d, [null, -1, 0.1, 0, 0]])
-  assert.equal(max, 0.25)
-  assert.deepEqual(clipped, [false, true, false, false, false])
+test('lapTimeRange is set by laps 2..N of both curves and flags a slow lap 1', () => {
+  const r = lapTimeRange([[23.1, 17.2, 17.0, 17.4], [22, 17.1, 17.3, 17.6]])
+  assert.ok(r.min <= 17.0 && r.min > 16.5)
+  assert.ok(r.max >= 17.6 && r.max < 18.5)
+  assert.deepEqual(r.clipped, [true, false, false, false])
+  assert.equal(r.clamp(23.1), r.max)
+  assert.equal(r.ticks.length, 5)
+  assert.equal(r.ticks[0], r.min)
+  assert.equal(r.ticks[4], r.max)
 })
 
-test('chartScale does not clip lap 2 when comparable, and handles short input', () => {
-  assert.equal(chartScale([[null, -0.3, 0.2, 0.25]]).clipped[1], false)
-  const two = chartScale([[null, -2]])
-  assert.equal(two.max, 2)
-  assert.equal(two.clipped[1], false)
-  assert.equal(chartScale([[null, 0, 0]]).max, 0.01)
-})
-
-test('barShare gives tiny non-zero values a minimum and caps at 1', () => {
-  assert.equal(barShare(0, 1), 0)
-  assert.equal(barShare(0.001, 1), 0.04)
-  assert.equal(barShare(-5, 1), 1)
-  assert.equal(barShare(0.5, 1), 0.5)
+test('lapTimeRange does not clip lap 1 inside the range and enforces a minimum span', () => {
+  const r = lapTimeRange([[17.3, 17.3, 17.3]])
+  assert.equal(r.clipped[0], false)
+  assert.ok(r.max - r.min >= 0.2)
+  assert.equal(lapTimeRange([[20]]).clipped[0], false)
 })
