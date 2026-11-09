@@ -309,7 +309,7 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
 
 export default function TemplateCreatorModal(props) {
   return (
-    <Portal lockScroll>
+    <Portal lockScroll={Boolean(props.isOpen)}>
       <TemplateCreatorModalInner {...props} />
     </Portal>
   )

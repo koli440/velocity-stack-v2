@@ -352,7 +352,7 @@ function AddPbModalInner({ isOpen, onClose, tracks = [], onSaved, prefill = null
 
 export default function AddPbModal(props) {
   return (
-    <Portal lockScroll>
+    <Portal lockScroll={Boolean(props.isOpen)}>
       <AddPbModalInner {...props} />
     </Portal>
   )
