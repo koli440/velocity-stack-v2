@@ -51,6 +51,7 @@ import { useRiderLoadContext } from './useRiderLoadContext'
 import { fetchProfilesByIds } from '../lib/social'
 import { shouldAutoScrollToToday, todayScrollBehavior } from '../lib/calendarScroll'
 import { isShownOnMobile, isEmptyDay } from '../lib/calendarMobileDays'
+import { dayTimeLabel } from '../lib/calendarDayTime'
 import { addLoadToRows, completedEventLoad, unscoredReason, UNSCORED_REASONS, overPlan, monthTotals } from '../lib/calendarLoad'
 import { fetchNotesInRange, createNote, updateNote, deleteNote, noteProfileIds } from '../lib/calendarNotes'
 import {
@@ -252,12 +253,22 @@ const tlHintFor = (e, opts) => {
 }
 
 // Day total: past/completed days show completed TL only; today mixes done + remaining plan; future days show the plan.
+function DayTime({ events }) {
+  const label = dayTimeLabel(events)
+  if (!label) return null
+  return (
+    <span className="rounded px-1 text-[10px] font-bold whitespace-nowrap bg-sky-600 text-white dark:bg-sky-300 dark:text-slate-900" data-testid="day-time" title="Total time of the completed activities this day">
+      {label} h
+    </span>
+  )
+}
+
 function DayTl({ tl }) {
   if (!tl || tl.mode === 'none') return null
   const done = tl.mode !== 'planned'
   const plan = tl.plannedRemaining > 0
   return (
-    <span className="mt-auto flex flex-wrap items-center justify-end gap-1 pt-0.5 text-[10px] font-bold" data-testid="day-tl" data-mode={tl.mode} title={done && plan ? 'Completed TL + remaining planned TL (estimate)' : done ? 'Completed training load' : 'Planned training load (estimate)'}>
+    <span className="flex flex-wrap items-center justify-end gap-1 text-[10px] font-bold" data-testid="day-tl" data-mode={tl.mode} title={done && plan ? 'Completed TL + remaining planned TL (estimate)' : done ? 'Completed training load' : 'Planned training load (estimate)'}>
       {done && (
         <span className="rounded px-1 bg-emerald-600 text-white dark:bg-emerald-500/90 dark:text-slate-900" data-testid="day-tl-completed" title={tl.estimated > 0 ? `${tl.measured} measured + ~${tl.estimated} estimated (heart rate or gym model)` : undefined}>
           TL {tl.completed}
@@ -771,7 +782,10 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                   {cell.events.map((e) => (e.kind === 'planned'
                     ? <PlannedChip key={`planned-${e.id}`} event={e} onOpen={(id) => openPlanned(cell.date, id)} />
                     : <EventChip key={`${e.kind}-${e.id}`} event={e} race={raceByActivity.get(e.id)} returnTo={returnTo} tl={completedEventLoad(e, { ltHistory: loadContext?.ltHistory || EMPTY, includeGym })} tlHint={tlHintFor(e, { ltHistory: loadContext?.ltHistory || EMPTY })} />))}
-                  <DayTl tl={cell.tl} />
+                  <div className="mt-auto flex flex-wrap items-center justify-end gap-1 pt-0.5">
+                    <DayTl tl={cell.tl} />
+                    <DayTime events={cell.events} />
+                  </div>
                 </div>
               )
             })}
