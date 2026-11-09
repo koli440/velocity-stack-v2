@@ -20,12 +20,12 @@ export default function PlannedPushSetting({ userId, provider = 'intervals' }) {
   const [error, setError] = useState(null)
 
   const load = async () => {
-    const { data } = await supabase
-      .from('connections')
-      .select(garmin ? 'push_planned_workouts, planned_push_at, planned_push_error, push_power_target' : 'push_planned_workouts, planned_push_at, planned_push_error')
-      .eq('user_id', userId)
-      .eq('provider', provider)
-      .maybeSingle()
+    const query = (cols) => supabase.from('connections').select(cols).eq('user_id', userId).eq('provider', provider).maybeSingle()
+    const base = 'push_planned_workouts, planned_push_at, planned_push_error'
+    let { data, error: loadError } = await query(garmin ? `${base}, push_power_target` : base)
+    // The power target column comes from a newer migration: still show the checkbox if it is missing.
+    if (loadError && garmin) ({ data, error: loadError } = await query(base))
+    if (loadError) setError(`Could not load the ${name} settings: ${loadError.message}`)
     setRow(data || null)
   }
   useEffect(() => {
@@ -33,7 +33,9 @@ export default function PlannedPushSetting({ userId, provider = 'intervals' }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
 
-  if (!row) return null
+  if (!row) {
+    return error ? <p className="text-[11px] text-red-500" role="alert" data-testid="planned-push-load-error">{error}</p> : null
+  }
   const toggle = async (enabled) => {
     setBusy(true)
     setError(null)
