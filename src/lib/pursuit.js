@@ -106,6 +106,8 @@ export function pacingStrategyLabel(pacingDriftS) {
  * @param {number} params.pacingDriftS - per-lap drift from lap 3 onward, in seconds
  * @param {number} params.chainring - front chainring tooth count
  * @param {number} params.cog - rear cog tooth count
+ * @param {number[]} [params.lapTimesS] - explicit lap times (e.g. from a personal pacing curve); when
+ *   given (one per lap) they replace the start-penalty/drift model
  * @param {number} [params.wheelCircumferenceM]
  * @returns {null|{
  *   laps: Array<{lap:number, lapTimeS:number, overallTimeS:number, speedKmh:number, cadenceRpm:number}>,
@@ -126,6 +128,7 @@ export function calculatePursuitStrategy({
   pacingDriftS,
   chainring,
   cog,
+  lapTimesS,
   wheelCircumferenceM = WHEEL_CIRCUMFERENCE_M,
 }) {
   const n = Math.round(laps)
@@ -143,7 +146,9 @@ export function calculatePursuitStrategy({
 
   for (let i = 1; i <= n; i++) {
     let lapTime
-    if (i === 1) {
+    if (Array.isArray(lapTimesS) && lapTimesS.length === n) {
+      lapTime = lapTimesS[i - 1]
+    } else if (i === 1) {
       lapTime = tBase + startPenaltyS
     } else if (i === 2) {
       lapTime = tBase

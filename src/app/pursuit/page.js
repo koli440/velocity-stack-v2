@@ -24,6 +24,7 @@ import VelodromePicker from '../../components/VelodromePicker'
 import Icon from '../../components/Icon'
 import GearPicker, { useGearState } from '../../components/GearPicker'
 import { LockedExtra, LockedHint, SignupBanner } from '../../components/SignupCatch'
+import { buildPacingCurve, applyPacingShape, fallbackMessage } from '../../lib/pacingCurve'
 import { parseGear, PURSUIT_GEAR_START } from '../../lib/gear'
 
 import ChartTooltip from '@/components/ChartTooltip'
@@ -65,6 +66,8 @@ export default function PursuitPage() {
   const [startPenalty, setStartPenalty] = useState(5)
   const [pacingDrift, setPacingDrift] = useState(0)
   const [userId, setUserId] = useState(null)
+  const [usePersonal, setUsePersonal] = useState(false)
+  const [pbRecords, setPbRecords] = useState(null)
   // Saved default when set, else a calculator-only starting gear (never saved).
   const { gear, setGear } = useGearState(userId, PURSUIT_GEAR_START)
   const parsedGear = parseGear(gear.chainring, gear.cog)
@@ -149,9 +152,35 @@ export default function PursuitPage() {
       ? getTrackLaps(trackLengthM, distanceM)
       : { laps: 0, valid: false }
 
-  const strategy =
+  // PB Vault records of this discipline at exactly this distance (RLS scopes them to the rider).
+  useEffect(() => {
+    if (!userId || !disciplineName || !(distanceM > 0)) {
+      setPbRecords(null)
+      return
+    }
+    let active = true
+    setPbRecords(null)
+    supabase
+      .from('personal_bests')
+      .select('lap_times, time_seconds')
+      .eq('discipline', disciplineName)
+      .eq('discipline_distance_m', Math.round(distanceM))
+      .then(({ data, error }) => {
+        if (active) setPbRecords(error ? [] : data || [])
+      })
+    return () => {
+      active = false
+    }
+  }, [userId, disciplineName, distanceM])
+
+  const personalCurve =
+    userId && usePersonal && pbRecords && lapsInfo.valid && lapsInfo.laps > 1
+      ? buildPacingCurve(pbRecords, lapsInfo.laps)
+      : null
+
+  const strategyParams =
     gearReady && lapsInfo.valid && lapsInfo.laps > 1 && selectedTrack && selectedDiscipline && targetSeconds > 0
-      ? calculatePursuitStrategy({
+      ? {
           trackLengthM,
           laps: lapsInfo.laps,
           totalDistanceM: distanceM,
@@ -160,8 +189,18 @@ export default function PursuitPage() {
           pacingDriftS: Number(pacingDrift) || 0,
           chainring: parsedGear.chainring,
           cog: parsedGear.cog,
+        }
+      : null
+
+  const genericStrategy = strategyParams ? calculatePursuitStrategy(strategyParams) : null
+  const personalStrategy =
+    strategyParams && personalCurve?.ok
+      ? calculatePursuitStrategy({
+          ...strategyParams,
+          lapTimesS: applyPacingShape(personalCurve.shape, targetSeconds),
         })
       : null
+  const strategy = personalStrategy || genericStrategy
 
   const strategyLabel = pacingStrategyLabel(Number(pacingDrift) || 0)
   const banner = STRATEGY_BANNER[strategyLabel]
@@ -172,6 +211,8 @@ export default function PursuitPage() {
         speedKmh: l.speedKmh,
         cadenceRpm: l.cadenceRpm,
         overallTimeS: l.overallTimeS,
+        genericLapTimeS: genericStrategy?.laps[l.lap - 1]?.lapTimeS,
+        lapTimeS: l.lapTimeS,
       }))
     : []
 
@@ -366,6 +407,55 @@ export default function PursuitPage() {
           </div>
         </div>
 
+        {userId && (
+          <div className="rounded-xl border border-slate-200 dark:border-surface-darkBorder p-3 space-y-2">
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <input
+                type="checkbox"
+                checked={usePersonal}
+                onChange={(e) => setUsePersonal(e.target.checked)}
+                className="accent-emerald-500"
+              />
+              Use my pacing
+            </label>
+            <p className="text-[11px] text-slate-400">
+              Shapes the lap times like your typical effort over this exact distance, from your PB Vault records.
+              Total time stays at your target. Replaces start penalty and drift.
+            </p>
+            {usePersonal && pbRecords === null && (
+              <p className="text-xs text-slate-400">Loading your records…</p>
+            )}
+            {personalCurve?.ok && (
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  Based on {personalCurve.recordsUsed} of {personalCurve.recordsTotal} record
+                  {personalCurve.recordsTotal === 1 ? '' : 's'} with lap splits.
+                </p>
+                <div className="flex items-end gap-1 h-12" aria-label="Your pacing shape">
+                  {personalCurve.shape.map((v, i) => {
+                    const max = Math.max(...personalCurve.shape.map(Math.abs)) || 1
+                    const h = Math.max(4, Math.round((Math.abs(v) / max) * 100))
+                    return (
+                      <div
+                        key={i}
+                        title={`Lap ${i + 1}: ${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}% vs average`}
+                        style={{ height: `${h}%` }}
+                        className={`flex-1 rounded-sm ${v > 0 ? 'bg-amber-400' : 'bg-emerald-500'}`}
+                      />
+                    )
+                  })}
+                </div>
+                <p className="text-[11px] text-slate-400">Amber = slower than your average lap, green = faster.</p>
+              </div>
+            )}
+            {personalCurve && !personalCurve.ok && (
+              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                {fallbackMessage(personalCurve.reason, { disciplineName, distanceM })}
+              </p>
+            )}
+          </div>
+        )}
+
         <div>
           <GearPicker label="Gear" chainring={gear.chainring} cog={gear.cog} onChange={setGear} className="max-w-xs" />
         </div>
@@ -394,10 +484,19 @@ export default function PursuitPage() {
           </div>
 
           {/* Strategy banner */}
-          <div className={`p-4 rounded-2xl border text-sm font-semibold ${banner.className}`}>
-            <div className="font-bold">{banner.label}</div>
-            <div className="text-xs opacity-90 mt-0.5">{banner.detail}</div>
-          </div>
+          {personalStrategy ? (
+            <div className="p-4 rounded-2xl border text-sm font-semibold bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400">
+              <div className="font-bold">Strategy: YOUR PACING</div>
+              <div className="text-xs opacity-90 mt-0.5">
+                Lap times follow your typical effort over {distanceM} m; the generic plan is shown alongside in the splits.
+              </div>
+            </div>
+          ) : (
+            <div className={`p-4 rounded-2xl border text-sm font-semibold ${banner.className}`}>
+              <div className="font-bold">{banner.label}</div>
+              <div className="text-xs opacity-90 mt-0.5">{banner.detail}</div>
+            </div>
+          )}
 
           {/* Splits table */}
           <div className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm overflow-x-auto">
@@ -406,7 +505,8 @@ export default function PursuitPage() {
               <thead>
                 <tr className="text-left text-xs uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-surface-darkBorder">
                   <th className="py-2 pr-4">Lap</th>
-                  <th className="py-2 pr-4">Lap time (s)</th>
+                  <th className="py-2 pr-4">{personalStrategy ? 'My pacing lap time (s)' : 'Lap time (s)'}</th>
+                  {personalStrategy && <th className="py-2 pr-4">Generic lap time (s)</th>}
                   <th className="py-2 pr-4">Overall time</th>
                   <th className="py-2 pr-4">Speed (km/h)</th>
                   <th className="py-2 pr-4">Cadence (RPM)</th>
@@ -420,6 +520,9 @@ export default function PursuitPage() {
                   >
                     <td className="py-1.5 pr-4 font-semibold">{l.lap}</td>
                     <td className="py-1.5 pr-4">{l.lapTimeS.toFixed(3)}</td>
+                    {personalStrategy && (
+                      <td className="py-1.5 pr-4 text-slate-400">{genericStrategy.laps[l.lap - 1].lapTimeS.toFixed(3)}</td>
+                    )}
                     <td className="py-1.5 pr-4">{l.overallTimeS.toFixed(3)}</td>
                     <td className="py-1.5 pr-4">{l.speedKmh.toFixed(1)}</td>
                     <td className="py-1.5 pr-4">{l.cadenceRpm}</td>
