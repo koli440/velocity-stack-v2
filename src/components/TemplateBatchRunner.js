@@ -94,7 +94,7 @@ export default function TemplateBatchRunner({ template, rider = null, athleteNam
   const problems = items.filter((i) => i.status !== 'ok')
 
   return (
-    <Portal>
+    <Portal lockScroll>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && !running && onClose()}>
         <div
           role="dialog"

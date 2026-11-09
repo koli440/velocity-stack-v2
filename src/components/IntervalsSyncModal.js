@@ -297,7 +297,7 @@ function IntervalsSyncModalInner({
 }
 export default function IntervalsSyncModal(props) {
   return (
-    <Portal>
+    <Portal lockScroll>
       <IntervalsSyncModalInner {...props} />
     </Portal>
   )

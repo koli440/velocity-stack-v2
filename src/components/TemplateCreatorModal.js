@@ -309,7 +309,7 @@ function TemplateCreatorModalInner({ isOpen, onClose, onSaved, editingTemplate =
 
 export default function TemplateCreatorModal(props) {
   return (
-    <Portal>
+    <Portal lockScroll>
       <TemplateCreatorModalInner {...props} />
     </Portal>
   )

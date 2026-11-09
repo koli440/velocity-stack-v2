@@ -185,12 +185,12 @@ export default function ExercisePickerModal({ client, ownerId, canSuggest = true
   const rowProps = (ex) => ({ ex, active: ex.id === active?.id, checked: isChecked(ex), onToggle: toggle, onActive: () => setActiveId(ex.id) })
 
   return (
-    <Portal>
+    <Portal lockScroll>
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 sm:p-4" onClick={onClose} onKeyDown={onKeyDown}>
         <div
           role="dialog"
           aria-label={title}
-          className="w-full max-w-2xl h-[88vh] sm:h-[80vh] flex flex-col bg-white dark:bg-surface-darkCard rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-surface-darkBorder"
+          className="w-full max-w-2xl h-[88dvh] sm:h-[80dvh] flex flex-col bg-white dark:bg-surface-darkCard rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-surface-darkBorder"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-4 sm:p-5 pb-3 space-y-3">
