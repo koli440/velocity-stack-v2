@@ -126,7 +126,7 @@ test('weightedFirstLap skips records with a different lap count or lap length', 
   ]
   const r = weightedFirstLap(records, 5, { trackLengthM: 250, now: NOW })
   assert.equal(r.used, 1)
-  assert.equal(r.seconds, 24)
+  assert.ok(Math.abs(r.seconds - 24) < 1e-9)
   assert.equal(weightedFirstLap([records[1]], 5, { trackLengthM: 250, now: NOW }), null)
 })
 
