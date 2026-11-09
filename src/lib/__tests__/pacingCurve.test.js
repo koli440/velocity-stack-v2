@@ -9,6 +9,8 @@ import {
   applyPacingShape,
   fallbackMessage,
   lapDeltas,
+  chartScale,
+  barShare,
   weightedFirstLap,
   FIRST_LAP_HALF_LIFE_MONTHS,
   MAX_FIRST_LAP_SHARE,
@@ -157,4 +159,26 @@ test('applyPacingShape clamps the first lap and ignores unusable values', () => 
   for (const bad of [null, undefined, NaN, 0, -3]) {
     assert.deepEqual(applyPacingShape(shape, 100, bad), applyPacingShape(shape, 100))
   }
+})
+
+test('chartScale uses laps 3..N and clips a dominant lap 2', () => {
+  const d = [null, -5.45, 0.2, -0.1, 0.25]
+  const { max, clipped } = chartScale([d, [null, -1, 0.1, 0, 0]])
+  assert.equal(max, 0.25)
+  assert.deepEqual(clipped, [false, true, false, false, false])
+})
+
+test('chartScale does not clip lap 2 when comparable, and handles short input', () => {
+  assert.equal(chartScale([[null, -0.3, 0.2, 0.25]]).clipped[1], false)
+  const two = chartScale([[null, -2]])
+  assert.equal(two.max, 2)
+  assert.equal(two.clipped[1], false)
+  assert.equal(chartScale([[null, 0, 0]]).max, 0.01)
+})
+
+test('barShare gives tiny non-zero values a minimum and caps at 1', () => {
+  assert.equal(barShare(0, 1), 0)
+  assert.equal(barShare(0.001, 1), 0.04)
+  assert.equal(barShare(-5, 1), 1)
+  assert.equal(barShare(0.5, 1), 0.5)
 })
