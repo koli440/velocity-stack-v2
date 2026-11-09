@@ -196,6 +196,37 @@ export function lapDeltas(lapTimes) {
 }
 
 /**
+ * Scale for the change-vs-previous-lap chart. Laps 3..N set the scale so the big lap 2 change
+ * (acceleration after the standing start) cannot flatten the rest; lap 2 is clipped when it
+ * exceeds the scale by more than `clipRatio`. With fewer than 3 laps all deltas set the scale.
+ * @param {Array<number|null>[]} deltaSets - lapDeltas() outputs sharing one scale
+ * @param {{ clipRatio?: number, minMax?: number }} [opts]
+ * @returns {{ max: number, clipped: boolean[] }} max (s) = full bar; clipped per lap of the first set
+ */
+export function chartScale(deltaSets, { clipRatio = 1.5, minMax = 0.01 } = {}) {
+  const first = deltaSets[0] ?? []
+  const abs = (sets, from) =>
+    sets.flatMap((d) => d.slice(from)).filter((v) => v !== null && Number.isFinite(v)).map(Math.abs)
+  const rest = abs(deltaSets, 2)
+  const max = Math.max(minMax, ...(rest.length ? rest : abs(deltaSets, 1)))
+  const clipped = first.map((d, i) => i === 1 && rest.length > 0 && d !== null && Math.abs(d) > max * clipRatio)
+  return { max, clipped }
+}
+
+/**
+ * Bar length as a share (0..1) of the half-height. Non-zero values get at least `minShare`.
+ * @param {number} d
+ * @param {number} max
+ * @param {number} [minShare]
+ * @returns {number}
+ */
+export function barShare(d, max, minShare = 0.04) {
+  const a = Math.abs(d)
+  if (!(a > 0)) return 0
+  return Math.min(1, Math.max(minShare, a / max))
+}
+
+/**
  * Human-readable reason for falling back to the generic model.
  * @param {string} reason
  * @param {{ disciplineName?: string, distanceM?: number }} ctx

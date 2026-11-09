@@ -24,7 +24,7 @@ import VelodromePicker from '../../components/VelodromePicker'
 import Icon from '../../components/Icon'
 import GearPicker, { useGearState } from '../../components/GearPicker'
 import { LockedExtra, LockedHint, SignupBanner } from '../../components/SignupCatch'
-import { buildPacingCurve, applyPacingShape, fallbackMessage, lapDeltas } from '../../lib/pacingCurve'
+import { buildPacingCurve, applyPacingShape, fallbackMessage, lapDeltas, chartScale, barShare } from '../../lib/pacingCurve'
 import { parseGear, PURSUIT_GEAR_START } from '../../lib/gear'
 
 import ChartTooltip from '@/components/ChartTooltip'
@@ -57,8 +57,10 @@ function fmtDelta(d) {
 function PacingChangeChart({ mine, generic }) {
   const myD = lapDeltas(mine)
   const genD = lapDeltas(generic)
-  const max = Math.max(0.01, ...myD.slice(1).map(Math.abs), ...genD.slice(1).map(Math.abs))
-  const pct = (d) => Math.min(100, (Math.abs(d) / max) * 100)
+  const { max, clipped } = chartScale([myD, genD])
+  const anyClipped = clipped.some(Boolean)
+  // Bars use at most 80% of the half-height so the value labels fit next to the bar end.
+  const pos = (d) => barShare(d, max) * 80
   const faster = myD.slice(1).filter((d) => d < 0).length
   const summary = `Change vs previous lap, ${myD.length - 1} laps after the start: ${faster} faster, ${
     myD.length - 1 - faster
@@ -67,43 +69,63 @@ function PacingChangeChart({ mine, generic }) {
     .join(', ')}.`
   return (
     <div className="space-y-1">
-      <div role="img" aria-label={summary} className="flex gap-1">
-        {myD.map((d, i) => (
-          <div key={i} className="flex-1 min-w-0 text-center">
-            <div className="text-[10px] h-3 leading-3 text-slate-500 dark:text-slate-400 truncate">
-              {d === null ? '' : d < 0 ? fmtDelta(d) : ''}
-            </div>
-            <div className="relative h-20" title={d === null ? 'Lap 1: start' : `Lap ${i + 1}: ${fmtDelta(d)} vs previous lap`}>
-              <div className="absolute inset-x-0 top-1/2 border-t border-slate-300 dark:border-slate-600" />
-              {d === null ? (
-                <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">start</span>
-              ) : (
-                <>
-                  <div
-                    style={{ height: `${pct(d) / 2}%` }}
-                    className={`absolute inset-x-[15%] rounded-sm ${
-                      d < 0 ? 'bottom-1/2 bg-emerald-500' : 'top-1/2 bg-amber-400'
-                    }`}
-                  />
-                  {genD[i] !== null && (
+      <div role="img" aria-label={summary} className="flex gap-0.5 sm:gap-1">
+        {myD.map((d, i) => {
+          const up = d !== null && d < 0
+          const label = d === null ? '' : fmtDelta(d)
+          return (
+            <div key={i} className="flex-1 min-w-0 text-center">
+              <div
+                className="relative h-36 sm:h-48"
+                title={d === null ? 'Lap 1: start' : `Lap ${i + 1}: ${label} vs previous lap`}
+              >
+                <div className="absolute inset-x-0 top-1/2 border-t border-slate-300 dark:border-slate-600" />
+                {d === null ? (
+                  <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-[9px] sm:text-[10px] text-slate-400">
+                    start
+                  </span>
+                ) : (
+                  <>
                     <div
-                      style={{ top: `${50 - (Math.sign(-genD[i]) * pct(genD[i])) / 2}%` }}
-                      className="absolute inset-x-0 border-t-2 border-slate-500/50 dark:border-slate-300/50"
-                    />
-                  )}
-                </>
-              )}
+                      style={{ height: `${pos(d) / 2}%` }}
+                      className={`absolute inset-x-[15%] rounded-sm ${
+                        up ? 'bottom-1/2 bg-emerald-500' : 'top-1/2 bg-amber-400'
+                      }`}
+                    >
+                      {clipped[i] && (
+                        <div
+                          className={`absolute inset-x-[-10%] h-1 -rotate-6 bg-white dark:bg-slate-900 ${
+                            up ? 'top-1/3' : 'bottom-1/3'
+                          }`}
+                        />
+                      )}
+                    </div>
+                    <div
+                      style={up ? { bottom: `calc(50% + ${pos(d) / 2}%)` } : { top: `calc(50% + ${pos(d) / 2}%)` }}
+                      className="absolute inset-x-0 text-[9px] sm:text-[10px] leading-3 text-slate-600 dark:text-slate-300 whitespace-nowrap"
+                    >
+                      {clipped[i] ? `${label} ✂` : label}
+                    </div>
+                    {genD[i] !== null && (
+                      <div
+                        style={{ top: `${50 - (Math.sign(-genD[i]) * Math.min(100, barShare(genD[i], max) * 100) * 0.4)}%` }}
+                        className="absolute inset-x-0 border-t-2 border-slate-500/50 dark:border-slate-300/50"
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">{i + 1}</div>
             </div>
-            <div className="text-[10px] h-3 leading-3 text-slate-500 dark:text-slate-400 truncate">
-              {d !== null && d >= 0 ? fmtDelta(d) : ''}
-            </div>
-            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">{i + 1}</div>
-          </div>
-        ))}
+          )
+        })}
       </div>
       <p className="text-[11px] text-slate-400">
         Change vs the previous lap, by lap number. Green = faster than the previous lap (speeding up), amber =
         slower. The grey line shows the generic plan for comparison.
+        {anyClipped
+          ? ' Scale is set by laps 3 onwards so small changes stay visible; the big lap 2 bar is cut (✂), its label shows the real value.'
+          : ''}
       </p>
     </div>
   )
