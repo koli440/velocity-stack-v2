@@ -186,44 +186,33 @@ export function applyPacingShape(shape, targetSeconds, firstLapS = null) {
 }
 
 /**
- * Lap-to-lap change: entry i (i >= 1) is lap i+1 time minus lap i time, so a negative value means
- * the lap was faster than the previous one. Lap 1 has no previous lap and is null.
- * @param {number[]} lapTimes
- * @returns {Array<number|null>}
+ * Y range (seconds) for the lap-time line chart. It is derived from laps 2..N of BOTH curves
+ * (padded) so small differences in later laps stay visible; the much slower lap 1 may exceed it,
+ * in which case `clipped[i]` is true and the plotted value is `clamp`ed to `max`.
+ * With a single lap, all laps set the range.
+ * @param {number[][]} curves - lap-time arrays sharing one range
+ * @param {{ padding?: number, minSpan?: number }} [opts]
+ * @returns {{ min: number, max: number, ticks: number[], clipped: boolean[], clamp: (t: number) => number }}
  */
-export function lapDeltas(lapTimes) {
-  return lapTimes.map((t, i) => (i === 0 ? null : t - lapTimes[i - 1]))
-}
-
-/**
- * Scale for the change-vs-previous-lap chart. Laps 3..N set the scale so the big lap 2 change
- * (acceleration after the standing start) cannot flatten the rest; lap 2 is clipped when it
- * exceeds the scale by more than `clipRatio`. With fewer than 3 laps all deltas set the scale.
- * @param {Array<number|null>[]} deltaSets - lapDeltas() outputs sharing one scale
- * @param {{ clipRatio?: number, minMax?: number }} [opts]
- * @returns {{ max: number, clipped: boolean[] }} max (s) = full bar; clipped per lap of the first set
- */
-export function chartScale(deltaSets, { clipRatio = 1.5, minMax = 0.01 } = {}) {
-  const first = deltaSets[0] ?? []
-  const abs = (sets, from) =>
-    sets.flatMap((d) => d.slice(from)).filter((v) => v !== null && Number.isFinite(v)).map(Math.abs)
-  const rest = abs(deltaSets, 2)
-  const max = Math.max(minMax, ...(rest.length ? rest : abs(deltaSets, 1)))
-  const clipped = first.map((d, i) => i === 1 && rest.length > 0 && d !== null && Math.abs(d) > max * clipRatio)
-  return { max, clipped }
-}
-
-/**
- * Bar length as a share (0..1) of the half-height. Non-zero values get at least `minShare`.
- * @param {number} d
- * @param {number} max
- * @param {number} [minShare]
- * @returns {number}
- */
-export function barShare(d, max, minShare = 0.04) {
-  const a = Math.abs(d)
-  if (!(a > 0)) return 0
-  return Math.min(1, Math.max(minShare, a / max))
+export function lapTimeRange(curves, { padding = 0.12, minSpan = 0.2 } = {}) {
+  const finite = (v) => Number.isFinite(v)
+  const later = curves.flatMap((c) => c.slice(1)).filter(finite)
+  const pool = later.length ? later : curves.flatMap((c) => c).filter(finite)
+  const lo = pool.length ? Math.min(...pool) : 0
+  const hi = pool.length ? Math.max(...pool) : 1
+  const pad = Math.max((hi - lo) * padding, (minSpan - (hi - lo)) / 2, 0.02)
+  const min = Math.floor((lo - pad) * 10) / 10
+  const max = Math.ceil((hi + pad) * 10) / 10
+  const count = 5
+  const ticks = Array.from({ length: count }, (_, i) => Math.round((min + ((max - min) * i) / (count - 1)) * 100) / 100)
+  const first = curves[0] ?? []
+  return {
+    min,
+    max,
+    ticks,
+    clipped: first.map((t, i) => later.length > 0 && i === 0 && t > max),
+    clamp: (t) => Math.min(max, Math.max(min, t)),
+  }
 }
 
 /**
