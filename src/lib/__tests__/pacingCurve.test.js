@@ -8,6 +8,7 @@ import {
   buildPacingCurve,
   applyPacingShape,
   fallbackMessage,
+  lapDeltas,
   FALLBACK_REASONS,
 } from '../pacingCurve.js'
 
@@ -86,4 +87,13 @@ test('applyPacingShape preserves the target total', () => {
 test('fallbackMessage mentions the reason', () => {
   assert.match(fallbackMessage(FALLBACK_REASONS.NO_RECORDS, { disciplineName: 'X', distanceM: 3000 }), /No PB Vault records/)
   assert.match(fallbackMessage(FALLBACK_REASONS.NO_LAPS, { disciplineName: 'X', distanceM: 3000 }), /no usable lap splits/)
+})
+
+test('lapDeltas gives change vs previous lap, null for lap 1', () => {
+  const d = lapDeltas([20, 18, 18.5, 19])
+  assert.equal(d[0], null)
+  assert.ok(Math.abs(d[1] + 2) < 1e-9)
+  assert.ok(Math.abs(d[2] - 0.5) < 1e-9)
+  assert.ok(Math.abs(d[3] - 0.5) < 1e-9)
+  assert.deepEqual(lapDeltas([]), [])
 })

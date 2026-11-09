@@ -133,6 +133,16 @@ export function applyPacingShape(shape, targetSeconds) {
 }
 
 /**
+ * Lap-to-lap change: entry i (i >= 1) is lap i+1 time minus lap i time, so a negative value means
+ * the lap was faster than the previous one. Lap 1 has no previous lap and is null.
+ * @param {number[]} lapTimes
+ * @returns {Array<number|null>}
+ */
+export function lapDeltas(lapTimes) {
+  return lapTimes.map((t, i) => (i === 0 ? null : t - lapTimes[i - 1]))
+}
+
+/**
  * Human-readable reason for falling back to the generic model.
  * @param {string} reason
  * @param {{ disciplineName?: string, distanceM?: number }} ctx

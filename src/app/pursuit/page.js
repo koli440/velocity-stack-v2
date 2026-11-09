@@ -24,7 +24,7 @@ import VelodromePicker from '../../components/VelodromePicker'
 import Icon from '../../components/Icon'
 import GearPicker, { useGearState } from '../../components/GearPicker'
 import { LockedExtra, LockedHint, SignupBanner } from '../../components/SignupCatch'
-import { buildPacingCurve, applyPacingShape, fallbackMessage } from '../../lib/pacingCurve'
+import { buildPacingCurve, applyPacingShape, fallbackMessage, lapDeltas } from '../../lib/pacingCurve'
 import { parseGear, PURSUIT_GEAR_START } from '../../lib/gear'
 
 import ChartTooltip from '@/components/ChartTooltip'
@@ -50,6 +50,65 @@ const STRATEGY_BANNER = {
 
 // "Pursuit Strategist" - migrated from v1's pages/10_pursuit.py. Account-free: AppShell lists it in
 // the public tool paths (src/lib/publicPaths.js). Home track and saved gear are signed-in extras.
+function fmtDelta(d) {
+  return `${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d).toFixed(2)}s`
+}
+
+function PacingChangeChart({ mine, generic }) {
+  const myD = lapDeltas(mine)
+  const genD = lapDeltas(generic)
+  const max = Math.max(0.01, ...myD.slice(1).map(Math.abs), ...genD.slice(1).map(Math.abs))
+  const pct = (d) => Math.min(100, (Math.abs(d) / max) * 100)
+  const faster = myD.slice(1).filter((d) => d < 0).length
+  const summary = `Change vs previous lap, ${myD.length - 1} laps after the start: ${faster} faster, ${
+    myD.length - 1 - faster
+  } slower. ${myD
+    .map((d, i) => (d === null ? 'Lap 1 start' : `Lap ${i + 1} ${fmtDelta(d)}`))
+    .join(', ')}.`
+  return (
+    <div className="space-y-1">
+      <div role="img" aria-label={summary} className="flex gap-1">
+        {myD.map((d, i) => (
+          <div key={i} className="flex-1 min-w-0 text-center">
+            <div className="text-[10px] h-3 leading-3 text-slate-500 dark:text-slate-400 truncate">
+              {d === null ? '' : d < 0 ? fmtDelta(d) : ''}
+            </div>
+            <div className="relative h-20" title={d === null ? 'Lap 1: start' : `Lap ${i + 1}: ${fmtDelta(d)} vs previous lap`}>
+              <div className="absolute inset-x-0 top-1/2 border-t border-slate-300 dark:border-slate-600" />
+              {d === null ? (
+                <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">start</span>
+              ) : (
+                <>
+                  <div
+                    style={{ height: `${pct(d) / 2}%` }}
+                    className={`absolute inset-x-[15%] rounded-sm ${
+                      d < 0 ? 'bottom-1/2 bg-emerald-500' : 'top-1/2 bg-amber-400'
+                    }`}
+                  />
+                  {genD[i] !== null && (
+                    <div
+                      style={{ top: `${50 - (Math.sign(-genD[i]) * pct(genD[i])) / 2}%` }}
+                      className="absolute inset-x-0 border-t-2 border-slate-500/50 dark:border-slate-300/50"
+                    />
+                  )}
+                </>
+              )}
+            </div>
+            <div className="text-[10px] h-3 leading-3 text-slate-500 dark:text-slate-400 truncate">
+              {d !== null && d >= 0 ? fmtDelta(d) : ''}
+            </div>
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">{i + 1}</div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[11px] text-slate-400">
+        Change vs the previous lap, by lap number. Green = faster than the previous lap (speeding up), amber =
+        slower. The grey line shows the generic plan for comparison.
+      </p>
+    </div>
+  )
+}
+
 export default function PursuitPage() {
   const [tracks, setTracks] = useState([])
   const [loadingTracks, setLoadingTracks] = useState(true)
@@ -425,27 +484,16 @@ export default function PursuitPage() {
             {usePersonal && pbRecords === null && (
               <p className="text-xs text-slate-400">Loading your records…</p>
             )}
-            {personalCurve?.ok && (
+            {personalCurve?.ok && personalStrategy && genericStrategy && (
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                   Based on {personalCurve.recordsUsed} of {personalCurve.recordsTotal} record
                   {personalCurve.recordsTotal === 1 ? '' : 's'} with lap splits.
                 </p>
-                <div className="flex items-end gap-1 h-12" aria-label="Your pacing shape">
-                  {personalCurve.shape.map((v, i) => {
-                    const max = Math.max(...personalCurve.shape.map(Math.abs)) || 1
-                    const h = Math.max(4, Math.round((Math.abs(v) / max) * 100))
-                    return (
-                      <div
-                        key={i}
-                        title={`Lap ${i + 1}: ${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}% vs average`}
-                        style={{ height: `${h}%` }}
-                        className={`flex-1 rounded-sm ${v > 0 ? 'bg-amber-400' : 'bg-emerald-500'}`}
-                      />
-                    )
-                  })}
-                </div>
-                <p className="text-[11px] text-slate-400">Amber = slower than your average lap, green = faster.</p>
+                <PacingChangeChart
+                  mine={personalStrategy.laps.map((l) => l.lapTimeS)}
+                  generic={genericStrategy.laps.map((l) => l.lapTimeS)}
+                />
               </div>
             )}
             {personalCurve && !personalCurve.ok && (
