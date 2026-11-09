@@ -12,6 +12,13 @@ export const MIN_SEGMENTS = 2
 /** Records whose splits don't add up to the recorded time within this ratio are treated as partial. */
 export const SPLIT_SUM_TOLERANCE = 0.05
 
+/** Recency weighting of lap 1: a record loses half its weight every this many months. */
+export const FIRST_LAP_HALF_LIFE_MONTHS = 12
+/** Lap 1 is clamped to at most this share of the target total (and at least the average lap). */
+export const MAX_FIRST_LAP_SHARE = 0.4
+
+const MS_PER_MONTH = 30.4375 * 24 * 3600 * 1000
+
 export const FALLBACK_REASONS = {
   NO_RECORDS: 'no-records',
   NO_LAPS: 'no-lap-data',
@@ -84,16 +91,51 @@ export function smoothProfile(profile) {
 }
 
 /**
+ * Recency-weighted average of the rider's ACTUAL first-lap times (absolute seconds). Only records
+ * whose splits are laps of the planned track (same lap count and lap length) contribute; others
+ * are skipped here (they still shape laps 2..N). Weight = 0.5 ^ (age in months / half-life); a
+ * record without a valid date counts as one half-life old.
+ * @param {Array<object>} records
+ * @param {number} laps
+ * @param {{ trackLengthM?: number, now?: Date|number }} [opts]
+ * @returns {{ seconds: number, used: number } | null}
+ */
+export function weightedFirstLap(records, laps, { trackLengthM, now = Date.now() } = {}) {
+  const n = Math.round(laps)
+  const nowMs = new Date(now).getTime()
+  let wSum = 0
+  let tSum = 0
+  let used = 0
+  for (const record of Array.isArray(records) ? records : []) {
+    const lapTimes = usableLapTimes(record)
+    if (!lapTimes || lapTimes.length !== n) continue
+    const split = Number(record.split_distance_m)
+    if (Number.isFinite(split) && split > 0 && Number.isFinite(trackLengthM) && Math.abs(split - trackLengthM) > 0.5) continue
+    const dateMs = record.achieved_date ? new Date(record.achieved_date).getTime() : NaN
+    const ageMonths = Number.isFinite(dateMs)
+      ? Math.max(0, (nowMs - dateMs) / MS_PER_MONTH)
+      : FIRST_LAP_HALF_LIFE_MONTHS
+    const w = Math.pow(0.5, ageMonths / FIRST_LAP_HALF_LIFE_MONTHS)
+    wSum += w
+    tSum += w * lapTimes[0]
+    used++
+  }
+  return used > 0 && wSum > 0 ? { seconds: tSum / wSum, used } : null
+}
+
+/**
  * Derives the typical pacing shape for `laps` laps from PB Vault records of ONE discipline and
  * ONE distance (the caller filters by distance; there is no scaling across distances).
  * All records count equally. Records without usable splits are skipped.
  *
  * @param {Array<object>} records - personal_bests rows (lap_times, time_seconds)
  * @param {number} laps - number of laps in the plan
- * @returns {{ ok: true, shape: number[], recordsUsed: number, recordsTotal: number }
+ * @param {{ trackLengthM?: number, now?: Date|number }} [opts] - used for the lap 1 weighting
+ * @returns {{ ok: true, shape: number[], recordsUsed: number, recordsTotal: number,
+ *     firstLap: { seconds: number, used: number } | null }
  *   | { ok: false, reason: string, recordsUsed: 0, recordsTotal: number }}
  */
-export function buildPacingCurve(records, laps) {
+export function buildPacingCurve(records, laps, opts = {}) {
   const list = Array.isArray(records) ? records : []
   const n = Math.round(laps)
   if (list.length === 0) {
@@ -115,21 +157,42 @@ export function buildPacingCurve(records, laps) {
     shape: smoothed.map((v) => v - mean),
     recordsUsed: profiles.length,
     recordsTotal: list.length,
+    firstLap: weightedFirstLap(list, n, opts),
   }
 }
 
 /**
  * Applies a pacing shape to a target time: lap i = avg * (1 + shape[i]), rescaled so the laps sum
- * exactly to `targetSeconds`.
+ * exactly to `targetSeconds`. With `firstLapS` (weighted actual first lap), lap 1 is that value,
+ * clamped to [average lap, MAX_FIRST_LAP_SHARE of the target], and laps 2..N keep the shape
+ * proportions and absorb the difference so the total is still exact.
  * @param {number[]} shape
  * @param {number} targetSeconds
+ * @param {number|null} [firstLapS]
  * @returns {number[]}
  */
-export function applyPacingShape(shape, targetSeconds) {
-  const avg = targetSeconds / shape.length
+export function applyPacingShape(shape, targetSeconds, firstLapS = null) {
+  const n = shape.length
+  const avg = targetSeconds / n
   const raw = shape.map((s) => avg * (1 + s))
   const sum = raw.reduce((a, b) => a + b, 0)
-  return raw.map((t) => (t * targetSeconds) / sum)
+  const scaled = raw.map((t) => (t * targetSeconds) / sum)
+  if (!(n > 1) || !Number.isFinite(firstLapS) || !(firstLapS > 0)) return scaled
+  const first = Math.min(MAX_FIRST_LAP_SHARE * targetSeconds, Math.max(avg, firstLapS))
+  const restRaw = scaled.slice(1)
+  const restSum = restRaw.reduce((a, b) => a + b, 0)
+  const restTarget = targetSeconds - first
+  return [first, ...restRaw.map((t) => (t * restTarget) / restSum)]
+}
+
+/**
+ * Lap-to-lap change: entry i (i >= 1) is lap i+1 time minus lap i time, so a negative value means
+ * the lap was faster than the previous one. Lap 1 has no previous lap and is null.
+ * @param {number[]} lapTimes
+ * @returns {Array<number|null>}
+ */
+export function lapDeltas(lapTimes) {
+  return lapTimes.map((t, i) => (i === 0 ? null : t - lapTimes[i - 1]))
 }
 
 /**
