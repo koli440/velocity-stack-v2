@@ -152,3 +152,13 @@ test('parseDistanceOverride validates and defaults', async () => {
   assert.ok(parseDistanceOverride('50').error)
   assert.ok(parseDistanceOverride('1e9').error)
 })
+
+test('calculatePursuitStrategy honours explicit lapTimesS', () => {
+  const r = calculatePursuitStrategy({
+    trackLengthM: 250, laps: 4, totalDistanceM: 1000, targetSeconds: 80,
+    startPenaltyS: 5, pacingDriftS: 0, chainring: 60, cog: 15,
+    lapTimesS: [22, 19, 19, 20],
+  })
+  assert.deepEqual(r.laps.map((l) => l.lapTimeS), [22, 19, 19, 20])
+  assert.equal(r.elapsedTimeS, 80)
+})
