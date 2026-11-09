@@ -1,7 +1,7 @@
 ---
 id: 2026-11-09-pursuit-my-pacing
 date: 2026-11-09
-title: "Use my pacing" in Pursuit Strategist
+title: My pacing in Pursuit Strategist
 link: /pursuit
 linkLabel: Open Pursuit Strategist
 ---
