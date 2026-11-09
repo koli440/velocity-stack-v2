@@ -182,7 +182,7 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
 
 export default function EditActivityModal(props) {
   return (
-    <Portal lockScroll>
+    <Portal lockScroll={Boolean(props.isOpen && props.activity)}>
       <EditActivityModalInner {...props} />
     </Portal>
   )

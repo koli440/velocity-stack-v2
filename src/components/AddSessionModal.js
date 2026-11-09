@@ -120,7 +120,7 @@ function AddSessionModalInner({ isOpen, onClose, user, tracks = [] }) {
 
 export default function AddSessionModal(props) {
   return (
-    <Portal lockScroll>
+    <Portal lockScroll={Boolean(props.isOpen)}>
       <AddSessionModalInner {...props} />
     </Portal>
   )

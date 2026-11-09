@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect } from 'react'
+import { acquireScrollLock } from './scrollLockCore'
 
-// Locks page scroll while a modal is mounted; restores the previous overflow on unmount.
-export default function useScrollLock() {
+// Locks page scroll while `active` (default true) and the component is mounted.
+// Ref-counted, so overlapping modals restore the original overflow only once all close.
+export default function useScrollLock(active = true) {
   useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
-  }, [])
+    if (!active) return undefined
+    return acquireScrollLock(document.body)
+  }, [active])
 }
