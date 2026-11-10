@@ -101,6 +101,11 @@ export default function GearsPage() {
         {similar.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">No similar gears found.</p>
         ) : (
+          <>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+            {similar.length} {similar.length === 1 ? 'gear' : 'gears'} within ±{tolerancePct} %
+          </p>
+          <div className="max-h-96 overflow-y-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase text-slate-400">
@@ -123,6 +128,8 @@ export default function GearsPage() {
               ))}
             </tbody>
           </table>
+          </div>
+          </>
         )}
       </div>
 
