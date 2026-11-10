@@ -107,3 +107,52 @@ export function respectTiers(histogram, levels = RESPECT_LEVELS) {
   }
   return rows
 }
+
+export const FALLBACK_LABELS = { 'no-records': 'No records at this distance', 'no-lap-data': 'Records without usable lap data' }
+export const fallbackLabel = (reason) => FALLBACK_LABELS[reason] || String(reason || 'Unknown')
+
+/** Discipline + distance label, e.g. "Individual Pursuit · 4000 m". */
+export function disciplineLabel(row) {
+  const d = String(row?.discipline || 'Unknown')
+  return Number(row?.distance_m) > 0 ? `${d} · ${row.distance_m} m` : d
+}
+
+/** PB Vault panel figures from admin_pb_vault_stats(): shares of all users, laps and records per rider. */
+export function pbVaultSummary(stats) {
+  const s = stats || {}
+  const dist = s.distribution || {}
+  const riders = Number(s.riders) || 0
+  return {
+    ridersPct: pct(riders, s.users_total),
+    lapsPct: pct(s.with_laps, s.records),
+    usableLapsPct: pct(s.with_usable_laps, s.records),
+    pacingPct: pct(s.pacing_eligible_riders, riders),
+    perRider: average(s.records, riders),
+    distribution: [
+      { key: 'one', label: '1 record', count: Number(dist.one) || 0 },
+      { key: 'two_to_five', label: '2-5 records', count: Number(dist.two_to_five) || 0 },
+      { key: 'six_plus', label: '6+ records', count: Number(dist.six_plus) || 0 },
+    ],
+  }
+}
+
+/** Weekly tool-usage rows -> a {day, count} series of one field (feeds the Bars helpers). */
+export function weekSeries(weeks, ...fields) {
+  return (weeks || []).map((w) => ({ day: w.week, count: fields.reduce((n, f) => n + (Number(w?.[f]) || 0), 0) }))
+}
+
+/** Sum of the `count` of event rows matching an event name (optionally only signed-in or public). */
+export function eventCount(rows, event, loggedIn) {
+  return (rows || []).reduce((n, r) => (r.event === event && (loggedIn === undefined || r.logged_in === loggedIn) ? n + (Number(r.count) || 0) : n), 0)
+}
+
+/** Tool-usage panel figures from admin_tool_usage_stats(). Counts are events, never visitors. */
+export function toolUsageSummary(stats) {
+  const s = stats || {}
+  return {
+    gearTotal: sumSeries(weekSeries(s.weeks, 'gear_public', 'gear_logged_in')),
+    pursuitTotal: sumSeries(weekSeries(s.weeks, 'pursuit_public', 'pursuit_logged_in')),
+    myPacingPct: pct(s.pursuit_plans_my_pacing, s.pursuit_plans_logged_in),
+    fallbackTotal: sumSeries(s.pacing_fallbacks),
+  }
+}

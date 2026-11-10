@@ -6,6 +6,7 @@ import { LockedExtra, SignupBanner } from '../../components/SignupCatch'
 import GearRecords from '../../components/GearRecords'
 import GearPicker, { useGearState } from '../../components/GearPicker'
 import { CALCULATOR_GEAR_START, parseGear } from '../../lib/gear'
+import { trackToolEvent } from '../../lib/toolUsage'
 import { gearInches, speedAtCadence, similarGears } from '../../lib/trackGearing'
 
 // "Gear Architect" - migrated from v1's pages/20_gears.py. A simple, account-free calculator:
@@ -13,6 +14,9 @@ import { gearInches, speedAtCadence, similarGears } from '../../lib/trackGearing
 // ratio and the resulting speed at that cadence.
 export default function GearsPage() {
   const [userId, setUserId] = useState(null)
+  useEffect(() => {
+    trackToolEvent(supabase, 'gear', 'view')
+  }, [])
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data?.user?.id || null)).catch(() => {})
   }, [])
@@ -24,6 +28,7 @@ export default function GearsPage() {
   const [cadence, setCadence] = useState(105)
   const [wheelSize, setWheelSize] = useState(27.0)
   const [tolerancePct, setTolerancePct] = useState(3)
+  const used = (event) => trackToolEvent(supabase, 'gear', event)
 
   const safeCog = cog || 1
   const inches = gearInches(chainring, safeCog, wheelSize)
@@ -39,7 +44,7 @@ export default function GearsPage() {
         type="number"
         step={step}
         value={value}
-        onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
+        onChange={(e) => { onChange(e.target.value === '' ? '' : Number(e.target.value)); used('calculate') }}
         className="w-full bg-slate-50 dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder rounded-xl px-3.5 py-2 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
       />
     </label>
@@ -66,7 +71,7 @@ export default function GearsPage() {
 
       <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <GearPicker label="Gear" chainring={gear.chainring} cog={gear.cog} onChange={setGear} className="sm:col-span-2" />
+          <GearPicker label="Gear" chainring={gear.chainring} cog={gear.cog} onChange={(g) => { setGear(g); used('calculate') }} className="sm:col-span-2" />
           {field('Cadence (RPM)', cadence, setCadence, 1)}
           {field('Wheel Size (in)', wheelSize, setWheelSize, 0.5)}
         </div>
@@ -89,7 +94,7 @@ export default function GearsPage() {
             max={10}
             step={0.5}
             value={tolerancePct}
-            onChange={(e) => setTolerancePct(Number(e.target.value))}
+            onChange={(e) => { setTolerancePct(Number(e.target.value)); used('compare') }}
             className="w-full accent-emerald-500"
           />
         </label>

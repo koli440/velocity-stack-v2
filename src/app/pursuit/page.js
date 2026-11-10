@@ -26,6 +26,7 @@ import Icon from '../../components/Icon'
 import GearPicker, { useGearState } from '../../components/GearPicker'
 import { LockedExtra, LockedHint, SignupBanner } from '../../components/SignupCatch'
 import { buildPacingCurve, applyPacingShape, fallbackMessage, lapTimeRange } from '../../lib/pacingCurve'
+import { trackToolEvent } from '../../lib/toolUsage'
 import { parseGear, PURSUIT_GEAR_START } from '../../lib/gear'
 
 import ChartTooltip from '@/components/ChartTooltip'
@@ -318,6 +319,22 @@ export default function PursuitPage() {
       : null
   const strategy = personalStrategy || genericStrategy
 
+  // Anonymous usage events (no identifiers); each distinct event is sent once per page load.
+  useEffect(() => {
+    trackToolEvent(supabase, 'pursuit', 'view')
+  }, [])
+  const planCalculated = Boolean(strategy)
+  const myPacingUsed = Boolean(personalStrategy)
+  useEffect(() => {
+    if (planCalculated) {
+      trackToolEvent(supabase, 'pursuit', 'plan', { discipline: disciplineName, distanceM, myPacing: myPacingUsed })
+    }
+  }, [planCalculated, disciplineName, distanceM, myPacingUsed])
+  const fallbackReason = personalCurve && !personalCurve.ok ? personalCurve.reason : null
+  useEffect(() => {
+    if (fallbackReason) trackToolEvent(supabase, 'pursuit', 'pacing_fallback', { reason: fallbackReason })
+  }, [fallbackReason])
+
   const strategyLabel = pacingStrategyLabel(Number(pacingDrift) || 0)
   const banner = STRATEGY_BANNER[strategyLabel]
 
@@ -529,7 +546,10 @@ export default function PursuitPage() {
               <input
                 type="checkbox"
                 checked={usePersonal}
-                onChange={(e) => setUsePersonal(e.target.checked)}
+                onChange={(e) => {
+                  setUsePersonal(e.target.checked)
+                  if (e.target.checked) trackToolEvent(supabase, 'pursuit', 'pacing_on', { discipline: disciplineName, distanceM })
+                }}
                 className="accent-emerald-500"
               />
               Use my pacing
