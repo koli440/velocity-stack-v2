@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { average, respectSummary, respectTiers, dayLabel, maxCount, orderProviders, pct, providerHealth, providerLabel, sumSeries, trend, withAllProviders } from './adminDashboard.js'
+import { average, pbVaultSummary, weekSeries, eventCount, toolUsageSummary, fallbackLabel, disciplineLabel, respectSummary, respectTiers, dayLabel, maxCount, orderProviders, pct, providerHealth, providerLabel, sumSeries, trend, withAllProviders } from './adminDashboard.js'
 
 const S = [1, 2, 3, 4].map((count, i) => ({ day: `2027-01-0${i + 1}`, count }))
 
@@ -72,4 +72,29 @@ test('respectTiers buckets a per-activity histogram by RESPECT_LEVELS', () => {
   assert.deepEqual([by.Beast.exact, by.Beast.atLeast], [1, 2])
   assert.deepEqual([by.Godlike.exact, by.Godlike.atLeast], [1, 1])
   assert.deepEqual(respectTiers(null).map((r) => r.exact), Array(10).fill(0))
+})
+
+test('PB Vault summary derives shares and the records-per-rider buckets', () => {
+  const k = pbVaultSummary({ users_total: 20, riders: 5, records: 15, with_laps: 6, with_usable_laps: 3, pacing_eligible_riders: 2, distribution: { one: 2, two_to_five: 2, six_plus: 1 } })
+  assert.equal(k.ridersPct, 25)
+  assert.equal(k.lapsPct, 40)
+  assert.equal(k.usableLapsPct, 20)
+  assert.equal(k.pacingPct, 40)
+  assert.equal(k.perRider, 3)
+  assert.deepEqual(k.distribution.map((d) => d.count), [2, 2, 1])
+  assert.equal(pbVaultSummary(null).ridersPct, 0)
+})
+
+test('tool usage helpers sum weekly events and labels', () => {
+  const weeks = [{ week: '2027-01-04', gear_public: 2, gear_logged_in: 1, pursuit_public: 4, pursuit_logged_in: 0 }, { week: '2027-01-11', gear_public: 0, gear_logged_in: 3, pursuit_public: 1, pursuit_logged_in: 2 }]
+  assert.deepEqual(weekSeries(weeks, 'gear_public', 'gear_logged_in'), [{ day: '2027-01-04', count: 3 }, { day: '2027-01-11', count: 3 }])
+  const k = toolUsageSummary({ weeks, pursuit_plans_logged_in: 4, pursuit_plans_my_pacing: 1, pacing_fallbacks: [{ reason: 'no-records', count: 2 }, { reason: 'no-lap-data', count: 1 }] })
+  assert.deepEqual(k, { gearTotal: 6, pursuitTotal: 7, myPacingPct: 25, fallbackTotal: 3 })
+  const rows = [{ event: 'view', logged_in: true, count: 2 }, { event: 'view', logged_in: false, count: 5 }, { event: 'plan', logged_in: false, count: 1 }]
+  assert.equal(eventCount(rows, 'view'), 7)
+  assert.equal(eventCount(rows, 'view', false), 5)
+  assert.equal(fallbackLabel('no-lap-data'), 'Records without usable lap data')
+  assert.equal(disciplineLabel({ discipline: 'Pursuit', distance_m: 4000 }), 'Pursuit · 4000 m')
+  assert.equal(disciplineLabel({ discipline: 'Pursuit' }), 'Pursuit')
+  assert.equal(toolUsageSummary(undefined).myPacingPct, 0)
 })

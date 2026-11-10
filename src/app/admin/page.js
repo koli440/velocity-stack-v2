@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import { reviewPath } from '../../lib/suggestions'
 import { formatDateTime } from '../../lib/dateFormat'
-import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth, respectSummary, respectTiers } from '../../lib/adminDashboard'
+import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth, respectSummary, respectTiers, pbVaultSummary, eventCount, toolUsageSummary, fallbackLabel, disciplineLabel } from '../../lib/adminDashboard'
 import SegmentedTabs from '../../components/SegmentedTabs'
 import Icon from '../../components/Icon'
 
@@ -47,7 +47,7 @@ function Panel({ title, id, link, children }) {
   )
 }
 
-function Bars({ series, label, tone = 'bg-orange-500' }) {
+function Bars({ series, label, tone = 'bg-orange-500', unit = 'day' }) {
   const max = maxCount(series)
   const t = trend(series)
   const list = series || []
@@ -55,10 +55,10 @@ function Bars({ series, label, tone = 'bg-orange-500' }) {
   return (
     <figure className="space-y-1">
       <figcaption className={`text-xs ${muted}`}>
-        {label}: <b className="text-slate-800 dark:text-white">{sumSeries(series)}</b> in {list.length} days ·{' '}
+        {label}: <b className="text-slate-800 dark:text-white">{sumSeries(series)}</b> in {list.length} {unit}s ·{' '}
         {t.direction === 'flat' ? 'flat' : `${t.direction === 'up' ? '▲' : '▼'} ${Math.abs(t.delta)} vs earlier half`}
       </figcaption>
-      <div className="flex items-end gap-[2px] h-20" role="img" aria-label={`${label} per day`}>
+      <div className="flex items-end gap-[2px] h-20" role="img" aria-label={`${label} per ${unit}`}>
         {list.map((p) => (
           <div key={p.day} title={`${dayLabel(p.day)}: ${p.count}`} className={`flex-1 rounded-t ${tone} ${p.count ? '' : 'opacity-20'}`} style={{ height: `${Math.max(4, (p.count / max) * 100)}%` }} />
         ))}
@@ -89,6 +89,29 @@ function Breakdown({ rows, labelOf }) {
   )
 }
 
+function WeekBars({ weeks, loggedInKey, publicKey, label }) {
+  const rows = (weeks || []).map((w) => ({ week: w.week, a: Number(w[loggedInKey]) || 0, b: Number(w[publicKey]) || 0 }))
+  const max = Math.max(1, ...rows.map((r) => r.a + r.b))
+  return (
+    <figure className="space-y-1">
+      <figcaption className={`text-xs ${muted}`}>
+        {label} per week (events, not visitors) · <span className="text-orange-500 font-bold">■</span> signed in · <span className="text-sky-500 font-bold">■</span> public
+      </figcaption>
+      <div className="flex items-end gap-1 h-20" role="img" aria-label={`${label} per week`}>
+        {rows.map((r) => (
+          <div key={r.week} title={`Week of ${dayLabel(r.week)}: ${r.a} signed in, ${r.b} public`} className="flex-1 flex flex-col justify-end h-full">
+            <div className="w-full bg-sky-500 rounded-t" style={{ height: `${(r.b / max) * 100}%` }} />
+            <div className={`w-full bg-orange-500 ${r.b ? '' : 'rounded-t'}`} style={{ height: `${(r.a / max) * 100}%` }} />
+          </div>
+        ))}
+      </div>
+      {rows.length > 0 && (
+        <div className={`flex justify-between text-xs ${muted}`}><span>{dayLabel(rows[0].week)}</span><span>{dayLabel(rows[rows.length - 1].week)}</span></div>
+      )}
+    </figure>
+  )
+}
+
 function Field({ label, children, className = '' }) {
   return (
     <div className={`flex justify-between gap-3 text-sm ${className}`}>
@@ -103,6 +126,8 @@ export default function AdminDashboardPage() {
   const [partner, setPartner] = useState(null)
   const [respect, setRespect] = useState(null)
   const [respectHist, setRespectHist] = useState([])
+  const [pbVault, setPbVault] = useState(null)
+  const [toolUsage, setToolUsage] = useState(null)
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser()
@@ -116,6 +141,10 @@ export default function AdminDashboardPage() {
     setRespect(rs.data || null)
     const rh = await supabase.rpc('admin_respect_histogram')
     setRespectHist(rh.data || [])
+    const pv = await supabase.rpc('admin_pb_vault_stats')
+    setPbVault(pv.data || null)
+    const tu = await supabase.rpc('admin_tool_usage_stats')
+    setToolUsage(tu.data || null)
     setState({ loading: false, admin: true, data: data || null, error: error?.message || '' })
   }, [days])
 
@@ -288,6 +317,75 @@ export default function AdminDashboardPage() {
                 </Panel>
               )
             })()}
+
+            {pbVault && (() => {
+              const k = pbVaultSummary(pbVault)
+              return (
+                <Panel title="PB Vault" id="p-pbvault">
+                  <StatGrid cols="sm:grid-cols-4">
+                    <Stat label="Riders with a record" value={pbVault.riders} hint={`${k.ridersPct}% of ${pbVault.users_total} users`} />
+                    <Stat label="Records" value={pbVault.records} hint={`${k.perRider} per rider`} />
+                    <Stat label="New 7d" value={pbVault.new_7d} />
+                    <Stat label="New 30d" value={pbVault.new_30d} />
+                  </StatGrid>
+                  <Bars series={pbVault.by_week} label="New records" tone="bg-emerald-500" unit="week" />
+                  <p className={`text-xs ${muted}`}>PB Vault figures cover all time and the last 12 weeks; the period buttons do not apply.</p>
+                  <StatGrid cols="sm:grid-cols-3">
+                    <Stat label="Records with lap splits" value={`${k.lapsPct}%`} hint={`${pbVault.with_laps} of ${pbVault.records}`} />
+                    <Stat label="With usable laps" value={`${k.usableLapsPct}%`} hint={`${pbVault.with_usable_laps} of ${pbVault.records}`} />
+                    <Stat label="Eligible for 'Use my pacing'" value={pbVault.pacing_eligible_riders} hint={`${k.pacingPct}% of riders with records`} />
+                  </StatGrid>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div><h3 className={subheading}>Top disciplines and distances</h3>
+                      <Breakdown rows={(pbVault.by_discipline || []).map((x) => ({ key: disciplineLabel(x), count: x.count }))} labelOf={(key) => key} /></div>
+                    <div><h3 className={subheading}>Records per rider</h3>
+                      <Breakdown rows={k.distribution.filter((x) => x.count > 0)} labelOf={(key) => k.distribution.find((x) => x.key === key)?.label || key} /></div>
+                  </div>
+                </Panel>
+              )
+            })()}
+
+            {toolUsage && <div className="lg:col-span-2">{(() => {
+              const k = toolUsageSummary(toolUsage)
+              const pe = toolUsage.pursuit_events
+              const ge = toolUsage.gear_events
+              return (
+                <Panel title="Gear Architect and Pursuit Strategist" id="p-tools">
+                  <p className={`text-xs ${muted}`}>
+                    Anonymous event counts (last 12 weeks, kept 90 days): no user id, IP or cookie is stored, so unique visitors cannot be counted. The
+                    public tools are included; they do not follow the period buttons.
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-3">
+                      <h3 className={subheading}>Gear Architect</h3>
+                      <StatGrid cols="sm:grid-cols-3">
+                        <Stat label="Page views" value={eventCount(ge, 'view')} hint={`${eventCount(ge, 'view', false)} public`} />
+                        <Stat label="Calculated" value={eventCount(ge, 'calculate')} hint={`${eventCount(ge, 'calculate', false)} public`} />
+                        <Stat label="Compared similar" value={eventCount(ge, 'compare')} hint={`${eventCount(ge, 'compare', false)} public`} />
+                      </StatGrid>
+                      <WeekBars weeks={toolUsage.weeks} loggedInKey="gear_logged_in" publicKey="gear_public" label="Gear events" />
+                    </div>
+                    <div className="space-y-3">
+                      <h3 className={subheading}>Pursuit Strategist</h3>
+                      <StatGrid cols="sm:grid-cols-3">
+                        <Stat label="Page views" value={eventCount(pe, 'view')} hint={`${eventCount(pe, 'view', false)} public`} />
+                        <Stat label="Plans calculated" value={eventCount(pe, 'plan')} hint={`${eventCount(pe, 'plan', false)} public`} />
+                        <Stat label="'My pacing' share" value={`${k.myPacingPct}%`} hint={`of signed-in plans · ${toolUsage.pacing_on} switched on`} />
+                      </StatGrid>
+                      <WeekBars weeks={toolUsage.weeks} loggedInKey="pursuit_logged_in" publicKey="pursuit_public" label="Pursuit events" />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div><h3 className={subheading}>Pursuit disciplines (plans)</h3>
+                      <Breakdown rows={(toolUsage.pursuit_disciplines || []).map((x) => ({ key: x.discipline, count: x.count }))} labelOf={(key) => key} /></div>
+                    <div><h3 className={subheading}>Pursuit distances (plans)</h3>
+                      <Breakdown rows={(toolUsage.pursuit_distances || []).map((x) => ({ key: disciplineLabel(x), count: x.count }))} labelOf={(key) => key} /></div>
+                    <div><h3 className={subheading}>'My pacing' fallback reasons</h3>
+                      <Breakdown rows={(toolUsage.pacing_fallbacks || []).map((x) => ({ key: x.reason, count: x.count }))} labelOf={fallbackLabel} /></div>
+                  </div>
+                </Panel>
+              )
+            })()}</div>}
 
             {partner && (
               <div className="lg:col-span-2">
