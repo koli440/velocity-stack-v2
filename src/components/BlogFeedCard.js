@@ -1,4 +1,9 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { supabase } from '../lib/supabase'
+import { trackBlogEvent } from '../lib/blogTracking'
 import Avatar from './Avatar'
 import CalendarTile from './CalendarTile'
 import CoverArt, { COVER_BACKGROUND } from './blog/CoverArt'
@@ -7,8 +12,26 @@ import { BLOG_AUTHOR } from '../lib/blog'
 // Timeline card for a published blog post (placed by publish date in the rider's own feed, see lib/blogFeed).
 // Same hero layout as an activity card. Content is the public post only.
 export default function BlogFeedCard({ card }) {
+  const ref = useRef(null)
+  const seen = useRef(false)
+
+  // One anonymous impression per card per feed mount, once at least half of it is visible (docs/analytics.md).
+  useEffect(() => {
+    const el = ref.current
+    if (!el || seen.current || typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver((entries) => {
+      if (seen.current || !entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.5)) return
+      seen.current = true
+      trackBlogEvent(supabase, 'blog_card_impression', card.slug)
+      io.disconnect()
+    }, { threshold: 0.5 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [card.slug])
+
   return (
     <div
+      ref={ref}
       data-testid="feed-blog-card"
       className="glass-card group relative overflow-hidden rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder hover:border-orange-500/60 hover:-translate-y-0.5 transition duration-200"
     >
@@ -37,6 +60,7 @@ export default function BlogFeedCard({ card }) {
         <div className="text-sm font-black text-slate-900 dark:text-white">{BLOG_AUTHOR.name}</div>
         <Link
           href={card.href}
+          onClick={() => trackBlogEvent(supabase, 'blog_card_click', card.slug)}
           className="mt-2 block text-base font-black text-slate-900 dark:text-white group-hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"
         >
           {card.title}
