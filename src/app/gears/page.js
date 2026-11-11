@@ -28,6 +28,7 @@ export default function GearsPage() {
   const [cadence, setCadence] = useState(105)
   const [wheelSize, setWheelSize] = useState(27.0)
   const [tolerancePct, setTolerancePct] = useState(3)
+  const [similarOpen, setSimilarOpen] = useState(false)
   const used = (event) => trackToolEvent(supabase, 'gear', event)
 
   const safeCog = cog || 1
@@ -84,15 +85,22 @@ export default function GearsPage() {
         {metric('Speed at Cadence', speedKmh.toFixed(1), 'km/h')}
       </div>
 
-      <LockedExtra
-        title="Your records in this gear"
-        description="Save your default gear and see your PB Vault records and race rides for each gear you've ridden."
-      >
-        <GearRecords client={supabase} userId={userId} chainring={gear.chainring} cog={gear.cog} />
-      </LockedExtra>
-
       <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
-        <h2 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3">Similar Gears</h2>
+        <button
+          type="button"
+          onClick={() => setSimilarOpen((v) => !v)}
+          aria-expanded={similarOpen}
+          aria-controls="similar-gears-body"
+          data-testid="similar-gears-toggle"
+          className="w-full flex items-center justify-between gap-3 text-left"
+        >
+          <span className="text-sm font-extrabold text-slate-900 dark:text-white">Similar Gears</span>
+          <span className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            {similar.length} {similar.length === 1 ? 'gear' : 'gears'} within ±{tolerancePct} %
+            <svg aria-hidden="true" viewBox="0 0 20 20" className={`w-4 h-4 transition-transform ${similarOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 8l5 5 5-5" /></svg>
+          </span>
+        </button>
+        <div id="similar-gears-body" hidden={!similarOpen} className="mt-3">
         <label className="block space-y-1.5 mb-4 max-w-xs">
           <span className="text-xs uppercase font-bold text-slate-400">Tolerance: ±{tolerancePct}%</span>
           <input
@@ -109,9 +117,6 @@ export default function GearsPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400">No similar gears found.</p>
         ) : (
           <>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-            {similar.length} {similar.length === 1 ? 'gear' : 'gears'} within ±{tolerancePct} %
-          </p>
           <div className="max-h-96 overflow-y-auto">
           <table className="w-full text-sm">
             <thead>
@@ -138,7 +143,15 @@ export default function GearsPage() {
           </div>
           </>
         )}
+        </div>
       </div>
+
+      <LockedExtra
+        title="Your records in this gear"
+        description="Save your default gear and see your PB Vault records and race rides for each gear you've ridden."
+      >
+        <GearRecords client={supabase} userId={userId} chainring={gear.chainring} cog={gear.cog} />
+      </LockedExtra>
 
       <SignupBanner usage={`${gear.chainring}x${gear.cog}|${cadence}|${wheelSize}|${tolerancePct}`} />
     </div>
