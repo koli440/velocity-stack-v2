@@ -80,3 +80,17 @@ test('similarGears returns nearby combos sorted by closeness, excluding the sele
 test('similarGears returns [] for invalid input', () => {
   assert.deepEqual(similarGears(52, 0, 27), [])
 })
+
+test('similarGears: larger tolerance returns a superset of a smaller one', () => {
+  const small = similarGears(52, 14, 27, { tolerance: 0.01 })
+  const large = similarGears(52, 14, 27, { tolerance: 0.1 })
+  assert.ok(large.length > small.length)
+  const keys = new Set(large.map((g) => `${g.chainring}x${g.cog}`))
+  for (const g of small) assert.ok(keys.has(`${g.chainring}x${g.cog}`))
+})
+
+test('similarGears: limit caps results and is off by default', () => {
+  const all = similarGears(52, 14, 27, { tolerance: 0.1 })
+  assert.ok(all.length > 12)
+  assert.equal(similarGears(52, 14, 27, { tolerance: 0.1, limit: 5 }).length, 5)
+})

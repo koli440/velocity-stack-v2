@@ -84,6 +84,13 @@ export default function GearsPage() {
         {metric('Speed at Cadence', speedKmh.toFixed(1), 'km/h')}
       </div>
 
+      <LockedExtra
+        title="Your records in this gear"
+        description="Save your default gear and see your PB Vault records and race rides for each gear you've ridden."
+      >
+        <GearRecords client={supabase} userId={userId} chainring={gear.chainring} cog={gear.cog} />
+      </LockedExtra>
+
       <div className="glass-card bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm">
         <h2 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3">Similar Gears</h2>
         <label className="block space-y-1.5 mb-4 max-w-xs">
@@ -101,6 +108,11 @@ export default function GearsPage() {
         {similar.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">No similar gears found.</p>
         ) : (
+          <>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+            {similar.length} {similar.length === 1 ? 'gear' : 'gears'} within ±{tolerancePct} %
+          </p>
+          <div className="max-h-96 overflow-y-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase text-slate-400">
@@ -123,17 +135,12 @@ export default function GearsPage() {
               ))}
             </tbody>
           </table>
+          </div>
+          </>
         )}
       </div>
 
       <SignupBanner usage={`${gear.chainring}x${gear.cog}|${cadence}|${wheelSize}|${tolerancePct}`} />
-
-      <LockedExtra
-        title="Your records in this gear"
-        description="Save your default gear and see your PB Vault records and race rides for each gear you've ridden."
-      >
-        <GearRecords client={supabase} userId={userId} chainring={gear.chainring} cog={gear.cog} />
-      </LockedExtra>
     </div>
   )
 }

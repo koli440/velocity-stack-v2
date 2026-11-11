@@ -82,10 +82,10 @@ export function speedAtCadence(gearInchesValue, cadence) {
  * @param {number} chainring
  * @param {number} cog
  * @param {number} wheelSize - wheel diameter in inches
- * @param {{tolerance?: number, limit?: number}} [opts] - tolerance is a fraction of gear inches
+ * @param {{tolerance?: number, limit?: number}} [opts] - tolerance is a fraction of gear inches; limit defaults to no cap
  * @returns {{chainring: number, cog: number, gearInches: number, ratio: number, diff: number}[]}
  */
-export function similarGears(chainring, cog, wheelSize, { tolerance = 0.03, limit = 12 } = {}) {
+export function similarGears(chainring, cog, wheelSize, { tolerance = 0.03, limit = Infinity } = {}) {
   const target = gearInches(chainring, cog, wheelSize)
   if (!Number.isFinite(target) || target <= 0) return []
   const results = []
