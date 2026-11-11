@@ -4,18 +4,17 @@
 // mirroring wahooPlan.js: nothing is dropped silently, whatever Garmin cannot express becomes a warning.
 //
 // Mapping (single-sided bands use their bound as the target):
-//  - %FTP / %LT2 / %LT1 / power zones -> watts via the rider's FTP (without FTP the step keeps its length only),
+//  - %FTP / %LT2 / %LT1 / power zones -> absolute watts from the rider's Velocity Stack FTP, LT1/LT2 and zone setup (without any the step keeps its length only),
 //    W -> the rider's power target type (default POWER_LAP = interval average), rpm -> CADENCE, bpm -> HEART_RATE, km/h -> SPEED (m/s).
 //  - %HRmax, %LT1HR, %LT2HR, W/kg and best-effort steps have no reliable Garmin target: the step keeps its length.
 //  - Distance steps use DISTANCE (metres). Warm-up / cool-down are duration-only steps.
 // Workouts without steps (free text, fixed track patterns) cannot be sent: Garmin workouts need at least one step.
 
-import { FTP_LT1_FRACTION } from './powerZones.js'
+import { basisFromFtp, bandToWatts, MISSING_POWER_NOTE, withBasis, hashBase } from './pushPower.js'
 import { parseStructure } from './plannedWorkouts.js'
-import { zoneBoundsPctFtp } from './intervalsWorkout.js'
 
 /** Bump when the output format changes so already pushed workouts are seen as out of date. */
-export const GARMIN_CONVERTER_VERSION = 3
+export const GARMIN_CONVERTER_VERSION = 4
 // Provider and source id: 20 characters at most, and the source id should equal the provider (Training API V2).
 export const GARMIN_PROVIDER_NAME = 'VelocityStack'
 // Training API V2 power target types: what the Edge shows as the step's power field and compares to the range.
@@ -42,33 +41,19 @@ const bound = (lo, hi) => {
 const r1 = (n) => Math.round(n * 10) / 10
 
 /** Target of a step's band -> { target, warning, note } (target null = no usable target). */
-function convertTarget(step, { ftp, powerTarget }) {
+function convertTarget(step, { basis, powerTarget }) {
   const { bandType: t, powerMin: lo, powerMax: hi } = step
   const b = bound(lo, hi)
   const out = { target: null, warning: null, note: null }
   if (!b) return out
-  const watts = (pctLow, pctHigh, warning) => {
-    if (!ftp) return { ...out, note: 'Set your FTP in your profile to send power targets to Garmin.' }
-    return {
-      ...out,
-      target: { type: powerTarget, low: Math.round((ftp * pctLow) / 100), high: Math.round((ftp * pctHigh) / 100) },
-      warning: warning || null,
-    }
+  if (['pct_ftp', 'pct_lt1', 'pct_lt2', 'zone'].includes(t)) {
+    const w = bandToWatts(step, basis)
+    if (!w) return { ...out, note: MISSING_POWER_NOTE }
+    const wb = bound(w.min, w.max)
+    if (!wb) return out
+    return { ...out, target: { type: powerTarget, low: Math.round(wb[0]), high: Math.round(wb[1]) }, warning: w.warning }
   }
   switch (t) {
-    case 'pct_ftp':
-      return watts(b[0], b[1])
-    case 'pct_lt2':
-      return watts(b[0], b[1], 'LT2 power targets were sent as watts from your FTP (LT2 is approximated by FTP).')
-    case 'pct_lt1':
-      return watts(b[0] * FTP_LT1_FRACTION, b[1] * FTP_LT1_FRACTION, 'LT1 power targets were sent as watts from your FTP (LT1 is approximated by 75% of FTP).')
-    case 'zone': {
-      const min = lo == null ? null : hi == null ? zoneBoundsPctFtp(lo)[1] : zoneBoundsPctFtp(lo)[0]
-      const max = hi == null ? null : lo == null ? zoneBoundsPctFtp(hi)[0] : zoneBoundsPctFtp(hi)[1]
-      const zb = bound(min, max)
-      if (!zb) return out
-      return watts(zb[0], zb[1], 'Power zones were sent as watts using the default zone model (your custom zones are not applied).')
-    }
     case 'watts':
       return { ...out, target: { type: powerTarget, low: Math.round(b[0]), high: Math.round(b[1]) } }
     case 'cadence_rpm':
@@ -180,13 +165,13 @@ function manifestOf(workout, warnings) {
 
 /**
  * @param {object} workout planned workout row
- * @param {{ ftp?: number|null, powerTarget?: string }} [opts] rider FTP in watts (profiles.ftp_w); power target type (see GARMIN_POWER_TARGETS)
+ * @param {{ ftp?: number|null, basis?: object|null, powerTarget?: string }} [opts] rider power basis (buildPowerBasis: FTP, LT1/LT2, zones; ftp = FTP-only fallback); power target type (see GARMIN_POWER_TARGETS)
  * @returns {{ workout: object|null, minutes: number, warnings: string[], structured: boolean }}
  */
-export function buildGarminWorkout(workout, { ftp = null, powerTarget = DEFAULT_GARMIN_POWER_TARGET } = {}) {
+export function buildGarminWorkout(workout, { ftp = null, basis = null, powerTarget = DEFAULT_GARMIN_POWER_TARGET } = {}) {
   const warnings = new Set()
   const next = newCounter()
-  const ctx = { ftp: ftp > 0 ? Math.round(ftp) : null, powerTarget: normalizePowerTarget(powerTarget), warnings, next }
+  const ctx = { basis: basis || basisFromFtp(ftp), powerTarget: normalizePowerTarget(powerTarget), warnings, next }
   const manifest = manifestOf(workout, warnings)
   const name = String(workout.title ?? '').trim().slice(0, MAX_NAME) || 'Workout'
   const description = String(workout.description ?? '').replace(/\r\n?/g, '\n').trim().slice(0, MAX_DESCRIPTION)
@@ -236,8 +221,8 @@ function cyrb53(str) {
 }
 
 /** Hash of what the rider edits (plus the converter version and the rider's power target type). */
-export function garminPushHash(workout, powerTarget = DEFAULT_GARMIN_POWER_TARGET) {
-  return cyrb53(
+export function garminPushHash(workout, powerTarget = DEFAULT_GARMIN_POWER_TARGET, basis = null) {
+  return withBasis(cyrb53(
     JSON.stringify([
       GARMIN_CONVERTER_VERSION,
       normalizePowerTarget(powerTarget),
@@ -247,7 +232,7 @@ export function garminPushHash(workout, powerTarget = DEFAULT_GARMIN_POWER_TARGE
       String(workout.description ?? '').trim(),
       String(workout.structure_dsl ?? '').replace(/\r\n?/g, '\n').trim(),
     ])
-  )
+  ), basis)
 }
 
 /** Push state for the UI from a planned_workout_garmin_pushes row: 'not_pushed' | 'pushed' | 'out_of_date' | 'error'. */
@@ -255,7 +240,7 @@ export function garminPushState(workout, row, ctx = null) {
   if (!row || row.push_status === 'pending_delete') return 'not_pushed'
   if (row.push_status === 'error' && row.last_error) return 'error'
   if (!row.garmin_workout_id) return 'not_pushed'
-  return row.pushed_hash === garminPushHash(workout, ctx?.power_target) ? 'pushed' : 'out_of_date'
+  return hashBase(row.pushed_hash) === garminPushHash(workout, ctx?.power_target) ? 'pushed' : 'out_of_date'
 }
 
 export const GARMIN_PUSH_STATE_LABELS = Object.freeze({

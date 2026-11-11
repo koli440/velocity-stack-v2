@@ -8,6 +8,7 @@
 // We only ever touch events whose id we stored in planned_workout_pushes (or that carry our external_id).
 
 import { createIntervalsEventsClient, PushError } from './intervalsEvents.js'
+import { createPowerBasisLoader } from './pushPowerBasis.js'
 import { buildIntervalsEvent, externalIdFor, plannedPushHash } from '../intervalsWorkout.js'
 
 export const CLAIM_TTL_MS = 2 * 60 * 1000
@@ -86,14 +87,15 @@ const safeMessage = (e) => (e instanceof PushError ? e.message : 'Unexpected err
  * @returns {{ state: 'pushed', eventId: string, warnings: string[], recreated: boolean, structured: boolean }}
  * @throws PushError
  */
-export async function pushPlannedWorkout({ service, workout, now = Date.now(), makeClient = createIntervalsEventsClient, conn = null, loadConnection }) {
+export async function pushPlannedWorkout({ service, workout, now = Date.now(), makeClient = createIntervalsEventsClient, conn = null, loadConnection, basisFor = null }) {
   const connection = conn || (await requireConnection(service, workout.rider_id, loadConnection))
   const client = makeClient({ athleteId: connection.athleteId, apiKey: connection.apiKey, accessToken: connection.accessToken })
   const row = await getPushRow(service, workout.id)
   await claim(service, workout, row, now)
 
-  const hash = plannedPushHash(workout)
-  const { event, warnings, structured } = buildIntervalsEvent(workout)
+  const basis = await (basisFor || createPowerBasisLoader(service, workout.rider_id))(workout.workout_date)
+  const hash = plannedPushHash(workout, basis)
+  const { event, warnings, structured } = buildIntervalsEvent(workout, { basis })
   const extId = externalIdFor(workout.id)
   const date = event.start_date_local.slice(0, 10)
   let eventId = row?.intervals_event_id || null
@@ -243,15 +245,16 @@ export async function pushRider({ service, riderId, conn, now, deadline, makeCli
     const { data: rows } = await service.from('planned_workout_pushes').select(PUSH_COLUMNS).in('workout_id', ids)
     for (const r of rows || []) rowById.set(r.workout_id, r)
   }
+  const basisFor = createPowerBasisLoader(service, riderId)
   for (const w of workouts || []) {
     if (!timeLeft() || budget <= 0 || out.stopped) break
     const row = rowById.get(w.id)
-    const hash = plannedPushHash(w)
+    const hash = plannedPushHash(w, await basisFor(w.workout_date))
     if (row?.intervals_event_id && row.pushed_hash === hash && row.push_status === 'pushed') continue
     if (row?.push_status === 'error' && row.attempted_hash === hash && row.last_attempt_at && now - Date.parse(row.last_attempt_at) < RETRY_SAME_ERROR_MS) continue
     budget -= 1
     try {
-      await pushPlannedWorkout({ service, workout: w, now, makeClient, conn, loadConnection })
+      await pushPlannedWorkout({ service, workout: w, now, makeClient, conn, loadConnection, basisFor })
       out.pushed += 1
     } catch (e) {
       handle(e)

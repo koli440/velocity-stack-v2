@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { buildPowerBasis } from '../pushPower.js'
 import { buildWahooWorkout, wahooDayCode, wahooWorkoutFields, planFileDataUri, wahooPushHash, wahooPushState, intervalsSeconds, wahooExternalId } from '../wahooPlan.js'
 
 const wk = (over = {}) => ({ id: 'w1', rider_id: 'r1', workout_date: '2027-01-12', discipline: 'ride', title: 'Sweet spot', description: '', structure_dsl: null, structure_manifest: null, status: 'planned', ...over })
@@ -34,7 +35,7 @@ test('steps become a plan with ftp targets, warmup/cooldown and a repeat block',
   assert.equal(cd.intensity_type, 'cd')
   assert.equal(main.exit_trigger_type, 'repeat')
   assert.equal(main.exit_trigger_value, 2) // N additional iterations
-  assert.deepEqual(main.intervals[0].targets, [{ type: 'ftp', low: 0.88, high: 0.94 }])
+  assert.deepEqual(main.intervals[0].targets, [{ type: 'watts', low: 220, high: 235 }])
   assert.equal(main.intervals[1].intensity_type, 'recover')
   assert.equal(r.minutes, Math.round((600 + 300 + 3 * 720) / 60))
   assert.equal(intervalsSeconds(r.plan.intervals), 600 + 300 + 3 * 720)
@@ -56,7 +57,7 @@ test('missing FTP keeps the duration, drops the target and warns', () => {
 
 test('LT2 and unsupported bands warn instead of dropping silently', () => {
   const r = buildWahooWorkout(withManifest({ steps: [step({ bandType: 'pct_lt2' }), step({ bandType: 'w_per_kg', powerMin: 3, powerMax: 3 })] }), { ftp: 250 })
-  assert.equal(r.plan.intervals[0].targets[0].type, 'ftp')
+  assert.deepEqual(r.plan.intervals[0].targets[0], { type: 'watts', low: 220, high: 235 })
   assert.equal(r.plan.intervals[1].targets, undefined)
   assert.ok(r.warnings.length >= 2)
 })
@@ -90,4 +91,21 @@ test('push hash and state follow edits', () => {
   assert.equal(wahooPushState(w, row), 'pushed')
   assert.equal(wahooPushState(wk({ title: 'Other' }), row), 'out_of_date')
   assert.equal(wahooPushState(w, { ...row, push_status: 'error', last_error: 'x' }), 'error')
+})
+
+test('zones and LT use the rider own setup as absolute watts', () => {
+  const basis = buildPowerBasis({ ftp: 250, lt: { lt1Power: 180, lt2Power: 240 }, pcts: [80, 100, 100, 105, 120] })
+  const r = buildWahooWorkout(withManifest({ steps: [step({ bandType: 'zone', powerMin: 2, powerMax: 2 }), step({ bandType: 'pct_lt2', powerMin: 95, powerMax: 100 }), step({ bandType: 'pct_lt1', powerMin: 100, powerMax: 100 })] }), { basis })
+  const t = r.plan.intervals.map((i) => i.targets[0])
+  assert.deepEqual(t[0], { type: 'watts', low: 144, high: 180 })
+  assert.deepEqual(t[1], { type: 'watts', low: 228, high: 240 })
+  assert.deepEqual(t[2], { type: 'watts', low: 180, high: 180 })
+  assert.ok(!r.warnings.some((w) => /not applied/.test(w)))
+})
+
+test('hash changes with the rider power basis and the stored base hash still matches in the UI', () => {
+  const w = wk({ structure_dsl: 'x' })
+  const a = wahooPushHash(w, buildPowerBasis({ ftp: 250 }))
+  assert.notEqual(a, wahooPushHash(w, buildPowerBasis({ ftp: 260 })))
+  assert.equal(wahooPushState(w, { push_status: 'pushed', wahoo_workout_id: '1', pushed_hash: a }), 'pushed')
 })

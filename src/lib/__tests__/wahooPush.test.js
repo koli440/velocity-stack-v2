@@ -4,6 +4,8 @@ import { fakeSupabase, fakeWahooClient } from './helpers/fakeSupabase.js'
 import { pushPlannedWorkoutToWahoo, removePlannedWorkoutFromWahoo, runWahooPushCycle } from '../server/wahooPush.js'
 import { PushError } from '../server/intervalsEvents.js'
 import { wahooPushHash, wahooExternalId } from '../wahooPlan.js'
+import { buildPowerBasis } from '../pushPower.js'
+const B = buildPowerBasis({ ftp: 250 })
 
 const NOW = Date.parse('2027-01-11T10:00:00Z')
 const RIDER = 'r1'
@@ -26,7 +28,7 @@ test('push creates plan then workout and stores the mapping', async () => {
   const row = sb.db.planned_workout_wahoo_pushes[0]
   assert.equal(row.push_status, 'pushed')
   assert.equal(row.wahoo_workout_id, r.workoutId)
-  assert.equal(row.pushed_hash, wahooPushHash(w))
+  assert.equal(row.pushed_hash, wahooPushHash(w, B))
   assert.equal(row.claimed_until, null)
 })
 
@@ -103,7 +105,7 @@ test('cron cycle pushes new workouts, skips unchanged ones and processes tombsto
   const sb = db({
     planned_workouts: [wk('w1', '2027-01-13'), unchanged],
     planned_workout_wahoo_pushes: [
-      { workout_id: 'w2', rider_id: RIDER, wahoo_plan_id: '1', wahoo_workout_id: '2', push_status: 'pushed', pushed_hash: wahooPushHash(unchanged) },
+      { workout_id: 'w2', rider_id: RIDER, wahoo_plan_id: '1', wahoo_workout_id: '2', push_status: 'pushed', pushed_hash: wahooPushHash(unchanged, B) },
       { workout_id: 'gone', rider_id: RIDER, wahoo_plan_id: '3', wahoo_workout_id: '4', push_status: 'pending_delete' },
     ],
   })

@@ -4,6 +4,8 @@ import { fakeSupabase, fakeEventsClient } from './helpers/fakeSupabase.js'
 import { pushPlannedWorkout, removePlannedWorkoutPush, runPlannedPushCycle } from '../server/plannedPush.js'
 import { PushError } from '../server/intervalsEvents.js'
 import { plannedPushHash, externalIdFor } from '../intervalsWorkout.js'
+import { buildPowerBasis } from '../pushPower.js'
+const B = buildPowerBasis()
 
 const NOW = Date.parse('2026-12-01T10:00:00Z')
 const RIDER = 'r1'
@@ -26,7 +28,7 @@ test('push creates an event and stores the mapping', async () => {
   assert.equal(client.calls.find((c) => c[0] === 'create')[1].external_id, externalIdFor('w1'))
   const row = sb.db.planned_workout_pushes[0]
   assert.equal(row.push_status, 'pushed')
-  assert.equal(row.pushed_hash, plannedPushHash(wk('w1', '2026-12-05')))
+  assert.equal(row.pushed_hash, plannedPushHash(wk('w1', '2026-12-05'), B))
   assert.equal(row.claimed_until, null)
 })
 
@@ -122,7 +124,7 @@ test('cycle: pushes new/changed in window only, propagates tombstones, skips unc
       wk('w7', '2026-11-20'), // past
     ],
     planned_workout_pushes: [
-      { workout_id: 'w2', rider_id: RIDER, intervals_event_id: '2', push_status: 'pushed', pushed_hash: plannedPushHash(unchanged) },
+      { workout_id: 'w2', rider_id: RIDER, intervals_event_id: '2', push_status: 'pushed', pushed_hash: plannedPushHash(unchanged, B) },
       { workout_id: 'w3', rider_id: RIDER, intervals_event_id: '3', push_status: 'pushed', pushed_hash: 'stale' },
       { workout_id: 'w6', rider_id: RIDER, intervals_event_id: '6', push_status: 'pushed', pushed_hash: 'x' },
       { workout_id: 'gone', rider_id: RIDER, intervals_event_id: '9', push_status: 'pending_delete' },
@@ -173,7 +175,7 @@ test('cycle: a failed workout with unchanged content is not retried right away',
   const sb = fakeSupabase({
     connections: [conn()],
     planned_workouts: [w],
-    planned_workout_pushes: [{ workout_id: 'w1', rider_id: RIDER, push_status: 'error', attempted_hash: plannedPushHash(w), last_error: 'x', last_attempt_at: new Date(NOW - 60000).toISOString() }],
+    planned_workout_pushes: [{ workout_id: 'w1', rider_id: RIDER, push_status: 'error', attempted_hash: plannedPushHash(w, B), last_error: 'x', last_attempt_at: new Date(NOW - 60000).toISOString() }],
   })
   const client = fakeEventsClient()
   const t = await runPlannedPushCycle({ service: sb, now: NOW, makeClient: mk(client), loadConnection })

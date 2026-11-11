@@ -9,6 +9,7 @@
 import { PushError } from './intervalsEvents.js'
 import { createGarminPlanClient } from './garminPlans.js'
 import { getFreshAccessToken } from './garminProvider.js'
+import { createPowerBasisLoader } from './pushPowerBasis.js'
 import { buildGarminWorkout, garminPushHash, normalizePowerTarget, GARMIN_PUSH_DISCIPLINES } from '../garminPlan.js'
 import { CLAIM_TTL_MS, RETRY_SAME_ERROR_MS, PUSH_WINDOW_DAYS, TIME_BUDGET_MS, RIDERS_PER_RUN, PUSHES_PER_RIDER, RIDER_CLAIM_MS } from './plannedPush.js'
 
@@ -53,11 +54,6 @@ export async function defaultMakeClient(service, conn) {
   }
 }
 
-async function riderFtp(service, riderId) {
-  const { data } = await service.from('profiles').select('ftp_w').eq('id', riderId).maybeSingle()
-  return Number(data?.ftp_w) > 0 ? Number(data.ftp_w) : null
-}
-
 async function getRow(service, workoutId) {
   const { data } = await service.from(TABLE).select(PUSH_COLUMNS).eq('workout_id', workoutId).maybeSingle()
   return data || null
@@ -92,7 +88,7 @@ async function record(service, workoutId, patch) {
  * @returns {{ state: 'pushed', workoutId: string, scheduleId: string, warnings: string[], recreated: boolean }}
  * @throws PushError
  */
-export async function pushPlannedWorkoutToGarmin({ service, workout, now = Date.now(), makeClient = defaultMakeClient, conn = null, client = null }) {
+export async function pushPlannedWorkoutToGarmin({ service, workout, now = Date.now(), makeClient = defaultMakeClient, conn = null, client = null, basisFor = null }) {
   if (!GARMIN_PUSH_DISCIPLINES.includes(workout.discipline || 'ride')) {
     throw new PushError('unsupported', 'Only ride workouts are sent to Garmin.', { status: 409 })
   }
@@ -102,7 +98,8 @@ export async function pushPlannedWorkoutToGarmin({ service, workout, now = Date.
   await claim(service, workout, row, now)
 
   const powerTarget = normalizePowerTarget(connection.push_power_target)
-  const hash = garminPushHash(workout, powerTarget)
+  const basis = await (basisFor || createPowerBasisLoader(service, workout.rider_id))(workout.workout_date)
+  const hash = garminPushHash(workout, powerTarget, basis)
   const stamp = iso(now)
   const date = String(workout.workout_date).slice(0, 10)
   let workoutId = row?.garmin_workout_id || null
@@ -111,7 +108,7 @@ export async function pushPlannedWorkoutToGarmin({ service, workout, now = Date.
   let built
 
   try {
-    built = buildGarminWorkout(workout, { ftp: await riderFtp(service, workout.rider_id), powerTarget })
+    built = buildGarminWorkout(workout, { basis, powerTarget })
     if (!built.workout) {
       throw new PushError('unsupported', 'This workout has no steps, so it cannot be sent to Garmin. Add structured steps first.', { status: 409 })
     }
@@ -249,15 +246,16 @@ export async function pushGarminRider({ service, riderId, conn, client, now, dea
     const { data: rows } = await service.from(TABLE).select(PUSH_COLUMNS).in('workout_id', ids)
     for (const r of rows || []) rowById.set(r.workout_id, r)
   }
+  const basisFor = createPowerBasisLoader(service, riderId)
   for (const w of workouts || []) {
     if (!ready()) break
     const row = rowById.get(w.id)
-    const hash = garminPushHash(w, conn?.push_power_target)
+    const hash = garminPushHash(w, conn?.push_power_target, await basisFor(w.workout_date))
     if (row?.garmin_workout_id && row.pushed_hash === hash && row.push_status === 'pushed') continue
     if (row?.push_status === 'error' && row.attempted_hash === hash && row.last_attempt_at && now - Date.parse(row.last_attempt_at) < RETRY_SAME_ERROR_MS) continue
     budget -= 1
     try {
-      await pushPlannedWorkoutToGarmin({ service, workout: w, now, conn, client })
+      await pushPlannedWorkoutToGarmin({ service, workout: w, now, conn, client, basisFor })
       out.pushed += 1
     } catch (e) {
       handle(e)

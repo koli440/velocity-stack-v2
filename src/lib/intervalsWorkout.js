@@ -18,9 +18,9 @@
 //
 // Mapping choices (single-sided bands use their bound as the target: "<55%FTP" -> 55%, ">80%FTP" -> 80%):
 //  - %FTP -> "lo-hi%"; W -> "lo-hiw"; %HRmax -> "lo-hi% HR"; %LT2HR -> "lo-hi% LTHR"; rpm -> "lo-hirpm".
-//  - %LT2 -> %FTP (LT2 power is approximated by FTP), %LT1 -> 75% of that, like the zone model's FTP fallback.
-//  - Power zones Z1-Z6 use a different model than Intervals.icu's zones, so they are converted to %FTP with
-//    the default zone model (powerZones.js, LT1 = 75% FTP, LT2 = FTP) and a warning is added.
+//  - With a power basis (pushPower.js: the rider's Velocity Stack FTP, LT1/LT2 and zone setup) %FTP, %LT1, %LT2 and
+//    power zones become absolute watts ("lo-hiw"), independent of what is set in Intervals.icu. Without any
+//    FTP/LT they fall back to %FTP (LT2 = FTP, LT1 = 75% FTP, default zone model) with a warning.
 //  - W/kg needs the rider's weight (`weightKg`); without it the target is a note.
 //  - best/max, bpm, %LT1HR and km/h bands have no Intervals.icu target: the step keeps its duration and the
 //    target becomes a note.
@@ -32,9 +32,10 @@
 
 import { DEFAULT_ZONE_PCTS, FTP_LT1_FRACTION, FTP_LT2_FRACTION } from './powerZones.js'
 import { parseStructure } from './plannedWorkouts.js'
+import { bandToWatts, withBasis, hashBase } from './pushPower.js'
 
 /** Bump when the output format changes so already pushed workouts are seen as out of date. */
-export const CONVERTER_VERSION = 1
+export const CONVERTER_VERSION = 2
 export const EXTERNAL_ID_PREFIX = 'velocity-stack:'
 export const MAX_DESCRIPTION_CHARS = 8000
 
@@ -82,10 +83,16 @@ function describeStep(step) {
  * Intervals.icu target text of a step's band.
  * @returns {{ target: string|null, cadence: string|null, note: string|null, warning: string|null, estimatedSpeedKmh?: number|null }}
  */
-function convertBand(step, { weightKg }) {
+function convertBand(step, { weightKg, basis = null }) {
   const { bandType: t, powerMin: lo, powerMax: hi } = step
   const none = { target: null, cadence: null, note: null, warning: null }
   const unsupported = (why) => ({ ...none, note: `${describeStep(step)} (${why})` })
+  // Absolute watts from the rider's Velocity Stack FTP/LT/zones; the % fallback (Intervals.icu's own FTP) only applies without them.
+  if (['pct_ftp', 'pct_lt1', 'pct_lt2', 'zone'].includes(t)) {
+    const w = bandToWatts(step, basis)
+    if (w) return { ...none, target: range(w.min, w.max, 'w'), warning: w.warning }
+    if (basis) none.warning = 'No FTP or LT power in your Velocity Stack profile, so targets were sent as % and use the FTP set in Intervals.icu.'
+  }
   switch (t) {
     case 'pct_ftp':
       return { ...none, target: range(lo, hi, '%') }
@@ -98,12 +105,12 @@ function convertBand(step, { weightKg }) {
     case 'cadence_rpm':
       return { ...none, cadence: range(lo, hi, 'rpm') }
     case 'pct_lt2':
-      return { ...none, target: range(lo, hi, '%'), warning: 'LT2 power targets were sent as % of FTP (LT2 is approximated by FTP).' }
+      return { ...none, target: range(lo, hi, '%'), warning: none.warning || 'LT2 power targets were sent as % of FTP (LT2 is approximated by FTP).' }
     case 'pct_lt1':
       return {
         ...none,
         target: range(lo != null ? lo * FTP_LT1_FRACTION : null, hi != null ? hi * FTP_LT1_FRACTION : null, '%'),
-        warning: 'LT1 power targets were sent as % of FTP (LT1 is approximated by 75% of FTP).',
+        warning: none.warning || 'LT1 power targets were sent as % of FTP (LT1 is approximated by 75% of FTP).',
       }
     case 'zone': {
       // "<Zk" is below the lower edge of zone k, ">Zk" above its upper edge.
@@ -112,7 +119,7 @@ function convertBand(step, { weightKg }) {
       return {
         ...none,
         target: range(min, max, '%'),
-        warning: 'Power zones were sent as % of FTP using the default zone model (your custom zones are not applied).',
+        warning: none.warning || 'Power zones were sent as % of FTP using the default zone model.',
       }
     }
     case 'wkg':
@@ -199,14 +206,14 @@ function mainBlocks(items, block) {
  * Intervals.icu workout text for a manifest (the `custom_intervals` shape of buildIntervalManifest).
  * @returns {{ text: string, structured: boolean, notes: string[], warnings: string[] }}
  */
-export function manifestToIntervalsText(manifest, { weightKg = null } = {}) {
+export function manifestToIntervalsText(manifest, { weightKg = null, basis = null } = {}) {
   const warnings = []
   const notes = []
   const steps = Array.isArray(manifest?.steps) ? manifest.steps : []
   if (!steps.length) {
     return { text: '', structured: false, notes, warnings: [`The fixed pattern "${String(manifest?.pattern || 'unknown').replace(/_/g, ' ')}" has no steps, so only a text description was sent.`] }
   }
-  const ctx = { weightKg }
+  const ctx = { weightKg, basis }
   const blocks = []
 
   const block = (header, stepList, labels) => {
@@ -245,11 +252,11 @@ export function manifestToIntervalsText(manifest, { weightKg = null } = {}) {
  * The Intervals.icu event for a planned workout.
  * @param {{ id?: string, workout_date: string, title: string, description?: string, discipline?: string,
  *           structure_dsl?: string|null, structure_manifest?: object|null }} workout
- * @param {{ weightKg?: number|null }} [opts]
+ * @param {{ weightKg?: number|null, basis?: object|null }} [opts] basis = rider power basis (pushPower.js); without it power targets are %
  * @returns {{ event: { category: 'WORKOUT', type: string, name: string, start_date_local: string, description: string, external_id?: string },
  *             structured: boolean, warnings: string[] }}
  */
-export function buildIntervalsEvent(workout, { weightKg = null } = {}) {
+export function buildIntervalsEvent(workout, { weightKg = null, basis = null } = {}) {
   const warnings = []
   let manifest = null
   const dsl = String(workout.structure_dsl ?? '').trim()
@@ -264,7 +271,7 @@ export function buildIntervalsEvent(workout, { weightKg = null } = {}) {
   let structured = false
   let notes = []
   if (manifest) {
-    const r = manifestToIntervalsText(manifest, { weightKg })
+    const r = manifestToIntervalsText(manifest, { weightKg, basis })
     text = r.text
     structured = r.structured
     notes = r.notes
@@ -310,8 +317,8 @@ function cyrb53(str) {
 }
 
 /** Hash of everything that ends up in the Intervals.icu event (plus the converter version). */
-export function plannedPushHash(workout) {
-  return cyrb53(
+export function plannedPushHash(workout, basis = null) {
+  return withBasis(cyrb53(
     JSON.stringify([
       CONVERTER_VERSION,
       String(workout.workout_date).slice(0, 10),
@@ -320,7 +327,7 @@ export function plannedPushHash(workout) {
       String(workout.description ?? '').trim(),
       String(workout.structure_dsl ?? '').replace(/\r\n?/g, '\n').trim(),
     ])
-  )
+  ), basis)
 }
 
 /**
@@ -331,7 +338,7 @@ export function pushState(workout, row) {
   if (!row || row.push_status === 'pending_delete') return 'not_pushed'
   if (row.push_status === 'error' && row.last_error) return 'error'
   if (!row.intervals_event_id) return 'not_pushed'
-  return row.pushed_hash === plannedPushHash(workout) ? 'pushed' : 'out_of_date'
+  return hashBase(row.pushed_hash) === plannedPushHash(workout) ? 'pushed' : 'out_of_date'
 }
 
 export const PUSH_STATE_LABELS = Object.freeze({

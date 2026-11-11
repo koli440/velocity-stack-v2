@@ -53,8 +53,8 @@ Data model details: [data-model.md](data-model.md).
   permission-change callback sets/clears the sync and push warnings. Disconnect calls `DELETE /partner-gateway/rest/user/registration` best effort. pg_cron `garmin-sync` (15 min)
   is the safety net. Duplicate priority: Intervals.icu = Wahoo = Garmin > Strava.
 - **Planned workout upload to Garmin** (Training API, `src/lib/garminPlan.js`, `server/garminPlans.js`, `server/garminPush.js`): a planned ride/track workout with
-  steps becomes a Garmin workout (`POST /workoutportal/workout/v2`, `PUT/DELETE /training-api/workout/v2/{id}`; updates read the workout's `ownerId` first) plus a schedule entry (`/training-api/schedule/`); `workoutProvider` = `workoutSourceId` = `VelocityStack`, at most 100 steps; %FTP/zone targets are converted to watts
-  from `profiles.ftp_w`; workouts without steps are not sent. Manual push in the workout dialog (`/api/planned-workouts/:id/garmin`), opt-in auto push on the Garmin
+  steps becomes a Garmin workout (`POST /workoutportal/workout/v2`, `PUT/DELETE /training-api/workout/v2/{id}`; updates read the workout's `ownerId` first) plus a schedule entry (`/training-api/schedule/`); `workoutProvider` = `workoutSourceId` = `VelocityStack`, at most 100 steps; %FTP/%LT1/%LT2/zone targets are converted to absolute watts
+  from the rider's Velocity Stack setup (see *Absolute watts* below); workouts without steps are not sent. Manual push in the workout dialog (`/api/planned-workouts/:id/garmin`), opt-in auto push on the Garmin
   card, mapping in `planned_workout_garmin_pushes`; the existing push cron runs `runGarminPushCycle`. Needs the rider's workout-import permission.
   Power targets use the rider's **power target type** (`connections.push_power_target`, set on the Garmin card; default `POWER_LAP` = interval average; also `POWER` = current,
   `POWER_3S`/`POWER_10S`/`POWER_30S`). The type decides which power field the Edge shows for a step, and it is part of the push hash (changing it re-sends pushed workouts, as does `GARMIN_CONVERTER_VERSION`).
@@ -157,14 +157,22 @@ Configured once on the Intervals.icu *Manage App* page: URL `https://www.velocit
   imports are de-duplicated and triggers only mark the rider due.
 
 ## Planned workouts -> Intervals.icu (`20261208000000_planned_workout_intervals_push.sql`)
+**Absolute watts (Garmin, Wahoo, Intervals.icu)**: pushed power targets are computed in Velocity Stack, so they never depend on the FTP or
+zones configured on the other platform or device. `src/lib/pushPower.js` (`buildPowerBasis`, `bandToWatts`) turns the rider's own numbers into
+watts: `%FTP` x `profiles.ftp_w`; `%LT1`/`%LT2` x the LT power valid on the workout day (`lactate_threshold_history`; LT1 = 75% FTP and LT2 = FTP
+when unset, with a warning); zones Z1-Z6 via `computeZones` with the rider's `power_zone_history` percentages. `server/pushPowerBasis.js` loads
+them once per rider and push cycle. The push hash carries the basis (`<hash>~<ftp,lt1,lt2,zone pcts>`), so changing FTP, LT or zones re-sends
+already pushed workouts (the browser compares the part before `~`). Without FTP/LT: Garmin/Wahoo keep the step length only, Intervals.icu falls
+back to %FTP, each with a warning. Converter versions: Garmin 4, Wahoo 2, Intervals.icu 2.
+
 A planned workout can be sent to the rider's Intervals.icu calendar as an event (`POST/PUT/DELETE /api/v1/athlete/{id}/events`,
 category `WORKOUT`, type Ride/WeightTraining/Workout, name, `start_date_local` at `T00:00:00`, description in Intervals.icu workout
 syntax, `external_id = velocity-stack:<planned workout id>`).
 
 - **Converter**: `src/lib/intervalsWorkout.js` (pure; `buildIntervalsEvent`, `plannedPushHash`, `pushState`). Warm-up/cool-down are
   duration-only steps, repeats are `Main set Nx` blocks, sets are expanded (no nested repeats), `%FTP`/W/`% HR`/`% LTHR`/rpm bands are
-  sent as targets (single-sided bands use their bound), `%LT2` is sent as %FTP, `%LT1` as 75% FTP, power zones as %FTP of the default zone
-  model (custom zones are not applied). Best-effort, bpm, `%LT1HR`, km/h and W/kg bands have no target: the step keeps its duration and the
+  sent as targets (single-sided bands use their bound); `%FTP`, `%LT1`, `%LT2` and power zones are sent as absolute watts
+  (see *Absolute watts* below; only without any FTP/LT they fall back to %FTP with a warning). Best-effort, bpm, `%LT1HR`, km/h and W/kg bands have no target: the step keeps its duration and the
   target is written as a note. Distance steps need a km/h band (duration = distance / mid speed), otherwise they are left out with a note.
   Fixed track patterns have no steps and become a plain-text description. Every degradation is returned as a warning and shown in the app.
 - **Who / how**: `POST|DELETE /api/planned-workouts/<id>/intervals`. The request-scoped (RLS) client must see the workout (rider or ACTIVE,

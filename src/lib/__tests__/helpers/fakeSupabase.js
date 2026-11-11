@@ -36,7 +36,7 @@ export function fakeSupabase(tables) {
       then(res, rej) { return Promise.resolve(run()).then(res, rej) },
     }
     function run() {
-      const rows = db[name]
+      const rows = (db[name] ||= [])
       if (op === 'insert') {
         const key = (name === 'planned_workout_pushes' || name === 'planned_workout_wahoo_pushes' || name === 'planned_workout_garmin_pushes') ? 'workout_id' : 'id'
         if (rows.some((r) => r[key] === patch[key])) return { data: null, error: { message: 'duplicate key' } }

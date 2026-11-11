@@ -4,6 +4,8 @@ import { fakeSupabase, fakeGarminClient } from './helpers/fakeSupabase.js'
 import { pushPlannedWorkoutToGarmin, removePlannedWorkoutFromGarmin, runGarminPushCycle } from '../server/garminPush.js'
 import { PushError } from '../server/intervalsEvents.js'
 import { garminPushHash } from '../garminPlan.js'
+import { buildPowerBasis } from '../pushPower.js'
+const B = buildPowerBasis({ ftp: 250 })
 
 const NOW = Date.parse('2026-11-02T10:00:00Z')
 const RIDER = 'r1'
@@ -25,7 +27,7 @@ test('push creates workout then schedule and stores the mapping', async () => {
   const row = sb.db.planned_workout_garmin_pushes[0]
   assert.equal(row.push_status, 'pushed')
   assert.equal(row.garmin_schedule_id, r.scheduleId)
-  assert.equal(row.pushed_hash, garminPushHash(w))
+  assert.equal(row.pushed_hash, garminPushHash(w, undefined, B))
   assert.equal(row.claimed_until, null)
 })
 
@@ -80,7 +82,7 @@ test('cron cycle pushes new workouts, skips unchanged ones and processes tombsto
   const sb = db({
     planned_workouts: [wk('w1', '2026-11-04'), unchanged],
     planned_workout_garmin_pushes: [
-      { workout_id: 'w2', rider_id: RIDER, garmin_workout_id: '1', garmin_schedule_id: '2', push_status: 'pushed', pushed_hash: garminPushHash(unchanged) },
+      { workout_id: 'w2', rider_id: RIDER, garmin_workout_id: '1', garmin_schedule_id: '2', push_status: 'pushed', pushed_hash: garminPushHash(unchanged, undefined, B) },
       { workout_id: 'gone', rider_id: RIDER, garmin_workout_id: '3', garmin_schedule_id: '4', push_status: 'pending_delete' },
     ],
   })
@@ -109,5 +111,5 @@ test('push uses the connection power target and stores a matching hash', async (
   const w = wk('w1', '2026-11-04')
   await pushPlannedWorkoutToGarmin({ service: sb, workout: w, now: NOW, conn: conn({ push_power_target: 'POWER_10S' }), client })
   assert.equal(client.calls[0][1].segments[0].steps[0].targetType, 'POWER_10S')
-  assert.equal(sb.db.planned_workout_garmin_pushes[0].pushed_hash, garminPushHash(w, 'POWER_10S'))
+  assert.equal(sb.db.planned_workout_garmin_pushes[0].pushed_hash, garminPushHash(w, 'POWER_10S', B))
 })
