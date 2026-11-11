@@ -21,6 +21,7 @@ import { jsonLdString } from '../../../lib/trackLanding'
 import BlogBody, { TagList } from '../../../components/blog/BlogBody'
 import Byline from '../../../components/blog/Byline'
 import ShareRow from '../../../components/blog/ShareRow'
+import BlogTracker from '../../../components/blog/BlogTracker'
 
 // Static pages that re-check the publish date at most every 15 minutes: a post dated in the future is a 404
 // until its date, then appears without a deploy. Slugs that were not prebuilt are rendered on demand (docs/blog.md).
@@ -71,7 +72,8 @@ export default async function BlogPostPage({ params }) {
   const avatarUrl = await authorAvatar()
 
   return (
-    <article className="max-w-2xl mx-auto">
+    <article id="blog-post" className="max-w-2xl mx-auto">
+      <BlogTracker slug={post.slug} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(blogPostingJsonLd(post, avatarUrl)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(breadcrumbJsonLd(post)) }} />
 

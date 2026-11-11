@@ -156,3 +156,29 @@ export function toolUsageSummary(stats) {
     fallbackTotal: sumSeries(s.pacing_fallbacks),
   }
 }
+
+/**
+ * Blog panel rows from admin_blog_stats(): one row per currently published post ({slug, title}), including posts with no events,
+ * sorted by views. Slugs not in `posts` (renamed, unpublished or junk) are left out. Counts are events, not readers.
+ */
+export function blogPostRows(stats, posts) {
+  const bySlug = new Map(((stats && stats.posts) || []).map((p) => [p.slug, p]))
+  const n = (v) => Number(v) || 0
+  return (posts || [])
+    .map((post) => {
+      const e = bySlug.get(post.slug) || {}
+      const views = n(e.views)
+      return {
+        slug: post.slug,
+        title: post.title || post.slug,
+        views30d: n(e.views_30d),
+        views,
+        impressions: n(e.impressions),
+        clicks: n(e.clicks),
+        ctr: pct(e.clicks, e.impressions),
+        read75: n(e.read_75),
+        readRate: pct(e.read_75, views),
+      }
+    })
+    .sort((a, b) => b.views - a.views || b.views30d - a.views30d || a.title.localeCompare(b.title))
+}

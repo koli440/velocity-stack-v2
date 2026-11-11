@@ -48,6 +48,7 @@ Every published post appears as a "New on the blog" card in the rider's own acti
 - `mergeBlogCards` (`src/lib/blogFeed.js`) interleaves cards with the loaded activities by date. While more pages exist, a card older than the oldest loaded activity waits until infinite scroll reaches that point, so cards keep their chronological position and loading more never reorders earlier items. Riders with no activities see all cards.
 - Cards are separate from the activity list: counts, ids, pagination, reactions and comments are unaffected. Only the dashboard "My sessions" feed passes cards, so they never appear in the Following tab, rider profiles or coach/athlete-context feeds, and contain nothing about any rider.
 - Permanent: no dismiss, no banner.
+- Anonymous analytics: each card sends one `blog_card_impression` per feed mount (>= 50% visible) and a `blog_card_click` when its link is activated; post pages send `blog_view` and `blog_read_75`. Slugs must keep matching the post-slug pattern. Details and privacy: `docs/analytics.md`; results in the admin Blog panel (`docs/admin.md`).
 
 ## SEO
 - `/blog/<slug>`: unique title (the post title as is, max 60 chars) and description, canonical URL (`canonicalUrl` when set), Open Graph `article` and Twitter large-image cards, `BlogPosting` and `BreadcrumbList` JSON-LD, RSS autodiscovery link.

@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import { reviewPath } from '../../lib/suggestions'
 import { formatDateTime } from '../../lib/dateFormat'
-import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth, respectSummary, respectTiers, pbVaultSummary, eventCount, toolUsageSummary, fallbackLabel, disciplineLabel } from '../../lib/adminDashboard'
+import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth, respectSummary, respectTiers, pbVaultSummary, eventCount, toolUsageSummary, fallbackLabel, disciplineLabel, blogPostRows } from '../../lib/adminDashboard'
 import SegmentedTabs from '../../components/SegmentedTabs'
 import Icon from '../../components/Icon'
 
@@ -128,6 +128,8 @@ export default function AdminDashboardPage() {
   const [respectHist, setRespectHist] = useState([])
   const [pbVault, setPbVault] = useState(null)
   const [toolUsage, setToolUsage] = useState(null)
+  const [blogStats, setBlogStats] = useState(null)
+  const [blogPosts, setBlogPosts] = useState([])
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser()
@@ -145,6 +147,14 @@ export default function AdminDashboardPage() {
     setPbVault(pv.data || null)
     const tu = await supabase.rpc('admin_tool_usage_stats')
     setToolUsage(tu.data || null)
+    const bs = await supabase.rpc('admin_blog_stats')
+    setBlogStats(bs.data || null)
+    try {
+      const res = await fetch('/api/blog-cards')
+      setBlogPosts(res.ok ? ((await res.json()).cards || []).map((c) => ({ slug: c.slug, title: c.title })) : [])
+    } catch {
+      setBlogPosts([])
+    }
     setState({ loading: false, admin: true, data: data || null, error: error?.message || '' })
   }, [days])
 
@@ -382,6 +392,42 @@ export default function AdminDashboardPage() {
                       <Breakdown rows={(toolUsage.pursuit_distances || []).map((x) => ({ key: disciplineLabel(x), count: x.count }))} labelOf={(key) => key} /></div>
                     <div><h3 className={subheading}>'My pacing' fallback reasons</h3>
                       <Breakdown rows={(toolUsage.pacing_fallbacks || []).map((x) => ({ key: x.reason, count: x.count }))} labelOf={fallbackLabel} /></div>
+                  </div>
+                </Panel>
+              )
+            })()}</div>}
+
+            {blogStats && <div className="lg:col-span-2">{(() => {
+              const rows = blogPostRows(blogStats, blogPosts)
+              return (
+                <Panel title="Blog" id="p-blog">
+                  <p className={`text-xs ${muted}`}>
+                    Anonymous event counts (last 12 weeks, kept 90 days): no user id, IP or cookie is stored, so these are events, not unique readers.
+                    Views count once per page load, impressions once per card per feed visit (at least half visible), read-through is a scroll past 75%
+                    of the post. Click-through = clicks / impressions; read-through = reads / views. Only published posts are listed.
+                  </p>
+                  <WeekBars weeks={blogStats.weeks} loggedInKey="logged_in" publicKey="public" label="Post views" />
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm" data-testid="admin-blog-table">
+                      <thead>
+                        <tr className={`text-left text-xs ${muted}`}>
+                          <th className="py-1 pr-3">Post</th><th className="px-2 text-right">Views 30d</th><th className="px-2 text-right">Views retained</th>
+                          <th className="px-2 text-right">Card impressions</th><th className="px-2 text-right">Card clicks</th><th className="px-2 text-right">CTR</th>
+                          <th className="px-2 text-right">Read 75%</th><th className="pl-2 text-right">Read-through</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((r) => (
+                          <tr key={r.slug} className="border-t border-slate-200 dark:border-surface-darkBorder">
+                            <td className="py-1 pr-3 font-semibold">{r.title}</td>
+                            <td className="px-2 text-right">{r.views30d}</td><td className="px-2 text-right">{r.views}</td>
+                            <td className="px-2 text-right">{r.impressions}</td><td className="px-2 text-right">{r.clicks}</td><td className="px-2 text-right">{r.ctr}%</td>
+                            <td className="px-2 text-right">{r.read75}</td><td className="pl-2 text-right">{r.readRate}%</td>
+                          </tr>
+                        ))}
+                        {rows.length === 0 && <tr><td colSpan={8} className={`py-2 ${muted}`}>No published posts.</td></tr>}
+                      </tbody>
+                    </table>
                   </div>
                 </Panel>
               )
