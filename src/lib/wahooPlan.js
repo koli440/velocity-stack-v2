@@ -6,20 +6,18 @@
 // Like intervalsWorkout.js nothing is dropped silently: whatever Wahoo cannot express becomes a warning.
 //
 // Mapping (single-sided bands use their bound as the target):
-//  - %FTP -> "ftp" target (needs the rider's FTP in the header; without it the step keeps its duration only),
+//  - %FTP / %LT1 / %LT2 / zones -> absolute "watts" targets from the rider's Velocity Stack FTP, LT and zones (without them the step keeps its duration only),
 //    W -> "watts", rpm -> "rpm", bpm -> "hr", km/h -> "speed" (m/s).
-//  - %LT2 -> %FTP, %LT1 -> 75% of that, power zones -> %FTP via the default zone model (all with a warning).
 //  - %HRmax, %LT1HR, %LT2HR, W/kg and best-effort steps have no reliable plan target: the step keeps its length.
 //  - Distance steps use Wahoo's distance trigger. Warm-up / cool-down are duration-only steps.
 //  - Wahoo bike computers only show the first target of an interval.
 // Workouts without steps (free text, fixed track patterns) are scheduled without a plan.
 
-import { FTP_LT1_FRACTION } from './powerZones.js'
+import { basisFromFtp, bandToWatts, MISSING_POWER_NOTE, withBasis, hashBase } from './pushPower.js'
 import { parseStructure } from './plannedWorkouts.js'
-import { zoneBoundsPctFtp } from './intervalsWorkout.js'
 
 /** Bump when the output format changes so already pushed workouts are seen as out of date. */
-export const WAHOO_CONVERTER_VERSION = 1
+export const WAHOO_CONVERTER_VERSION = 2
 export const WAHOO_EXTERNAL_ID_PREFIX = 'velocity-stack:'
 export const WAHOO_BIKING_TYPE_ID = 0
 export const WAHOO_PLAN_VERSION = '1.0.0'
@@ -46,34 +44,19 @@ const bound = (lo, hi) => {
 }
 
 /** Target of a step's band -> { target, warning, note } (target null = no usable plan target). */
-function convertTarget(step, { ftp }) {
+function convertTarget(step, { basis }) {
   const { bandType: t, powerMin: lo, powerMax: hi } = step
   const b = bound(lo, hi)
   const out = { target: null, warning: null, note: null }
   if (!b) return out
-  const rel = (type, scale, warning) => {
-    if (!ftp) return { ...out, note: 'Set your FTP in your profile to send power targets as % of FTP.' }
-    return { ...out, target: { type, low: r3(b[0] * scale), high: r3(b[1] * scale) }, warning: warning || null }
+  if (['pct_ftp', 'pct_lt1', 'pct_lt2', 'zone'].includes(t)) {
+    const w = bandToWatts(step, basis)
+    if (!w) return { ...out, note: MISSING_POWER_NOTE }
+    const wb = bound(w.min, w.max)
+    if (!wb) return out
+    return { ...out, target: { type: 'watts', low: Math.round(wb[0]), high: Math.round(wb[1]) }, warning: w.warning }
   }
   switch (t) {
-    case 'pct_ftp':
-      return rel('ftp', 0.01)
-    case 'pct_lt2':
-      return rel('ftp', 0.01, 'LT2 power targets were sent as % of FTP (LT2 is approximated by FTP).')
-    case 'pct_lt1':
-      return rel('ftp', 0.01 * FTP_LT1_FRACTION, 'LT1 power targets were sent as % of FTP (LT1 is approximated by 75% of FTP).')
-    case 'zone': {
-      const min = lo == null ? null : hi == null ? zoneBoundsPctFtp(lo)[1] : zoneBoundsPctFtp(lo)[0]
-      const max = hi == null ? null : lo == null ? zoneBoundsPctFtp(hi)[0] : zoneBoundsPctFtp(hi)[1]
-      const zb = bound(min, max)
-      if (!zb) return out
-      if (!ftp) return { ...out, note: 'Set your FTP in your profile to send power zones as targets.' }
-      return {
-        ...out,
-        target: { type: 'ftp', low: r3(zb[0] / 100), high: r3(zb[1] / 100) },
-        warning: 'Power zones were sent as % of FTP using the default zone model (your custom zones are not applied).',
-      }
-    }
     case 'watts':
       return { ...out, target: { type: 'watts', low: Math.round(b[0]), high: Math.round(b[1]) } }
     case 'cadence_rpm':
@@ -167,12 +150,12 @@ function manifestOf(workout, warnings) {
 
 /**
  * @param {object} workout planned workout row
- * @param {{ ftp?: number|null }} [opts] rider FTP in watts (profiles.ftp_w)
+ * @param {{ ftp?: number|null, basis?: object|null }} [opts] rider power basis (buildPowerBasis); ftp = FTP-only fallback
  * @returns {{ plan: object|null, minutes: number, warnings: string[], structured: boolean }}
  */
-export function buildWahooWorkout(workout, { ftp = null } = {}) {
+export function buildWahooWorkout(workout, { ftp = null, basis = null } = {}) {
   const warnings = new Set()
-  const ctx = { ftp: ftp > 0 ? Math.round(ftp) : null, warnings }
+  const ctx = { basis: basis || basisFromFtp(ftp), warnings }
   const manifest = manifestOf(workout, warnings)
   const name = String(workout.title ?? '').trim().slice(0, 80) || 'Workout'
   const description = String(workout.description ?? '').replace(/\r\n?/g, '\n').trim().slice(0, MAX_DESCRIPTION)
@@ -197,7 +180,7 @@ export function buildWahooWorkout(workout, { ftp = null } = {}) {
     workout_type_location: 0,
   }
   if (description) header.description = description
-  if (ctx.ftp) header.ftp = ctx.ftp
+  if (ctx.basis.ftp) header.ftp = ctx.basis.ftp
   return { plan: { header, intervals }, minutes, warnings: [...warnings], structured: true }
 }
 
@@ -235,9 +218,9 @@ function cyrb53(str) {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)
 }
 
-/** Hash of what the rider edits (plus the converter version). The FTP used for % targets is read at push time, so an FTP change shows up on the next edit. */
-export function wahooPushHash(workout) {
-  return cyrb53(
+/** Hash of what the rider edits (plus the converter version). With a power basis (FTP/LT/zones) its key is appended, so a change of the rider's numbers re-sends the workout. */
+export function wahooPushHash(workout, basis = null) {
+  return withBasis(cyrb53(
     JSON.stringify([
       WAHOO_CONVERTER_VERSION,
       String(workout.workout_date).slice(0, 10),
@@ -246,7 +229,7 @@ export function wahooPushHash(workout) {
       String(workout.description ?? '').trim(),
       String(workout.structure_dsl ?? '').replace(/\r\n?/g, '\n').trim(),
     ])
-  )
+  ), basis)
 }
 
 /** Push state for the UI from a planned_workout_wahoo_pushes row: 'not_pushed' | 'pushed' | 'out_of_date' | 'error'. */
@@ -254,7 +237,7 @@ export function wahooPushState(workout, row) {
   if (!row || row.push_status === 'pending_delete') return 'not_pushed'
   if (row.push_status === 'error' && row.last_error) return 'error'
   if (!row.wahoo_workout_id) return 'not_pushed'
-  return row.pushed_hash === wahooPushHash(workout) ? 'pushed' : 'out_of_date'
+  return hashBase(row.pushed_hash) === wahooPushHash(workout) ? 'pushed' : 'out_of_date'
 }
 
 export const WAHOO_PUSH_STATE_LABELS = Object.freeze({

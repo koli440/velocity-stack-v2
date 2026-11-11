@@ -9,6 +9,7 @@
 import { PushError } from './intervalsEvents.js'
 import { createWahooPlanClient } from './wahooPlans.js'
 import { getFreshAccessToken } from './wahooProvider.js'
+import { createPowerBasisLoader } from './pushPowerBasis.js'
 import { buildWahooWorkout, wahooExternalId, wahooPushHash, wahooWorkoutFields, WAHOO_PUSH_DISCIPLINES } from '../wahooPlan.js'
 import { CLAIM_TTL_MS, RETRY_SAME_ERROR_MS, PUSH_WINDOW_DAYS, TIME_BUDGET_MS, RIDERS_PER_RUN, PUSHES_PER_RIDER, RIDER_CLAIM_MS } from './plannedPush.js'
 
@@ -53,11 +54,6 @@ export async function defaultMakeClient(service, conn) {
   }
 }
 
-async function riderFtp(service, riderId) {
-  const { data } = await service.from('profiles').select('ftp_w').eq('id', riderId).maybeSingle()
-  return Number(data?.ftp_w) > 0 ? Number(data.ftp_w) : null
-}
-
 async function getRow(service, workoutId) {
   const { data } = await service.from(TABLE).select(PUSH_COLUMNS).eq('workout_id', workoutId).maybeSingle()
   return data || null
@@ -92,7 +88,7 @@ async function record(service, workoutId, patch) {
  * @returns {{ state: 'pushed', workoutId: string, planId: string|null, warnings: string[], recreated: boolean, structured: boolean }}
  * @throws PushError
  */
-export async function pushPlannedWorkoutToWahoo({ service, workout, now = Date.now(), makeClient = defaultMakeClient, conn = null, client = null }) {
+export async function pushPlannedWorkoutToWahoo({ service, workout, now = Date.now(), makeClient = defaultMakeClient, conn = null, client = null, basisFor = null }) {
   if (!WAHOO_PUSH_DISCIPLINES.includes(workout.discipline || 'ride')) {
     throw new PushError('unsupported', 'Only ride workouts are sent to Wahoo.', { status: 409 })
   }
@@ -101,7 +97,8 @@ export async function pushPlannedWorkoutToWahoo({ service, workout, now = Date.n
   const row = await getRow(service, workout.id)
   await claim(service, workout, row, now)
 
-  const hash = wahooPushHash(workout)
+  const basis = await (basisFor || createPowerBasisLoader(service, workout.rider_id))(workout.workout_date)
+  const hash = wahooPushHash(workout, basis)
   const stamp = iso(now)
   let planId = row?.wahoo_plan_id || null
   let workoutId = row?.wahoo_workout_id || null
@@ -109,7 +106,7 @@ export async function pushPlannedWorkoutToWahoo({ service, workout, now = Date.n
   let built
 
   try {
-    built = buildWahooWorkout(workout, { ftp: await riderFtp(service, workout.rider_id) })
+    built = buildWahooWorkout(workout, { basis })
 
     if (built.plan) {
       if (planId) {
@@ -260,15 +257,16 @@ export async function pushWahooRider({ service, riderId, conn, client, now, dead
     const { data: rows } = await service.from(TABLE).select(PUSH_COLUMNS).in('workout_id', ids)
     for (const r of rows || []) rowById.set(r.workout_id, r)
   }
+  const basisFor = createPowerBasisLoader(service, riderId)
   for (const w of workouts || []) {
     if (!ready()) break
     const row = rowById.get(w.id)
-    const hash = wahooPushHash(w)
+    const hash = wahooPushHash(w, await basisFor(w.workout_date))
     if (row?.wahoo_workout_id && row.pushed_hash === hash && row.push_status === 'pushed') continue
     if (row?.push_status === 'error' && row.attempted_hash === hash && row.last_attempt_at && now - Date.parse(row.last_attempt_at) < RETRY_SAME_ERROR_MS) continue
     budget -= 1
     try {
-      await pushPlannedWorkoutToWahoo({ service, workout: w, now, conn, client })
+      await pushPlannedWorkoutToWahoo({ service, workout: w, now, conn, client, basisFor })
       out.pushed += 1
     } catch (e) {
       handle(e)

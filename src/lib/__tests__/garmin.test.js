@@ -21,6 +21,7 @@ import {
 } from '../garmin.js'
 import { handleGarminPush } from '../server/garminWebhook.js'
 import { buildGarminWorkout, garminPushState, garminPushHash, GARMIN_POWER_TARGETS, normalizePowerTarget } from '../garminPlan.js'
+import { buildPowerBasis } from '../pushPower.js'
 import { createGarminPlanClient } from '../server/garminPlans.js'
 import { createGarminProvider } from '../server/garminProvider.js'
 import { sourcePriority } from '../activityDuplicates.js'
@@ -295,4 +296,20 @@ test('provider imports MTB and run files with the pushed type, and skips other s
   const swim = await run(null, { sport: 'swimming' })
   assert.equal(swim.r.skip, true)
   assert.equal(swim.status, 'skipped')
+})
+
+test('garmin zones and LT steps use the rider own zone setup as absolute watts', () => {
+  const basis = buildPowerBasis({ ftp: 250, lt: { lt1Power: 180, lt2Power: 240 }, pcts: [80, 100, 100, 105, 120] })
+  const step = (bandType, powerMin, powerMax) => ({ role: 'work', keyBy: 'time', targetDurationSec: 600, bandType, powerMin, powerMax })
+  const r = buildGarminWorkout({ id: 'w', title: 'x', structure_manifest: { steps: [step('zone', 2, 2), step('pct_lt2', 95, 100), step('pct_lt1', 100, 100)] } }, { basis, powerTarget: 'POWER_LAP' })
+  const t = r.workout.segments[0].steps.map((s) => [s.targetType, s.targetValueLow, s.targetValueHigh])
+  assert.deepEqual(t, [['POWER_LAP', 144, 180], ['POWER_LAP', 228, 240], ['POWER_LAP', 180, 180]])
+  assert.ok(!r.warnings.some((w) => /not applied/.test(w)))
+})
+
+test('garmin hash changes with the rider power basis; UI state ignores it', () => {
+  const w = { workout_date: '2026-12-01', title: 'x', structure_dsl: 'y' }
+  const a = garminPushHash(w, 'POWER_LAP', buildPowerBasis({ ftp: 250 }))
+  assert.notEqual(a, garminPushHash(w, 'POWER_LAP', buildPowerBasis({ ftp: 251 })))
+  assert.equal(garminPushState(w, { push_status: 'pushed', garmin_workout_id: '1', pushed_hash: a }), 'pushed')
 })

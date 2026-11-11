@@ -7,6 +7,7 @@ import {
   formatStepDuration,
   externalIdFor,
 } from '../intervalsWorkout.js'
+import { buildPowerBasis } from '../pushPower.js'
 
 const base = { id: 'w1', workout_date: '2026-12-10', title: 'Sweet spot', discipline: 'ride', description: '' }
 
@@ -86,4 +87,24 @@ test('pushState', () => {
   assert.equal(pushState(base, { push_status: 'pushed', intervals_event_id: '1', pushed_hash: plannedPushHash(base) }), 'pushed')
   assert.equal(pushState({ ...base, title: 'x' }, { push_status: 'pushed', intervals_event_id: '1', pushed_hash: plannedPushHash(base) }), 'out_of_date')
   assert.equal(pushState(base, { push_status: 'error', last_error: 'boom', intervals_event_id: '1' }), 'error')
+})
+
+test('with a power basis, % / LT / zone steps are sent as absolute watts from the rider setup', () => {
+  const basis = buildPowerBasis({ ftp: 250, lt: { lt1Power: 180, lt2Power: 240 }, pcts: [80, 100, 100, 105, 120] })
+  const dsl = '1x\nwork 10min ±10% @ 90-100%FTP\nwork 10min ±10% @ Z2\nwork 10min ±10% @ 95-100%LT2'
+  const { event, warnings } = buildIntervalsEvent({ ...base, structure_dsl: dsl }, { basis })
+  assert.match(event.description, /Work 10m 225-250w/)
+  assert.match(event.description, /Work 10m 144-180w/)
+  assert.match(event.description, /Work 10m 228-240w/)
+  assert.ok(!warnings.some((w) => /not applied/.test(w)))
+})
+
+test('without FTP or LT the % fallback is kept with a warning, and the hash follows the basis', () => {
+  const { event, warnings } = buildIntervalsEvent({ ...base, structure_dsl: '1x\nwork 10min ±10% @ 90-100%FTP' }, { basis: buildPowerBasis() })
+  assert.match(event.description, /90-100%/)
+  assert.ok(warnings.some((w) => /FTP/.test(w)))
+  const w = { ...base, structure_dsl: 'x' }
+  const a = plannedPushHash(w, buildPowerBasis({ ftp: 250 }))
+  assert.notEqual(a, plannedPushHash(w, buildPowerBasis({ ftp: 255 })))
+  assert.equal(pushState(w, { push_status: 'pushed', intervals_event_id: '1', pushed_hash: a }), 'pushed')
 })
