@@ -27,6 +27,47 @@ import Portal from './Portal'
 import useModalA11y from './useModalA11y'
 import { STREAM_METRICS, buildStreamSeries, formatAxisTick, formatElapsed } from '../lib/activityStreams'
 import ChartTooltip from '@/components/ChartTooltip'
+import { computeStreamStats } from '../lib/streamStats'
+
+const fmt = (v, d = 0) => (v == null ? null : d > 0 ? v.toFixed(d) : String(Math.round(v)))
+
+// Stats for the visible range (zoomed range or the whole activity); metrics the stream lacks are hidden.
+function RangeStats({ data, zoom, mode, ftp }) {
+  const stats = useMemo(() => computeStreamStats(data, zoom, { ftp }), [data, zoom, ftp])
+  if (!stats) return null
+  const items = [
+    ['Duration', formatElapsed(stats.durationS), ''],
+    ['Distance', stats.distanceM != null ? (stats.distanceM / 1000).toFixed(2) : null, 'km'],
+    ['Avg speed', fmt(stats.avgSpeed, 1), 'km/h'],
+    ['Avg HR', fmt(stats.avgHr), 'bpm'],
+    ['Max HR', fmt(stats.maxHr), 'bpm'],
+    ['Avg power', fmt(stats.avgPower), 'W'],
+    ['Max power', fmt(stats.maxPower), 'W'],
+    // NP needs at least 30 s of samples
+    ['NP', stats.hasPower ? (fmt(stats.np) ?? '-') : null, 'W'],
+    ['VI', fmt(stats.vi, 2), ''],
+    ['IF', fmt(stats.intensityFactor, 2), ''],
+    ['Avg cadence', fmt(stats.avgCadence), 'RPM'],
+    ['Avg torque', fmt(stats.avgTorque, 1), 'Nm'],
+  ].filter(([, v]) => v != null)
+  return (
+    <div className="mb-2" data-testid="range-stats">
+      <div className="text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+        {zoom ? `Selected ${formatAxisTick(zoom[0], mode)} – ${formatAxisTick(zoom[1], mode)}` : 'Whole activity'}
+      </div>
+      <dl className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-x-3 gap-y-1.5">
+        {items.map(([label, value, unit]) => (
+          <div key={label} className="min-w-0 rounded-lg bg-slate-50 dark:bg-slate-900/50 px-2 py-1">
+            <dt className="text-[9px] font-bold uppercase tracking-wide text-slate-400 truncate">{label}</dt>
+            <dd className="text-xs font-black tabular-nums text-slate-900 dark:text-white">
+              {value} {unit && <span className="text-[9px] font-semibold text-slate-400">{unit}</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+}
 
 // Lactate threshold lines (issue #121) drawn on the power and heart-rate lanes.
 function thresholdLines(metric, lt) {
@@ -145,7 +186,7 @@ const PAN_STEP = 0.25
 
 const iconBtn = 'inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500'
 
-function ChartPanel({ data, mode, zoom, setZoom, highlightWindows, lt, zones, enlarged, idSuffix }) {
+function ChartPanel({ data, mode, zoom, setZoom, highlightWindows, lt, zones, ftp, enlarged, idSuffix }) {
   const [drag, setDrag] = useState(null) // { startPx, endPx } relative to the plot area
   const plotRef = useRef(null)
   const dragRef = useRef(null)
@@ -221,6 +262,7 @@ function ChartPanel({ data, mode, zoom, setZoom, highlightWindows, lt, zones, en
           )}
         </div>
       )}
+      <RangeStats data={data} zoom={zoom} mode={mode} ftp={ftp} />
       <div
         className="relative space-y-1.5 select-none cursor-crosshair rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
         style={{ touchAction: enlarged ? 'none' : 'pan-y' }}
@@ -323,7 +365,7 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
       ))}
     </div>
   )
-  const panelProps = { data, mode, zoom, setZoom, highlightWindows, lt, zones }
+  const panelProps = { data, mode, zoom, setZoom, highlightWindows, lt, zones, ftp: activity?.ftp_at_activity_w }
 
   return (
     <div className="glass-dense w-full bg-white dark:bg-surface-darkCard p-4 sm:p-5 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
