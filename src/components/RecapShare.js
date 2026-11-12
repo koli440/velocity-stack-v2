@@ -10,7 +10,7 @@ const btn = 'px-3 py-2 text-xs font-bold rounded-lg'
 
 // Owner controls: private by default. "Create public link" is the explicit opt-in; "Stop sharing" revokes it
 // (the old link stops working; sharing again creates a new one). Download PNG never publishes anything.
-export default function RecapShare({ year, recap, name }) {
+export default function RecapShare({ year, recap, name, avatarUrl = null }) {
   const [slug, setSlug] = useState(null)
   const [loaded, setLoaded] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -65,7 +65,7 @@ export default function RecapShare({ year, recap, name }) {
   }
 
   const download = async () => {
-    const blob = await recapPngBlob(recap, name)
+    const blob = await recapPngBlob(recap, name, avatarUrl)
     if (!blob) return setMsg('Could not create the image.')
     const file = new File([blob], `velocity-stack-${year}-recap.png`, { type: 'image/png' })
     if (navigator.canShare?.({ files: [file] })) {
@@ -98,7 +98,7 @@ export default function RecapShare({ year, recap, name }) {
         </>
       ) : (
         <>
-          <p className="text-sm text-slate-300">Your recap is private. Create a public link to share it: it shows your first name or nickname and season totals only, and you can turn it off any time.</p>
+          <p className="text-sm text-slate-300">Your recap is private. Create a public link to share it: it shows your first name or nickname, your profile picture and season totals only, and you can turn it off any time.</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={enable} disabled={busy} className={`${btn} bg-brand-neon text-slate-900 disabled:opacity-50`}>Create public link</button>
             <button type="button" onClick={download} className={`${btn} border border-slate-500 text-white`}>Download PNG</button>
