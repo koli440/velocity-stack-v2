@@ -9,7 +9,7 @@ A yearly, story-style summary of a rider's rides, computed in SQL from stored ac
 
 ## Sharing (opt-in)
 - Private by default. `season_recap_shares(user_id, season_year, slug)` has RLS on and no client grants; riders use `get_season_recap_share`, `enable_season_recap_share` (idempotent, returns a 20-hex random slug) and `revoke_season_recap_share` (deletes the row; sharing again creates a new slug, the old link stays dead).
-- `get_shared_season_recap(slug)` is callable by `anon`: totals plus nickname or first name only. Activity ids and titles are stripped; all rides of the year count, including ones with private visibility, which is why sharing is explicit.
+- `get_shared_season_recap(slug)` is callable by `anon`: totals plus nickname or first name only. Activity ids and titles are stripped; rides with `visibility = 'private'` are excluded from the public payload (the owner's own `/recap` still counts them).
 - Public page `/recap/s/<slug>` (standalone shell, `noindex`, never cached) with a final call-to-action slide linking to `/connections`. Unknown or revoked slugs 404. `opengraph-image.js` / `twitter-image.js` in the same folder render the 1200x630 card (generic site card for unknown slugs).
 - Owner page `/recap/<year>` (signed in): swipeable `RecapStory`, Share (Web Share or copy link) and Download PNG (drawn on a canvas on the device; works without a public link and publishes nothing).
 

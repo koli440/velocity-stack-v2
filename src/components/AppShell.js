@@ -18,6 +18,7 @@ import { isLegalPath } from '../lib/legal'
 import { isLandingPath } from '../lib/trackLanding'
 import { isBlogPath } from '../lib/blog'
 import { isRecapSharePath } from '../lib/recap'
+import { isImportPath } from '../lib/importGuides'
 import { isPublicContentPath, isPublicToolPath } from '../lib/publicPaths'
 import { AuthStateContext } from './AuthState'
 import { GLASS_EVENT, readGlassPref } from '../lib/glass'
@@ -40,7 +41,7 @@ export default function AppShell({ children }) {
   const isPublicTool = isPublicToolPath(pathname)
   const isPublicPage = isPublicTool || isPublicContentPath(pathname)
   // Legal pages are always public and render without waiting for the session (crawlers, Google's reviewers).
-  const isLegalPage = isLegalPath(pathname) || isLandingPath(pathname) || isBlogPath(pathname) || isRecapSharePath(pathname)
+  const isLegalPage = isLegalPath(pathname) || isLandingPath(pathname) || isBlogPath(pathname) || isImportPath(pathname) || isRecapSharePath(pathname)
 
   useEffect(() => {
     setGlassEnabled(readGlassPref())

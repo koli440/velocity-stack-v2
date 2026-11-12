@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { callIntervals, startGarminAuthorize, startWahooAuthorize, startStravaAuthorize, startIntervalsAuthorize, runProviderSync, fetchConnection } from '../lib/connectionsClient'
-import { emptyFeedState } from '../lib/emptyFeed'
+import { emptyFeedState, FIRST_RUN_STEPS, IMPORT_GUIDE_LINKS } from '../lib/emptyFeed'
 import { backfillProgressText, describeSyncResult } from '../lib/syncPlan'
 import { syncHealth, isConnected } from '../lib/connections'
 import { OPEN_ADD_SESSION_EVENT } from '../lib/navigation'
@@ -137,6 +137,15 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
             </p>
           </div>
 
+          <ol aria-label="How it works" className="grid gap-2 sm:grid-cols-3">
+            {FIRST_RUN_STEPS.map((s, i) => (
+              <li key={s.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                <p className="text-xs font-black text-slate-900 dark:text-white">{i + 1}. {s.title}</p>
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{s.text}</p>
+              </li>
+            ))}
+          </ol>
+
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/connections" className={`${primaryBtn} bg-slate-900 dark:bg-emerald-500 dark:text-slate-950 hover:opacity-90 text-center`}>
               Choose your ride source
@@ -200,6 +209,9 @@ export default function EmptyFeedCard({ userId, activitiesLoaded, activityCount,
           )}
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
+            {IMPORT_GUIDE_LINKS.map((l) => (
+              <Link key={l.href} href={l.href} className={linkBtn}>{l.label}</Link>
+            ))}
             <Link href="/import-help" className={linkBtn}>Using an SRM? Import .fit files</Link>
             <button type="button" onClick={openAdd} className={linkBtn}>Upload .fit</button>
             <button type="button" onClick={openAdd} className={linkBtn}>Import history</button>

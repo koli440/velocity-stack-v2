@@ -53,3 +53,6 @@ Public, indexable campaign page for Google Ads (track riders and coaches); `src/
 
 ## Season recap events
 `recap_view`, `recap_share`, `recap_cta_click` and `recap_signup` are GA4 events sent only with analytics consent (`src/lib/recapTracking.js`). See `docs/season-recap.md`.
+
+## Import landing pages
+`/import` and `/import/<source>` send GA4 `import_guide_view` and `import_cta_click` (`source_guide`, `cta`) through `trackImportEvent` (`src/lib/importTracking.js`). Unlike the first-party events above, these use gtag, so they are sent only with the Analytics consent category (`hasConsent('analytics')`) and are a no-op otherwise. See `docs/import-pages.md`.

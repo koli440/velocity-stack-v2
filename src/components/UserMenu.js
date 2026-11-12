@@ -118,6 +118,9 @@ export default function UserMenu({ user, profile, displayName }) {
               <button role="menuitem" onClick={() => go('/import-help')} className={row(pathname === '/import-help')}>
                 Import .fit from SRM PC8
               </button>
+              <button role="menuitem" onClick={() => go('/import')} className={row(pathname === '/import' || pathname.startsWith('/import/'))}>
+                Import your rides
+              </button>
             </div>
           )}
         </div>

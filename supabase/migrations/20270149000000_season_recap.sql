@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.season_recap_shares (
 ALTER TABLE public.season_recap_shares ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.season_recap_shares FROM PUBLIC, anon, authenticated;
 
-CREATE OR REPLACE FUNCTION public.season_recap_compute(p_user UUID, p_year INTEGER)
+CREATE OR REPLACE FUNCTION public.season_recap_compute(p_user UUID, p_year INTEGER, p_public_only BOOLEAN DEFAULT FALSE)
 RETURNS JSONB
 LANGUAGE sql STABLE SET search_path = public AS $$
     WITH rides AS (
@@ -36,6 +36,7 @@ LANGUAGE sql STABLE SET search_path = public AS $$
         FROM public.activities a
         WHERE a.user_id = p_user
           AND a.activity_type = 'ride'
+          AND (NOT p_public_only OR COALESCE(a.visibility, 'private') <> 'private')
           AND a.activity_date >= make_timestamptz(p_year, 1, 1, 0, 0, 0, 'UTC')
           AND a.activity_date <  make_timestamptz(p_year + 1, 1, 1, 0, 0, 0, 'UTC')
     ),
@@ -122,7 +123,7 @@ LANGUAGE sql STABLE SET search_path = public AS $$
         )
     )
 $$;
-REVOKE ALL ON FUNCTION public.season_recap_compute(UUID, INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.season_recap_compute(UUID, INTEGER, BOOLEAN) FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.season_recap(p_year INTEGER)
 RETURNS JSONB
@@ -188,7 +189,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
     SELECT jsonb_build_object(
         'year', s.season_year,
         'name', COALESCE(NULLIF(BTRIM(p.nickname), ''), NULLIF(BTRIM(p.first_name), ''), 'A rider'),
-        'recap', public.season_recap_compute(s.user_id, s.season_year) #- '{longest_ride,id}' #- '{longest_ride,title}'
+        'recap', public.season_recap_compute(s.user_id, s.season_year, TRUE) #- '{longest_ride,id}' #- '{longest_ride,title}'
     )
     FROM public.season_recap_shares s
     JOIN public.profiles p ON p.id = s.user_id

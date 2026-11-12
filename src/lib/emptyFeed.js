@@ -86,3 +86,17 @@ export function emptyFeedState({ activityCount, connections, activitiesLoaded = 
   if (connected.some((c) => backfillProgressText(c) || (c.status !== 'error' && !c.last_synced_at))) return 'importing'
   return 'connected'
 }
+
+/** The first-run path shown on the welcome card: connect or import, then see rides and fitness. */
+export const FIRST_RUN_STEPS = [
+  { id: 'source', title: 'Connect or import', text: 'Link Garmin, Wahoo, Intervals.icu or Strava, or import .fit files.' },
+  { id: 'rides', title: 'Your rides arrive', text: 'Newest first; this page updates by itself.' },
+  { id: 'fitness', title: 'See your fitness', text: 'Your power profile and Fitness, Fatigue and Form build from your rides.' },
+]
+
+/** Guides for riders coming from another service (public landing pages). */
+export const IMPORT_GUIDE_LINKS = [
+  { href: '/import/strava', label: 'Coming from Strava? Use your data export' },
+  { href: '/import/garmin', label: 'Garmin guide' },
+  { href: '/import/fit', label: '.fit import guide' },
+]
