@@ -93,14 +93,18 @@ export function drawRecap(ctx, { name, year, stats, bars = [], avatar = null }) 
   ctx.fillText('velocity-stack.app', 80, height - 50)
 }
 
-// Resolves null when the image is missing or blocked, so the PNG falls back to initials.
-function loadImage(url) {
+export const AVATAR_TIMEOUT_MS = 5000
+
+// Resolves null when the image is missing, blocked or stalls, so the PNG falls back to initials.
+export function loadImage(url, timeoutMs = AVATAR_TIMEOUT_MS) {
   if (!url) return Promise.resolve(null)
   return new Promise((resolve) => {
     const img = new Image()
+    const timer = setTimeout(() => { img.src = ''; resolve(null) }, timeoutMs)
+    const done = (v) => { clearTimeout(timer); resolve(v) }
     img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = () => resolve(null)
+    img.onload = () => done(img)
+    img.onerror = () => done(null)
     img.src = url
   })
 }

@@ -116,11 +116,18 @@ export function headlineStats(recap) {
   return out.slice(0, 4)
 }
 
-/** Only http(s) URLs are ever used as an avatar source (the shared payload is untrusted input). */
-export function safeAvatarUrl(url) {
+export const AVATAR_PATH_PREFIX = '/storage/v1/object/public/avatars/'
+
+/**
+ * Avatar URLs come from a client-writable column, so only https URLs on our own Supabase storage host and the public
+ * `avatars` bucket path are accepted (also stops the OG renderer from fetching arbitrary hosts).
+ */
+export function safeAvatarUrl(url, supabaseUrl = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_URL : '') {
   try {
+    const base = new URL(String(supabaseUrl || ''))
     const u = new URL(String(url || ''))
-    return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : null
+    if (u.protocol !== 'https:' || u.host !== base.host || u.username || u.password) return null
+    return u.pathname.startsWith(AVATAR_PATH_PREFIX) ? u.toString() : null
   } catch {
     return null
   }

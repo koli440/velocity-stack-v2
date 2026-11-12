@@ -2,15 +2,24 @@ import { ImageResponse } from 'next/og'
 import { OG_SIZE, renderOgImage } from './ogImage'
 import { headlineStats, monthlyBars, safeAvatarUrl } from './recap'
 import { avatarInitials } from './avatars'
+import { fetchAvatarDataUri } from './server/recapAvatar'
 
 export const RECAP_OG_ALT = 'Velocity Stack season recap'
 
 /** 1200x630 card for a shared recap; falls back to the generic site card when the link is unknown or revoked. */
-export function renderRecapOg(shared) {
+export async function renderRecapOg(shared) {
   if (!shared?.recap) return renderOgImage()
+  const avatar = await fetchAvatarDataUri(safeAvatarUrl(shared.avatar_url))
+  try {
+    return await buildRecapOg(shared, avatar)
+  } catch {
+    return avatar ? buildRecapOg(shared, null) : renderOgImage()
+  }
+}
+
+function buildRecapOg(shared, avatar) {
   const stats = headlineStats(shared.recap).slice(0, 3)
   const bars = monthlyBars(shared.recap)
-  const avatar = safeAvatarUrl(shared.avatar_url)
   const ring = { display: 'flex', width: 180, height: 180, borderRadius: 90, border: '6px solid #39ff14', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', background: '#1e293b' }
   return new ImageResponse(
     (

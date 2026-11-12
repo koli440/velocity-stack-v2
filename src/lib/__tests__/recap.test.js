@@ -85,9 +85,24 @@ test('monthly bars flag the peak and scale to the max', () => {
   assert.deepEqual(monthlyBars(null), [])
 })
 
-test('avatar URLs must be http(s); every card id has a theme', () => {
-  assert.equal(safeAvatarUrl('https://x.test/a.png'), 'https://x.test/a.png')
-  assert.equal(safeAvatarUrl('javascript:alert(1)'), null)
-  assert.equal(safeAvatarUrl(null), null)
+test('avatar URLs are limited to our Supabase avatars bucket; every card id has a theme', () => {
+  const sb = 'https://abc.supabase.co'
+  const ok = 'https://abc.supabase.co/storage/v1/object/public/avatars/u/avatar-1.png'
+  assert.equal(safeAvatarUrl(ok, sb), ok)
+  for (const bad of ['http://abc.supabase.co/storage/v1/object/public/avatars/a.png', 'https://evil.test/storage/v1/object/public/avatars/a.png',
+    'https://abc.supabase.co/storage/v1/object/public/other/a.png', 'https://abc.supabase.co@evil.test/storage/v1/object/public/avatars/a.png',
+    'http://169.254.169.254/latest', 'javascript:alert(1)', null]) assert.equal(safeAvatarUrl(bad, sb), null)
+  assert.equal(safeAvatarUrl(ok, ''), null)
   for (const c of buildRecapCards(full, { name: 'A' })) assert.ok(cardTheme(c.id).gradient)
+})
+
+test('avatar fetch for OG falls back to null on bad type, size, status or failure', async () => {
+  const { fetchAvatarDataUri } = await import('../server/recapAvatar.js')
+  const mk = (type, bytes, ok = true) => async () => ({ ok, headers: { get: () => type }, arrayBuffer: async () => new Uint8Array(bytes).buffer })
+  assert.match(await fetchAvatarDataUri('https://x/a.png', { fetchImpl: mk('image/png', 10) }), /^data:image\/png;base64,/)
+  assert.equal(await fetchAvatarDataUri('https://x/a', { fetchImpl: mk('text/html', 10) }), null)
+  assert.equal(await fetchAvatarDataUri('https://x/a', { fetchImpl: mk('image/png', 50), maxBytes: 10 }), null)
+  assert.equal(await fetchAvatarDataUri('https://x/a', { fetchImpl: mk('image/png', 10, false) }), null)
+  assert.equal(await fetchAvatarDataUri('https://x/a', { fetchImpl: async () => { throw new Error('boom') } }), null)
+  assert.equal(await fetchAvatarDataUri(null), null)
 })
