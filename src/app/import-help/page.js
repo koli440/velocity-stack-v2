@@ -24,7 +24,7 @@ export default function ImportHelpPage() {
 
       <p>
         SRM is one of your ride sources, ahead of Intervals.icu and Strava. It has no cloud sync, so files are
-        imported by hand. See all sources on <Link className={LINK} href="/connections">Connections</Link>.
+        imported by hand. Coming from Strava or Garmin? See the <Link className={LINK} href="/import">import guides</Link>. See all sources on <Link className={LINK} href="/connections">Connections</Link>.
       </p>
 
       <div className={CARD}>

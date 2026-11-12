@@ -50,3 +50,6 @@ Public, indexable campaign page for Google Ads (track riders and coaches); `src/
 - Endpoint: callable by `anon` and `authenticated`; strict event allowlist, slug must match the post-slug pattern (max 80 chars; posts are markdown files, so existence cannot be checked in SQL, the admin panel only lists currently published posts), anything else is silently ignored. Same bot exclusion (user-agent, bot accounts) and global rate limit (300 events per minute) as the tool events. The table has no client privileges.
 - Rows older than 90 days are deleted by the existing daily `tool-usage-prune` job (`prune_tool_usage_events()` now also prunes `blog_events`).
 - Shown on `/admin` (see `docs/admin.md`).
+
+## Import landing pages
+`/import` and `/import/<source>` send GA4 `import_guide_view` and `import_cta_click` (`source_guide`, `cta`) through `trackImportEvent` (`src/lib/importTracking.js`). Unlike the first-party events above, these use gtag, so they are sent only with the Analytics consent category (`hasConsent('analytics')`) and are a no-op otherwise. See `docs/import-pages.md`.

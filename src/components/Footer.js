@@ -47,6 +47,10 @@ export default function Footer() {
             Blog
           </Link>
 
+          <Link href="/import" className="hover:text-slate-900 dark:hover:text-white transition">
+            Import rides
+          </Link>
+
           <Link href="/track" className="hover:text-slate-900 dark:hover:text-white transition">
             For track riders
           </Link>
