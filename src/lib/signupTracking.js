@@ -1,6 +1,7 @@
 // Sign-up conversion tracking: GA4 `sign_up` + Reddit `SignUp` (see docs/analytics.md).
 import { trackRedditEvent } from './redditPixel.js'
 import { hasConsent } from './consent.js'
+import { trackRecapSignUp } from './recapTracking.js'
 
 export const ATTRIBUTION_KEY = 'vs.attribution'
 export const OAUTH_PENDING_KEY = 'vs.oauthSignup'
@@ -49,6 +50,7 @@ export function trackSignUp(method, attribution = {}) {
     window.gtag('event', 'sign_up', params)
   }
   if (hasConsent('marketing', storage)) trackRedditEvent('SignUp')
+  trackRecapSignUp()
 }
 
 function store(kind) {

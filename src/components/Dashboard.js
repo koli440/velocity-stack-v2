@@ -17,6 +17,7 @@ import PowerProfileCard from './PowerProfileCard'
 import WeekStatsCard from './WeekStatsCard'
 import FitnessCard from './FitnessCard'
 import OnboardingChecklist from './OnboardingChecklist'
+import RecapBanner from './RecapBanner'
 import { withOwnAuthorAvatar } from '../lib/blogFeed'
 import { BLOG_AUTHOR } from '../lib/blog'
 
@@ -264,6 +265,7 @@ export default function Dashboard({ initialActivities = [] }) {
       {/* Main Cockpit */}
       <div className="flex-1 w-full min-w-0 space-y-6">
         <OnboardingChecklist />
+        <RecapBanner />
 
         {/* Feed scope */}
         <SegmentedTabs

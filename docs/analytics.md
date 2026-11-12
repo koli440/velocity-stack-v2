@@ -50,3 +50,6 @@ Public, indexable campaign page for Google Ads (track riders and coaches); `src/
 - Endpoint: callable by `anon` and `authenticated`; strict event allowlist, slug must match the post-slug pattern (max 80 chars; posts are markdown files, so existence cannot be checked in SQL, the admin panel only lists currently published posts), anything else is silently ignored. Same bot exclusion (user-agent, bot accounts) and global rate limit (300 events per minute) as the tool events. The table has no client privileges.
 - Rows older than 90 days are deleted by the existing daily `tool-usage-prune` job (`prune_tool_usage_events()` now also prunes `blog_events`).
 - Shown on `/admin` (see `docs/admin.md`).
+
+## Season recap events
+`recap_view`, `recap_share`, `recap_cta_click` and `recap_signup` are GA4 events sent only with analytics consent (`src/lib/recapTracking.js`). See `docs/season-recap.md`.
