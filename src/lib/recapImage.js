@@ -2,6 +2,7 @@
 // nothing leaves the device. Browser-only.
 import { headlineStats, monthlyBars } from './recap.js'
 import { avatarInitials } from './avatars.js'
+import { drawRecapArt } from './recapArt.js'
 
 export const PNG_SIZE = { width: 1080, height: 1350 }
 
@@ -55,16 +56,12 @@ function drawMonthBars(ctx, bars, x, baseY, w, h) {
 
 export function drawRecap(ctx, { name, year, stats, bars = [], avatar = null }) {
   const { width, height } = PNG_SIZE
-  const g = ctx.createLinearGradient(0, 0, width, height)
-  g.addColorStop(0, '#047857')
-  g.addColorStop(0.45, '#0f172a')
-  g.addColorStop(1, '#020617')
-  ctx.fillStyle = g
-  ctx.fillRect(0, 0, width, height)
-  const glow = ctx.createRadialGradient(width - 120, 160, 10, width - 120, 160, 420)
-  glow.addColorStop(0, 'rgba(57,255,20,0.35)')
-  glow.addColorStop(1, 'rgba(57,255,20,0)')
-  ctx.fillStyle = glow
+  drawRecapArt(ctx, 'intro', { width, height })
+  const shade = ctx.createLinearGradient(0, 0, 0, height)
+  shade.addColorStop(0, 'rgba(2,6,23,0.1)')
+  shade.addColorStop(0.4, 'rgba(2,6,23,0.4)')
+  shade.addColorStop(1, 'rgba(2,6,23,0.65)')
+  ctx.fillStyle = shade
   ctx.fillRect(0, 0, width, height)
   ctx.textBaseline = 'alphabetic'
   ctx.fillStyle = '#39ff14'

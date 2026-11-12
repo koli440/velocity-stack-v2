@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Avatar from './Avatar'
+import Icon from './Icon'
+import RecapArt from './RecapArt'
 import { cardTheme } from '../lib/recap'
 
 // Swipeable story cards (CSS scroll-snap: touch swipe, trackpad, arrow keys, dots and prev/next buttons).
@@ -46,14 +48,18 @@ export default function RecapStory({ cards, children, avatarUrl = null, name = '
               key={c.id}
               aria-roledescription="slide"
               aria-label={`${i + 1} of ${total}: ${c.title}`}
-              className={`relative overflow-hidden snap-center shrink-0 w-full min-h-[28rem] flex flex-col justify-center gap-4 p-8 bg-gradient-to-br ${theme.gradient} text-white`}
+              className={`relative overflow-hidden snap-center shrink-0 w-full min-h-[28rem] flex flex-col justify-center gap-4 p-8 text-white`}
             >
-              <span aria-hidden="true" className="pointer-events-none absolute -right-4 -top-6 text-[9rem] leading-none opacity-15 select-none motion-safe:animate-pulse">{theme.icon}</span>
+              <RecapArt id={c.id} />
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-slate-950/10" />
+              <span aria-hidden="true" data-testid="recap-card-icon" className="absolute right-4 top-4 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/50 ring-1 ring-white/25 text-brand-neon backdrop-blur">
+                <Icon name={theme.icon} size={20} />
+              </span>
               {c.id === 'intro' && (
-                <Avatar url={avatarUrl} name={name} size="w-24 h-24" textSize="text-3xl" className="ring-4 ring-brand-neon shadow-xl" />
+                <Avatar url={avatarUrl} name={name} size="w-24 h-24" textSize="text-3xl" className="relative ring-4 ring-brand-neon shadow-xl" />
               )}
               <p className="relative text-xs font-black uppercase tracking-widest text-brand-neon">{c.title}</p>
-              {c.big && <p className="relative text-5xl font-black leading-tight break-words bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">{c.big}</p>}
+              {c.big && <p className="relative text-5xl font-black leading-tight break-words bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]">{c.big}</p>}
               <div className="relative space-y-1 text-lg text-slate-200">
                 {c.lines.map((l) => <p key={l}>{l}</p>)}
               </div>
@@ -73,7 +79,7 @@ export default function RecapStory({ cards, children, avatarUrl = null, name = '
                 </div>
               )}
               {c.trophies && (
-                <p className="relative text-3xl" aria-hidden="true">{'🏆'.repeat(c.trophies)}</p>
+                <p className="relative flex gap-1 text-yellow-300" aria-hidden="true">{Array.from({ length: c.trophies }, (_, t) => <Icon key={t} name="trophy" size={32} />)}</p>
               )}
               {c.bars && c.bars.length > 0 && (
                 <div className="relative flex items-end gap-1 h-28" aria-hidden="true">
@@ -95,9 +101,11 @@ export default function RecapStory({ cards, children, avatarUrl = null, name = '
           <article
             aria-roledescription="slide"
             aria-label={`${total} of ${total}`}
-            className="snap-center shrink-0 w-full min-h-[28rem] flex flex-col justify-center gap-4 p-8 bg-gradient-to-br from-slate-950 to-slate-800 text-white"
+            className="relative overflow-hidden snap-center shrink-0 w-full min-h-[28rem] flex flex-col justify-center p-8 text-white"
           >
-            {children}
+            <RecapArt id="intro" />
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-slate-950/55" />
+            <div className="relative flex flex-col gap-4">{children}</div>
           </article>
         )}
       </div>
