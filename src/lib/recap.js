@@ -148,17 +148,17 @@ export function monthlyBars(recap) {
   }))
 }
 
-/** Visual accent (Tailwind gradient + hex pair for canvas/OG) per story card. */
+/** Visual accent per story card: Tailwind gradient fallback, hex pair, and the icon-set name (src/lib/iconSet.js). Backdrop artwork lives in recapArt.js. */
 export const CARD_THEMES = {
-  intro: { gradient: 'from-emerald-700 via-slate-900 to-slate-950', from: '#047857', to: '#020617', icon: '🚴' },
-  totals: { gradient: 'from-sky-700 via-slate-900 to-slate-950', from: '#0369a1', to: '#020617', icon: '🛣️' },
-  longest: { gradient: 'from-indigo-700 via-slate-900 to-slate-950', from: '#4338ca', to: '#020617', icon: '📏' },
-  power: { gradient: 'from-amber-600 via-rose-900 to-slate-950', from: '#d97706', to: '#020617', icon: '⚡' },
-  pbs: { gradient: 'from-yellow-600 via-amber-900 to-slate-950', from: '#ca8a04', to: '#020617', icon: '🏆' },
-  streak: { gradient: 'from-orange-600 via-red-900 to-slate-950', from: '#ea580c', to: '#020617', icon: '🔥' },
-  month: { gradient: 'from-fuchsia-700 via-purple-900 to-slate-950', from: '#a21caf', to: '#020617', icon: '📅' },
-  velodrome: { gradient: 'from-teal-700 via-slate-900 to-slate-950', from: '#0f766e', to: '#020617', icon: '🏟️' },
-  empty: { gradient: 'from-slate-800 to-slate-950', from: '#1e293b', to: '#020617', icon: '🚴' },
+  intro: { gradient: 'from-emerald-700 via-slate-900 to-slate-950', from: '#047857', to: '#020617', icon: 'bike' },
+  totals: { gradient: 'from-sky-700 via-slate-900 to-slate-950', from: '#0369a1', to: '#020617', icon: 'speed' },
+  longest: { gradient: 'from-indigo-700 via-slate-900 to-slate-950', from: '#4338ca', to: '#020617', icon: 'mountain' },
+  power: { gradient: 'from-amber-600 via-rose-900 to-slate-950', from: '#d97706', to: '#020617', icon: 'bolt' },
+  pbs: { gradient: 'from-yellow-600 via-amber-900 to-slate-950', from: '#ca8a04', to: '#020617', icon: 'trophy' },
+  streak: { gradient: 'from-orange-600 via-red-900 to-slate-950', from: '#ea580c', to: '#020617', icon: 'flame' },
+  month: { gradient: 'from-fuchsia-700 via-purple-900 to-slate-950', from: '#a21caf', to: '#020617', icon: 'calendar' },
+  velodrome: { gradient: 'from-teal-700 via-slate-900 to-slate-950', from: '#0f766e', to: '#020617', icon: 'velodrome' },
+  empty: { gradient: 'from-slate-800 to-slate-950', from: '#1e293b', to: '#020617', icon: 'bike' },
 }
 export const cardTheme = (id) => CARD_THEMES[id] || CARD_THEMES.empty
 

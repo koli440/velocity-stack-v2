@@ -2,6 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { parseRecapYear, isValidSlug, bannerYear, buildRecapCards, headlineStats, monthlyBars, safeAvatarUrl, cardTheme, recapShareUrl, isRecapSharePath } from '../recap.js'
 import { trackRecapEvent, trackRecapCta, trackRecapSignUp, RECAP_CTA_KEY } from '../recapTracking.js'
+import { ICON_SET } from '../iconSet.js'
+import { ART_SCENES, artScene, drawRecapArt } from '../recapArt.js'
 import { CONSENT_KEY, buildConsentRecord } from '../consent.js'
 
 const full = {
@@ -105,4 +107,26 @@ test('avatar fetch for OG falls back to null on bad type, size, status or failur
   assert.equal(await fetchAvatarDataUri('https://x/a', { fetchImpl: mk('image/png', 10, false) }), null)
   assert.equal(await fetchAvatarDataUri('https://x/a', { fetchImpl: async () => { throw new Error('boom') } }), null)
   assert.equal(await fetchAvatarDataUri(null), null)
+})
+
+test('every recap card has artwork and an icon from our icon set (no emoji)', () => {
+  for (const c of buildRecapCards(full, { name: 'A' })) {
+    assert.ok(ICON_SET[cardTheme(c.id).icon], `icon for ${c.id}`)
+    assert.ok(ART_SCENES[c.id] && artScene(c.id).paths.length >= 3, `art for ${c.id}`)
+  }
+  assert.equal(artScene('unknown'), ART_SCENES.empty)
+})
+
+test('canvas art draws every scene path and stays inside the target rectangle', () => {
+  const calls = { stroke: 0, clip: 0 }
+  const grad = { addColorStop() {} }
+  const ctx = new Proxy({ createLinearGradient: () => grad, createRadialGradient: () => grad, stroke: () => { calls.stroke++ }, clip: () => { calls.clip++ } }, {
+    get: (t, k) => (k in t ? t[k] : () => {}), set: () => true,
+  })
+  globalThis.Path2D = class {}
+  try {
+    for (const id of Object.keys(ART_SCENES)) drawRecapArt(ctx, id, { width: 1080, height: 1350 })
+  } finally { delete globalThis.Path2D }
+  assert.equal(calls.clip, Object.keys(ART_SCENES).length)
+  assert.ok(calls.stroke >= Object.keys(ART_SCENES).length * 3)
 })

@@ -14,7 +14,10 @@ A yearly, story-style summary of a rider's rides, computed in SQL from stored ac
 - Owner page `/recap/<year>` (signed in): swipeable `RecapStory`, Share (Web Share or copy link) and Download PNG (drawn on a canvas on the device; works without a public link and publishes nothing).
 
 ## Graphics and avatar
-- Each story card has its own gradient theme (`cardTheme`), a large icon, and a visual: 12 monthly bars with the peak highlighted (`monthlyBars`, also drawn in the PNG and OG image), a power gauge (best average vs. peak), streak dots and PB trophies.
+- Backgrounds are the main visual, in the style of the blog hero card (`blog/CoverArt.js`): each story card has its own layered scene in `src/lib/recapArt.js` (deep gradient, coloured glow, velodrome ovals, speed lines, route / power curve, streak dots), unique per card id. Data graphics sit on top with a light scrim so they stay legible.
+- One scene description, three renderers: `RecapArt` (SVG, used by the story cards, the public page and the OG image via next/og) and `drawRecapArt` (canvas `Path2D`, used by the PNG). Change a scene once and all surfaces follow. The PNG and OG image use the `intro` scene.
+- The top-right badge on each card is an icon from our own set (`ICON_SET`, `Icon`; name per card in `CARD_THEMES`), never an emoji. PB trophies use the set's `trophy` icon.
+- Visuals on top: 12 monthly bars with the peak highlighted (`monthlyBars`, also drawn in the PNG and OG image), a power gauge (best average vs. peak), streak dots and PB trophies.
 - The rider's profile picture (`profiles.avatar_url`, see `avatars.js`) shows on the intro card, the PNG (drawn on the canvas; initials if it cannot load) and the OG image. Without a picture, initials are used.
 - Privacy: the public payload includes `avatar_url` (migration `20270150000000_recap_share_avatar.sql`) only for a live opt-in share, so revoking the link removes it. URLs are accepted only as http(s) (`safeAvatarUrl`).
 

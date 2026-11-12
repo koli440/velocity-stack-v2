@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og'
 import { OG_SIZE, renderOgImage } from './ogImage'
 import { headlineStats, monthlyBars, safeAvatarUrl } from './recap'
 import { avatarInitials } from './avatars'
+import RecapArt from '../components/RecapArt'
 import { fetchAvatarDataUri } from './server/recapAvatar'
 
 export const RECAP_OG_ALT = 'Velocity Stack season recap'
@@ -20,7 +21,7 @@ export async function renderRecapOg(shared) {
 function buildRecapOg(shared, avatar) {
   const stats = headlineStats(shared.recap).slice(0, 3)
   const bars = monthlyBars(shared.recap)
-  const ring = { display: 'flex', width: 180, height: 180, borderRadius: 90, border: '6px solid #39ff14', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', background: '#1e293b' }
+  const ring = { display: 'flex', boxShadow: '0 8px 30px rgba(0,0,0,0.5)', width: 180, height: 180, borderRadius: 90, border: '6px solid #39ff14', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', background: '#1e293b' }
   return new ImageResponse(
     (
       <div
@@ -31,11 +32,14 @@ function buildRecapOg(shared, avatar) {
           flexDirection: 'column',
           justifyContent: 'center',
           padding: '60px 70px',
-          background: 'linear-gradient(135deg, #047857 0%, #0f172a 45%, #020617 100%)',
+          position: 'relative',
+          background: '#020617',
           color: '#ffffff',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <RecapArt id="intro" style={{ width: 1200, height: 630 }} />
+        <div style={{ display: 'flex', position: 'absolute', top: 0, left: 0, width: 1200, height: 630, background: 'linear-gradient(90deg, rgba(2,6,23,0.6) 0%, rgba(2,6,23,0.25) 55%, rgba(2,6,23,0) 100%)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', fontSize: 34, color: '#39ff14', fontWeight: 800 }}>
               Velocity Stack · {shared.year} season recap
@@ -51,7 +55,7 @@ function buildRecapOg(shared, avatar) {
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', marginTop: 40 }}>
+        <div style={{ display: 'flex', marginTop: 40, position: 'relative' }}>
           {stats.map((s) => (
             <div key={s.label} style={{ display: 'flex', flexDirection: 'column', marginRight: 60 }}>
               <div style={{ display: 'flex', fontSize: 64, fontWeight: 800 }}>{s.value}</div>
@@ -60,7 +64,7 @@ function buildRecapOg(shared, avatar) {
           ))}
         </div>
         {bars.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'flex-end', height: 110, marginTop: 36 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', height: 110, marginTop: 36, position: 'relative' }}>
             {bars.map((b) => (
               <div
                 key={b.month}
