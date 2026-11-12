@@ -79,6 +79,8 @@ The manual `POST /api/sync/{intervals,wahoo,garmin}/run` (the "Sync now" button)
   (webhook/new rides), which are always synced first. Backfills are shared fairly between riders. When the budget is
   spent, runs stop quietly and resume after the window resets (:00/:15/:30/:45, daily at midnight UTC).
 
+Riders with long Strava histories are pointed to the data-export ZIP import on the public guide `/import/strava` (`docs/import-pages.md`).
+
 ## Strava analysis and repair
 - Strava has no .fit export, so rides are analysed from streams (`analyzeStreams`) into the same `{ summary, curves, time_series }`
   shape as the .fit path (`api/analyze.py`), including `time_series.heartrate` and the `HeartRate` curve.
