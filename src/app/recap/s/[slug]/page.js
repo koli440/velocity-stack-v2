@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { loadSharedRecap } from '../../../../lib/server/sharedRecap'
-import { buildRecapCards, recapSharePath, recapShareText } from '../../../../lib/recap'
+import { buildRecapCards, recapSharePath, recapShareText, safeAvatarUrl } from '../../../../lib/recap'
 import RecapStory from '../../../../components/RecapStory'
 import PublicRecapCta from '../../../../components/PublicRecapCta'
 
@@ -31,7 +31,7 @@ export default async function SharedRecapPage({ params }) {
       <h1 className="text-2xl font-black text-center text-slate-900 dark:text-white">
         {shared.name}&apos;s {shared.year} season
       </h1>
-      <RecapStory cards={cards}>
+      <RecapStory cards={cards} avatarUrl={safeAvatarUrl(shared.avatar_url)} name={shared.name}>
         <PublicRecapCta year={shared.year} />
       </RecapStory>
     </div>

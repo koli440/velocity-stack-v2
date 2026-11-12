@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { parseRecapYear, isValidSlug, bannerYear, buildRecapCards, headlineStats, recapShareUrl, isRecapSharePath } from '../recap.js'
+import { parseRecapYear, isValidSlug, bannerYear, buildRecapCards, headlineStats, monthlyBars, safeAvatarUrl, cardTheme, recapShareUrl, isRecapSharePath } from '../recap.js'
 import { trackRecapEvent, trackRecapCta, trackRecapSignUp, RECAP_CTA_KEY } from '../recapTracking.js'
 import { CONSENT_KEY, buildConsentRecord } from '../consent.js'
 
@@ -73,4 +73,21 @@ test('recap events fire only with analytics consent', () => {
   assert.equal(trackRecapSignUp(), false)
   assert.deepEqual(calls.map((c) => c[1]), ['recap_view', 'recap_cta_click', 'recap_signup'])
   delete global.window
+})
+
+test('monthly bars flag the peak and scale to the max', () => {
+  const recap = { ...full, months: full.months.map((m) => (m.month === 6 ? { ...m, distance_km: 40 } : m)) }
+  const bars = monthlyBars(recap)
+  assert.equal(bars.length, 12)
+  assert.deepEqual(bars.filter((b) => b.peak).map((b) => b.month), [6])
+  assert.equal(bars.find((b) => b.month === 6).height, 1)
+  assert.equal(bars[0].height, 0.25)
+  assert.deepEqual(monthlyBars(null), [])
+})
+
+test('avatar URLs must be http(s); every card id has a theme', () => {
+  assert.equal(safeAvatarUrl('https://x.test/a.png'), 'https://x.test/a.png')
+  assert.equal(safeAvatarUrl('javascript:alert(1)'), null)
+  assert.equal(safeAvatarUrl(null), null)
+  for (const c of buildRecapCards(full, { name: 'A' })) assert.ok(cardTheme(c.id).gradient)
 })

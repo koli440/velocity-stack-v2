@@ -13,6 +13,11 @@ A yearly, story-style summary of a rider's rides, computed in SQL from stored ac
 - Public page `/recap/s/<slug>` (standalone shell, `noindex`, never cached) with a final call-to-action slide linking to `/connections`. Unknown or revoked slugs 404. `opengraph-image.js` / `twitter-image.js` in the same folder render the 1200x630 card (generic site card for unknown slugs).
 - Owner page `/recap/<year>` (signed in): swipeable `RecapStory`, Share (Web Share or copy link) and Download PNG (drawn on a canvas on the device; works without a public link and publishes nothing).
 
+## Graphics and avatar
+- Each story card has its own gradient theme (`cardTheme`), a large icon, and a visual: 12 monthly bars with the peak highlighted (`monthlyBars`, also drawn in the PNG and OG image), a power gauge (best average vs. peak), streak dots and PB trophies.
+- The rider's profile picture (`profiles.avatar_url`, see `avatars.js`) shows on the intro card, the PNG (drawn on the canvas; initials if it cannot load) and the OG image. Without a picture, initials are used.
+- Privacy: the public payload includes `avatar_url` (migration `20270150000000_recap_share_avatar.sql`) only for a live opt-in share, so revoking the link removes it. URLs are accepted only as http(s) (`safeAvatarUrl`).
+
 ## Dashboard banner
 `RecapBanner` on the dashboard, October to February (`bannerYear`), dismissible per year (`localStorage` `vs.recapBanner.<year>`).
 

@@ -77,27 +77,25 @@ export function buildRecapCards(recap, { name } = {}) {
     const lines = []
     if (has(bp.best_avg_power_w)) lines.push(`Best average power ${nf(bp.best_avg_power_w)} W`)
     if (has(bp.best_np_w)) lines.push(`Best normalized power ${nf(bp.best_np_w)} W`)
-    cards.push({ id: 'power', title: 'Peak power', big: has(bp.max_power_w) ? `${nf(bp.max_power_w)} W` : `${nf(bp.best_avg_power_w || bp.best_np_w)} W`, lines })
+    cards.push({ id: 'power', title: 'Peak power', gauge: bp.max_power_w > 0 ? Math.min(1, (bp.best_avg_power_w || bp.best_np_w || 0) / bp.max_power_w) : undefined, big: has(bp.max_power_w) ? `${nf(bp.max_power_w)} W` : `${nf(bp.best_avg_power_w || bp.best_np_w)} W`, lines })
   }
 
   const pb = recap.personal_bests
   if (pb && has(pb.count)) {
     const lines = (pb.items || []).slice(0, 3).map((i) => [i.discipline, i.event, fmtPbTime(i.time_seconds)].filter(Boolean).join(' · '))
-    cards.push({ id: 'pbs', title: 'Personal bests', big: `${nf(pb.count)} new ${pb.count === 1 ? 'PB' : 'PBs'}`, lines })
+    cards.push({ id: 'pbs', title: 'Personal bests', trophies: Math.min(pb.count, 5), big: `${nf(pb.count)} new ${pb.count === 1 ? 'PB' : 'PBs'}`, lines })
   }
 
   if (recap.longest_streak && recap.longest_streak.days >= 2) {
-    cards.push({ id: 'streak', title: 'Longest streak', big: `${recap.longest_streak.days} days`, lines: [`Riding every day, ${recap.longest_streak.start} to ${recap.longest_streak.end}`] })
+    cards.push({ id: 'streak', title: 'Longest streak', big: `${recap.longest_streak.days} days`, streak: Math.min(recap.longest_streak.days, 31), lines: [`Riding every day, ${recap.longest_streak.start} to ${recap.longest_streak.end}`] })
   }
 
   const bm = recap.busiest_month
   if (bm) {
     const lines = [`${nf(bm.rides)} ${bm.rides === 1 ? 'ride' : 'rides'}`]
     if (has(bm.distance_km)) lines.unshift(fmtKm(bm.distance_km))
-    const bars = Array.isArray(recap.months) && has(recap.distance_km)
-      ? recap.months.map((m) => ({ label: monthName(m.month).slice(0, 1), value: Number(m.distance_km) || 0 }))
-      : Array.isArray(recap.months) ? recap.months.map((m) => ({ label: monthName(m.month).slice(0, 1), value: Number(m.rides) || 0 })) : undefined
-    cards.push({ id: 'month', title: 'Busiest month', big: monthName(bm.month), lines, bars })
+    const bars = monthlyBars(recap)
+    cards.push({ id: 'month', title: 'Busiest month', big: monthName(bm.month), lines, bars, peak: bm.month })
   }
 
   const fv = recap.favorite_velodrome
@@ -117,5 +115,44 @@ export function headlineStats(recap) {
   out.push({ label: recap.ride_count === 1 ? 'ride' : 'rides', value: nf(recap.ride_count) })
   return out.slice(0, 4)
 }
+
+/** Only http(s) URLs are ever used as an avatar source (the shared payload is untrusted input). */
+export function safeAvatarUrl(url) {
+  try {
+    const u = new URL(String(url || ''))
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : null
+  } catch {
+    return null
+  }
+}
+
+/** 12 monthly bars (distance when the season has any, else ride counts) with heights 0..1 and the peak flagged. */
+export function monthlyBars(recap) {
+  if (!recap || !Array.isArray(recap.months) || !recap.months.length) return []
+  const useKm = has(recap.distance_km)
+  const vals = recap.months.map((m) => Number(useKm ? m.distance_km : m.rides) || 0)
+  const max = Math.max(...vals, 0)
+  return recap.months.map((m, i) => ({
+    month: m.month,
+    label: monthName(m.month).slice(0, 1),
+    value: vals[i],
+    height: max > 0 ? vals[i] / max : 0,
+    peak: max > 0 && vals[i] === max,
+  }))
+}
+
+/** Visual accent (Tailwind gradient + hex pair for canvas/OG) per story card. */
+export const CARD_THEMES = {
+  intro: { gradient: 'from-emerald-700 via-slate-900 to-slate-950', from: '#047857', to: '#020617', icon: '🚴' },
+  totals: { gradient: 'from-sky-700 via-slate-900 to-slate-950', from: '#0369a1', to: '#020617', icon: '🛣️' },
+  longest: { gradient: 'from-indigo-700 via-slate-900 to-slate-950', from: '#4338ca', to: '#020617', icon: '📏' },
+  power: { gradient: 'from-amber-600 via-rose-900 to-slate-950', from: '#d97706', to: '#020617', icon: '⚡' },
+  pbs: { gradient: 'from-yellow-600 via-amber-900 to-slate-950', from: '#ca8a04', to: '#020617', icon: '🏆' },
+  streak: { gradient: 'from-orange-600 via-red-900 to-slate-950', from: '#ea580c', to: '#020617', icon: '🔥' },
+  month: { gradient: 'from-fuchsia-700 via-purple-900 to-slate-950', from: '#a21caf', to: '#020617', icon: '📅' },
+  velodrome: { gradient: 'from-teal-700 via-slate-900 to-slate-950', from: '#0f766e', to: '#020617', icon: '🏟️' },
+  empty: { gradient: 'from-slate-800 to-slate-950', from: '#1e293b', to: '#020617', icon: '🚴' },
+}
+export const cardTheme = (id) => CARD_THEMES[id] || CARD_THEMES.empty
 
 export const recapShareText = (year, name) => `${name ? `${name}'s` : 'My'} ${year} cycling season recap on Velocity Stack`
