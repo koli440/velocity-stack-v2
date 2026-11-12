@@ -64,6 +64,7 @@ export const PRIVATE_PATHS = [
   '/feedback',
   '/fitness',
   '/pb-vault',
+  '/recap/20',
   '/report-bug',
   '/riders',
   '/templates',
