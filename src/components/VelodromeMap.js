@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { mapTilesFor, isRetina } from '@/lib/mapTiles'
+import { mapTiles, isRetina } from '@/lib/mapTiles'
 import Icon from './Icon'
 
 // Leaflet renders the marker shadow with an empty alt; Bing flags that as missing
@@ -28,7 +28,7 @@ const customIcon = new AltIcon({
 })
 
 export default function VelodromeMap({ tracks = [] }) {
-  const tiles = mapTilesFor('dark', { retina: isRetina() })
+  const tiles = mapTiles({ retina: isRetina() })
   // Select only velodromes with valid GPS coordinates
   const validTracks = tracks.filter(t => t.latitude && t.longitude && !isNaN(t.latitude) && !isNaN(t.longitude))
 
@@ -38,7 +38,7 @@ export default function VelodromeMap({ tracks = [] }) {
         center={[30.0, 10.0]}
         zoom={2}
         scrollWheelZoom={true}
-        style={{ height: '100%', width: '100%', background: '#0F172A' }}
+        style={{ height: '100%', width: '100%', background: '#e8eef4' }}
       >
         <TileLayer
           attribution={tiles.attribution}

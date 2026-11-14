@@ -131,3 +131,15 @@ body {
   height: 34px;
   line-height: 34px;
 }
+
+/* The map is always light, also in the dark theme: keep attribution opaque and readable */
+.leaflet-container .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.92);
+  color: #334155;
+}
+.leaflet-container .leaflet-control-attribution a {
+  color: #0369a1;
+}
+.leaflet-bar {
+  border: 1px solid #94a3b8 !important;
+}
