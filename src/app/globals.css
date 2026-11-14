@@ -121,3 +121,13 @@ body {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
+
+/* Leaflet zoom controls: opaque and readable on any map style */
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background-color: #fff;
+  color: #0f172a;
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+}
