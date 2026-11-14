@@ -3,7 +3,8 @@
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { MAP_TILES } from '@/lib/mapTiles'
+import { useTheme } from 'next-themes'
+import { mapTilesFor, isRetina } from '@/lib/mapTiles'
 import Icon from './Icon'
 import { routeSegments } from '@/lib/routeMapSharing'
 
@@ -21,25 +22,28 @@ const startIcon = new AltIcon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-  className: 'hue-rotate-[90deg]', // greenish hue for the start
+  iconSize: [32, 52],
+  iconAnchor: [16, 52],
+  popupAnchor: [1, -44],
+  shadowSize: [52, 52],
+  className: 'hue-rotate-[90deg] drop-shadow-md', // greenish hue for the start
 })
 
 const finishIcon = new AltIcon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+  iconSize: [32, 52],
+  iconAnchor: [16, 52],
+  popupAnchor: [1, -44],
+  shadowSize: [52, 52],
+  className: 'drop-shadow-md',
 })
 
 export default function ActivityMap({ latitude = [], longitude = [] }) {
   // Continuous segments only: samples hidden by a privacy zone (null) must not be bridged by a line.
+  const { resolvedTheme } = useTheme()
+  const tiles = mapTilesFor(resolvedTheme, { retina: isRetina() })
   const segments = routeSegments(latitude, longitude)
   if (!segments.length) return null
   const points = segments.flat()
@@ -50,20 +54,24 @@ export default function ActivityMap({ latitude = [], longitude = [] }) {
   const bounds = L.latLngBounds(points)
 
   return (
-    <div className="glass-dense h-[380px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-surface-darkBorder shadow-xs relative z-0">
+    <div className="glass-dense h-[420px] md:h-[520px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-surface-darkBorder shadow-xs relative z-0">
       <MapContainer
         bounds={bounds}
-        boundsOptions={{ padding: [24, 24] }}
+        boundsOptions={{ padding: [16, 16] }}
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%', background: '#0F172A' }}
       >
         <TileLayer
-          attribution={MAP_TILES.attribution}
-          url={MAP_TILES.url}
-          maxZoom={MAP_TILES.maxZoom}
+          key={tiles.url}
+          attribution={tiles.attribution}
+          url={tiles.url}
+          maxZoom={tiles.maxZoom}
+          tileSize={tiles.tileSize}
+          zoomOffset={tiles.zoomOffset}
           alt="Map tile"
         />
-        <Polyline positions={segments} pathOptions={{ color: '#f97316', weight: 4, opacity: 0.9 }} />
+        <Polyline positions={segments} pathOptions={{ color: '#ffffff', weight: 9, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }} />
+        <Polyline positions={segments} pathOptions={{ color: '#ea580c', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }} />
         <Marker position={start} icon={startIcon}>
           <Popup>
             <div className="text-slate-900 text-xs font-bold"><Icon name="flag" /> Start</div>

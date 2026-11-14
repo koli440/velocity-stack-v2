@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { MAP_TILES } from '@/lib/mapTiles'
+import { mapTilesFor, isRetina } from '@/lib/mapTiles'
 import Icon from './Icon'
 
 // Leaflet renders the marker shadow with an empty alt; Bing flags that as missing
@@ -28,11 +28,12 @@ const customIcon = new AltIcon({
 })
 
 export default function VelodromeMap({ tracks = [] }) {
+  const tiles = mapTilesFor('dark', { retina: isRetina() })
   // Select only velodromes with valid GPS coordinates
   const validTracks = tracks.filter(t => t.latitude && t.longitude && !isNaN(t.latitude) && !isNaN(t.longitude))
 
   return (
-    <div className="h-[260px] sm:h-[360px] lg:h-[420px] w-full rounded-2xl overflow-hidden border border-track-line shadow-2xl relative z-0">
+    <div className="h-[320px] sm:h-[420px] lg:h-[520px] w-full rounded-2xl overflow-hidden border border-track-line shadow-2xl relative z-0">
       <MapContainer
         center={[30.0, 10.0]}
         zoom={2}
@@ -40,9 +41,11 @@ export default function VelodromeMap({ tracks = [] }) {
         style={{ height: '100%', width: '100%', background: '#0F172A' }}
       >
         <TileLayer
-          attribution={MAP_TILES.attribution}
-          url={MAP_TILES.url}
-          maxZoom={MAP_TILES.maxZoom}
+          attribution={tiles.attribution}
+          url={tiles.url}
+          maxZoom={tiles.maxZoom}
+          tileSize={tiles.tileSize}
+          zoomOffset={tiles.zoomOffset}
           alt="Map tile"
         />
         {validTracks.map((track) => (
