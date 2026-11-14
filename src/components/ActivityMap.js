@@ -3,8 +3,7 @@
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { useTheme } from 'next-themes'
-import { mapTilesFor, isRetina } from '@/lib/mapTiles'
+import { mapTiles, isRetina } from '@/lib/mapTiles'
 import Icon from './Icon'
 import { routeSegments } from '@/lib/routeMapSharing'
 
@@ -42,8 +41,7 @@ const finishIcon = new AltIcon({
 
 export default function ActivityMap({ latitude = [], longitude = [] }) {
   // Continuous segments only: samples hidden by a privacy zone (null) must not be bridged by a line.
-  const { resolvedTheme } = useTheme()
-  const tiles = mapTilesFor(resolvedTheme, { retina: isRetina() })
+  const tiles = mapTiles({ retina: isRetina() })
   const segments = routeSegments(latitude, longitude)
   if (!segments.length) return null
   const points = segments.flat()
@@ -59,10 +57,9 @@ export default function ActivityMap({ latitude = [], longitude = [] }) {
         bounds={bounds}
         boundsOptions={{ padding: [16, 16] }}
         scrollWheelZoom={true}
-        style={{ height: '100%', width: '100%', background: '#0F172A' }}
+        style={{ height: '100%', width: '100%', background: '#e8eef4' }}
       >
         <TileLayer
-          key={tiles.url}
           attribution={tiles.attribution}
           url={tiles.url}
           maxZoom={tiles.maxZoom}

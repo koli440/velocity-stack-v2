@@ -9,19 +9,14 @@ if (!KEY && typeof console !== 'undefined') {
   )
 }
 
-export function mapStyleFor(theme) {
-  return theme === 'dark' ? 'dataviz-dark' : 'streets-v2'
-}
-
-// Tile layer props for the given resolved theme ('light' | 'dark'). MapTiler 512px tiles (zoomOffset -1)
-// render labels sharper than 256px ones; `retina` requests the @2x variant. Without a key: OSM.
-export function mapTilesFor(theme, { key = KEY, retina = false } = {}) {
+// Always the light MapTiler style (readable in both app themes). 512px tiles (zoomOffset -1) render labels
+// sharper than 256px ones; `retina` requests the @2x variant. Without a key: OSM.
+export function mapTiles({ key = KEY, retina = false } = {}) {
   if (!key) {
     return { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: OSM_ATTRIBUTION, maxZoom: 19 }
   }
-  const style = mapStyleFor(theme)
   return {
-    url: `https://api.maptiler.com/maps/${style}/{z}/{x}/{y}${retina ? '@2x' : ''}.png?key=${key}`,
+    url: `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}${retina ? '@2x' : ''}.png?key=${key}`,
     attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> ' + OSM_ATTRIBUTION,
     maxZoom: 20,
     tileSize: 512,
