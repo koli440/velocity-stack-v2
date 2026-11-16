@@ -15,9 +15,9 @@ export default function BuyPackageButton({ packageId }) {
     else { setMsg(r.error); setBusy(false) }
   }
   return (
-    <div className="mt-2">
-      <button type="button" disabled={busy} onClick={go} className="px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-bold disabled:opacity-50">Pay with Stripe</button>
-      {msg && <p role="alert" className="text-xs text-red-600 mt-1">{msg}</p>}
+    <div className="pt-1">
+      <button type="button" disabled={busy} onClick={go} className="inline-flex w-full sm:w-auto items-center justify-center min-h-[44px] px-4 rounded-xl text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">{busy ? 'Opening checkout…' : 'Pay with Stripe'}</button>
+      {msg && <p role="alert" className="text-sm font-semibold text-red-700 dark:text-red-300 mt-2">{msg}</p>}
     </div>
   )
 }
