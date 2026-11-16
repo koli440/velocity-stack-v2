@@ -43,3 +43,5 @@ Velodrome info data migrations (helper + strict/relaxed chunks + penrose; tolera
 Web Push: `MIG=<repo>/supabase/migrations/20270137000000_web_push.sql node harness.mjs <repo>/supabase/migrations ./web-push-adversarial.mjs`
 
 Admin Respect stats RPC: `MIG=<repo>/supabase/migrations/20270140000000_admin_respect_stats.sql node harness.mjs <repo>/supabase/migrations ./admin-respect-adversarial.mjs`
+
+Coach module flag + notes: `MIG=<repo>/supabase/migrations/20270151000000_coach_module_flag_and_notes.sql node harness.mjs <repo>/supabase/migrations ./coach-notes-adversarial.mjs`

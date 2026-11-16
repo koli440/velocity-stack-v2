@@ -26,6 +26,16 @@ export const ATHLETE_PAGES = Object.freeze([
   { key: 'physiology', label: 'Physiology', sub: '/physiology' },
 ])
 
+// Pages of the coach module (behind the `coach_module` feature flag, see docs/coaching.md).
+export const COACH_MODULE_PAGES = Object.freeze([
+  { key: 'notes', label: 'Notes', sub: '/notes' },
+])
+
+/** Athlete tab/sidebar pages; module pages only when the signed-in user has the coach module. */
+export function athletePages(moduleEnabled = false) {
+  return moduleEnabled ? [...ATHLETE_PAGES, ...COACH_MODULE_PAGES] : ATHLETE_PAGES
+}
+
 /** Parses a pathname into { riderId, subPath } (riderId null outside athlete context). */
 export function parseCoachPath(pathname) {
   const m = /^\/coach\/([^/]+)(\/.*)?$/.exec(pathname || '')
@@ -65,6 +75,7 @@ const ATHLETE_ICONS = Object.freeze({
   'pb-vault': 'trophy',
   templates: 'clipboard',
   physiology: 'settings',
+  notes: 'clipboard',
 })
 
 /**
@@ -72,10 +83,10 @@ const ATHLETE_ICONS = Object.freeze({
  * ONLY athlete-scoped pages (plus a way back to the coach dashboard); every item of the coach's own
  * pages (telemetry, tools, feedback, own settings...) is hidden so nothing silently exits the context.
  */
-export function sidebarItems(navItems, riderId) {
+export function sidebarItems(navItems, riderId, moduleEnabled = false) {
   if (!riderId) return navItems
   return [
-    ...ATHLETE_PAGES.map((p) => ({
+    ...athletePages(moduleEnabled).map((p) => ({
       key: p.key,
       label: p.label,
       icon: ATHLETE_ICONS[p.key] || 'home',

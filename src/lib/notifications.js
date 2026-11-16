@@ -37,6 +37,8 @@ export function describeNotification(notification, actor) {
       return `${name} chose a different coach — you no longer have access to their data`
     case 'coach_edited':
       return `${name} (your coach) updated your training settings`
+    case 'coach_note_shared':
+      return `${name} (your coach) shared a note with you`
     case 'activity_comment': {
       if (notification.activity_owned) return `${name} commented on your activity`
       const athlete = coachedAthlete(notification)
@@ -87,6 +89,8 @@ export function notificationHref(notification) {
       return COACHING_HREF
     case 'coach_edited':
       return '/settings#physiology'
+    case 'coach_note_shared':
+      return COACHING_HREF
     case 'suggestion_submitted':
       return n.suggestion_id ? reviewPath(n.suggestion_id) : null
     case 'activity_reaction':

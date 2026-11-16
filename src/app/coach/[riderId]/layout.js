@@ -6,7 +6,8 @@ import { useParams, usePathname, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { fetchAthleteProfile } from '../../../lib/coaching'
 import { AthleteContext } from '../../../components/AthleteContext'
-import { ATHLETE_PAGES, athletePath, bannerText, parseCoachPath, rendersBeforeAthleteLoaded } from '../../../lib/coachContext'
+import { useCoachModule } from '../../../components/useCoachModule'
+import { athletePages, athletePath, bannerText, parseCoachPath, rendersBeforeAthleteLoaded } from '../../../lib/coachContext'
 
 // Wraps every athlete page: verifies (via the database) that the viewer actively coaches the
 // rider, shows the persistent "Coaching: <Name> - Exit" banner and the athlete tab bar.
@@ -18,6 +19,7 @@ export default function AthleteLayout({ children }) {
   const { subPath } = parseCoachPath(pathname)
   const [athlete, setAthlete] = useState(null)
   const [state, setState] = useState('loading') // loading | ok | denied
+  const moduleEnabled = useCoachModule()
 
   useEffect(() => {
     if (!riderId) return setState('denied')
@@ -75,7 +77,7 @@ export default function AthleteLayout({ children }) {
         </span>
       </div>
       <nav className="flex flex-wrap gap-1" aria-label="Athlete sections">
-        {ATHLETE_PAGES.map((p) => {
+        {athletePages(moduleEnabled).map((p) => {
           const href = athletePath(riderId, p.sub)
           const active = p.sub ? pathname === href || pathname.startsWith(`${href}/`) : pathname === href
           return (

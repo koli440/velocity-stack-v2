@@ -7,6 +7,7 @@ import { NAV_ITEMS, NAV_LOCKED_LABEL, isNavItemLocked } from '../lib/navigation'
 import { parseCoachPath, sidebarItems, isSidebarItemActive, isContextNavActive, navHref, logoHref, chromeVisibility } from '../lib/coachContext'
 import Icon from './Icon'
 import { loginHref } from '../lib/signupCatch'
+import { useCoachModule } from './useCoachModule'
 
 export default function Sidebar({
   isOpen = false,
@@ -17,7 +18,8 @@ export default function Sidebar({
   const router = useRouter()
   const pathname = usePathname()
   const { riderId } = parseCoachPath(pathname)
-  const items = sidebarItems(NAV_ITEMS, riderId)
+  const moduleEnabled = useCoachModule()
+  const items = sidebarItems(NAV_ITEMS, riderId, moduleEnabled)
   const chrome = chromeVisibility(riderId)
 
   const handleNavigate = (path) => {
