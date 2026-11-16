@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../../../lib/supabase'
 import { useCoachModule } from '../../../components/useCoachModule'
+import CoachQuestionsEditor from '../../../components/CoachQuestionsEditor'
 import {
   ACCENTS, BIO_MAX, CURRENCIES, DISCIPLINE_OPTIONS, HEADLINE_MAX, INTERVALS, PACKAGE_KINDS, PACKAGE_MAX,
   cardPath, cardUrl, coachCardErrorMessage, fetchMyCoachCard, parseList, saveCoachCard, setCoachCardVisibility,
@@ -160,6 +161,7 @@ export default function CoachCardSettingsPage() {
           </div>
         </section>
       )}
+      {saved && <CoachQuestionsEditor />}
     </div>
   )
 }

@@ -44,6 +44,7 @@ We may remove content and suspend or terminate accounts that break these rules.
 - A coaching relationship needs the rider's explicit acceptance, and the rider can end it or block the coach at any time. See the Privacy Policy for exactly what a coach can see and change.
 - **Coaches** must use the athlete's data only to coach that athlete, keep it confidential, make changes only in the athlete's interest and in line with what has been agreed, and follow applicable law. Coach edits are labelled and recorded.
 - **Riders** decide whether to accept coaching and remain responsible for their own training decisions.
+- **Applications:** riders may apply to a coach through the coach's public page by sending an onboarding questionnaire. Applying is optional, answers (especially health answers, which are optional) should be truthful and complete only as far as you are comfortable, and the questionnaire is not medical advice or a medical screening; if a health question applies to you, talk to a doctor before starting. Coaches may use applications only to decide on and prepare coaching, must keep them confidential and must not ask for answers outside the questionnaire for other purposes. We do not vet coaches.
 - Any commercial terms between a coach and a rider are theirs alone.
 
 ## 8. Not medical advice; training at your own risk
