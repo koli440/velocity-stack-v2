@@ -11,6 +11,7 @@ import { localDayKey } from '../../lib/fitnessForm'
 import { athletePath, formatLastActivity, weeklyVolume } from '../../lib/coachContext'
 import Avatar from '../../components/Avatar'
 import BotBadge from '../../components/BotBadge'
+import CoachApplications from '../../components/CoachApplications'
 
 const FLAG_STYLES = {
   alert: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
@@ -96,6 +97,7 @@ export default function CoachDashboardPage() {
   return (
     <div className="space-y-6" data-testid="coach-dashboard">
       <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Coach dashboard</h1>
+      <CoachApplications />
       {state.loading && <p className="text-xs text-slate-400">Loading…</p>}
       {state.error && <p className="text-xs text-red-500">Could not load everything: {state.error.message}</p>}
       {!state.loading && state.athletes.length === 0 && (

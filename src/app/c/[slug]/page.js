@@ -3,6 +3,7 @@ import { loadCoachCard } from '../../../lib/server/coachCardStore'
 import { accentOf, cardDescription, cardPath, priceLabel } from '../../../lib/coachCard'
 import { safeAvatarUrl } from '../../../lib/recap'
 import ReportCoachCard from '../../../components/ReportCoachCard'
+import ApplyToCoachButton from '../../../components/ApplyToCoachButton'
 
 // Never cached: unpublishing must take effect immediately.
 export const dynamic = 'force-dynamic'
@@ -73,6 +74,7 @@ export default async function CoachCardPage({ params }) {
         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
           {!card.accepting_athletes ? 'Not accepting new athletes right now.' : card.waitlist ? 'Currently full: new athletes join the waitlist.' : 'Accepting new athletes.'}
         </p>
+        {card.accepting_athletes && <ApplyToCoachButton slug={card.slug} />}
         <ReportCoachCard slug={card.slug} />
       </div>
     </article>

@@ -14,6 +14,7 @@ import FtpHistoryPanel from '../../components/FtpHistoryPanel'
 import WeightHistoryPanel from '../../components/WeightHistoryPanel'
 import CoachingPanel from '../../components/CoachingPanel'
 import SharedNotesPanel from '../../components/SharedNotesPanel'
+import MyOnboardingPanel from '../../components/MyOnboardingPanel'
 import CoachCardLink from '../../components/CoachCardLink'
 import CoachBadge, { useCoachNames } from '../../components/CoachBadge'
 import CoachEditsList from '../../components/CoachEditsList'
@@ -444,6 +445,7 @@ export default function SettingsPage() {
       <div className="mt-6">
         <CoachingPanel userId={user?.id} />
         <SharedNotesPanel />
+        <MyOnboardingPanel />
         <CoachCardLink />
       </div>
 

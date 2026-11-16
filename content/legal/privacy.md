@@ -1,7 +1,7 @@
 ---
 title: Privacy Policy
 description: How VelocityStack collects, uses, shares and protects your data, including activity, location and health-related data, and your rights.
-updated: 2026-11-04
+updated: 2026-11-16
 ---
 This Privacy Policy explains what personal data VelocityStack ("we", "us", "the Service", at velocity-stack.app) collects, why, who sees it, and what rights you have. Please also read our [Terms of Service](/terms).
 
@@ -49,6 +49,7 @@ Coaching works only with your consent.
 - Your coach can change only your training settings (FTP, weight, thresholds, power zones, training defaults) and your planned workouts, races and calendar notes. Every such edit is labelled "set by coach", recorded in an audit list, and you are notified.
 - You can end coaching or block a coach at any time and access stops immediately. A coach can also leave. Data that a coach created for you (for example planned workouts) stays in your account.
 - If you are a coach, you are responsible for handling the athlete's data you can see confidentially and only for coaching that athlete.
+- **Applying to a coach (onboarding questionnaire):** when you apply to a coach you may fill in a questionnaire (date of birth, goals, training history, availability, equipment, optional answers to the coach's own questions and, optionally, a health questionnaire based on the PAR-Q). Giving it is your explicit consent (Art. 6(1)(a) and, for health answers, Art. 9(2)(a)); we store the consent version and a fingerprint of the text you agreed to. Health answers are optional, are never collected for people under 18, are shown only to the coach you applied to (in lists the coach only sees whether any answer was YES) and are not used for anything else. The coach can see your answers only while your request is pending or you are coached by them. You can edit, withdraw consent for (which cuts the coach's access and cancels a pending request) or delete your answers at any time in Settings. If you accept coaching, we may create your FTP, weight, thresholds, future races and unavailable days from your answers, but only where you have no such data yet; this is shown to you in Settings.
 
 ## 6. Integrations (Strava, Intervals.icu, Wahoo and Garmin)
 Integrations start only when you connect them under Settings, Connections.
@@ -83,6 +84,7 @@ Our providers may process data outside your country, including outside the Europ
 
 ## 10. How long we keep data and how to delete it
 - We keep your data for as long as your account exists.
+- **Onboarding answers** are kept until you delete or withdraw them or delete your account; withdrawing removes the coach's access immediately.
 - **Disconnecting an integration** deletes its tokens or key immediately (for Garmin it also removes our registration at Garmin and any queued, not yet imported activity notifications). Activities already imported from Garmin remain in your account until you delete them in the app or ask us to delete your account; you can access and download them in the app, correct them where editable, or ask us by email for a copy. **Individual items** such as rides, templates, notes, races and your profile photo can be deleted by you in the app.
 - **Deleting your account:** the app does not currently have a self-service "delete account" button. To delete your account and the associated data (activities, files, settings and relationships), email **koli440@gmail.com** from your account address. We will delete the account and its data within 30 days and confirm to you. Backups held by our providers are overwritten in their normal cycle.
 - Server logs at our providers are kept for a short period set by those providers.
