@@ -6,6 +6,7 @@ import { supabase } from '../../../lib/supabase'
 import { useCoachModule } from '../../../components/useCoachModule'
 import CoachQuestionsEditor from '../../../components/CoachQuestionsEditor'
 import CoachLicenceEditor from '../../../components/CoachLicenceEditor'
+import CoachBillingPanel from '../../../components/CoachBillingPanel'
 import {
   ACCENTS, BIO_MAX, CURRENCIES, DISCIPLINE_OPTIONS, HEADLINE_MAX, INTERVALS, PACKAGE_KINDS, PACKAGE_MAX,
   cardPath, cardUrl, coachCardErrorMessage, fetchMyCoachCard, parseList, saveCoachCard, setCoachCardVisibility,
@@ -164,6 +165,7 @@ export default function CoachCardSettingsPage() {
       )}
       {saved && <CoachQuestionsEditor />}
       {saved && <CoachLicenceEditor />}
+      {saved && <CoachBillingPanel />}
     </div>
   )
 }
