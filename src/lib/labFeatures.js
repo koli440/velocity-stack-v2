@@ -5,6 +5,8 @@ export const LAB_FEATURES = Object.freeze([
   { key: 'lactate', label: 'Lactate step test', desc: 'Enter lactate, heart rate and power per step; get LT1, LT2 and OBLA thresholds.', icon: 'flask' },
   { key: 'schedule', label: 'Test scheduler', desc: 'Repeat tests every few weeks with reminders and a progress timeline.', icon: 'flask' },
   { key: 'profile', label: 'Power profile', desc: 'Sprinter, pursuiter or time trialist from the power-duration curve.', icon: 'flask' },
+  { key: 'durability', label: 'Durability', desc: 'Fresh versus fatigued 5-minute power after about 2000 kJ.', icon: 'flask' },
+  { key: 'decoupling', label: 'Efficiency and decoupling', desc: 'Aerobic decoupling (Pw:HR) and efficiency factor across steady rides.', icon: 'flask' },
 ])
 
 export const labFeature = (key) => LAB_FEATURES.find((f) => f.key === key) || null
