@@ -2,6 +2,7 @@
 // priority order. Routes: /coach/<riderId>/lab[/<key>] (coach, athlete context) and /lab[/<key>] (own).
 export const LAB_FEATURES = Object.freeze([
   { key: 'protocols', label: 'Protocol runner', desc: 'Guided FTP and critical power field tests, pushed to the calendar.', icon: 'flask' },
+  { key: 'lactate', label: 'Lactate step test', desc: 'Enter lactate, heart rate and power per step; get LT1, LT2 and OBLA thresholds.', icon: 'flask' },
 ])
 
 export const labFeature = (key) => LAB_FEATURES.find((f) => f.key === key) || null
