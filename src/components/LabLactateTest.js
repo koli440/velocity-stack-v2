@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { labErrorMessage } from '../lib/labRuns'
 import { computeLactateResult, ltEntryFromResult, normalizeSteps } from '../lib/lactateStepTest'
 import { fetchLtHistory, saveLtEntry, validateLtEntry } from '../lib/lactateThresholds'
-import { normalizePlan, planToRows, resolvePlan } from '../lib/lactatePlan'
+import { LACTATE_INSTRUCTION, normalizePlan, planToRows, resolvePlan } from '../lib/lactatePlan'
 import { fetchFtpHistory, ftpAt } from '../lib/ftpHistory'
 import { ErrorNote, StatusNote, adminBtn, adminCard, adminInput } from './admin/AdminUi'
 
@@ -95,7 +95,7 @@ export default function LabLactateTest({ athleteId, viewerId }) {
     if (n.error) return setMsg({ error: n.error })
     setBusy(true)
     const { error } = await supabase.rpc('lab_lactate_plan_save', {
-      p_athlete: athleteId, p_instruction: n.plan.instruction, p_step_minutes: n.plan.step_minutes, p_steps: n.plan.steps,
+      p_athlete: athleteId, p_instruction: '', p_step_minutes: n.plan.step_minutes, p_steps: n.plan.steps,
     })
     setBusy(false)
     if (error) return setMsg({ error: labErrorMessage(error) })
@@ -105,7 +105,7 @@ export default function LabLactateTest({ athleteId, viewerId }) {
   }
 
   const resetPlan = async () => {
-    if (!window.confirm('Go back to the default instruction and steps?')) return
+    if (!window.confirm('Go back to the default steps?')) return
     const { error } = await supabase.rpc('lab_lactate_plan_reset', { p_athlete: athleteId })
     if (error) return setMsg({ error: labErrorMessage(error) })
     setEditing(null)
@@ -163,7 +163,6 @@ export default function LabLactateTest({ athleteId, viewerId }) {
         <h2 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white mb-2">How to do the test</h2>
         {editing ? (
           <div className="space-y-2">
-            <textarea className={input} rows={7} maxLength={3000} aria-label="Instruction" value={editing.instruction} onChange={(e) => setEditing({ ...editing, instruction: e.target.value })} />
             <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100 sm:max-w-xs"><span>Step length (minutes)</span>
               <input type="number" className={input} value={editing.step_minutes} onChange={(e) => setEditing({ ...editing, step_minutes: e.target.value })} /></label>
             <div className="space-y-1">
@@ -184,7 +183,7 @@ export default function LabLactateTest({ athleteId, viewerId }) {
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line" data-testid="lactate-instruction">{planInfo.plan.instruction}</p>
+            <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line" data-testid="lactate-instruction">{LACTATE_INSTRUCTION}</p>
             <p className="text-sm text-slate-800 dark:text-slate-200" data-testid="lactate-prepared-steps">
               {planInfo.plan.steps.length} steps of {planInfo.plan.step_minutes} min: {planInfo.plan.steps.map((st) => (ftp > 0 ? `${Math.round((ftp * st.pct) / 100)} W` : `${st.pct}% FTP`)).join(', ')}
               {ftp > 0 ? ` (from FTP ${ftp} W)` : ' (set your FTP to see watts)'}
@@ -192,7 +191,7 @@ export default function LabLactateTest({ athleteId, viewerId }) {
             {planInfo.fromCoach && <p className="text-xs text-slate-600 dark:text-slate-300">Prepared by your coach.</p>}
             {planInfo.editable && (
               <div className="flex flex-wrap gap-2">
-                <button className={quiet} onClick={() => setEditing({ instruction: planInfo.plan.instruction, step_minutes: planInfo.plan.step_minutes, steps: planInfo.plan.steps.map((st) => ({ pct: st.pct })) })}>Edit instruction and steps</button>
+                <button className={quiet} onClick={() => setEditing({ step_minutes: planInfo.plan.step_minutes, steps: planInfo.plan.steps.map((st) => ({ pct: st.pct })) })}>Edit steps</button>
                 {planInfo.custom && <button className={quiet} onClick={resetPlan}>Reset to default</button>}
               </div>
             )}
