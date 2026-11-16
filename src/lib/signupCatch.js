@@ -21,4 +21,5 @@ export const shouldShowCatch = ({ interactions, dismissed, signedIn }) =>
 export const LOGIN_TOOL_CARDS = [
   { key: 'gears', title: 'Gear Architect', icon: 'gears', href: '/gears', description: 'Gear inches, ratio and speed at cadence for any chainring and cog.' },
   { key: 'pursuit', title: 'Pursuit Strategist', icon: 'stopwatch', href: '/pursuit', description: 'Turn a target time into lap-by-lap splits and a pacing plan.' },
+  { key: 'coaches', title: 'Coach directory', icon: 'users', href: '/coaches', description: 'Browse coaches who chose to be listed, see their packages and apply.' },
 ]
