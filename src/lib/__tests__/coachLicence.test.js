@@ -26,5 +26,7 @@ test('licence notifications and errors', () => {
   assert.match(describeNotification({ type: 'licence_reviewed' }), /licence was reviewed/)
   assert.match(describeNotification({ type: 'licence_expiring' }), /expir/)
   assert.equal(notificationHref({ type: 'licence_reviewed' }), '/settings/coach-card')
+  assert.match(describeNotification({ type: 'licence_submitted' }), /waiting for your review/)
+  assert.equal(notificationHref({ type: 'licence_submitted' }), '/admin/coach-licences')
   assert.match(licenceErrorMessage({ message: 'Unknown licence level' }), /list/)
 })

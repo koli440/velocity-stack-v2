@@ -47,6 +47,8 @@ export function describeNotification(notification, actor) {
       return `${name} completed a lab test`
     case 'licence_reviewed':
       return 'Your coaching licence was reviewed'
+    case 'licence_submitted':
+      return 'A coaching licence is waiting for your review'
     case 'licence_expiring':
       return 'Your coaching licence is expiring or has expired'
     case 'coach_message':
@@ -114,6 +116,8 @@ export function notificationHref(notification) {
       return '/settings#physiology'
     case 'coach_note_shared':
       return COACHING_HREF
+    case 'licence_submitted':
+      return '/admin/coach-licences'
     case 'licence_reviewed':
     case 'licence_expiring':
       return '/settings/coach-card'
