@@ -18,3 +18,6 @@ Coach-facing physiology lab, flag-gated by `coach_module`. Specs below; each lin
 6. [Efficiency and decoupling trend](lab/decoupling.md)
 7. [Field protocol forms](lab/field-forms.md)
 8. [Reports](lab/reports.md)
+
+## Status
+- 1 Protocol runner: implemented (see its spec, "Implementation").

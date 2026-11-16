@@ -39,6 +39,12 @@ export function describeNotification(notification, actor) {
       return `${name} (your coach) updated your training settings`
     case 'coach_note_shared':
       return `${name} (your coach) shared a note with you`
+    case 'lab_test_planned':
+      return `${name} (your coach) planned a lab test for you`
+    case 'lab_test_due':
+      return 'A lab test is due'
+    case 'lab_test_result':
+      return `${name} completed a lab test`
     case 'licence_reviewed':
       return 'Your coaching licence was reviewed'
     case 'licence_expiring':
@@ -108,6 +114,11 @@ export function notificationHref(notification) {
     case 'licence_reviewed':
     case 'licence_expiring':
       return '/settings/coach-card'
+    case 'lab_test_planned':
+    case 'lab_test_due':
+      return '/lab/protocols'
+    case 'lab_test_result':
+      return n.actor_id ? `/coach/${n.actor_id}/lab/protocols` : '/coach'
     case 'coach_message':
       return '/chat'
     case 'subscription_started':

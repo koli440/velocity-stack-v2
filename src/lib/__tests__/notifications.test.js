@@ -112,3 +112,12 @@ test('every notification type resolves to a sensible link (or none)', () => {
   assert.equal(href({ type: 'unknown' }), null)
   assert.equal(href(null), null)
 })
+
+test('lab notifications have text and links', async () => {
+  const { describeNotification, notificationHref } = await import('../notifications.js')
+  const actor = { nickname: 'Coach' }
+  assert.match(describeNotification({ type: 'lab_test_planned' }, actor), /planned a lab test/)
+  assert.match(describeNotification({ type: 'lab_test_due' }, actor), /due/)
+  assert.equal(notificationHref({ type: 'lab_test_planned' }), '/lab/protocols')
+  assert.equal(notificationHref({ type: 'lab_test_result', actor_id: 'r1' }), '/coach/r1/lab/protocols')
+})
