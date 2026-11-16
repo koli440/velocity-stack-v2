@@ -6,6 +6,10 @@ import { labErrorMessage, fetchLabRuns } from '../lib/labRuns'
 import { fetchFtpHistory, resolveFtpAt } from '../lib/ftpHistory'
 import { fetchLtHistory, resolveLtAt } from '../lib/lactateThresholds'
 import { fetchWeightHistory, weightAt } from '../lib/weightHistory'
+import { MOBILITY_ITEMS } from '../lib/labFieldForms'
+import { fetchRideStreams } from '../lib/labRides'
+import { durabilityTrend } from '../lib/durability'
+import { decouplingTrend } from '../lib/decoupling'
 import { computeProfile, mergeBests } from '../lib/labPowerProfile'
 import { NOTE_MAX, TITLE_MAX, allowedSections, buildSnapshot, reportUrl, validateReportInput } from '../lib/labReports'
 import { ErrorNote, StatusNote, adminBtn, adminCard, adminInput } from './admin/AdminUi'
@@ -24,7 +28,7 @@ export default function LabReports({ athleteId, viewerId }) {
   const [reports, setReports] = useState([])
   const [title, setTitle] = useState('Lab report')
   const [note, setNote] = useState('')
-  const [chosen, setChosen] = useState(['thresholds', 'tests', 'phenotype'])
+  const [chosen, setChosen] = useState(() => allowedSections(viewerId === athleteId).map((x) => x.key))
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
 
@@ -40,23 +44,44 @@ export default function LabReports({ athleteId, viewerId }) {
   const create = async () => {
     setBusy(true)
     setMsg(null)
-    const [ftp, lt, runs, acts, wh] = await Promise.all([
+    const has = (k) => chosen.includes(k)
+    const rpc = async (fn, args) => ((await supabase.rpc(fn, args)).data || [])
+    const [ftp, lt, runs, acts, wh, ageRes, lactate, field, entries, dur, dec, aero] = await Promise.all([
       fetchFtpHistory(supabase, athleteId),
       fetchLtHistory(supabase, athleteId),
       fetchLabRuns(supabase, athleteId),
-      chosen.includes('phenotype')
+      has('phenotype')
         ? supabase.from('activities').select('curves_data').eq('user_id', athleteId).gte('activity_date', new Date(Date.now() - 365 * 86400000).toISOString()).limit(500)
         : Promise.resolve({ data: [] }),
       fetchWeightHistory(supabase, athleteId),
+      has('phenotype') ? supabase.rpc('lab_athlete_age', { p_athlete: athleteId }) : Promise.resolve({ data: null }),
+      has('lactate') ? rpc('lab_lactate_list', { p_athlete: athleteId }) : [],
+      has('forms') ? rpc('lab_field_list', { p_athlete: athleteId, p_kind: null }) : [],
+      ['fueling', 'fit', 'pedalling', 'cadence'].some(has) ? rpc('lab_entry_list', { p_athlete: athleteId, p_kind: null }) : [],
+      has('durability') ? fetchRideStreams(supabase, athleteId, { days: 180, limit: 40 }) : { rides: [] },
+      has('decoupling') ? fetchRideStreams(supabase, athleteId, { days: 180, limit: 40, hr: true }) : { rides: [] },
+      has('aero') && own ? fetch('/api/aero-tests').then((r) => (r.ok ? r.json() : null)).catch(() => null) : null,
     ])
     const weight = weightAt(wh.history, today())
-    const profile = computeProfile({ bests: mergeBests((acts.data || []).map((a) => a.curves_data?.Power || null)), weightKg: weight })
+    const age = Number(ageRes.data) || null
+    const profile = computeProfile({ bests: mergeBests((acts.data || []).map((a) => a.curves_data?.Power || null)), weightKg: weight, age })
+    const latest = (kind) => field.find((r) => r.kind === kind)?.data
+    const mob = latest('mobility')
+    const sprint = latest('sprint')
+    const bodyRow = latest('body')
     const snapshot = buildSnapshot(chosen, {
       ftp: resolveFtpAt(ftp.history, today()),
       lt: resolveLtAt(lt.history, today()),
       runs: runs.runs,
       profile: profile.error ? null : profile,
-      body: weight ? { weight_kg: weight } : null,
+      body: bodyRow || (weight ? { weight_kg: weight } : null),
+      mobility: mob ? { mobility_pass: MOBILITY_ITEMS.filter((i) => mob[i.key] === 'pass').length, mobility_total: MOBILITY_ITEMS.length } : null,
+      sprint: sprint ? { sprint_distance_m: sprint.distance_m, sprint_time_s: sprint.time_s } : null,
+      lactate: lactate[0] || null,
+      durability: durabilityTrend(dur.rides || []),
+      decoupling: decouplingTrend(dec.rides || []),
+      aero: Array.isArray(aero) ? aero : aero?.aeroTests || [],
+      entries,
     }, { isOwnAthlete: own })
     const v = validateReportInput({ title, note, snapshot })
     if (v.error) { setBusy(false); return setMsg({ error: v.error }) }

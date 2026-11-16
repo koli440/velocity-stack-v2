@@ -33,6 +33,21 @@ export function ageFactor(age) {
   return Math.max(AGE_FLOOR, 1 - (a - 35) * AGE_DECLINE_PER_YEAR)
 }
 
+/**
+ * How the age was used: { age, factor, applied, note }. A missing or invalid age gives no adjustment and a note
+ * that the result may change once the age is set (stated in the report).
+ */
+export function ageEffect(age) {
+  const a = Number(age)
+  if (age == null || age === '' || !Number.isFinite(a) || a < 10 || a > 100) {
+    return { age: null, factor: 1, applied: false, note: 'Age not set: no age adjustment was applied, so the phenotype may change once the athlete adds their year of birth.' }
+  }
+  const factor = ageFactor(a)
+  if (factor === 1) return { age: Math.round(a), factor, applied: false, note: `Age ${Math.round(a)}: no age adjustment (it starts above 35).` }
+  const pct = Math.round((1 - factor) * 1000) / 10
+  return { age: Math.round(a), factor, applied: true, note: `Age ${Math.round(a)}: power benchmarks were lowered by ${pct} % to account for age.` }
+}
+
 /** 0-100 score of W/kg against five anchor points (linear between them, extrapolated to 0..100). */
 export function scoreFromAnchors(wkg, anchors) {
   if (!(wkg > 0)) return 0
@@ -81,7 +96,7 @@ export function computeProfile({ bests, weightKg, age = null, sex = 'male' }) {
     return { key: d.key, label: d.label, watts, wkg: Math.round(wkg * 100) / 100, score: Math.round(scoreFromAnchors(wkg / af, anchors)) }
   })
   const scores = Object.fromEntries(rows.map((r) => [r.key, r.score]))
-  return { rows, scores, phenotype: classifyPhenotype(scores) }
+  return { rows, scores, phenotype: classifyPhenotype(scores), age: ageEffect(age) }
 }
 
 /** Phenotype from the four scores; null when any duration is missing. */
