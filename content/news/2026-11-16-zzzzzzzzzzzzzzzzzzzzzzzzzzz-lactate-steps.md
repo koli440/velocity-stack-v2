@@ -6,4 +6,4 @@ link: /lab
 linkLabel: Open Lab
 ---
 
-The Lab lactate step test now shows fixed instructions and ready-made steps (in watts from your FTP). Coaches can edit the steps for their athletes; the instructions themselves are not editable.
+The Lab lactate step test now shows fixed instructions and a New step test form prefilled with ready-made steps (in watts from your FTP). Coaches and athletes can change the powers, add or remove steps and set the step length for each test; the instructions themselves are not editable.
