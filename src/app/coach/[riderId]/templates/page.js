@@ -10,6 +10,7 @@ import TemplateSearchPicker from '../../../../components/TemplateSearchPicker'
 import TemplateStatsTable from '../../../../components/TemplateStatsTable'
 import { orderMetricKeys } from '../../../../lib/templateStats'
 import { athleteTemplateGroups } from '../../../../lib/coachRuns'
+import { ErrorNote, adminBtn, adminCard, adminMuted } from '../../../../components/admin/AdminUi'
 
 // Coach in athlete context: the template runs THE COACH made on THIS athlete's activities, grouped by
 // template (own + system). Read through /api/templates/stats?rider=, which only returns runs stamped
@@ -63,27 +64,27 @@ export default function AthleteTemplatesPage() {
   return (
     <section className="space-y-3" data-testid="athlete-templates">
       <div>
-        <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Templates · {athleteName}</h1>
-        <p className="text-xs text-slate-500">
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white">Templates · {athleteName}</h1>
+        <p className={`text-sm ${adminMuted}`}>
           Template runs you made on {athleteName}&apos;s activities. Only your own runs are listed; they are not part of your own template statistics.
         </p>
       </div>
       {userId && (
         <div className="flex flex-wrap items-center gap-2" data-testid="athlete-batch-run">
-          <button onClick={() => setPicking(true)} aria-haspopup="dialog" className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider">
+          <button onClick={() => setPicking(true)} aria-haspopup="dialog" className={adminBtn.success}>
             Run a template on several activities…
           </button>
-          <span className="text-[11px] text-slate-400">Search your own and system templates.</span>
+          <span className="text-sm text-slate-600 dark:text-slate-300">Search your own and system templates.</span>
         </div>
       )}
       {error && (
-        <div className="text-xs font-bold text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex justify-between gap-3">
-          <span>{error}</span>
-          <button onClick={load} className="underline">Retry</button>
+        <div className="space-y-2">
+          <ErrorNote>{error}</ErrorNote>
+          <button onClick={load} className={adminBtn.secondary}>Retry</button>
         </div>
       )}
       {!error && state.groups.length === 0 && (
-        <p className="text-sm text-slate-400 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center">
+        <p className={`${adminCard} text-sm ${adminMuted} text-center`}>
           You have not run any template on {athleteName}&apos;s activities yet. Open an activity and run one of your templates or a system template.
         </p>
       )}
@@ -91,20 +92,20 @@ export default function AthleteTemplatesPage() {
         {state.groups.map((g) => {
           const keys = orderMetricKeys(Object.keys(g.stat.metrics))
           return (
-            <div key={g.id} className="bg-white dark:bg-surface-darkCard p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm flex flex-col gap-2 text-[11px]">
-              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">{g.name}</h3>
-              <div className="flex flex-wrap gap-1.5 text-[10px] font-black uppercase tracking-wider">
-                {g.category && <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">{g.category}</span>}
-                <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-500">{g.source}</span>
+            <div key={g.id} className={`${adminCard} flex flex-col gap-2 text-sm`}>
+              <h3 className="font-black text-base text-slate-900 dark:text-white">{g.name}</h3>
+              <div className="flex flex-wrap gap-1.5 text-xs font-black uppercase tracking-wider">
+                {g.category && <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-600">{g.category}</span>}
+                <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-900 border border-sky-300 dark:bg-sky-900/50 dark:text-sky-100 dark:border-sky-700">{g.source}</span>
               </div>
               <p className="font-bold text-slate-700 dark:text-slate-200">
                 Run {g.stat.count} {g.stat.count === 1 ? 'time' : 'times'} on {athleteName}
-                {g.stat.last_run_at && <span className="font-normal text-slate-400"> · last {new Date(g.stat.last_run_at).toLocaleDateString()}</span>}
+                {g.stat.last_run_at && <span className="font-normal text-slate-600 dark:text-slate-300"> · last {new Date(g.stat.last_run_at).toLocaleDateString()}</span>}
               </p>
               {keys.length > 0 && (
                 <TemplateStatsTable keys={keys} metrics={g.stat.metrics} showBest={false} caption={`${g.name} statistics`} />
               )}
-              <button onClick={() => setRunsFor(g)} className="self-start font-bold text-emerald-500 hover:underline" aria-haspopup="dialog">
+              <button onClick={() => setRunsFor(g)} className={`${adminBtn.secondary} self-start`} aria-haspopup="dialog">
                 View {g.stat.count} {g.stat.count === 1 ? 'run' : 'runs'}
               </button>
             </div>

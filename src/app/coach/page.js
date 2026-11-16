@@ -14,22 +14,24 @@ import { athletePath, formatLastActivity, weeklyVolume } from '../../lib/coachCo
 import Avatar from '../../components/Avatar'
 import BotBadge from '../../components/BotBadge'
 import CoachApplications from '../../components/CoachApplications'
+import Icon from '../../components/Icon'
+import { AdminPage, EmptyState, ErrorNote, adminBtn, adminCard, adminInput, adminMuted } from '../../components/admin/AdminUi'
 
 const FLAG_STYLES = {
-  alert: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
-  warn: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  info: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+  alert: 'bg-rose-100 text-rose-800 border border-rose-300 dark:bg-rose-900/50 dark:text-rose-200 dark:border-rose-700',
+  warn: 'bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-900/50 dark:text-amber-100 dark:border-amber-700',
+  info: 'bg-slate-100 text-slate-800 border border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600',
 }
 const signed = (n) => `${n > 0 ? '+' : ''}${n}`
 
 function FitnessSummaryLine({ fitness }) {
   if (!fitness) return null
   if (fitness.empty) {
-    return <span data-testid="coach-fitness" className="block text-[11px] text-slate-400">Fitness: no training load yet</span>
+    return <span data-testid="coach-fitness" className="block text-xs text-slate-600 dark:text-slate-300">Fitness: no training load yet</span>
   }
   return (
     <span data-testid="coach-fitness" className="block space-y-1">
-      <span className="block text-[11px] font-mono text-slate-600 dark:text-slate-300">
+      <span className="block text-xs font-mono text-slate-700 dark:text-slate-200">
         <span title="Fitness (CTL)">Fitness {fitness.fitness}</span> · <span title="Fatigue (ATL)">Fatigue {fitness.fatigue}</span> ·{' '}
         <span title="Form (TSB)">Form {signed(fitness.form)}</span>
         {fitness.ramp !== null && <span title="Fitness change over the last 7 days"> · Ramp {signed(fitness.ramp)}/wk</span>}
@@ -37,7 +39,7 @@ function FitnessSummaryLine({ fitness }) {
       {fitness.flags.length > 0 && (
         <span className="flex flex-wrap gap-1">
           {fitness.flags.map((f) => (
-            <span key={f.key} className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${FLAG_STYLES[f.level]}`}>{f.label}</span>
+            <span key={f.key} className={`px-2 py-0.5 rounded-full text-xs font-bold ${FLAG_STYLES[f.level]}`}>{f.label}</span>
           ))}
         </span>
       )}
@@ -98,81 +100,80 @@ export default function CoachDashboardPage() {
   )
 
   return (
-    <div className="space-y-6" data-testid="coach-dashboard">
-      <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Coach dashboard</h1>
-      <ChatLink />
-      <CoachApplications />
-      {state.loading && <p className="text-xs text-slate-400">Loading…</p>}
-      {state.error && <p className="text-xs text-red-500">Could not load everything: {state.error.message}</p>}
-      {!state.loading && state.athletes.length === 0 && (
-        <p className="text-sm text-slate-500">
-          You are not coaching anyone yet.{' '}
-          <Link href={COACHING_SETTINGS_PATH} className="underline">Invite an athlete</Link>
-        </p>
-      )}
-      {state.athletes.length > 1 && (
-        <label className="flex items-center gap-2 text-xs text-slate-500">
-          Sort by
-          <select
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value)}
-            data-testid="coach-sort"
-            className="rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-200"
-          >
-            {FITNESS_SORTS.map((o) => (
-              <option key={o.key} value={o.key}>{o.label}</option>
-            ))}
-          </select>
-        </label>
-      )}
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {sorted.map((a) => {
-          const v = weeklyVolume(a.stats)
-          const name = authorName(a.profile)
-          return (
-            <li key={a.riderId}>
-              <Link
-                href={athletePath(a.riderId)}
-                className="block p-4 rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder hover:border-indigo-500 transition space-y-2"
-              >
-                <span className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
-                  <Avatar url={a.profile?.avatar_url} name={name} size="w-7 h-7" textSize="text-xs" /> {name}
-                  {a.profile?.is_bot && <BotBadge />}
-                  {a.unread > 0 && (
-                    <span
-                      data-testid="coach-unread-comments"
-                      className="ml-auto px-1.5 py-0.5 rounded-full bg-orange-500 text-white text-[10px] font-black"
-                    >
-                      {a.unread} new {a.unread === 1 ? 'comment' : 'comments'}
+    <AdminPage title="Coach dashboard" description="Your athletes, applications and pending invites." back={null} width="max-w-5xl">
+      <div className="space-y-6" data-testid="coach-dashboard">
+        <ChatLink />
+        <CoachApplications />
+        {state.loading && <p className={`text-sm ${adminMuted}`} role="status">Loading athletes…</p>}
+        {state.error && <ErrorNote>{`Could not load everything: ${state.error.message}`}</ErrorNote>}
+        {!state.loading && state.athletes.length === 0 && (
+          <EmptyState>
+            You are not coaching anyone yet.{' '}
+            <Link href={COACHING_SETTINGS_PATH} className="font-bold text-orange-700 dark:text-orange-400 underline">Invite an athlete</Link>
+          </EmptyState>
+        )}
+        {state.athletes.length > 1 && (
+          <label className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+            Sort by
+            <select value={sortKey} onChange={(e) => setSortKey(e.target.value)} data-testid="coach-sort" className={`${adminInput} sm:w-64`}>
+              {FITNESS_SORTS.map((o) => (
+                <option key={o.key} value={o.key}>{o.label}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        <ul className="grid gap-4 sm:grid-cols-2">
+          {sorted.map((a) => {
+            const v = weeklyVolume(a.stats)
+            const name = authorName(a.profile)
+            return (
+              <li key={a.riderId} className="flex">
+                <div className={`${adminCard} w-full flex flex-col gap-3`}>
+                  <Link
+                    href={athletePath(a.riderId)}
+                    className="block space-y-2 rounded-xl hover:text-orange-700 dark:hover:text-orange-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                  >
+                    <span className="flex items-center gap-3 font-black text-base text-slate-900 dark:text-white">
+                      <Avatar url={a.profile?.avatar_url} name={name} size="w-10 h-10" textSize="text-sm" />
+                      <span className="min-w-0 break-words">{name}</span>
+                      {a.profile?.is_bot && <BotBadge />}
+                      {a.unread > 0 && (
+                        <span data-testid="coach-unread-comments" className="ml-auto shrink-0 px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs font-black">
+                          {a.unread} new {a.unread === 1 ? 'comment' : 'comments'}
+                        </span>
+                      )}
                     </span>
-                  )}
-                </span>
-                <span className="block text-[11px] text-slate-500">
-                  Last activity: {formatLastActivity(a.stats?.last_activity_at)}
-                </span>
-                <span className="block text-[11px] font-mono text-slate-600 dark:text-slate-300">
-                  7 days: {v.sessions} rides · {v.duration} · {v.distance} · load {v.load}{v.gymSessions > 0 ? ` · ${v.gymSessions} gym` : ''}
-                </span>
-                <FitnessSummaryLine fitness={a.fitness} />
-              </Link>
-              <MessageButton relationshipId={a.relationshipId} label={`Message ${name}`} className="mt-2" />
-            </li>
-          )
-        })}
-      </ul>
-      {state.pending.length > 0 && (
-        <section className="space-y-2" data-testid="coach-pending">
-          <h2 className="text-xs uppercase font-bold tracking-wider text-slate-400">Pending</h2>
-          <ul className="space-y-1">
-            {state.pending.map((p) => (
-              <li key={p.id} className="text-xs text-slate-600 dark:text-slate-300">
-                <b>{p.name}</b> · {p.text} ·{' '}
-                <Link href={COACHING_SETTINGS_PATH} className="underline">Manage</Link>
+                    <span className="block text-sm text-slate-600 dark:text-slate-300">
+                      Last activity: {formatLastActivity(a.stats?.last_activity_at)}
+                    </span>
+                    <span className="block text-xs font-mono text-slate-700 dark:text-slate-200">
+                      7 days: {v.sessions} rides · {v.duration} · {v.distance} · load {v.load}{v.gymSessions > 0 ? ` · ${v.gymSessions} gym` : ''}
+                    </span>
+                    <FitnessSummaryLine fitness={a.fitness} />
+                  </Link>
+                  <div className="mt-auto flex flex-wrap gap-2">
+                    <Link href={athletePath(a.riderId)} className={adminBtn.primary}>Open athlete <Icon name="chevronRight" /></Link>
+                    <MessageButton relationshipId={a.relationshipId} label={`Message ${name}`} />
+                  </div>
+                </div>
               </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
+            )
+          })}
+        </ul>
+        {state.pending.length > 0 && (
+          <section className={`${adminCard} space-y-3`} data-testid="coach-pending">
+            <h2 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Pending</h2>
+            <ul className="space-y-2">
+              {state.pending.map((p) => (
+                <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 dark:border-slate-600 p-3 text-sm text-slate-800 dark:text-slate-200">
+                  <span><b>{p.name}</b> · {p.text}</span>
+                  <Link href={COACHING_SETTINGS_PATH} className={adminBtn.secondary}>Manage</Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+    </AdminPage>
   )
 }

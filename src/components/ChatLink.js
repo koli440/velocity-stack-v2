@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Icon from './Icon'
+import { adminBtn } from './admin/AdminUi'
 import { supabase } from '../lib/supabase'
 import { fetchThreads, totalUnread } from '../lib/coachChat'
 
@@ -21,9 +23,9 @@ export default function ChatLink() {
   if (!threads) return null
   const unread = totalUnread(threads)
   return (
-    <Link href="/chat" className="inline-flex items-center gap-2 text-sm font-bold underline" data-testid="chat-link">
-      Messages
-      {unread > 0 && <span className="rounded-full bg-orange-500 text-white text-[10px] px-1.5 py-0.5">{unread}</span>}
+    <Link href="/chat" className={`${adminBtn.secondary} self-start w-fit`} data-testid="chat-link">
+      <Icon name="chat" /> Messages
+      {unread > 0 && <span className="rounded-full bg-orange-500 text-white text-xs font-black px-2 py-0.5">{unread}</span>}
     </Link>
   )
 }

@@ -17,10 +17,11 @@ import {
   saveCoachNote,
   deleteCoachNote,
 } from '../../../../lib/coachNotes'
+import Icon from '../../../../components/Icon'
+import { ErrorNote, adminBtn, adminCard, adminInput, adminMuted } from '../../../../components/admin/AdminUi'
 
-const input = 'w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm'
-const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50'
-const quiet = `${btn} border-slate-300 dark:border-slate-700 text-slate-500`
+const input = `${adminInput} !py-2`
+const quiet = adminBtn.secondary
 
 const empty = { id: null, title: '', body: '', tags: [], pinned: false, shared_with_rider: false }
 
@@ -52,7 +53,7 @@ export default function AthleteNotesPage() {
 
   if (!riderId) return null
   if (!enabled) {
-    return <p className="text-sm text-slate-500">The coach module is not available for your account yet.</p>
+    return <p className={`${adminCard} text-sm ${adminMuted}`}>The coach module is not available for your account yet.</p>
   }
 
   const readOnly = notes.some((n) => n.read_only)
@@ -91,17 +92,17 @@ export default function AthleteNotesPage() {
 
   return (
     <div className="space-y-4" data-testid="athlete-notes">
-      <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
+      <h1 className="text-2xl font-black text-slate-900 dark:text-white">
         Notes{athlete ? ` · ${athlete.display_name}` : ''}
       </h1>
-      <p className="text-xs text-slate-500">
+      <p className={`text-sm ${adminMuted}`}>
         Notes are private to you unless you share them. Unshared notes are deleted 30 days after coaching ends;
         export them before then.
       </p>
-      {error && <p role="alert" className="text-xs text-red-500">{error}</p>}
+      <ErrorNote>{error}</ErrorNote>
 
       {!readOnly && (
-        <form onSubmit={submit} className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-800 p-3">
+        <form onSubmit={submit} className={`${adminCard} space-y-3`}>
           <input
             className={input}
             placeholder="Title (optional)"
@@ -124,26 +125,27 @@ export default function AthleteNotesPage() {
                 key={t}
                 aria-pressed={draft.tags.includes(t)}
                 onClick={() => toggleTag(t)}
-                className={`${btn} ${draft.tags.includes(t) ? 'border-orange-500 text-orange-500' : 'border-slate-300 dark:border-slate-700 text-slate-500'}`}
+                className={draft.tags.includes(t) ? adminBtn.primary : adminBtn.secondary}
               >
                 {NOTE_TAG_LABELS[t]}
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-300">
-            <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={draft.pinned} onChange={(e) => setDraft({ ...draft, pinned: e.target.checked })} />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-800 dark:text-slate-200">
+            <label className="flex items-center gap-2 min-h-[44px] lg:min-h-[32px]">
+              <input className="h-5 w-5 accent-orange-600" type="checkbox" checked={draft.pinned} onChange={(e) => setDraft({ ...draft, pinned: e.target.checked })} />
               Pin
             </label>
-            <label className="flex items-center gap-1.5">
+            <label className="flex items-center gap-2 min-h-[44px] lg:min-h-[32px]">
               <input
+                className="h-5 w-5 accent-orange-600"
                 type="checkbox"
                 checked={draft.shared_with_rider}
                 onChange={(e) => setDraft({ ...draft, shared_with_rider: e.target.checked })}
               />
               Share with athlete
             </label>
-            <button type="submit" disabled={busy} className={`${btn} border-orange-500/40 text-orange-500 hover:bg-orange-500/10`}>
+            <button type="submit" disabled={busy} className={adminBtn.primary}>
               {draft.id ? 'Save changes' : 'Add note'}
             </button>
             {draft.id && (
@@ -155,9 +157,9 @@ export default function AthleteNotesPage() {
         </form>
       )}
 
-      <div className="flex flex-wrap gap-2 items-center">
-        <input className={`${input} max-w-xs`} placeholder="Search notes" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <select className={`${input} max-w-[10rem]`} value={tag} onChange={(e) => setTag(e.target.value)} aria-label="Filter by tag">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-center">
+        <input className={`${input} sm:max-w-xs`} placeholder="Search notes" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <select className={`${input} sm:max-w-[11rem]`} value={tag} onChange={(e) => setTag(e.target.value)} aria-label="Filter by tag">
           <option value="">All tags</option>
           {NOTE_TAGS.map((t) => (
             <option key={t} value={t}>{NOTE_TAG_LABELS[t]}</option>
@@ -169,29 +171,29 @@ export default function AthleteNotesPage() {
       </div>
 
       {!loaded ? (
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className={`text-sm ${adminMuted}`} role="status">Loading…</p>
       ) : visible.length === 0 ? (
-        <p className="text-xs text-slate-500">No notes yet.</p>
+        <p className={`${adminCard} text-sm ${adminMuted} text-center`}>No notes yet.</p>
       ) : (
         <ul className="space-y-2">
           {visible.map((n) => (
-            <li key={n.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-1">
+            <li key={n.id} className={`${adminCard} space-y-2`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs font-bold text-slate-900 dark:text-white">
-                  {n.pinned ? '📌 ' : ''}{n.title || n.note_date}
-                  {n.shared_with_rider && <span className="ml-2 text-[10px] text-emerald-600">shared</span>}
+                <span className="flex flex-wrap items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
+                  {n.pinned && <Icon name="pin" className="text-orange-600" />}{n.title || n.note_date}
+                  {n.shared_with_rider && <span className="rounded-full px-2 py-0.5 text-xs font-bold border bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-100 dark:border-emerald-700">shared</span>}
                 </span>
                 {!n.read_only && (
                   <span className="flex gap-2">
                     <button className={quiet} onClick={() => setDraft({ ...empty, ...n, tags: n.tags || [] })}>
                       Edit
                     </button>
-                    <button className={`${btn} border-red-400/40 text-red-500`} onClick={() => remove(n.id)}>Delete</button>
+                    <button className={adminBtn.danger} onClick={() => remove(n.id)}>Delete</button>
                   </span>
                 )}
               </div>
-              <p className="text-xs whitespace-pre-wrap text-slate-700 dark:text-slate-300">{n.body}</p>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-sm whitespace-pre-wrap break-words text-slate-800 dark:text-slate-200">{n.body}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
                 {n.note_date}{(n.tags || []).length ? ` · ${n.tags.map((t) => NOTE_TAG_LABELS[t] || t).join(', ')}` : ''}
               </p>
             </li>

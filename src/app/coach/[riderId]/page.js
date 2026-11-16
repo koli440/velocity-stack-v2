@@ -13,11 +13,12 @@ import { athletePath, formatDistanceKm, formatDuration, formatLastActivity } fro
 import CoachBadge, { useCoachNames } from '../../../components/CoachBadge'
 import CoachEditsList from '../../../components/CoachEditsList'
 import { useAthlete } from '../../../components/AthleteContext'
+import { adminBtn, adminCard, adminMuted } from '../../../components/admin/AdminUi'
 
 function Stat({ label, value, badgeRow, names }) {
   return (
-    <div className="p-3 rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder space-y-1">
-      <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">{label}</p>
+    <div className={`${adminCard} !p-3 sm:!p-4 space-y-1`}>
+      <p className="text-xs uppercase font-bold tracking-wider text-slate-600 dark:text-slate-300">{label}</p>
       <p className="text-lg font-black text-slate-900 dark:text-white">{value ?? '—'}</p>
       {badgeRow && <CoachBadge row={badgeRow} names={names} />}
     </div>
@@ -58,7 +59,7 @@ export default function AthleteOverviewPage() {
 
   const stamped = data ? [data.ftpRow, data.weightRow, data.lt].filter(Boolean) : []
   const names = useCoachNames(stamped)
-  if (!data) return <p className="text-xs text-slate-400">Loading…</p>
+  if (!data) return <p className={`text-sm ${adminMuted}`} role="status">Loading…</p>
 
   const lt = data.lt
   return (
@@ -69,22 +70,21 @@ export default function AthleteOverviewPage() {
         <Stat label="LT1" value={lt?.lt1_power_w ? `${lt.lt1_power_w} W${lt.lt1_hr ? ` / ${lt.lt1_hr} bpm` : ''}` : null} badgeRow={lt} names={names} />
         <Stat label="LT2" value={lt?.lt2_power_w ? `${lt.lt2_power_w} W${lt.lt2_hr ? ` / ${lt.lt2_hr} bpm` : ''}` : null} badgeRow={lt} names={names} />
       </section>
-      <p className="text-xs">
-        <Link href={athletePath(riderId, '/calendar')} className="font-bold underline">Open calendar</Link>
-        {' · '}
-        <Link href={athletePath(riderId, '/physiology')} className="font-bold underline">Edit physiology</Link>
-      </p>
+      <div className="flex flex-wrap gap-2">
+        <Link href={athletePath(riderId, '/calendar')} className={adminBtn.secondary}>Open calendar</Link>
+        <Link href={athletePath(riderId, '/physiology')} className={adminBtn.secondary}>Edit physiology</Link>
+      </div>
 
-      <section className="space-y-2">
-        <h2 className="text-xs uppercase font-bold tracking-wider text-slate-400">Recent activities</h2>
-        {data.activities.length === 0 && <p className="text-xs text-slate-500">No activities yet.</p>}
-        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+      <section className={`${adminCard} space-y-3`}>
+        <h2 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Recent activities</h2>
+        {data.activities.length === 0 && <p className={`text-sm ${adminMuted}`}>No activities yet.</p>}
+        <ul className="divide-y divide-slate-200 dark:divide-slate-600">
           {data.activities.map((a) => (
-            <li key={a.id} className="py-2 text-xs flex justify-between gap-3">
-              <Link href={withReturnTo(athletePath(riderId, `/activities/${a.id}`), returnTo)} className="font-semibold hover:underline truncate">
+            <li key={a.id} className="py-2 text-sm flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-3">
+              <Link href={withReturnTo(athletePath(riderId, `/activities/${a.id}`), returnTo)} className="font-bold text-slate-900 dark:text-white hover:underline min-h-[32px] inline-flex items-center truncate">
                 {a.title || 'Untitled'}
               </Link>
-              <span className="font-mono text-slate-500 shrink-0">
+              <span className="font-mono text-slate-600 dark:text-slate-300 shrink-0">
                 {formatLastActivity(a.activity_date)} · {formatDuration(a.moving_time_s)} · {formatDistanceKm(a.distance_m)}
               </span>
             </li>

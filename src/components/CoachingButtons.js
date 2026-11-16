@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
+import { adminBtn, adminCard } from './admin/AdminUi'
 import { riderName } from '../lib/riders'
 import {
   fetchCoachingStatus,
@@ -14,8 +15,6 @@ import {
   endCoaching,
   coachingErrorMessage,
 } from '../lib/coaching'
-
-const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50'
 
 // "Invite as athlete" / "Request as my coach" on a rider profile. Incoming requests are
 // answered in Settings, where the replacement warning is shown before accepting.
@@ -51,13 +50,13 @@ export default function CoachingButtons({ userId, rider }) {
     setBusy(false)
   }
 
-  const primary = `${btn} border-orange-500/40 text-orange-500 hover:bg-orange-500/10`
-  const quiet = `${btn} border-slate-300 dark:border-slate-700 text-slate-500`
+  const primary = adminBtn.primary
+  const quiet = adminBtn.secondary
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder">
-      <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Coaching</span>
-      {actions.label && <span className="text-xs text-slate-600 dark:text-slate-300">{actions.label}</span>}
+    <div className={`${adminCard} !p-3 flex flex-wrap items-center gap-2`}>
+      <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Coaching</span>
+      {actions.label && <span className="text-sm text-slate-700 dark:text-slate-200">{actions.label}</span>}
       {actions.invite && (
         <button type="button" disabled={busy} className={primary} onClick={() => run(() => inviteAthlete(supabase, rider.id))}>
           Invite as athlete
@@ -84,13 +83,13 @@ export default function CoachingButtons({ userId, rider }) {
       {state.status === 'athlete' && (
         <Link href={`/coach/${rider.id}/calendar`} className={primary}>Calendar</Link>
       )}
-      {actions.hint && <span className="basis-full text-[11px] text-slate-400">{actions.hint}</span>}
+      {actions.hint && <span className="basis-full text-sm text-slate-600 dark:text-slate-300">{actions.hint}</span>}
       {state.status === 'none' && (
-        <span className="basis-full text-[11px] text-slate-400">
+        <span className="basis-full text-sm text-slate-600 dark:text-slate-300">
           {riderName(rider)} must accept. A coach can read all of a rider's data (privacy-zone locations stay hidden).
         </span>
       )}
-      {error && <span className="basis-full text-[11px] text-rose-500">{error}</span>}
+      {error && <span className="basis-full text-sm font-semibold text-rose-700 dark:text-rose-300">{error}</span>}
     </div>
   )
 }
