@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { canEditMessage, chatPath, threadHref, chatErrorMessage, mergeMessages, totalUnread, EDIT_WINDOW_MS } from '../coachChat.js'
+import { canEditMessage, chatPath, threadHref, referenceParams, chatErrorMessage, mergeMessages, totalUnread, EDIT_WINDOW_MS } from '../coachChat.js'
 import { describeNotification, notificationHref } from '../notifications.js'
 
 test('canEditMessage: own, not deleted, within window', () => {
@@ -37,4 +37,10 @@ test('coach_message notification has no message text and links to /chat', () => 
 
 test('threadHref opens the relationship thread for pending rows, not a profile', () => {
   assert.equal(threadHref({ id: 'rel1', other_id: 'u2', status: 'pending' }), '/chat/rel1')
+})
+
+test('referenceParams only carries a mention id (never a workout/activity link)', () => {
+  assert.deepEqual(referenceParams({ type: 'activity', id: 'a1' }), { activityId: 'a1', workoutId: null })
+  assert.deepEqual(referenceParams({ type: 'workout', id: 'w1' }), { activityId: null, workoutId: 'w1' })
+  assert.deepEqual(referenceParams(null), { activityId: null, workoutId: null })
 })
