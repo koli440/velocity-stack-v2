@@ -62,6 +62,7 @@ export const PRIVATE_PATHS = [
   '/calendar',
   '/coach/',
   '/c/',
+  '/lab/report/',
   '/coaches',
   '/feedback',
   '/fitness',

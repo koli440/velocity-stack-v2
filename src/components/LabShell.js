@@ -11,8 +11,9 @@ import LabPowerProfile from './LabPowerProfile'
 import LabDurability from './LabDurability'
 import LabDecoupling from './LabDecoupling'
 import LabFieldForms from './LabFieldForms'
+import LabReports from './LabReports'
 
-const FEATURE_COMPONENTS = { protocols: LabProtocolRunner, lactate: LabLactateTest, schedule: LabScheduler, profile: LabPowerProfile, durability: LabDurability, decoupling: LabDecoupling, forms: LabFieldForms }
+const FEATURE_COMPONENTS = { protocols: LabProtocolRunner, lactate: LabLactateTest, schedule: LabScheduler, profile: LabPowerProfile, durability: LabDurability, decoupling: LabDecoupling, forms: LabFieldForms, reports: LabReports }
 
 // Lab pages for a coached athlete (riderId set, /coach/<id>/lab) or the signed-in user's own results (/lab).
 // Access is decided by the database (is_coach_of / own rows); errors surface in the components.

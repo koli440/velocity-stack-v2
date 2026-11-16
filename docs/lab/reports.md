@@ -1,2 +1,9 @@
 # Reports
 Branded shareable report page `/lab/report/<token>` and print-to-PDF stylesheet: coach card logo, name, licence badge (`coach_licence_public`), selected results (thresholds, phenotype, timeline). Created by the coach or athlete; share token is explicit opt-in, revocable; only chosen sections are exposed through a SECURITY DEFINER RPC callable by anon with the token. Health-like data is included only if the athlete enabled sharing.
+
+## Implementation (as built)
+- Migration `20270165000000_lab_reports.sql`: table `lab_reports` (no client privileges; token = 64 hex chars from two random UUIDs, unique), RPCs `lab_report_create` (title 1-80, note <= 300, snapshot <= 6000 bytes, sections `thresholds`, `tests`, `phenotype`, `forms`; max 20 active links per athlete), `lab_reports_list`, `lab_report_revoke`, all behind `lab_gate` (athlete or active coach, no flag), and the only anon-callable `lab_report_public(token)`.
+- Decision: a report is a **frozen snapshot** built client-side from whitelisted numeric fields (`labReports.buildSnapshot`), so later data changes or revoked access never leak extra data. Branding (coach name, card logo, licence badge via `coach_licence_public`, link to the public card only when it is published) is read live and shown only when a coach created the report.
+- Decision: health-like data (`forms`: weight, body fat) can only be included by the athlete themselves; the RPC rejects it from a coach. Revoking sets `revoked_at`; the public RPC then returns nothing (404).
+- Page `/lab/report/<token>` is server-rendered, uncached, noindex, listed in `robots` disallow, reachable logged out (`isReportPath` in `AppShell`), with a print button and `print:` styles for PDF. Creator UI at `/lab/reports` and `/coach/<id>/lab/reports`.
+- Tests: `labReports.test.js`, harness `lab-reports-adversarial.mjs`.

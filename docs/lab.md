@@ -25,5 +25,6 @@ Coach-facing physiology lab. **Not flag-gated**: it is not part of the coach bus
 - 3 Test scheduler: implemented.
 - 4 Power profile: implemented.
 - 7 Field protocol forms: implemented.
+- 8 Reports: implemented.
 - 5 Durability: implemented.
 - 6 Efficiency and decoupling: implemented.
