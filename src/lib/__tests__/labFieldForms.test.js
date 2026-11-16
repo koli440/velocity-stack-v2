@@ -37,5 +37,5 @@ test('deltas compare the newest two results of a kind', () => {
 
 test('summaries', () => {
   assert.equal(summarizeField('mobility', { hip_flexion: 'pass', hip_extension: 'limited' }), '1/2 pass')
-  assert.match(summarizeField('sprint', { distance_m: 200, time_s: 18, peak_power_w: 1500 }), /40 km\/h · peak 1500 W/)
+  assert.match(summarizeField('sprint', { distance_m: 200, time_s: 18, peak_power_w: 1500 }), /\(40 km\/h\) · peak 1500 W/)
 })
