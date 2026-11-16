@@ -1,14 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { adminCard, adminInput, adminBtn } from './admin/AdminUi'
 import {
   AVAILABILITY, MAX_BLACKOUT, MAX_EVENTS, PARQ_QUESTIONS, PRIORITIES, SEX_OPTIONS, STRUCTURE_OPTIONS, WEEKDAYS,
   buildAnswers, isMinor, validateForm,
 } from '../lib/coachOnboarding'
 
-const field = 'w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-3 py-2 text-sm'
-const lbl = 'block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1'
-const h2 = 'text-sm font-extrabold text-slate-900 dark:text-white'
+const field = adminInput
+const lbl = 'block text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1'
+const h2 = 'text-base font-extrabold text-slate-900 dark:text-white'
 
 function Input({ label, form, set, name, type = 'text', ...rest }) {
   return (
@@ -56,10 +57,10 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
   }
 
   return (
-    <form onSubmit={submit} className="space-y-6" data-testid="onboarding-form">
-      <section className="space-y-3">
+    <form onSubmit={submit} className="space-y-5" data-testid="onboarding-form">
+      <section className={`${adminCard} space-y-3`}>
         <h2 className={h2}>About you</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Date of birth *" type="date" form={form} set={set} name="dob" required />
           <label className="block">
             <span className={lbl}>Sex</span>
@@ -73,10 +74,10 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
           <Input label="Country" form={form} set={set} name="country" maxLength={60} />
           <Input label="Language" form={form} set={set} name="language" maxLength={40} />
         </div>
-        {minor && <p className="text-xs text-amber-700 dark:text-amber-300">You are under 18: health questions are skipped and a parent or guardian should be involved.</p>}
+        {minor && <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">You are under 18: health questions are skipped and a parent or guardian should be involved.</p>}
       </section>
 
-      <section className="space-y-3">
+      <section className={`${adminCard} space-y-3`}>
         <h2 className={h2}>Goals</h2>
         <Input label="Main goal" form={form} set={set} name="main_goal" maxLength={40} placeholder="e.g. race, fitness, weight loss" />
         <label className="block">
@@ -87,22 +88,22 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
         <div className="space-y-2">
           <span className={lbl}>Target events (max {MAX_EVENTS})</span>
           {form.events.map((ev, i) => (
-            <div key={i} className="flex gap-2">
+            <div key={i} className="flex flex-wrap gap-2 items-center">
               <input className={field} placeholder="Name" maxLength={80} value={ev.name || ''} onChange={(e) => listSet('events', i, { name: e.target.value })} />
               <input className={field} type="date" value={ev.date || ''} onChange={(e) => listSet('events', i, { date: e.target.value })} />
               <select className={field} value={ev.priority || 'B'} onChange={(e) => listSet('events', i, { priority: e.target.value })}>
                 {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
               </select>
-              <button type="button" className="text-xs font-bold" onClick={() => set({ events: form.events.filter((_, j) => j !== i) })}>Remove</button>
+              <button type="button" className={adminBtn.danger} onClick={() => set({ events: form.events.filter((_, j) => j !== i) })}>Remove</button>
             </div>
           ))}
-          {form.events.length < MAX_EVENTS && <button type="button" className="text-xs font-bold underline" onClick={() => set({ events: [...form.events, { name: '', date: '', priority: 'B' }] })}>Add event</button>}
+          {form.events.length < MAX_EVENTS && <button type="button" className={adminBtn.secondary} onClick={() => set({ events: [...form.events, { name: '', date: '', priority: 'B' }] })}>Add event</button>}
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className={`${adminCard} space-y-3`}>
         <h2 className={h2}>Training history</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Years riding" type="number" form={form} set={set} name="years_riding" />
           <Input label="Hours per week now" type="number" form={form} set={set} name="weekly_hours" />
           <label className="block">
@@ -122,14 +123,14 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
         <Input label="Other sports" form={form} set={set} name="other_sports" maxLength={200} />
       </section>
 
-      <section className="space-y-3">
+      <section className={`${adminCard} space-y-3`}>
         <h2 className={h2}>Availability</h2>
         <Input label="Hours per week you can train" type="number" form={form} set={set} name="hours_per_week" />
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
           {WEEKDAYS.map((d) => (
             <label key={d} className="text-center">
               <span className={lbl}>{d.toUpperCase()}</span>
-              <select className="w-full rounded border border-slate-300 dark:border-slate-700 bg-transparent text-xs py-1" value={form.weekdays?.[d] || ''} onChange={(e) => set({ weekdays: { ...form.weekdays, [d]: e.target.value } })}>
+              <select className={field} value={form.weekdays?.[d] || ''} onChange={(e) => set({ weekdays: { ...form.weekdays, [d]: e.target.value } })}>
                 <option value="">-</option>
                 {Object.entries(AVAILABILITY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
@@ -139,20 +140,20 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
         <div className="space-y-2">
           <span className={lbl}>Days you are unavailable (max {MAX_BLACKOUT})</span>
           {form.blackout.map((b, i) => (
-            <div key={i} className="flex gap-2">
+            <div key={i} className="flex flex-wrap gap-2 items-center">
               <input className={field} type="date" value={b.date || ''} onChange={(e) => listSet('blackout', i, { date: e.target.value })} />
               <input className={field} placeholder="Note" maxLength={200} value={b.note || ''} onChange={(e) => listSet('blackout', i, { note: e.target.value })} />
-              <button type="button" className="text-xs font-bold" onClick={() => set({ blackout: form.blackout.filter((_, j) => j !== i) })}>Remove</button>
+              <button type="button" className={adminBtn.danger} onClick={() => set({ blackout: form.blackout.filter((_, j) => j !== i) })}>Remove</button>
             </div>
           ))}
-          {form.blackout.length < MAX_BLACKOUT && <button type="button" className="text-xs font-bold underline" onClick={() => set({ blackout: [...form.blackout, { date: '', note: '' }] })}>Add day</button>}
+          {form.blackout.length < MAX_BLACKOUT && <button type="button" className={adminBtn.secondary} onClick={() => set({ blackout: [...form.blackout, { date: '', note: '' }] })}>Add day</button>}
         </div>
         <Input label="How do you like to communicate?" form={form} set={set} name="contact_style" maxLength={300} />
       </section>
 
-      <section className="space-y-3">
+      <section className={`${adminCard} space-y-3`}>
         <h2 className={h2}>Equipment</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Power meter" form={form} set={set} name="power_meter" maxLength={100} />
           <Input label="Heart rate" form={form} set={set} name="hr" maxLength={100} />
           <Input label="Smart trainer" form={form} set={set} name="smart_trainer" maxLength={100} />
@@ -165,7 +166,7 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
       {!minor && (
         <section className="space-y-3" data-testid="health-section">
           <h2 className={h2}>Health (optional)</h2>
-          <p className="text-xs text-slate-500">Sensitive. Only this coach sees it, you can skip it, and you can delete it anytime.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Sensitive. Only this coach sees it, you can skip it, and you can delete it anytime.</p>
           <select className={field} value={healthMode} onChange={(e) => setHealthMode(e.target.value)} aria-label="Health answers">
             <option value="skip">Skip for now</option>
             <option value="declined">I prefer not to share health information</option>
@@ -179,7 +180,7 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
                   <span>{q}</span>
                 </label>
               ))}
-              <p className="text-xs text-slate-500">Tick the questions you answer YES to.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Tick the questions you answer YES to.</p>
               <textarea className={field} rows={2} maxLength={1000} placeholder="Injuries or conditions the coach should know" value={healthNotes} onChange={(e) => setHealthNotes(e.target.value)} />
             </div>
           )}
@@ -187,7 +188,7 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
       )}
 
       {questions.length > 0 && (
-        <section className="space-y-3">
+        <section className={`${adminCard} space-y-3`}>
           <h2 className={h2}>Questions from the coach</h2>
           {questions.map((q) => (
             <label key={q.position} className="block">
@@ -201,15 +202,15 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
       {consentRequired && (
         <section className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-2">
           <h2 className={h2}>Consent</h2>
-          <p className="whitespace-pre-line text-xs text-slate-600 dark:text-slate-300">{consentText}</p>
+          <p className="whitespace-pre-line text-sm text-slate-700 dark:text-slate-200">{consentText}</p>
           <label className="flex gap-2 text-sm font-semibold">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> I agree
           </label>
         </section>
       )}
 
-      {error && <p role="alert" className="text-sm font-semibold text-rose-600">{error}</p>}
-      <button type="submit" disabled={busy} className="px-4 py-2 rounded-lg text-sm font-bold bg-slate-900 text-white dark:bg-white dark:text-slate-900 disabled:opacity-50">
+      {error && <p role="alert" className="text-sm font-semibold text-red-700 dark:text-red-300">{error}</p>}
+      <button type="submit" disabled={busy} className={`${adminBtn.primary} w-full sm:w-auto`}>
         {busy ? 'Saving…' : submitLabel}
       </button>
     </form>

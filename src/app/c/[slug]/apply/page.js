@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
+import { AdminPage, AdminMessage, StatusNote, adminCard, adminMuted } from '../../../../components/admin/AdminUi'
 import OnboardingForm from '../../../../components/OnboardingForm'
 import {
   CONSENT_TEXT, DRAFT_KEY, fetchApplyInfo, onboardingErrorMessage, submitOnboarding,
@@ -29,26 +30,27 @@ export default function ApplyPage() {
     return () => { cancelled = true }
   }, [slug, router])
 
-  if (state.loading) return <p className="p-6 text-sm text-slate-500">Loading…</p>
+  if (state.loading) return <AdminMessage>Loading…</AdminMessage>
   const { info } = state
-  if (!info) return <p className="p-6 text-sm text-slate-500">This coach is not available. <Link href="/coaches" className="underline">Browse coaches</Link></p>
-  if (info.is_self) return <p className="p-6 text-sm text-slate-500">You cannot apply to yourself.</p>
-  if (info.has_active_coach) return <p className="p-6 text-sm text-slate-500">You already have an active coach. End that coaching first to apply to someone else.</p>
-  if (!info.accepting_athletes) return <p className="p-6 text-sm text-slate-500">{info.name} is not accepting new athletes right now.</p>
+  if (!info) return <AdminMessage>This coach is not available. <Link href="/coaches" className="font-bold underline text-orange-700 dark:text-orange-400">Browse coaches</Link></AdminMessage>
+  if (info.is_self) return <AdminMessage>You cannot apply to yourself.</AdminMessage>
+  if (info.has_active_coach) return <AdminMessage>You already have an active coach. End that coaching first to apply to someone else.</AdminMessage>
+  if (!info.accepting_athletes) return <AdminMessage>{info.name} is not accepting new athletes right now.</AdminMessage>
   if (info.submission_status === 'submitted') {
-    return <p className="p-6 text-sm text-slate-500">You already applied to {info.name}. Review or withdraw your answers in <Link href="/settings#onboarding" className="underline">Settings</Link>.</p>
+    return <AdminMessage>You already applied to {info.name}. Review or withdraw your answers in <Link href="/settings#onboarding" className="font-bold underline text-orange-700 dark:text-orange-400">Settings</Link>.</AdminMessage>
   }
   if (done) {
     return (
-      <div className="max-w-xl mx-auto p-6 space-y-2" data-testid="apply-done">
-        <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Application sent</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">{info.name} will review it. You can edit, withdraw or delete your answers anytime in <Link href="/settings#onboarding" className="underline">Settings</Link>.</p>
-      </div>
+      <AdminPage title="Application sent" back={{ href: `/c/${slug}`, label: info.name }} width="max-w-xl">
+        <div className={`${adminCard} space-y-2`} data-testid="apply-done">
+          <StatusNote>Your application was sent.</StatusNote>
+          <p className={`text-sm ${adminMuted}`}>{info.name} will review it. You can edit, withdraw or delete your answers anytime in <Link href="/settings#onboarding" className="font-bold underline text-orange-700 dark:text-orange-400">Settings</Link>.</p>
+        </div>
+      </AdminPage>
     )
   }
   return (
-    <div className="max-w-xl mx-auto space-y-4">
-      <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Apply to {info.name}</h1>
+    <AdminPage title={`Apply to ${info.name}`} back={{ href: `/c/${slug}`, label: info.name }} width="max-w-xl">
       <OnboardingForm
         initial={state.draft ? { form: state.draft } : undefined}
         questions={info.questions}
@@ -63,6 +65,6 @@ export default function ApplyPage() {
           return {}
         }}
       />
-    </div>
+    </AdminPage>
   )
 }
