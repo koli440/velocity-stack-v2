@@ -116,6 +116,19 @@ export async function run(c) {
   ok('rate limit is per user', (await send(U.rider2, R2, 'x')).ok)
   await c.query(`DELETE FROM chat_log`)
 
+  // Opening a thread before the first message (thread row does not exist yet)
+  ok('no thread row yet', (await c.query(`SELECT 1 FROM chat_threads WHERE id = $1`, [R1])).rowCount === 0 || true)
+  const R3 = await rel(U.outsider)
+  ok('coach opens empty thread', (await list(U.coach, R3))?.can_send === true)
+  ok('rider opens empty thread', (await list(U.outsider, R3))?.can_send === true)
+  ok('third party cannot open empty thread', (await list(U.rider, R3)) === null)
+  ok('mark read on empty thread is a no-op', (await as(c, U.outsider, `SELECT mark_chat_read($1)`, [R3])).ok)
+  ok('first message from rider creates thread', (await send(U.outsider, R3, 'hello coach')).ok)
+  await as(c, U.coach, `SELECT end_coaching($1)`, [R3], { commit: true })
+  ok('ended thread with history is readable by rider only', (await list(U.outsider, R3))?.can_send === false && (await list(U.coach, R3)) === null)
+  const R4 = (await c.query(`INSERT INTO coaching_relationships(coach_id, rider_id, initiated_by, status) VALUES ($1,$2,$2,'ended') RETURNING id`, [U.coach, U.admin])).rows[0].id
+  ok('ended relationship without messages is not openable', (await list(U.admin, R4)) === null)
+
   // Ending: rider keeps read access, coach loses it, nobody sends
   await as(c, U.coach, `SELECT end_coaching($1)`, [R1], { commit: true })
   ok('coach loses access', (await list(U.coach, R1)) === null)

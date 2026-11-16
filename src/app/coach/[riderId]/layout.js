@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
+import { chatPath } from '../../../lib/coachChat'
 import { fetchAthleteProfile } from '../../../lib/coaching'
 import { AthleteContext } from '../../../components/AthleteContext'
 import { useCoachModule } from '../../../components/useCoachModule'
@@ -18,6 +19,7 @@ export default function AthleteLayout({ children }) {
   const { riderId } = parseCoachPath(`/coach/${params?.riderId}`)
   const { subPath } = parseCoachPath(pathname)
   const [athlete, setAthlete] = useState(null)
+  const [relationshipId, setRelationshipId] = useState(null)
   const [state, setState] = useState('loading') // loading | ok | denied
   const moduleEnabled = useCoachModule()
 
@@ -32,6 +34,11 @@ export default function AthleteLayout({ children }) {
       const { athlete: a } = await fetchAthleteProfile(supabase, riderId)
       if (cancelled) return
       setAthlete(a)
+      if (a) {
+        const { data: rel } = await supabase.from('coaching_relationships').select('id')
+          .eq('coach_id', session.user.id).eq('rider_id', riderId).eq('status', 'active').maybeSingle()
+        if (!cancelled) setRelationshipId(rel?.id || null)
+      }
       setState(a ? 'ok' : 'denied')
     })()
     return () => {
@@ -68,6 +75,11 @@ export default function AthleteLayout({ children }) {
       >
         <span className="text-sm font-extrabold">{bannerText(athlete?.display_name)}</span>
         <span className="flex items-center gap-4">
+          {relationshipId && (
+            <Link href={chatPath(relationshipId)} data-testid="message-athlete" className="text-xs font-bold underline underline-offset-2 hover:text-indigo-100">
+              Message
+            </Link>
+          )}
           <Link href="/coach" className="text-xs font-bold underline underline-offset-2 hover:text-indigo-100">
             Coach dashboard
           </Link>

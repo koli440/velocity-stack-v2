@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Portal from './Portal'
 import { NAV_ITEMS, NAV_LOCKED_LABEL, isNavItemLocked } from '../lib/navigation'
 import { parseCoachPath, sidebarItems, isSidebarItemActive, isContextNavActive, navHref, logoHref, chromeVisibility } from '../lib/coachContext'
 import Icon from './Icon'
+import { supabase } from '../lib/supabase'
+import { fetchThreads, totalUnread } from '../lib/coachChat'
 import { loginHref } from '../lib/signupCatch'
 import { useCoachModule } from './useCoachModule'
 
@@ -19,7 +21,15 @@ export default function Sidebar({
   const pathname = usePathname()
   const { riderId } = parseCoachPath(pathname)
   const moduleEnabled = useCoachModule()
-  const items = sidebarItems(NAV_ITEMS, riderId, moduleEnabled)
+  const [threads, setThreads] = useState([])
+  useEffect(() => {
+    if (!signedIn) return setThreads([])
+    let cancelled = false
+    fetchThreads(supabase).then(({ threads: t, error }) => { if (!cancelled) setThreads(error ? [] : t) })
+    return () => { cancelled = true }
+  }, [signedIn, pathname])
+  const unread = totalUnread(threads)
+  const items = sidebarItems(NAV_ITEMS, riderId, moduleEnabled, threads.length > 0)
   const chrome = chromeVisibility(riderId)
 
   const handleNavigate = (path) => {
@@ -98,7 +108,10 @@ export default function Sidebar({
                   onClick={() => handleNavigate(riderId ? item.href : navHref(item, riderId))}
                   className={navItemClass(riderId ? isSidebarItemActive(item, pathname) : isContextNavActive(item, pathname, riderId))}
                 >
-                  <Icon name={item.icon} size={18} /> {item.label}
+                  <Icon name={item.icon} size={18} /> <span className="flex-1">{item.label}</span>
+                  {item.key === 'messages' && unread > 0 && (
+                    <span data-testid="sidebar-unread" className="rounded-full bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5" aria-label={`${unread} unread`}>{unread}</span>
+                  )}
                 </button>
               )
             })}

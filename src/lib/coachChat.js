@@ -20,6 +20,8 @@ export function chatErrorMessage(error) {
 export const canEditMessage = (m, userId, now = Date.now()) =>
   !!m && !m.deleted && m.sender_id === userId && now - new Date(m.created_at).getTime() <= EDIT_WINDOW_MS
 
+export const chatPath = (relationshipId) => `/chat/${relationshipId}`
+
 export const totalUnread = (threads) => (threads || []).reduce((n, t) => n + (Number(t.unread) || 0), 0)
 
 // Oldest first for display (the RPC returns newest first), merged by id so refetched pages never duplicate.
