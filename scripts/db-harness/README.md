@@ -54,6 +54,8 @@ Lab field forms: `MIG=<repo>/supabase/migrations/20270164000000_lab_field_forms.
 Lab reports: `MIG=<repo>/supabase/migrations/20270165000000_lab_reports.sql node harness.mjs <repo>/supabase/migrations ./lab-reports-adversarial.mjs`
 Pay after accept: `MIG=<repo>/supabase/migrations/20270171000000_coach_pay_after_accept.sql node harness.mjs <repo>/supabase/migrations ./coach-pay-after-accept-adversarial.mjs`
 
+Free period: `MIG=<repo>/supabase/migrations/20270172000000_coach_free_period.sql node harness.mjs <repo>/supabase/migrations ./coach-free-period-adversarial.mjs`
+
 Coach onboarding: `MIG=<repo>/supabase/migrations/20270153000000_coach_onboarding.sql node harness.mjs <repo>/supabase/migrations ./onboarding-adversarial.mjs`
 Coach chat: `MIG=<repo>/supabase/migrations/20270154000000_coach_chat.sql node harness.mjs <repo>/supabase/migrations ./chat-adversarial.mjs`
 Coach licences: `MIG=<repo>/supabase/migrations/20270155000000_coach_licences.sql node harness.mjs <repo>/supabase/migrations ./licence-adversarial.mjs`

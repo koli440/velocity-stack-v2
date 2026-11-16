@@ -53,13 +53,16 @@ export function suggestSlug(name) {
   return s.length >= 3 ? s : ''
 }
 
+export const TRIAL_DAYS_MAX = 90
+
 /** "EUR 80 / month" style price line; null when the package has no price. */
 export function priceLabel(pkg) {
   if (!pkg || pkg.kind === 'free') return 'Free'
   if (pkg.amount_cents == null) return null
   const amount = (pkg.amount_cents / 100).toLocaleString('en', { minimumFractionDigits: pkg.amount_cents % 100 ? 2 : 0, maximumFractionDigits: 2 })
   const base = `${String(pkg.currency || 'eur').toUpperCase()} ${amount}`
-  return pkg.kind === 'subscription' && pkg.interval ? `${base} / ${pkg.interval}` : base
+  const label = pkg.kind === 'subscription' && pkg.interval ? `${base} / ${pkg.interval}` : base
+  return pkg.kind === 'subscription' && pkg.trial_days > 0 ? `${label}, first ${pkg.trial_days} days free` : label
 }
 
 /** Client-side mirror of the SQL validation; returns the first problem or null. */
@@ -78,6 +81,9 @@ export function validateCard(card) {
     if (String(p.description || '').length > PACKAGE_DESC_MAX) return `Package descriptions can have at most ${PACKAGE_DESC_MAX} characters.`
     if (!PACKAGE_KINDS[p.kind]) return 'Unknown package type.'
     if (p.kind === 'subscription' && !INTERVALS[p.interval]) return 'Choose how often a subscription renews.'
+    if (p.trial_days != null && p.trial_days !== '' && !(Number.isInteger(Number(p.trial_days)) && p.trial_days >= 0 && p.trial_days <= TRIAL_DAYS_MAX)) {
+      return `The free period must be 0-${TRIAL_DAYS_MAX} days.`
+    }
     if (p.kind !== 'free' && p.amount_cents != null && !(Number.isInteger(p.amount_cents) && p.amount_cents >= 0 && p.amount_cents <= 1000000)) {
       return 'Enter a valid price.'
     }
@@ -185,6 +191,7 @@ export async function saveCoachCard(client, card) {
         interval: p.kind === 'subscription' ? p.interval : null,
         amount_cents: p.kind === 'free' || p.amount_cents === '' ? null : p.amount_cents ?? null,
         currency: p.currency || 'eur',
+        trial_days: p.kind === 'subscription' ? Number(p.trial_days) || 0 : 0,
         is_active: p.is_active !== false,
       })),
     },

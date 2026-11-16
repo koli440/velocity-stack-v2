@@ -186,6 +186,13 @@ export default function CoachCardSettingsPage() {
                     {Object.keys(INTERVALS).map((k) => <option key={k}>{k}</option>)}
                   </select>
                 )}
+                {p.kind === 'subscription' && (
+                  <label className="flex items-center gap-1.5 text-xs font-semibold">
+                    Free days
+                    <input aria-label="Free period in days" type="number" min="0" max="90" step="1" className={field + ' sm:!w-20'} value={p.trial_days || 0}
+                      onChange={(e) => setPkg(i, { trial_days: e.target.value === '' ? 0 : Math.round(Number(e.target.value)) })} />
+                  </label>
+                )}
                 {p.kind !== 'free' && (
                   <>
                     <input aria-label="Price" type="number" min="0" step="0.01" className={field + ' sm:!w-28'} value={p.amount_cents == null ? '' : p.amount_cents / 100}

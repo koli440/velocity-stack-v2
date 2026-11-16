@@ -138,6 +138,7 @@ export function buildCheckoutParams(ctx, riderId, origin, feePercent = 0) {
     const [interval, count] = INTERVALS[ctx.interval] || INTERVALS.month
     const sub = { metadata: meta, transfer_data: { destination: ctx.stripe_account_id } }
     if (feePercent > 0) sub.application_fee_percent = feePercent
+    if (Number.isInteger(ctx.trial_days) && ctx.trial_days > 0) sub.trial_period_days = Math.min(ctx.trial_days, 90)
     return { ...base, mode: 'subscription', line_items: [{ quantity: 1, price_data: { ...price, recurring: { interval, interval_count: count } } }], subscription_data: sub }
   }
   const pi = { metadata: meta, transfer_data: { destination: ctx.stripe_account_id } }
