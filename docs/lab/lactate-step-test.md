@@ -10,3 +10,7 @@
 - `src/lib/lactateStepTest.js`: LT1 = baseline (lowest of the first 3 steps) + 0.5 mmol/L, LT2 = Dmax on a cubic fit (needs 4+ steps; falls back to OBLA 4), OBLA 2/4 by linear interpolation; HR interpolated between steps.
 - Apply writes LT1/LT2 (power + HR) to the athlete's lactate threshold history on the test date via `saveLtEntry` (confirm when the date already has an entry), so zones follow it.
 - UI: `/coach/<id>/lab/lactate` and `/lab/lactate`. Harness: `lab-lactate-adversarial.mjs`; unit tests `lactateStepTest.test.js`.
+
+## Instructions and prepared steps (coach-editable)
+
+The test shows a "How to do the test" section: an instruction text and prepared steps (default: 4 min steps at 50-110 % FTP, see `src/lib/lactatePlan.js`). Steps are stored as % of FTP and shown as target watts when FTP is known. A coach edits the plan (instruction, step length 1-20 min, 3-20 steps at 20-200 % FTP); it applies to all of their active athletes, who see it read-only ("Prepared by your coach"). A rider without a coach edits their own plan. Reset returns to defaults. Storage: `lab_lactate_plans` (RLS, no direct privileges) via `lab_lactate_plan_get/save/reset`; harness `lab-lactate-plan-adversarial.mjs`.

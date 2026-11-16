@@ -49,6 +49,7 @@ Coach card + directory: `MIG=<repo>/supabase/migrations/20270152000000_coach_car
 Coach card media: `MIG=<repo>/supabase/migrations/20270157000000_coach_card_media.sql node harness.mjs <repo>/supabase/migrations ./coach-card-media-adversarial.mjs`
 Lab protocol runner: `MIG=<repo>/supabase/migrations/20270158000000_lab_runs.sql node harness.mjs <repo>/supabase/migrations ./lab-runs-adversarial.mjs`
 Lab lactate step test: `MIG=<repo>/supabase/migrations/20270159000000_lab_lactate.sql node harness.mjs <repo>/supabase/migrations ./lab-lactate-adversarial.mjs`
+Lactate plan: `MIG=<repo>/supabase/migrations/20270177000000_lab_lactate_plan.sql node harness.mjs <repo>/supabase/migrations ./lab-lactate-plan-adversarial.mjs`
 Lab test scheduler: `MIG=<repo>/supabase/migrations/20270160000000_lab_scheduler.sql node harness.mjs <repo>/supabase/migrations ./lab-scheduler-adversarial.mjs`
 Lab field forms: `MIG=<repo>/supabase/migrations/20270164000000_lab_field_forms.sql node harness.mjs <repo>/supabase/migrations ./lab-forms-adversarial.mjs`
 Lab reports: `MIG=<repo>/supabase/migrations/20270165000000_lab_reports.sql node harness.mjs <repo>/supabase/migrations ./lab-reports-adversarial.mjs`
