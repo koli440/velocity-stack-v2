@@ -22,6 +22,9 @@ export const canEditMessage = (m, userId, now = Date.now()) =>
 
 export const chatPath = (relationshipId) => `/chat/${relationshipId}`
 
+// Every /chat row (pending included) opens its own relationship thread, never a profile page.
+export const threadHref = (t) => chatPath(t.id)
+
 export const totalUnread = (threads) => (threads || []).reduce((n, t) => n + (Number(t.unread) || 0), 0)
 
 // Oldest first for display (the RPC returns newest first), merged by id so refetched pages never duplicate.

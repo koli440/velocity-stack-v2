@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { canEditMessage, chatPath, chatErrorMessage, mergeMessages, totalUnread, EDIT_WINDOW_MS } from '../coachChat.js'
+import { canEditMessage, chatPath, threadHref, chatErrorMessage, mergeMessages, totalUnread, EDIT_WINDOW_MS } from '../coachChat.js'
 import { describeNotification, notificationHref } from '../notifications.js'
 
 test('canEditMessage: own, not deleted, within window', () => {
@@ -33,4 +33,8 @@ test('coach_message notification has no message text and links to /chat', () => 
   const n = { type: 'coach_message', actor_nickname: 'Sam' }
   assert.match(describeNotification(n), /sent you a message/)
   assert.equal(notificationHref(n), '/chat')
+})
+
+test('threadHref opens the relationship thread for pending rows, not a profile', () => {
+  assert.equal(threadHref({ id: 'rel1', other_id: 'u2', status: 'pending' }), '/chat/rel1')
 })

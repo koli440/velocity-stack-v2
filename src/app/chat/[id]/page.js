@@ -8,7 +8,7 @@ import {
   canEditMessage, chatErrorMessage, deleteMessage, editMessage, fetchMessages, markRead, mergeMessages,
   MAX_MESSAGE_LENGTH, reportMessage, sendMessage,
 } from '../../../lib/coachChat'
-import { acceptCoaching } from '../../../lib/coaching'
+import { acceptCoaching, declineCoaching } from '../../../lib/coaching'
 import Icon from '../../../components/Icon'
 import { ErrorNote, StatusNote, adminBtn, adminCard, adminInput } from '../../../components/admin/AdminUi'
 
@@ -56,18 +56,20 @@ export default function ChatThreadPage() {
   </div>
 
   if (thread.status === 'pending') {
-    const accept = async () => {
+    const name = thread.other_name || 'this person'
+    const answer = (fn, back) => async () => {
       setBusy(true)
-      const { error } = await acceptCoaching(supabase, id)
+      const { error } = await fn(supabase, id)
       setBusy(false)
       if (error) setMsg({ error: true, text: chatErrorMessage(error) })
+      else if (back) router.push('/chat')
       else await load()
     }
     return <div className={`${adminCard} max-w-2xl mx-auto text-sm text-slate-700 dark:text-slate-200 space-y-3`} data-testid="chat-pending">
-      <p className="font-bold">Waiting for acceptance</p>
+      <p className="font-bold">{thread.initiated_by_me ? `Waiting for ${name} to accept` : `${name} invited you`}</p>
       <p>{thread.initiated_by_me ? 'Your coaching request has not been accepted yet. You can message each other once it is.' : 'You have a coaching invitation. Accept it to start chatting.'}</p>
       {msg?.error && <ErrorNote>{msg.text}</ErrorNote>}
-      {!thread.initiated_by_me && <button type="button" disabled={busy} onClick={accept} className={adminBtn.primary}>Accept</button>}{' '}
+      {!thread.initiated_by_me && <><button type="button" disabled={busy} onClick={answer(acceptCoaching)} className={adminBtn.primary}>Accept</button>{' '}<button type="button" disabled={busy} onClick={answer(declineCoaching, true)} className={adminBtn.secondary}>Decline</button>{' '}</>}
       <Link href="/chat" className={adminBtn.secondary}><Icon name="chevronLeft" /> Messages</Link>
     </div>
   }

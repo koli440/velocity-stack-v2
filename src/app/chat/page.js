@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
-import { fetchThreads } from '../../lib/coachChat'
+import { fetchThreads, threadHref } from '../../lib/coachChat'
 import Avatar from '../../components/Avatar'
 import Icon from '../../components/Icon'
 import { AdminPage, ErrorNote, adminCard, adminMuted } from '../../components/admin/AdminUi'
@@ -36,7 +36,7 @@ export default function ChatListPage() {
           <ul className={`${adminCard} !p-0 overflow-hidden divide-y divide-slate-200 dark:divide-surface-darkBorder`}>
             {state.threads.map((t) => (
               <li key={t.id}>
-                <Link href={`/chat/${t.id}`} className="flex items-center gap-3 px-4 py-3 min-h-[64px] hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500">
+                <Link href={threadHref(t)} className="flex items-center gap-3 px-4 py-3 min-h-[64px] hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500">
                   <Avatar name={t.other_name} size="w-10 h-10" textSize="text-sm" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-bold text-slate-900 dark:text-white">{t.other_name}</span>

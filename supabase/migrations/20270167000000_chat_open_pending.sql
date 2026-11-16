@@ -14,7 +14,10 @@ BEGIN
         IF FOUND AND r.status = 'pending' AND auth.uid() IN (r.coach_id, r.rider_id)
            AND NOT public.is_blocked_between(r.coach_id, r.rider_id) THEN
             RETURN jsonb_build_object('can_send', false, 'status', 'pending', 'rider_id', r.rider_id,
-                                      'initiated_by_me', r.initiated_by = auth.uid(), 'messages', '[]'::JSONB);
+                                      'initiated_by_me', r.initiated_by = auth.uid(),
+                                      'other_name', (SELECT public.profile_display_name(o.nickname, o.first_name, o.last_name) FROM public.profiles o
+                                                     WHERE o.id = CASE WHEN r.coach_id = auth.uid() THEN r.rider_id ELSE r.coach_id END),
+                                      'other_id', CASE WHEN r.coach_id = auth.uid() THEN r.rider_id ELSE r.coach_id END, 'messages', '[]'::JSONB);
         END IF;
         RETURN NULL;
     END IF;
