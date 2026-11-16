@@ -18,6 +18,7 @@ Coach-facing physiology lab. **Not flag-gated**: it is not part of the coach bus
 6. [Efficiency and decoupling trend](lab/decoupling.md)
 7. [Field protocol forms](lab/field-forms.md)
 8. [Reports](lab/reports.md)
+9. [Measurement protocols](lab/measurement-protocols.md): fueling/glucose, bike-fit log, pedalling efficiency, cadence profile
 
 ## Status
 - 1 Protocol runner: implemented (see its spec, "Implementation").
@@ -28,3 +29,4 @@ Coach-facing physiology lab. **Not flag-gated**: it is not part of the coach bus
 - 8 Reports: implemented.
 - 5 Durability: implemented.
 - 6 Efficiency and decoupling: implemented.
+- 9 Measurement protocols: implemented.
