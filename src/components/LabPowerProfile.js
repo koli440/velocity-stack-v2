@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { computeProfile, mergeBests, PHENOTYPE_LABELS } from '../lib/powerProfile'
+import { computeProfile, mergeBests, PHENOTYPE_LABELS } from '../lib/labPowerProfile'
 import { fetchWeightHistory, weightAt } from '../lib/weightHistory'
 
 const card = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4'
