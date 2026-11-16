@@ -14,11 +14,11 @@ import {
   submitLabRun,
 } from '../lib/labRuns'
 import { activityDay, applyThreshold } from '../lib/applyThresholds'
+import { ErrorNote, StatusNote, adminBtn, adminCard, adminInput } from './admin/AdminUi'
 
-const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50'
-const primary = `${btn} bg-indigo-600 border-indigo-600 text-white`
-const quiet = `${btn} border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300`
-const card = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4'
+const primary = adminBtn.primary
+const quiet = adminBtn.secondary
+const card = adminCard
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -109,7 +109,7 @@ export default function LabProtocolRunner({ athleteId, viewerId }) {
   return (
     <div className="space-y-4" data-testid="lab-protocols">
       <section className={card}>
-        <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">Plan a field test</h2>
+        <h2 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Plan a field test</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           {LAB_PROTOCOL_IDS.map((id) => (
             <button key={id} type="button" onClick={() => setProtocol(id)} className={id === protocol ? primary : quiet} data-testid={`lab-protocol-${id}`}>
@@ -117,26 +117,26 @@ export default function LabProtocolRunner({ athleteId, viewerId }) {
             </button>
           ))}
         </div>
-        <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">{p.summary}</p>
-        <ol className="mt-2 list-decimal pl-5 space-y-1 text-xs text-slate-600 dark:text-slate-300" data-testid="lab-brief">
+        <p className="mt-3 text-sm text-slate-700 dark:text-slate-200">{p.summary}</p>
+        <ol className="mt-2 list-decimal pl-5 space-y-1 text-sm text-slate-700 dark:text-slate-200" data-testid="lab-brief">
           {p.steps.map((s) => (
             <li key={s}>{s}</li>
           ))}
         </ol>
-        <div className="mt-3 flex items-center gap-2">
-          <input type="date" value={day} onChange={(e) => setDay(e.target.value)} aria-label="Test date" className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs" />
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2">
+          <input type="date" value={day} onChange={(e) => setDay(e.target.value)} aria-label="Test date" className={`${adminInput} sm:max-w-[11rem]`} />
           <button type="button" onClick={create} disabled={busy === 'create' || !day} className={primary} data-testid="lab-push">
             Push to calendar
           </button>
         </div>
       </section>
 
-      {error && <p className="text-xs text-red-600" role="alert" data-testid="lab-error">{error}</p>}
-      {notice && <p className="text-xs text-emerald-600" role="status">{notice}</p>}
+      {error && <div data-testid="lab-error"><ErrorNote>{error}</ErrorNote></div>}
+      {notice && <StatusNote>{notice}</StatusNote>}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">Tests</h2>
-        {loaded && runs.length === 0 && <p className="text-xs text-slate-500" data-testid="lab-empty">No tests yet. Plan one above; it appears on the athlete&apos;s calendar.</p>}
+        <h2 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Tests</h2>
+        {loaded && runs.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-300" data-testid="lab-empty">No tests yet. Plan one above; it appears on the athlete&apos;s calendar.</p>}
         {runs.filter((r) => r.status !== 'cancelled').map((r) => {
           const cand = detected[r.id]
           const res = r.result
@@ -145,31 +145,31 @@ export default function LabProtocolRunner({ athleteId, viewerId }) {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{LAB_PROTOCOLS[r.protocol]?.label || r.protocol}</p>
-                  <p className="text-xs text-slate-500">{r.planned_date} · {r.status}{r.activity_title ? ` · ${r.activity_title}` : ''}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">{r.planned_date} · {r.status}{r.activity_title ? ` · ${r.activity_title}` : ''}</p>
                 </div>
                 {r.status === 'planned' && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => detect(r)} disabled={busy === `detect-${r.id}`} className={quiet}>Detect from ride</button>
                     <button type="button" onClick={() => cancel(r)} disabled={busy === `cancel-${r.id}`} className={quiet}>Cancel</button>
                   </div>
                 )}
               </div>
               {cand && (
-                <div className="mt-3 rounded-lg bg-slate-50 dark:bg-slate-800 p-3 text-xs" data-testid="lab-candidate">
+                <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 p-3 text-sm text-slate-800 dark:text-slate-100" data-testid="lab-candidate">
                   <p className="font-bold">Found in “{cand.activity.title}”: {cand.result.efforts.map((e) => `${Math.round(e.durationSec / 60)} min ${e.avgW} W`).join(', ')}</p>
-                  {cand.result.warnings.map((w) => <p key={w} className="text-amber-600">{w}</p>)}
+                  {cand.result.warnings.map((w) => <p key={w} className="text-amber-700 dark:text-amber-300">{w}</p>)}
                   <button type="button" onClick={() => accept(r)} disabled={busy === `accept-${r.id}`} className={`${primary} mt-2`}>Use this result</button>
                 </div>
               )}
               {res && (
-                <div className="mt-3 text-xs text-slate-700 dark:text-slate-200" data-testid="lab-result">
+                <div className="mt-3 text-sm text-slate-800 dark:text-slate-200" data-testid="lab-result">
                   <p>{res.efforts?.map((e) => `${Math.round(e.durationSec / 60)} min: ${e.avgW} W`).join(' · ')}{res.cp ? ` · CP ${res.cp} W, W′ ${(res.wPrime / 1000).toFixed(1)} kJ` : ''}</p>
                   {r.status === 'completed' && (res.proposals || []).map((pr) => (
                     <button key={pr.label} type="button" onClick={() => apply(r, pr)} disabled={busy === `apply-${r.id}`} className={`${primary} mt-2 mr-2`} data-testid="lab-apply">
                       Apply {pr.label}
                     </button>
                   ))}
-                  {r.status === 'applied' && r.applied && <p className="mt-1 font-bold text-emerald-600">Applied: FTP {r.applied.value} W from {r.applied.date}</p>}
+                  {r.status === 'applied' && r.applied && <p className="mt-1 font-bold text-emerald-700 dark:text-emerald-400">Applied: FTP {r.applied.value} W from {r.applied.date}</p>}
                 </div>
               )}
             </div>

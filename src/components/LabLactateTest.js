@@ -5,12 +5,12 @@ import { supabase } from '../lib/supabase'
 import { labErrorMessage } from '../lib/labRuns'
 import { computeLactateResult, ltEntryFromResult, normalizeSteps } from '../lib/lactateStepTest'
 import { fetchLtHistory, saveLtEntry, validateLtEntry } from '../lib/lactateThresholds'
+import { ErrorNote, StatusNote, adminBtn, adminCard, adminInput } from './admin/AdminUi'
 
-const btn = 'px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50'
-const primary = `${btn} bg-indigo-600 border-indigo-600 text-white`
-const quiet = `${btn} border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300`
-const card = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4'
-const input = 'w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2 py-1 text-sm'
+const primary = adminBtn.primary
+const quiet = adminBtn.secondary
+const card = adminCard
+const input = adminInput
 const today = () => new Date().toISOString().slice(0, 10)
 const emptyRows = () => Array.from({ length: 6 }, () => ({ power: '', hr: '', lactate: '' }))
 
@@ -25,7 +25,7 @@ export function LactateChart({ steps, result }) {
   const y = (l) => H - pad - (l / maxL) * (H - pad * 2)
   const marks = [['LT1', result.lt1, '#16a34a'], ['LT2', result.lt2, '#dc2626']].filter((m) => m[1])
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-md" role="img" aria-label="Lactate curve" data-testid="lactate-chart">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-md text-slate-600 dark:text-slate-300" role="img" aria-label="Lactate curve" data-testid="lactate-chart">
       <polyline fill="none" stroke="#6366f1" strokeWidth="2" points={steps.map((s) => `${x(s.power)},${y(s.lactate)}`).join(' ')} />
       {steps.map((s) => <circle key={s.power} cx={x(s.power)} cy={y(s.lactate)} r="3" fill="#6366f1" />)}
       {marks.map(([label, m, color]) => (
@@ -34,9 +34,9 @@ export function LactateChart({ steps, result }) {
           <text x={x(m.power)} y={pad / 2 - 2} fontSize="9" textAnchor="middle" fill={color}>{label} {m.power}W</text>
         </g>
       ))}
-      <text x={pad} y={H - 8} fontSize="9" fill="#64748b">{minP} W</text>
-      <text x={W - pad} y={H - 8} fontSize="9" textAnchor="end" fill="#64748b">{maxP} W</text>
-      <text x={4} y={pad} fontSize="9" fill="#64748b">mmol/L</text>
+      <text x={pad} y={H - 8} fontSize="9" fill="currentColor">{minP} W</text>
+      <text x={W - pad} y={H - 8} fontSize="9" textAnchor="end" fill="currentColor">{maxP} W</text>
+      <text x={4} y={pad} fontSize="9" fill="currentColor">mmol/L</text>
     </svg>
   )
 }
@@ -46,7 +46,7 @@ function Thresholds({ result }) {
     <li key={label}>{label}: {v ? `${v.power} W${v.hr != null ? ` · ${v.hr} bpm` : ''}` : 'not reached'}</li>
   )
   return (
-    <ul className="text-xs text-slate-700 dark:text-slate-300 space-y-0.5" data-testid="lactate-thresholds">
+    <ul className="text-sm text-slate-800 dark:text-slate-200 space-y-0.5" data-testid="lactate-thresholds">
       {row('LT1 (baseline + 0.5)', result.lt1)}
       {row(`LT2 (${result.lt2Method === 'obla4' ? 'OBLA 4' : 'Dmax'})`, result.lt2)}
       {row('OBLA 2 mmol', result.obla2)}
@@ -118,24 +118,24 @@ export default function LabLactateTest({ athleteId, viewerId }) {
 
   return (
     <div className="space-y-4" data-testid="lab-lactate">
-      <p className="text-xs text-slate-500">Private: visible to the athlete and their active coach only.</p>
+      <p className="text-sm text-slate-600 dark:text-slate-300">Private: visible to the athlete and their active coach only.</p>
       <section className={card}>
-        <h2 className="text-sm font-extrabold text-slate-900 dark:text-white mb-2">New step test</h2>
-        <label className="text-xs text-slate-500">Date <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${input} w-40 inline-block ml-2`} /></label>
-        <table className="mt-3 text-xs w-full max-w-md">
-          <thead><tr className="text-left text-slate-500"><th>Step</th><th>Power (W)</th><th>HR (bpm)</th><th>Lactate (mmol/L)</th></tr></thead>
+        <h2 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white mb-2">New step test</h2>
+        <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100 space-y-1 sm:max-w-xs"><span>Date</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={input} /></label>
+        <div className="overflow-x-auto"><table className="mt-3 text-sm w-full max-w-lg">
+          <thead><tr className="text-left text-slate-700 dark:text-slate-200"><th>Step</th><th>Power (W)</th><th>HR (bpm)</th><th>Lactate (mmol/L)</th></tr></thead>
           <tbody>
             {rows.map((r, i) => (
               <tr key={i}>
-                <td className="pr-2">{i + 1}</td>
+                <td className="pr-2 font-bold text-slate-800 dark:text-slate-200">{i + 1}</td>
                 {['power', 'hr', 'lactate'].map((k) => (
-                  <td key={k} className="pr-2 py-0.5"><input inputMode="decimal" aria-label={`${k} step ${i + 1}`} value={r[k]} onChange={(e) => setCell(i, k, e.target.value)} className={input} /></td>
+                  <td key={k} className="pr-2 py-1"><input inputMode="decimal" aria-label={`${k} step ${i + 1}`} value={r[k]} onChange={(e) => setCell(i, k, e.target.value)} className={input} /></td>
                 ))}
               </tr>
             ))}
           </tbody>
-        </table>
-        <div className="mt-2 flex gap-2">
+        </table></div>
+        <div className="mt-3 flex flex-wrap gap-2">
           <button className={quiet} onClick={() => setRows((rs) => [...rs, { power: '', hr: '', lactate: '' }].slice(0, 20))}>Add step</button>
           <button className={primary} onClick={calculate}>Calculate</button>
         </div>
@@ -146,21 +146,21 @@ export default function LabLactateTest({ athleteId, viewerId }) {
             <button className={primary} disabled={busy} onClick={save}>Save test</button>
           </div>
         )}
-        {msg?.error && <p className="mt-2 text-xs text-red-600" role="alert">{msg.error}</p>}
-        {msg?.ok && <p className="mt-2 text-xs text-emerald-600">{msg.ok}</p>}
+        {msg?.error && <ErrorNote>{msg.error}</ErrorNote>}
+        {msg?.ok && <StatusNote>{msg.ok}</StatusNote>}
       </section>
       <section className={card}>
-        <h2 className="text-sm font-extrabold text-slate-900 dark:text-white mb-2">History</h2>
-        {tests.length === 0 && <p className="text-xs text-slate-500">No lactate tests yet.</p>}
+        <h2 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white mb-2">History</h2>
+        {tests.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-300">No lactate tests yet.</p>}
         <ul className="space-y-4">
           {tests.map((t) => (
-            <li key={t.id} className="border-t border-slate-100 dark:border-slate-800 pt-3" data-testid="lactate-test">
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{t.test_date}</p>
+            <li key={t.id} className="rounded-xl border border-slate-200 dark:border-slate-600 p-3" data-testid="lactate-test">
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{t.test_date}</p>
               <LactateChart steps={t.steps} result={t.result} />
               <Thresholds result={t.result} />
-              <div className="mt-2 flex gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button className={primary} disabled={busy} onClick={() => apply(t)}>Apply LT1/LT2</button>
-                <button className={quiet} onClick={() => remove(t.id)}>Delete</button>
+                <button className={adminBtn.danger} onClick={() => remove(t.id)}>Delete</button>
               </div>
             </li>
           ))}
