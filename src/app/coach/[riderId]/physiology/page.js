@@ -16,10 +16,10 @@ export default function AthletePhysiologyPage() {
   if (!riderId) return null
   return (
     <div className="space-y-6" data-testid="athlete-physiology">
-      <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
+      <h1 className="text-2xl font-black text-slate-900 dark:text-white">
         Physiology &amp; training settings{athlete ? ` · ${athlete.display_name}` : ''}
       </h1>
-      <p className="text-xs text-slate-500">
+      <p className="text-sm text-slate-600 dark:text-slate-300">
         Changes are visible to the athlete, labelled “Set by coach”, and they are notified.
       </p>
       <AthleteTrainingDefaults riderId={riderId} athlete={athlete} />

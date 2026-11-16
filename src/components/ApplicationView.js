@@ -1,10 +1,11 @@
+import { adminCard } from './admin/AdminUi'
 import { AVAILABILITY, SEX_OPTIONS, STRUCTURE_OPTIONS, PARQ_QUESTIONS } from '../lib/coachOnboarding'
 
 const Row = ({ k, v }) => (v === undefined || v === null || v === '' ? null : (
-  <div className="flex gap-2 text-sm"><dt className="w-40 shrink-0 text-slate-500">{k}</dt><dd className="text-slate-900 dark:text-white whitespace-pre-line">{String(v)}</dd></div>
+  <div className="flex flex-col sm:flex-row sm:gap-2 text-sm"><dt className="sm:w-40 shrink-0 text-slate-600 dark:text-slate-300 font-semibold">{k}</dt><dd className="text-slate-900 dark:text-white whitespace-pre-line break-words">{String(v)}</dd></div>
 ))
 const Block = ({ title, children }) => (
-  <section className="space-y-1"><h2 className="text-sm font-extrabold text-slate-900 dark:text-white">{title}</h2><dl className="space-y-1">{children}</dl></section>
+  <section className={`${adminCard} space-y-2`}><h2 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">{title}</h2><dl className="space-y-2">{children}</dl></section>
 )
 
 /** Read-only rendering of a stored questionnaire (coach application detail, rider "my answers"). */

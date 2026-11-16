@@ -166,7 +166,7 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
           onSelect={(e) => setCaret(e.target.selectionStart ?? value.length)}
           onKeyDown={onKeyDown}
           disabled={busy}
-          className="w-full resize-y rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-orange-500 disabled:opacity-60"
+          className="w-full resize-y rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:border-orange-500 disabled:opacity-60"
         />
         {popoverOpen && placement && (
           <Portal>
@@ -176,7 +176,7 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
               className="overflow-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg"
             >
               {candidates.length === 0 ? (
-                <div role="status" data-testid="mention-status" className="px-3 py-2 text-xs text-slate-500">
+                <div role="status" data-testid="mention-status" className="px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
                   {mentionStatusText(mentionStatus)}
                 </div>
               ) : (
@@ -194,7 +194,7 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
                         <Avatar url={c.avatar_url} name={c.display_name || c.nickname} size="w-5 h-5" textSize="text-[9px]" />
                         <span className="font-bold text-slate-900 dark:text-white">@{c.handle || c.nickname}</span>
                         {c.display_name && c.display_name !== (c.handle || c.nickname) && (
-                          <span className="text-slate-500 truncate">{c.display_name}</span>
+                          <span className="text-slate-600 dark:text-slate-300 truncate">{c.display_name}</span>
                         )}
                       </button>
                     </li>
@@ -208,14 +208,14 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
       <div className="flex items-center gap-2">
         <span
           data-testid="comment-counter"
-          className={`text-[10px] font-bold ${length > COMMENT_MAX_LENGTH ? 'text-rose-500' : length >= COUNTER_WARN_AT ? 'text-amber-500' : 'text-slate-400'}`}
+          className={`text-xs font-bold ${length > COMMENT_MAX_LENGTH ? 'text-rose-700 dark:text-rose-300' : length >= COUNTER_WARN_AT ? 'text-amber-700 dark:text-amber-300' : 'text-slate-600 dark:text-slate-300'}`}
         >
           {length}/{COMMENT_MAX_LENGTH}
         </span>
-        {error && <span role="alert" className="text-[11px] text-rose-500">{error}</span>}
+        {error && <span role="alert" className="text-xs text-rose-700 dark:text-rose-300">{error}</span>}
         <div className="ml-auto flex items-center gap-2">
           {onCancel && (
-            <button type="button" onClick={onCancel} className="text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+            <button type="button" onClick={onCancel} className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-700 dark:hover:text-slate-300">
               Cancel
             </button>
           )}
@@ -224,7 +224,7 @@ function Composer({ activityId, initialValue = '', submitLabel, busy, error, onS
             onClick={submit}
             disabled={!valid || busy}
             data-testid="comment-submit"
-            className="px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-black disabled:opacity-40 transition"
+            className="min-h-[44px] lg:min-h-[36px] px-4 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-black disabled:opacity-40 transition"
           >
             {busy ? 'Saving…' : submitLabel}
           </button>
@@ -397,8 +397,8 @@ export default function ActivityComments({ activityId }) {
 
   if (loadError) {
     return (
-      <section id="comments" className="rounded-2xl border border-slate-200 dark:border-surface-darkBorder p-4 text-xs">
-        <span className="text-rose-500">Comments could not be loaded.</span>{' '}
+      <section id="comments" className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-4 text-sm">
+        <span className="text-rose-700 dark:text-rose-300">Comments could not be loaded.</span>{' '}
         <button type="button" onClick={() => { setLoading(true); load() }} className="font-bold underline">
           Retry
         </button>
@@ -420,14 +420,14 @@ export default function ActivityComments({ activityId }) {
     >
       <div className="flex items-center gap-2">
         <h2 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">
-          Comments <span className="text-slate-400 font-bold normal-case text-xs">{commentCountLabel(comments.length)}</span>
+          Comments <span className="text-slate-600 dark:text-slate-300 font-bold normal-case text-xs">{commentCountLabel(comments.length)}</span>
         </h2>
         {isOwner && (
           <button
             type="button"
             onClick={toggleComments}
             data-testid="comments-toggle"
-            className="ml-auto text-[11px] font-bold text-slate-500 hover:text-orange-500"
+            className="ml-auto text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-orange-500"
           >
             {info.comments_enabled ? 'Turn comments off' : 'Turn comments on'}
           </button>
@@ -435,7 +435,7 @@ export default function ActivityComments({ activityId }) {
       </div>
 
       {comments.length === 0 && (
-        <p className="text-xs text-slate-400" data-testid="comments-empty">
+        <p className="text-xs text-slate-600 dark:text-slate-300" data-testid="comments-empty">
           {info.comments_enabled ? 'No comments yet. Start the conversation.' : 'No comments.'}
         </p>
       )}
@@ -463,15 +463,15 @@ export default function ActivityComments({ activityId }) {
                     {isCoach && (
                       <span
                         data-testid="comment-coach-badge"
-                        className="px-1.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold"
+                        className="px-1.5 py-0.5 rounded-md bg-orange-100 dark:bg-orange-900/50 text-orange-900 dark:text-orange-100 text-xs font-bold"
                       >
                         Coach
                       </span>
                     )}
-                    <time dateTime={c.created_at} title={new Date(c.created_at).toLocaleString()} className="text-slate-400">
+                    <time dateTime={c.created_at} title={new Date(c.created_at).toLocaleString()} className="text-slate-600 dark:text-slate-300">
                       {relativeTime(c.created_at)}
                     </time>
-                    {c.edited_at && <span className="text-slate-400 italic">edited</span>}
+                    {c.edited_at && <span className="text-slate-600 dark:text-slate-300 italic">edited</span>}
                   </div>
 
                   {editingId === c.id ? (
@@ -490,16 +490,16 @@ export default function ActivityComments({ activityId }) {
                   )}
 
                   {editingId !== c.id && (
-                    <div className="flex gap-3 text-[11px] font-bold text-slate-400">
+                    <div className="flex gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
                       {!mine && (
-                        <button type="button" onClick={() => report(c)} className="hover:text-rose-500">
+                        <button type="button" onClick={() => report(c)} className="hover:text-rose-700 dark:text-rose-300">
                           Report
                         </button>
                       )}
                     </div>
                   )}
                   {editingId !== c.id && (mine || isOwner) && (
-                    <div className="flex gap-3 text-[11px] font-bold text-slate-400">
+                    <div className="flex gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
                       {mine && (
                         <button type="button" onClick={() => { setEditingId(c.id); setEditError('') }} className="hover:text-orange-500">
                           Edit
@@ -509,7 +509,7 @@ export default function ActivityComments({ activityId }) {
                         type="button"
                         onClick={() => remove(c)}
                         disabled={deletingId === c.id}
-                        className="hover:text-rose-500 disabled:opacity-50"
+                        className="hover:text-rose-700 dark:text-rose-300 disabled:opacity-50"
                       >
                         {deletingId === c.id ? 'Deleting…' : 'Delete'}
                       </button>
@@ -522,8 +522,8 @@ export default function ActivityComments({ activityId }) {
         </ul>
       )}
 
-      {rowError && <p role="alert" className="text-[11px] text-rose-500">{rowError}</p>}
-      {notice && <p role="status" className="text-[11px] text-emerald-600">{notice}</p>}
+      {rowError && <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">{rowError}</p>}
+      {notice && <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">{notice}</p>}
 
       {canWrite ? (
         <Composer
@@ -534,7 +534,7 @@ export default function ActivityComments({ activityId }) {
           onSubmit={post}
         />
       ) : (
-        <p className="text-xs text-slate-500 rounded-xl bg-slate-50 dark:bg-slate-900/60 px-3 py-2" data-testid="comments-readonly">
+        <p className="text-xs text-slate-600 dark:text-slate-300 rounded-xl bg-slate-50 dark:bg-slate-900/60 px-3 py-2" data-testid="comments-readonly">
           {isOwner ? 'Comments are turned off. Existing comments stay visible to riders who can see this activity.' : 'Comments are turned off for this activity.'}
         </p>
       )}
