@@ -3,6 +3,7 @@ import { loadCoachDirectory } from '../../lib/server/coachCardStore'
 import { DISCIPLINE_OPTIONS, accentOf, cardPath, safeCoachMediaUrl } from '../../lib/coachCard'
 import { noindex } from '../../lib/seo'
 import Icon from '../../components/Icon'
+import LicenceBadge from '../../components/LicenceBadge'
 
 // Local copies: AdminUi is a client module, so its string constants are not usable in a server component.
 const CARD = 'glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder'
@@ -15,7 +16,8 @@ export const dynamic = 'force-dynamic'
 export default async function CoachesPage({ searchParams }) {
   const q = String(searchParams?.q || '').slice(0, 60)
   const discipline = DISCIPLINE_OPTIONS.includes(searchParams?.discipline) ? searchParams.discipline : ''
-  const coaches = await loadCoachDirectory({ q, discipline })
+  const verifiedOnly = searchParams?.verified === '1'
+  const coaches = await loadCoachDirectory({ q, discipline, verifiedOnly })
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
       <header className="space-y-2">
@@ -28,11 +30,14 @@ export default async function CoachesPage({ searchParams }) {
           <option value="">All disciplines</option>
           {DISCIPLINE_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
+        <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100 min-h-[44px] lg:min-h-[40px]">
+          <input type="checkbox" name="verified" value="1" defaultChecked={verifiedOnly} className="h-4 w-4 accent-orange-500" /> Verified licence only
+        </label>
         <button className={`${BTN} bg-orange-500 border-orange-500 text-white hover:bg-orange-600`}><Icon name="search" /> Search</button>
       </form>
       {coaches.length === 0 ? (
         <div className={`${CARD} p-5 text-sm text-slate-700 dark:text-slate-200 space-y-2`} data-testid="coach-directory-empty">
-          <p className="font-bold text-base text-slate-900 dark:text-white">{q || discipline ? 'No coaches match your search.' : 'No coaches are listed yet.'}</p>
+          <p className="font-bold text-base text-slate-900 dark:text-white">{q || discipline || verifiedOnly ? 'No coaches match your search.' : 'No coaches are listed yet.'}</p>
           <p>
             The directory only shows coaches who published their coach card and chose to be listed. Coaches can opt in under{' '}
             <Link href="/settings/coach-card" className="font-bold text-orange-700 dark:text-orange-400 underline">Settings, Coach card</Link>{' '}
@@ -60,6 +65,7 @@ export default async function CoachesPage({ searchParams }) {
                       {c.location && <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300"><Icon name="pin" className="shrink-0" /> <span className="min-w-0 break-words">{c.location}</span></p>}
                     </div>
                   </div>
+                  <LicenceBadge licence={c.licence} />
                   {c.headline && <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3">{c.headline}</p>}
                   {(c.disciplines || []).length > 0 && (
                     <ul className="flex flex-wrap gap-1.5">

@@ -54,6 +54,8 @@ Lab field forms: `MIG=<repo>/supabase/migrations/20270164000000_lab_field_forms.
 Lab reports: `MIG=<repo>/supabase/migrations/20270165000000_lab_reports.sql node harness.mjs <repo>/supabase/migrations ./lab-reports-adversarial.mjs`
 Pay after accept: `MIG=<repo>/supabase/migrations/20270171000000_coach_pay_after_accept.sql node harness.mjs <repo>/supabase/migrations ./coach-pay-after-accept-adversarial.mjs`
 
+Directory verified licence: `MIG=<repo>/supabase/migrations/20270174000000_directory_verified_licence.sql node harness.mjs <repo>/supabase/migrations ./directory-licence-adversarial.mjs`
+
 Licence admin notification: `MIG=<repo>/supabase/migrations/20270173000000_licence_admin_notify.sql node harness.mjs <repo>/supabase/migrations ./licence-admin-notify-adversarial.mjs`
 
 Free period: `MIG=<repo>/supabase/migrations/20270172000000_coach_free_period.sql node harness.mjs <repo>/supabase/migrations ./coach-free-period-adversarial.mjs`

@@ -22,13 +22,14 @@ export async function loadCoachCard(slug) {
   }
 }
 
-export async function loadCoachDirectory({ q = '', discipline = '', offset = 0 } = {}) {
+export async function loadCoachDirectory({ q = '', discipline = '', offset = 0, verifiedOnly = false } = {}) {
   try {
     const { data, error } = await anonClient().rpc('list_coaches', {
       p_search: q || null,
       p_discipline: discipline || null,
       p_limit: 24,
       p_offset: offset,
+      p_verified_only: verifiedOnly === true,
     })
     return error || !Array.isArray(data) ? [] : data
   } catch {
