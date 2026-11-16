@@ -102,4 +102,6 @@ test('billing labels, errors and notifications', () => {
   assert.doesNotMatch(billingErrorMessage('select * from secret', 400), /select/)
   assert.match(describeNotification({ type: 'payment_failed', actor_nickname: 'Sam' }), /failed/)
   assert.equal(notificationHref({ type: 'subscription_started' }), '/settings/coach-card')
+  assert.match(describeNotification({ type: 'payment_requested', actor_nickname: 'Sam' }), /pay for your plan/)
+  assert.equal(notificationHref({ type: 'payment_requested' }), '/settings#coaching')
 })

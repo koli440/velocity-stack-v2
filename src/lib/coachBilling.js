@@ -35,3 +35,9 @@ export function connectStateLabel(s) {
 
 export const subscriptionStatusLabel = (st) =>
   ({ active: 'Active', trialing: 'Trial', past_due: 'Payment overdue', unpaid: 'Unpaid', canceled: 'Cancelled', paused: 'Paused', incomplete: 'Incomplete', incomplete_expired: 'Expired' })[st] || 'Unknown'
+
+/** Open "pay for your plan" prompts of the signed-in athlete (accepted application with a paid package). */
+export async function fetchPaymentDue(client) {
+  const { data, error } = await client.rpc('my_payment_due')
+  return { due: error ? [] : data || [], error }
+}

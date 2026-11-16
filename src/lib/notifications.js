@@ -57,6 +57,8 @@ export function describeNotification(notification, actor) {
       return `${name} ended a paid coaching subscription`
     case 'payment_failed':
       return `A coaching payment from ${name} failed`
+    case 'payment_requested':
+      return `${name} accepted you — pay for your plan to get started`
     case 'onboarding_submitted':
       return `${name} applied to be coached by you`
     case 'activity_comment': {
@@ -104,6 +106,7 @@ export function notificationHref(notification) {
     case 'coach_invite':
     case 'coach_request':
     case 'coach_accepted':
+    case 'payment_requested':
     case 'coach_ended':
     case 'coach_replaced':
       return COACHING_HREF
