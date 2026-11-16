@@ -37,8 +37,7 @@ export async function run(c) {
   const result = (proto = 'ftp_20') => JSON.stringify({ protocol: proto, efforts: [{ durationSec: 1200, avgW: 300 }], ftp: 285 })
 
   ok('tables have no client privileges', !(await as(c, U.coach, `SELECT * FROM lab_test_runs`)).ok)
-  ok('module flag off: coach cannot create', !(await create(U.coach, U.rider)).ok)
-  await as(c, U.admin, `SELECT admin_coach_module_allow($1, true)`, [U.coach], { commit: true })
+  ok('works without the coach module flag', (await as(c, U.coach, `SELECT lab_runs_list($1)`, [U.rider])).ok)
   ok('anon cannot call', !(await as(c, null, `SELECT lab_runs_list($1)`, [U.rider])).ok)
   ok('stranger cannot create for a rider', !(await create(U.stranger, U.rider)).ok)
   ok('coach of ended relationship cannot create', !(await create(U.coach, U.rider2)).ok)
@@ -54,7 +53,7 @@ export async function run(c) {
 
   ok('stranger cannot list', !(await as(c, U.stranger, `SELECT lab_runs_list($1)`, [U.rider])).ok)
   ok('coach lists the run', (await as(c, U.coach, `SELECT lab_runs_list($1) AS l`, [U.rider])).rows[0].l.length === 1)
-  ok('athlete lists own runs through the coach module', (await as(c, U.rider, `SELECT lab_runs_list($1)`, [U.rider])).ok)
+  ok('athlete lists own runs (no flag needed)', (await as(c, U.rider, `SELECT lab_runs_list($1)`, [U.rider])).ok)
   ok('athlete cannot read another athlete', !(await as(c, U.rider, `SELECT lab_runs_list($1)`, [U.rider2])).ok)
 
   const sub = (u, run, activity, res) => as(c, u, `SELECT * FROM lab_run_submit($1, $2, $3::jsonb)`, [run, activity, res], { commit: true })
@@ -75,8 +74,9 @@ export async function run(c) {
   ok('coach cancels a planned run', (await as(c, U.coach, `SELECT lab_run_cancel($1)`, [r2.rows[0].id], { commit: true })).ok)
   ok('cancelling removes the planned workout', (await c.query(`SELECT 1 FROM planned_workouts WHERE id = $1`, [r2.rows[0].planned_workout_id])).rowCount === 0)
 
-  ok('athlete creates own run (module via coach)', (await create(U.rider, U.rider, 'ftp_8', '2027-03-01')).ok)
-  ok('athlete without coach cannot use the lab', !(await create(U.nocoach, U.nocoach)).ok)
+  ok('athlete creates own run (no flag)', (await create(U.rider, U.rider, 'ftp_8', '2027-03-01')).ok)
+  ok('athlete without a coach can use own lab (no flag, no coach needed)', (await create(U.nocoach, U.nocoach)).ok)
+  ok('athlete without a coach cannot use another athlete', !(await create(U.nocoach, U.rider)).ok)
   const mine = (await as(c, U.rider, `SELECT lab_runs_list($1) AS l`, [U.rider])).rows[0].l
   ok('athlete sees own results', mine.some((x) => x.status === 'applied' && x.result.ftp === 285))
 }

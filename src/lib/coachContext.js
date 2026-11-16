@@ -24,12 +24,13 @@ export const ATHLETE_PAGES = Object.freeze([
   { key: 'pb-vault', label: 'Personal Bests', sub: '/pb-vault' },
   { key: 'templates', label: 'Templates', sub: '/templates' },
   { key: 'physiology', label: 'Physiology', sub: '/physiology' },
+  // The lab is not part of the flagged coach business layer: any coach/athlete relationship may use it.
+  { key: 'lab', label: 'Lab', sub: '/lab' },
 ])
 
 // Pages of the coach module (behind the `coach_module` feature flag, see docs/coaching.md).
 export const COACH_MODULE_PAGES = Object.freeze([
   { key: 'notes', label: 'Notes', sub: '/notes' },
-  { key: 'lab', label: 'Lab', sub: '/lab' },
 ])
 
 /** Athlete tab/sidebar pages; module pages only when the signed-in user has the coach module. */
@@ -84,8 +85,9 @@ const ATHLETE_ICONS = Object.freeze({
 export const COACH_MODULE_NAV_ITEMS = Object.freeze([
   { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true },
   { key: 'coach-directory', label: 'Coach directory', icon: 'search', href: '/coaches' },
-  { key: 'lab', label: 'Lab', icon: 'flask', href: '/lab' },
 ])
+
+export const LAB_NAV_ITEM = Object.freeze({ key: 'lab', label: 'Lab', icon: 'flask', href: '/lab' })
 
 export function withModuleNavItems(navItems) {
   const at = navItems.findIndex((i) => i.key === 'riders')
@@ -106,9 +108,15 @@ export function withMessagesItem(items) {
   return at < 0 ? [...items, MESSAGES_NAV_ITEM] : [...items.slice(0, at + 1), MESSAGES_NAV_ITEM, ...items.slice(at + 1)]
 }
 
+/** Adds the (unflagged) "Lab" entry after "Riders" (or last). */
+export function withLabItem(items) {
+  const at = items.findIndex((i) => i.key === 'riders')
+  return at < 0 ? [...items, LAB_NAV_ITEM] : [...items.slice(0, at + 1), LAB_NAV_ITEM, ...items.slice(at + 1)]
+}
+
 export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvailable = false) {
   if (!riderId) {
-    const base = moduleEnabled ? withModuleNavItems(navItems) : navItems
+    const base = withLabItem(moduleEnabled ? withModuleNavItems(navItems) : navItems)
     return chatAvailable ? withMessagesItem(base) : base
   }
   return [

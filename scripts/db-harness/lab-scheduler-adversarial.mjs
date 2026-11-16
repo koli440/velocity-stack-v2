@@ -31,8 +31,7 @@ export async function run(c) {
     as(c, u, `SELECT * FROM lab_schedule_save($1,$2,$3,$4,$5)`, [a, proto, weeks, start, end], { commit: true })
 
   ok('tables have no client privileges', !(await as(c, U.coach, `SELECT * FROM lab_test_schedules`)).ok && !(await as(c, U.coach, `SELECT * FROM lab_schedule_reminders`)).ok)
-  ok('flag off: coach cannot save', !(await save(U.coach, U.rider)).ok)
-  await as(c, U.admin, `SELECT admin_coach_module_allow($1, true)`, [U.coach], { commit: true })
+  ok('works without the coach module flag', (await as(c, U.coach, `SELECT * FROM lab_schedules_list($1)`, [U.rider])).ok)
   ok('stranger cannot save', !(await save(U.stranger, U.rider)).ok)
   ok('anon cannot list', !(await as(c, null, `SELECT * FROM lab_schedules_list($1)`, [U.rider])).ok)
   ok('bad protocol / interval / dates rejected',
