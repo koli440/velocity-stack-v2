@@ -10,6 +10,7 @@ export const ADMIN_LINKS = [
   ['/admin/comment-reports', 'Reported comments'],
   ['/admin/template-reruns', 'Template re-run'],
   ['/admin/partner-apps', 'Partner apps'],
+  ['/admin/coach-module', 'Coach module'],
 ]
 
 // Pill-style admin navigation; scrolls horizontally on narrow screens.

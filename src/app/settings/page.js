@@ -13,6 +13,7 @@ import PowerZonesPanel from '../../components/PowerZonesPanel'
 import FtpHistoryPanel from '../../components/FtpHistoryPanel'
 import WeightHistoryPanel from '../../components/WeightHistoryPanel'
 import CoachingPanel from '../../components/CoachingPanel'
+import SharedNotesPanel from '../../components/SharedNotesPanel'
 import CoachBadge, { useCoachNames } from '../../components/CoachBadge'
 import CoachEditsList from '../../components/CoachEditsList'
 import { PROFILE_UPDATED_EVENT } from '../../lib/navigation'
@@ -441,6 +442,7 @@ export default function SettingsPage() {
 
       <div className="mt-6">
         <CoachingPanel userId={user?.id} />
+        <SharedNotesPanel />
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400">
