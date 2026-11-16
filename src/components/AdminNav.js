@@ -13,6 +13,7 @@ export const ADMIN_LINKS = [
   ['/admin/coach-module', 'Coach module'],
   ['/admin/coach-cards', 'Coach card reports'],
   ['/admin/chat-reports', 'Chat reports'],
+  ['/admin/coach-licences', 'Coach licences'],
 ]
 
 // Pill-style admin navigation; scrolls horizontally on narrow screens.

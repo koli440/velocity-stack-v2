@@ -1,3 +1,4 @@
+import LicenceBadge from '../../../components/LicenceBadge'
 import { notFound } from 'next/navigation'
 import { loadCoachCard } from '../../../lib/server/coachCardStore'
 import { accentOf, cardDescription, cardPath, priceLabel } from '../../../lib/coachCard'
@@ -43,6 +44,7 @@ export default async function CoachCardPage({ params }) {
           )}
           <div>
             <h1 className="text-2xl font-black text-slate-900 dark:text-white">{card.name}</h1>
+            <LicenceBadge licence={card.licence} />
             {card.headline && <p className={`font-bold ${accent.text}`}>{card.headline}</p>}
             {card.location && <p className="text-sm text-slate-500">{card.location}</p>}
           </div>
