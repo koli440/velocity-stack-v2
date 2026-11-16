@@ -83,7 +83,7 @@ const ATHLETE_ICONS = Object.freeze({
 
 // Own (non-athlete-context) nav entries of the coach module, shown after "Riders" while the flag is on for the user.
 export const COACH_MODULE_NAV_ITEMS = Object.freeze([
-  { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true },
+  { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true, leavesContext: true },
   { key: 'coach-directory', label: 'Coach directory', icon: 'search', href: '/coaches' },
 ])
 
@@ -123,7 +123,13 @@ export function withPublicDirectoryItem(items) {
   return at < 0 ? [...items, COACH_DIRECTORY_NAV_ITEM] : [...items.slice(0, at + 1), COACH_DIRECTORY_NAV_ITEM, ...items.slice(at + 1)]
 }
 
-export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvailable = false, signedIn = true) {
+/** Thread with this athlete (coach side), else the Messages list where the start-conversation flow lives. */
+export function athleteMessagesHref(threads, riderId) {
+  const t = (threads || []).find((x) => x.role === 'coach' && String(x.other_id) === String(riderId) && x.status !== 'ended')
+  return t ? `/chat/${t.id}` : '/chat'
+}
+
+export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvailable = false, signedIn = true, threads = []) {
   if (!riderId) {
     const listed = signedIn ? (moduleEnabled ? withModuleNavItems(navItems) : navItems) : withPublicDirectoryItem(navItems)
     const base = withLabItem(listed)
@@ -137,6 +143,7 @@ export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvail
       href: athletePath(riderId, p.sub),
       exact: !p.sub,
     })),
+    { key: 'messages', label: 'Messages', icon: 'chat', href: athleteMessagesHref(threads, riderId), exact: true },
     { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true, leavesContext: true },
   ]
 }
