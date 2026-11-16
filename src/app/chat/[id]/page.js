@@ -8,6 +8,8 @@ import {
   canEditMessage, chatErrorMessage, deleteMessage, editMessage, fetchMessages, markRead, mergeMessages,
   MAX_MESSAGE_LENGTH, reportMessage, sendMessage,
 } from '../../../lib/coachChat'
+import Icon from '../../../components/Icon'
+import { ErrorNote, StatusNote, adminBtn, adminCard, adminInput } from '../../../components/admin/AdminUi'
 
 export default function ChatThreadPage() {
   const { id } = useParams()
@@ -46,8 +48,11 @@ export default function ChatThreadPage() {
 
   useEffect(() => { bottom.current?.scrollIntoView?.({ block: 'end' }) }, [messages.length])
 
-  if (thread === undefined) return <p className="text-sm text-slate-400">Loading…</p>
-  if (!thread) return <p className="text-sm text-slate-500">Conversation not found or no longer available. <Link href="/chat" className="underline">Back</Link></p>
+  if (thread === undefined) return <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Loading conversation…</p>
+  if (!thread) return <div className={`${adminCard} max-w-2xl mx-auto text-sm text-slate-700 dark:text-slate-200 space-y-3`}>
+    <p>Conversation not found or no longer available.</p>
+    <Link href="/chat" className={adminBtn.secondary}><Icon name="chevronLeft" /> Messages</Link>
+  </div>
 
   const act = async (fn) => {
     setBusy(true)
@@ -72,23 +77,27 @@ export default function ChatThreadPage() {
     if (reason) act(() => reportMessage(supabase, m.id, reason)).then((okay) => okay && setMsg({ text: 'Reported. An admin will review it.' }))
   }
 
+  const link = 'inline-flex items-center min-h-[32px] underline underline-offset-2 font-semibold'
   return (
-    <div className="max-w-2xl mx-auto space-y-3" data-testid="chat-thread">
-      <Link href="/chat" className="text-xs underline text-slate-500">← Messages</Link>
-      <ul className="space-y-2">
+    <div className="max-w-2xl mx-auto flex flex-col gap-3 min-h-[calc(100dvh-10rem)]" data-testid="chat-thread">
+      <Link href="/chat" className="inline-flex items-center gap-1 min-h-[44px] text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-orange-600 dark:hover:text-orange-400">
+        <Icon name="chevronLeft" /> Messages
+      </Link>
+      {messages.length === 0 && <p className="text-sm text-center text-slate-600 dark:text-slate-300 py-8">No messages yet. Say hello.</p>}
+      <ul className="flex-1 space-y-3">
         {messages.map((m) => {
           const mine = m.sender_id === me
           return (
             <li key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${mine ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'}`}>
-                {m.deleted ? <em className="opacity-70">Message deleted</em> : <p className="whitespace-pre-wrap break-words">{m.body}</p>}
-                {m.activity && <Link href={`/activities/${m.activity.id}`} className="block text-xs underline mt-1">Activity: {m.activity.title}</Link>}
-                {m.workout && <p className="text-xs mt-1">Workout: {m.workout.title}</p>}
-                <p className="text-[10px] opacity-70 mt-1 flex gap-2">
-                  {new Date(m.created_at).toLocaleString()}{m.edited_at && ' · edited'}
-                  {!m.deleted && thread.can_send && mine && canEditMessage(m, me) && <button type="button" onClick={() => edit(m)} className="underline">Edit</button>}
-                  {!m.deleted && thread.can_send && mine && <button type="button" onClick={() => remove(m)} className="underline">Delete</button>}
-                  {!m.deleted && !mine && <button type="button" onClick={() => report(m)} className="underline">Report</button>}
+              <div className={`max-w-[88%] sm:max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${mine ? 'bg-orange-600 text-white rounded-br-md' : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 rounded-bl-md'}`}>
+                {m.deleted ? <em className="opacity-80">Message deleted</em> : <p className="whitespace-pre-wrap break-words">{m.body}</p>}
+                {m.activity && <Link href={`/activities/${m.activity.id}`} className={`${link} text-xs mt-1`}>Activity: {m.activity.title}</Link>}
+                {m.workout && <p className="text-xs mt-1 font-semibold">Workout: {m.workout.title}</p>}
+                <p className={`text-xs mt-1 flex flex-wrap items-center gap-x-3 ${mine ? 'text-white/90' : 'text-slate-600 dark:text-slate-300'}`}>
+                  <span>{new Date(m.created_at).toLocaleString()}{m.edited_at && ' · edited'}</span>
+                  {!m.deleted && thread.can_send && mine && canEditMessage(m, me) && <button type="button" onClick={() => edit(m)} className={link}>Edit</button>}
+                  {!m.deleted && thread.can_send && mine && <button type="button" onClick={() => remove(m)} className={link}>Delete</button>}
+                  {!m.deleted && !mine && <button type="button" onClick={() => report(m)} className={link}>Report</button>}
                 </p>
               </div>
             </li>
@@ -96,15 +105,15 @@ export default function ChatThreadPage() {
         })}
       </ul>
       <div ref={bottom} />
-      {msg && <p className={`text-xs ${msg.error ? 'text-red-500' : 'text-emerald-600'}`}>{msg.text}</p>}
+      {msg && (msg.error ? <ErrorNote>{msg.text}</ErrorNote> : <StatusNote>{msg.text}</StatusNote>)}
       {thread.can_send ? (
-        <form onSubmit={send} className="flex gap-2">
+        <form onSubmit={send} className="sticky bottom-0 glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-2 flex items-end gap-2">
           <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={MAX_MESSAGE_LENGTH} rows={2} placeholder="Write a message" aria-label="Message"
-            className="flex-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent p-2 text-sm" />
-          <button disabled={busy || !body.trim()} className="rounded-xl bg-orange-500 text-white text-sm font-bold px-4 disabled:opacity-50">Send</button>
+            className={`${adminInput} !py-2 resize-none`} />
+          <button disabled={busy || !body.trim()} className={`${adminBtn.primary} shrink-0`}>Send</button>
         </form>
       ) : (
-        <p className="text-xs text-slate-500">This conversation is read-only because the coaching relationship has ended.</p>
+        <p className={`${adminCard} text-sm text-slate-700 dark:text-slate-200`}>This conversation is read-only because the coaching relationship has ended.</p>
       )}
     </div>
   )
