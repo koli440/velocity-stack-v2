@@ -141,8 +141,8 @@ export default function AppShell({ children }) {
   // complete); signed-in users get the full app shell once the session is known.
   if (isLegalPage) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100">
-        <header className="border-b border-slate-200 dark:border-surface-darkBorder bg-white/60 dark:bg-surface-darkCard/40 px-4 sm:px-6 py-3">
+      <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-surface-dark text-slate-900 dark:text-slate-100 print:bg-white print:text-black">
+        <header className="print:hidden border-b border-slate-200 dark:border-surface-darkBorder bg-white/60 dark:bg-surface-darkCard/40 px-4 sm:px-6 py-3">
           <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
             <Link href="/" className="font-extrabold text-slate-800 dark:text-slate-200">
               Velocity<span className="text-emerald-500 dark:text-brand-neon">Stack</span>
@@ -156,8 +156,8 @@ export default function AppShell({ children }) {
             </nav>
           </div>
         </header>
-        <main className="flex-1 w-full px-4 sm:px-6 py-6 sm:py-10">{children}</main>
-        <Footer />
+        <main className="flex-1 w-full px-4 sm:px-6 py-6 sm:py-10 print:p-0">{children}</main>
+        <div className="print:hidden"><Footer /></div>
       </div>
     )
   }
