@@ -8,6 +8,7 @@ export const LAB_FEATURES = Object.freeze([
   { key: 'durability', label: 'Durability', desc: 'Fresh versus fatigued 5-minute power after about 2000 kJ.', icon: 'flask' },
   { key: 'decoupling', label: 'Efficiency and decoupling', desc: 'Aerobic decoupling (Pw:HR) and efficiency factor across steady rides.', icon: 'flask' },
   { key: 'forms', label: 'Field forms', desc: 'Body composition, mobility checklist and sprint test with history.', icon: 'flask' },
+  { key: 'reports', label: 'Reports', desc: 'Branded, revocable share links with logo and licence badge; print to PDF.', icon: 'flask' },
 ])
 
 export const labFeature = (key) => LAB_FEATURES.find((f) => f.key === key) || null
