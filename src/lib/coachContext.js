@@ -114,9 +114,19 @@ export function withLabItem(items) {
   return at < 0 ? [...items, LAB_NAV_ITEM] : [...items.slice(0, at + 1), LAB_NAV_ITEM, ...items.slice(at + 1)]
 }
 
-export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvailable = false) {
+export const COACH_DIRECTORY_NAV_ITEM = COACH_MODULE_NAV_ITEMS[1]
+
+/** Logged-out visitors: the public coach directory, after the public tools (Pursuit Strategist). */
+export function withPublicDirectoryItem(items) {
+  if (items.some((i) => i.key === COACH_DIRECTORY_NAV_ITEM.key)) return items
+  const at = items.findIndex((i) => i.key === 'pursuit')
+  return at < 0 ? [...items, COACH_DIRECTORY_NAV_ITEM] : [...items.slice(0, at + 1), COACH_DIRECTORY_NAV_ITEM, ...items.slice(at + 1)]
+}
+
+export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvailable = false, signedIn = true) {
   if (!riderId) {
-    const base = withLabItem(moduleEnabled ? withModuleNavItems(navItems) : navItems)
+    const listed = signedIn ? (moduleEnabled ? withModuleNavItems(navItems) : navItems) : withPublicDirectoryItem(navItems)
+    const base = withLabItem(listed)
     return chatAvailable ? withMessagesItem(base) : base
   }
   return [

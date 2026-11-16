@@ -12,7 +12,7 @@ import {
   formatDistanceKm,
   weeklyVolume,
 } from '../coachContext.js'
-import { NAV_ITEMS } from '../navigation.js'
+import { NAV_ITEMS, isNavItemLocked } from '../navigation.js'
 
 const RID = '11111111-2222-3333-4444-555555555555'
 const ME = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
@@ -134,6 +134,14 @@ test('module nav items (dashboard + directory) follow the flag and sit after Rid
   assert.equal(c.sidebarItems(nav, null, false, true).find((i) => i.key === 'messages').icon, 'chat')
   assert.ok(!c.sidebarItems(nav, 'rid', true, true).some((i) => i.key === 'messages'))
   assert.equal(c.COACH_MODULE_NAV_ITEMS.find((i) => i.key === 'coach-directory').href, '/coaches')
+  const anon = c.sidebarItems(NAV_ITEMS, null, false, false, false)
+  const keys = anon.map((i) => i.key)
+  assert.equal(keys.indexOf('coach-directory'), keys.indexOf('pursuit') + 1)
+  assert.equal(anon.find((i) => i.key === 'coach-directory').icon, c.COACH_MODULE_NAV_ITEMS.find((i) => i.key === 'coach-directory').icon)
+  assert.ok(keys.includes('gears') && keys.includes('pursuit') && !keys.includes('coach-home'))
+  assert.equal(isNavItemLocked(anon.find((i) => i.key === 'coach-directory'), false), false)
+  assert.equal(isNavItemLocked(anon.find((i) => i.key === 'riders'), false), true)
+  assert.ok(!c.sidebarItems(NAV_ITEMS, null, false, false, true).some((i) => i.key === 'coach-directory'), 'signed-in without the flag unchanged')
   assert.ok(c.sidebarItems(nav, 'rid', false).some((i) => i.key === 'lab'), 'lab tab in athlete context without the flag')
   assert.ok(!c.COACH_MODULE_PAGES.some((p) => p.key === 'lab'))
 })
