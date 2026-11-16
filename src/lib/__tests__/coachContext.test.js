@@ -123,3 +123,12 @@ test('chrome visibility and context-preserving links', async () => {
   assert.equal(c.contextualHref('/activities/a1', null), '/activities/a1')
   assert.equal(c.contextualHref('/templates', RID), '/templates')
 })
+
+import * as c from '../coachContext.js'
+
+test('module nav items (dashboard + directory) follow the flag and sit after Riders', () => {
+  const nav = [{ key: 'home' }, { key: 'riders' }, { key: 'about' }]
+  assert.deepEqual(c.sidebarItems(nav, null, false).map((i) => i.key), ['home', 'riders', 'about'])
+  assert.deepEqual(c.sidebarItems(nav, null, true).map((i) => i.key), ['home', 'riders', 'coach-home', 'coach-directory', 'about'])
+  assert.equal(c.COACH_MODULE_NAV_ITEMS.find((i) => i.key === 'coach-directory').href, '/coaches')
+})

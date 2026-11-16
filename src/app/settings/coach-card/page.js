@@ -11,8 +11,8 @@ import Icon from '../../../components/Icon'
 import { AdminPage, AdminMessage, ErrorNote, StatusNote, adminCard, adminInput, adminBtn, adminMuted } from '../../../components/admin/AdminUi'
 import {
   ACCENTS, BIO_MAX, CURRENCIES, DISCIPLINE_OPTIONS, HEADLINE_MAX, INTERVALS, PACKAGE_KINDS, PACKAGE_MAX,
-  cardPath, cardUrl, coachCardErrorMessage, fetchMyCoachCard, parseList, saveCoachCard, setCoachCardVisibility,
-  validateCard,
+  COACH_DIRECTORY_PATH, COACH_MEDIA_BUCKET, cardPath, cardUrl, coachCardErrorMessage, fetchMyCoachCard, parseList, removeCoachMediaObjects,
+  safeCoachMediaUrl, saveCoachCard, setCoachCardVisibility, uploadCoachMedia, validateCard,
 } from '../../../lib/coachCard'
 
 const field = adminInput
@@ -20,7 +20,7 @@ const label = 'block text-sm font-semibold text-slate-800 dark:text-slate-100 mb
 const hint = `text-xs mt-1 ${adminMuted}`
 const h2 = 'text-base font-extrabold text-slate-900 dark:text-white'
 const btn = adminBtn.primary
-const EMPTY = { slug: '', headline: '', bio: '', accent: 'orange', disciplines: [], languages: [], location: '', accepting_athletes: true, max_athletes: '', packages: [] }
+const EMPTY = { logo_url: null, banner_url: null, slug: '', headline: '', bio: '', accent: 'orange', disciplines: [], languages: [], location: '', accepting_athletes: true, max_athletes: '', packages: [] }
 
 export default function CoachCardSettingsPage() {
   const enabled = useCoachModule()
@@ -30,6 +30,7 @@ export default function CoachCardSettingsPage() {
   const [langs, setLangs] = useState('')
   const [msg, setMsg] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [userId, setUserId] = useState(null)
 
   const load = useCallback(async () => {
     const { card: c } = await fetchMyCoachCard(supabase)
@@ -43,6 +44,7 @@ export default function CoachCardSettingsPage() {
     }
   }, [])
   useEffect(() => { if (enabled) load() }, [enabled, load])
+  useEffect(() => { supabase.auth.getSession().then(({ data }) => setUserId(data?.session?.user?.id || null)) }, [])
 
   if (!enabled) return <AdminMessage>The coach module is not available for your account yet.</AdminMessage>
   if (!card) return <AdminMessage>Loading…</AdminMessage>
@@ -60,7 +62,23 @@ export default function CoachCardSettingsPage() {
     setBusy(false)
     if (error) return setMsg({ error: true, text: coachCardErrorMessage(error) })
     setMsg({ text: 'Saved.' })
+    for (const kind of ['logo', 'banner']) {
+      const url = next[`${kind}_url`]
+      const prefix = `/storage/v1/object/public/${COACH_MEDIA_BUCKET}/`
+      const keepPath = url ? decodeURIComponent(new URL(url).pathname.slice(prefix.length)) : null
+      removeCoachMediaObjects(supabase, { userId, kind, keepPath })
+    }
     load()
+  }
+
+  const pickImage = async (kind, file) => {
+    if (!file) return
+    setBusy(true)
+    const { url, error } = await uploadCoachMedia(supabase, { userId, kind, file })
+    setBusy(false)
+    if (error) return setMsg({ error: true, text: error.message || 'Upload failed.' })
+    set({ [`${kind}_url`]: url })
+    setMsg({ text: 'Image uploaded. Save the card to publish it.' })
   }
 
   const visibility = async (isPublic, isListed) => {
@@ -75,6 +93,35 @@ export default function CoachCardSettingsPage() {
     <AdminPage title="Coach card" description="Your public coaching profile: how athletes find you and what you offer." back={{ href: '/settings', label: 'Settings' }} width="max-w-2xl">
       {msg && (msg.error ? <ErrorNote>{msg.text}</ErrorNote> : <StatusNote>{msg.text}</StatusNote>)}
       <form onSubmit={save} className="space-y-5">
+        <section className={`${adminCard} space-y-4`}>
+        <div>
+          <h2 className={h2}>Logo and banner</h2>
+          <p className={hint}>Shown on your public card and in the directory. JPG, PNG or WebP, up to 5 MB. A wide banner (about 3:1) works best.</p>
+        </div>
+        {[['banner', 'Cover banner', 'h-24 w-full rounded-xl object-cover'], ['logo', 'Logo', 'h-20 w-20 rounded-xl object-contain bg-white border border-slate-200 dark:border-slate-700']].map(([kind, title, cls]) => {
+          const url = safeCoachMediaUrl(card[`${kind}_url`])
+          return (
+            <div key={kind} className="space-y-2">
+              <span className={label}>{title}</span>
+              {url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={url} alt={`${title} preview`} className={cls} />
+              ) : (
+                <p className={`text-sm ${adminMuted}`}>No {title.toLowerCase()} yet.</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <label className={`${adminBtn.secondary} cursor-pointer`}>
+                  <Icon name="upload" /> {url ? 'Replace' : 'Upload'}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={busy || !userId} aria-label={`Upload ${title.toLowerCase()}`}
+                    onChange={(e) => { pickImage(kind, e.target.files?.[0]); e.target.value = '' }} />
+                </label>
+                {url && <button type="button" className={adminBtn.danger} onClick={() => set({ [`${kind}_url`]: null })}><Icon name="trash" /> Remove</button>}
+              </div>
+            </div>
+          )
+        })}
+        </section>
+
         <section className={`${adminCard} space-y-4`}>
         <h2 className={h2}>Profile</h2>
         <div>
@@ -168,9 +215,18 @@ export default function CoachCardSettingsPage() {
             Your card is {card.is_public ? 'public' : 'private'}{card.is_listed ? ' and listed in the coach directory' : ''}.
             {card.is_public && <> <Link className="font-bold underline text-orange-700 dark:text-orange-400" href={cardPath(card.slug)}>View it</Link>.</>}
           </p>
+          <div className={`text-sm space-y-1 ${adminMuted}`}>
+            <p><strong>Published</strong>: anyone with your link can open your card.</p>
+            <p>
+              <strong>Listed in the directory</strong>: your card also appears on the public{' '}
+              <Link className="font-bold underline text-orange-700 dark:text-orange-400" href={COACH_DIRECTORY_PATH}>coach directory</Link>.
+              It is off by default and needs a published card.
+            </p>
+            <p>Directory status: <strong>{card.is_listed ? 'you are listed' : card.is_public ? 'not listed (opt in below)' : 'not listed (publish first)'}</strong>.</p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button className={card.is_public ? adminBtn.secondary : adminBtn.primary} disabled={busy} onClick={() => visibility(!card.is_public, card.is_public ? false : card.is_listed)}>{card.is_public ? 'Unpublish' : 'Publish'}</button>
-            {card.is_public && <button className={adminBtn.secondary} disabled={busy} onClick={() => visibility(true, !card.is_listed)}>{card.is_listed ? 'Remove from directory' : 'List in directory'}</button>}
+            {card.is_public && <button className={adminBtn.secondary} disabled={busy} onClick={() => visibility(true, !card.is_listed)}>{card.is_listed ? 'Remove from directory' : 'List me in the directory'}</button>}
           </div>
         </section>
       )}

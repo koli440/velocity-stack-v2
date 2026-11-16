@@ -78,13 +78,25 @@ const ATHLETE_ICONS = Object.freeze({
   notes: 'clipboard',
 })
 
+// Own (non-athlete-context) nav entries of the coach module, shown after "Riders" while the flag is on for the user.
+export const COACH_MODULE_NAV_ITEMS = Object.freeze([
+  { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true },
+  { key: 'coach-directory', label: 'Coach directory', icon: 'search', href: '/coaches' },
+])
+
+export function withModuleNavItems(navItems) {
+  const at = navItems.findIndex((i) => i.key === 'riders')
+  if (at < 0) return [...navItems, ...COACH_MODULE_NAV_ITEMS]
+  return [...navItems.slice(0, at + 1), ...COACH_MODULE_NAV_ITEMS, ...navItems.slice(at + 1)]
+}
+
 /**
  * Sidebar / mobile drawer items. Outside athlete context: the coach's own items. In athlete context
  * ONLY athlete-scoped pages (plus a way back to the coach dashboard); every item of the coach's own
  * pages (telemetry, tools, feedback, own settings...) is hidden so nothing silently exits the context.
  */
 export function sidebarItems(navItems, riderId, moduleEnabled = false) {
-  if (!riderId) return navItems
+  if (!riderId) return moduleEnabled ? withModuleNavItems(navItems) : navItems
   return [
     ...athletePages(moduleEnabled).map((p) => ({
       key: p.key,
