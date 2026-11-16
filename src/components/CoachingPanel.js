@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
+import ChatLink from './ChatLink'
 import BotBadge from './BotBadge'
 import { authorName } from '../lib/social'
 import {
@@ -108,6 +109,7 @@ export default function CoachingPanel({ userId }) {
         </p>
       </div>
 
+      <ChatLink />
       {error && <p className="text-xs text-rose-500">{error}</p>}
       {!loaded && <p className="text-xs text-slate-400">Loading…</p>}
       {loaded && empty && (
