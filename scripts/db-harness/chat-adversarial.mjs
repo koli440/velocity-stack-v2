@@ -135,6 +135,19 @@ export async function run(c) {
   const R4 = (await c.query(`INSERT INTO coaching_relationships(coach_id, rider_id, initiated_by, status) VALUES ($1,$2,$2,'ended') RETURNING id`, [U.coach, U.admin])).rows[0].id
   ok('ended relationship without messages is not openable', (await list(U.admin, R4)) === null)
 
+  // Dual role: one account coaches an athlete AND is the rider of its own coach (both creation orders)
+  for (const order of ['asCoachFirst', 'asRiderFirst']) {
+    const dual = uid(), myCoach = uid(), myAthlete = uid()
+    for (const [id, n] of [[dual, 'dual'], [myCoach, 'mycoach'], [myAthlete, 'myathlete']]) {
+      await c.query(`INSERT INTO auth.users(id,email) VALUES ($1,$2)`, [id, n + uid() + '@x.test'])
+      await c.query(`INSERT INTO public.profiles(id, nickname) VALUES ($1,$2) ON CONFLICT (id) DO UPDATE SET nickname = EXCLUDED.nickname`, [id, n])
+    }
+    const mk = (co, ri) => c.query(`INSERT INTO coaching_relationships(coach_id, rider_id, initiated_by, status) VALUES ($1,$2,$2,'active')`, [co, ri])
+    if (order === 'asCoachFirst') { await mk(dual, myAthlete); await mk(myCoach, dual) } else { await mk(myCoach, dual); await mk(dual, myAthlete) }
+    const sum = (await as(c, dual, `SELECT chat_threads_summary() AS s`)).rows[0].s
+    ok('dual role lists both threads (' + order + ')', sum.length === 2 && sum.some((t) => t.role === 'rider' && t.other_id === myCoach) && sum.some((t) => t.role === 'coach' && t.other_id === myAthlete))
+  }
+
   // Ending: rider keeps read access, coach loses it, nobody sends
   await as(c, U.coach, `SELECT end_coaching($1)`, [R1], { commit: true })
   ok('coach loses access', (await list(U.coach, R1)) === null)
