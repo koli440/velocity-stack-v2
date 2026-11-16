@@ -7,9 +7,9 @@ Guided field tests: FTP ramp, 20-minute, 8-minute, CP3/CP12, CP5/CP20.
 - **Tests**: formula unit tests; harness for scoping, status transitions, apply only by coach.
 
 ## Implementation (as built)
-- Migration `20270158000000_lab_runs.sql`: table `lab_test_runs` (no client privileges), RPCs `lab_run_create`, `lab_runs_list`, `lab_run_submit`, `lab_run_mark_applied`, `lab_run_cancel`, access helpers `lab_can_access` (athlete or `is_coach_of`) and `lab_gate` (module flag of the caller, or, for the athlete's own data, of an active coach). Notification types `lab_test_planned`, `lab_test_due`, `lab_test_result` are added for the whole Lab module here.
+- Migration `20270158000000_lab_runs.sql`: table `lab_test_runs` (no client privileges), RPCs `lab_run_create`, `lab_runs_list`, `lab_run_submit`, `lab_run_mark_applied`, `lab_run_cancel`, access helpers `lab_can_access` (athlete or `is_coach_of`) and `lab_gate` (authenticated and `lab_can_access`; no flag since `20270162000000_lab_ungate.sql`). Notification types `lab_test_planned`, `lab_test_due`, `lab_test_result` are added for the whole Lab module here.
 - Creating a run plans a workout (`planned_workouts`, structured DSL + manifest, "set by coach" stamp) and notifies the athlete when a coach plans it. Cancelling an unfinished run removes the workout.
 - Detection is client side (`src/lib/labProtocols.js`, `labRuns.js`): best windows of the power stream of rides from one day before to two days after the planned day; the strongest candidate is proposed, then stored with `lab_run_submit` (activity must belong to the athlete).
 - Apply uses `applyThreshold` (FTP history, "set by coach" and RLS rules); `lab_run_mark_applied` then records what was applied. Zones follow the FTP unless custom zones are set. CP tests propose FTP = CP (the coach can pick another value in physiology).
-- Decision: the athlete can use the lab when their active coach has the module flag, so athletes need no flag themselves; own results at `/lab/protocols`.
+- Decision: the lab is not flag-gated: athletes use their own lab with or without a coach; own results at `/lab/protocols`.
 - Routes: `/coach/<id>/lab[/protocols]` (coach) and `/lab[/protocols]` (athlete). Harness: `lab-runs-adversarial.mjs`.
