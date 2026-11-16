@@ -23,3 +23,4 @@ Coach-facing physiology lab, flag-gated by `coach_module`. Specs below; each lin
 - 1 Protocol runner: implemented (see its spec, "Implementation").
 - 2 Lactate step test: implemented.
 - 3 Test scheduler: implemented.
+- 4 Power profile: implemented.

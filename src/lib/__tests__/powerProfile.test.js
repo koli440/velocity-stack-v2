@@ -1,39 +1,40 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mapCurvesToProfile, buildRadarData, hasProfileData, POWER_PROFILE_AXES, allTimeStyle } from '../powerProfile.js'
+import { ageFactor, scoreFromAnchors, bestsFromCurve, mergeBests, computeProfile, classifyPhenotype } from '../powerProfile.js'
 
-test('maps plain power curve to 7 axes, missing -> null', () => {
-  const pts = mapCurvesToProfile({ '15s': 900, '1m': 600, '5m': 350, '1h': 250, '30s': 700 })
-  assert.equal(pts.length, 7)
-  assert.deepEqual(pts.map((p) => p.value), [900, 600, null, 350, null, null, 250])
+test('ageFactor', () => {
+  assert.equal(ageFactor(30), 1)
+  assert.ok(Math.abs(ageFactor(55) - 0.84) < 1e-9)
+  assert.equal(ageFactor(120), 0.7)
 })
 
-test('accepts baseline curves object with { value } points', () => {
-  const pts = mapCurvesToProfile({ Power: { '3m': { value: 400, activityId: 'a' } }, Speed: {} })
-  assert.equal(pts[2].value, 400)
-  assert.equal(pts[0].value, null)
+test('scoreFromAnchors interpolates and clamps', () => {
+  const a = [2, 3, 4, 5, 6]
+  assert.equal(scoreFromAnchors(1, a), 0)
+  assert.equal(scoreFromAnchors(3.5, a), 37.5)
+  assert.equal(scoreFromAnchors(9, a), 100)
 })
 
-test('W/kg conversion and missing weight', () => {
-  assert.equal(mapCurvesToProfile({ '1m': 600 }, { perKg: true, weightKg: 75 })[1].value, 8)
-  assert.equal(mapCurvesToProfile({ '1m': 600 }, { perKg: true })[1].value, null)
+test('bests from curves, numbers or objects, max over curves', () => {
+  assert.deepEqual(bestsFromCurve({ '5s': 800, '1m': { value: 500 }, '5m': 'x' }), { '5s': 800, '1m': 500 })
+  assert.deepEqual(mergeBests([{ '5s': 800 }, { '5s': 900, '20m': 300 }, null]), { '5s': 900, '20m': 300 })
 })
 
-test('handles empty/invalid input', () => {
-  assert.equal(hasProfileData(mapCurvesToProfile(null)), false)
-  assert.equal(hasProfileData(mapCurvesToProfile({ '1m': 'x', '3m': 0 })), false)
+test('profile needs weight and classifies a sprinter and a time trialist', () => {
+  assert.ok(computeProfile({ bests: {}, weightKg: 0 }).error)
+  const sprinter = computeProfile({ bests: { '5s': 1500, '1m': 700, '5m': 330, '20m': 270 }, weightKg: 75 })
+  assert.equal(sprinter.phenotype.type, 'sprinter')
+  const tt = computeProfile({ bests: { '5s': 900, '1m': 500, '5m': 400, '20m': 340 }, weightKg: 70 })
+  assert.equal(tt.phenotype.type, 'time_trialist')
 })
 
-test('buildRadarData merges series', () => {
-  const d = buildRadarData({ a: mapCurvesToProfile({ '15s': 10 }), b: mapCurvesToProfile({ '15s': 20 }) })
-  assert.equal(d.length, POWER_PROFILE_AXES.length)
-  assert.deepEqual([d[0].a, d[0].b, d[1].a], [10, 20, null])
-})
-
-test('allTimeStyle is solid 1px and theme-dependent', () => {
-  const light = allTimeStyle(false)
-  const dark = allTimeStyle(true)
-  assert.equal(light.strokeWidth, 1)
-  assert.equal(light.strokeDasharray, undefined)
-  assert.notEqual(light.stroke, dark.stroke)
+test('sex and age adjust the score; missing duration gives no phenotype', () => {
+  const b = { '5s': 1000, '1m': 500, '5m': 330, '20m': 280 }
+  const m = computeProfile({ bests: b, weightKg: 70, sex: 'male' })
+  const f = computeProfile({ bests: b, weightKg: 70, sex: 'female' })
+  const old = computeProfile({ bests: b, weightKg: 70, age: 55 })
+  assert.ok(f.rows[2].score > m.rows[2].score)
+  assert.ok(old.rows[2].score > m.rows[2].score)
+  assert.equal(classifyPhenotype({ '5s': 50, '1m': 50, '5m': null, '20m': 50 }), null)
+  assert.equal(classifyPhenotype({ '5s': 50, '1m': 52, '5m': 50, '20m': 51 }).type, 'all_rounder')
 })
