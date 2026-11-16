@@ -136,7 +136,7 @@ export async function run(c) {
   // Accept -> auto-setup
   const rel = (await c.query(`SELECT id FROM coaching_relationships WHERE coach_id=$1 AND rider_id=$2`, [U.coach, U.rider])).rows[0].id
   ok('rider cannot accept own request', !(await as(c, U.rider, `SELECT accept_coaching($1)`, [rel])).ok)
-  ok('coach accepts', (await as(c, U.coach, `SELECT accept_coaching($1)`, [rel], { commit: true })).ok)
+  ok('coach accepts', (await as(c, U.coach, `SELECT accept_application($1)`, [rel], { commit: true })).ok)
   ok('relationship active', (await c.query(`SELECT status FROM coaching_relationships WHERE id=$1`, [rel])).rows[0].status === 'active')
   const ftp = (await c.query(`SELECT ftp_w, set_by_coach FROM ftp_history WHERE user_id=$1`, [U.rider])).rows
   ok('FTP created, not stamped as coach', ftp.length === 1 && ftp[0].ftp_w === 280 && ftp[0].set_by_coach === false)
@@ -161,7 +161,7 @@ export async function run(c) {
   // Existing FTP is never overwritten; same-day thresholds/weight kept
   await submit(U.rider2, 'coach-one', { a: answers({ history: { ftp_w: 330 } }) })
   const rel2 = (await c.query(`SELECT id FROM coaching_relationships WHERE coach_id=$1 AND rider_id=$2`, [U.coach, U.rider2])).rows[0].id
-  await as(c, U.coach, `SELECT accept_coaching($1)`, [rel2], { commit: true })
+  await as(c, U.coach, `SELECT accept_application($1)`, [rel2], { commit: true })
   const f2 = (await c.query(`SELECT ftp_w FROM ftp_history WHERE user_id=$1`, [U.rider2])).rows
   ok('existing FTP kept', f2.length === 1 && f2[0].ftp_w === 250)
   ok('skip is logged', (await c.query(`SELECT 1 FROM onboarding_setup_log l JOIN onboarding_submissions s ON s.id=l.submission_id WHERE s.rider_id=$1 AND l.target='ftp' AND l.status='skipped'`, [U.rider2])).rowCount === 1)

@@ -8,7 +8,7 @@ import {
   canEditMessage, chatErrorMessage, deleteMessage, editMessage, fetchMessages, fetchReferenceCandidates, referenceParams, threadStateMessage, markRead, mergeMessages,
   MAX_MESSAGE_LENGTH, reportMessage, sendMessage,
 } from '../../../lib/coachChat'
-import { acceptCoaching, declineCoaching } from '../../../lib/coaching'
+import { acceptCoaching, declineCoaching, fetchApplicationLinks } from '../../../lib/coaching'
 import Icon from '../../../components/Icon'
 import { ErrorNote, StatusNote, adminBtn, adminCard, adminInput } from '../../../components/admin/AdminUi'
 
@@ -24,12 +24,14 @@ export default function ChatThreadPage() {
   const [loadError, setLoadError] = useState(null)
   const [ref, setRef] = useState(null)
   const [picker, setPicker] = useState(null)
+  const [applicationId, setApplicationId] = useState(null)
   const bottom = useRef(null)
 
   const load = useCallback(async () => {
     const { thread: t, error } = await fetchMessages(supabase, id)
     setThread(t)
     setLoadError(error)
+    if (t?.status === 'pending' && !t.initiated_by_me) setApplicationId((await fetchApplicationLinks(supabase))[id] || null)
     if (t?.messages?.length || t?.can_send) {
       setMessages(mergeMessages(t.messages))
       markRead(supabase, id)
@@ -78,7 +80,7 @@ export default function ChatThreadPage() {
       <p className="font-bold">{thread.initiated_by_me ? `Waiting for ${name} to accept` : `${name} invited you`}</p>
       <p>{thread.initiated_by_me ? 'Your coaching request has not been accepted yet. You can message each other once it is.' : 'You have a coaching invitation. Accept it to start chatting.'}</p>
       {msg?.error && <ErrorNote>{msg.text}</ErrorNote>}
-      {!thread.initiated_by_me && <><button type="button" disabled={busy} onClick={answer(acceptCoaching)} className={adminBtn.primary}>Accept</button>{' '}<button type="button" disabled={busy} onClick={answer(declineCoaching, true)} className={adminBtn.secondary}>Decline</button>{' '}</>}
+      {!thread.initiated_by_me && <>{applicationId ? <Link href={`/coach/applications/${applicationId}`} className={adminBtn.primary}>Review application</Link> : <button type="button" disabled={busy} onClick={answer(acceptCoaching)} className={adminBtn.primary}>Accept</button>}{' '}<button type="button" disabled={busy} onClick={answer(declineCoaching, true)} className={adminBtn.secondary}>Decline</button>{' '}</>}
       <Link href="/chat" className={adminBtn.secondary}><Icon name="chevronLeft" /> Messages</Link>
     </div>
   }
