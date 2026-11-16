@@ -9,7 +9,6 @@ export const NAV_ITEMS = [
   { key: 'riders', label: 'Riders', icon: 'users', href: '/riders' },
   { key: 'gears', label: 'Gear Architect', icon: 'gears', href: '/gears' },
   { key: 'pursuit', label: 'Pursuit Strategist', icon: 'stopwatch', href: '/pursuit' },
-  { key: 'aero-lab', label: 'Aero Lab', icon: 'flask', href: '/aero-lab' },
   { key: 'templates', label: 'Templates', icon: 'clipboard', href: '/templates' },
   { key: 'velodromes', label: 'Velodromes', icon: 'velodrome', href: '/velodromes' },
   { key: 'about', label: 'About', icon: 'book', href: '/about' },

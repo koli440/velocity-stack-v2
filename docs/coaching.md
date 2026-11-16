@@ -35,7 +35,7 @@ with the service role; the coach never sees the API key, the athlete id or the c
 ## Own-account queries must filter by owner (data isolation)
 **Queries on own-account pages must always filter by owner explicitly; RLS coach read access is only for athlete context.**
 The `*_select_coach` policies (PBs, aero tests, templates, run results, histories, curves, ...) are OR-ed with the owner
-policies, so an unfiltered `select` by a coach returns their own rows PLUS every coached rider's. On `/pb-vault`, `/aero-lab`,
+policies, so an unfiltered `select` by a coach returns their own rows PLUS every coached rider's. On `/pb-vault`, `/lab/protocols` (aero test),
 templates, dashboard, stats, search etc. always add `.eq('user_id', <signed-in user>)` (helper: `scopeToOwner` in
 `src/lib/ownerScope.js`; templates: `visibleTemplatesFilter`). Athlete-context pages (`/coach/<riderId>/...`) pass the rider id
 explicitly. Never rely on RLS alone to scope a read.

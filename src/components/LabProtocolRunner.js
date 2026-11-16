@@ -14,17 +14,20 @@ import {
   submitLabRun,
 } from '../lib/labRuns'
 import { activityDay, applyThreshold } from '../lib/applyThresholds'
+import AeroLabPanel from './AeroLabPanel'
 import { ErrorNote, StatusNote, adminBtn, adminCard, adminInput } from './admin/AdminUi'
 
 const primary = adminBtn.primary
 const quiet = adminBtn.secondary
 const card = adminCard
 
+export const AERO_PROTOCOL = 'aero'
+
 const today = () => new Date().toISOString().slice(0, 10)
 
 // Protocol runner: pick a test, push it to the athlete's calendar, detect the result from the uploaded
 // ride, review and apply FTP in one click (writes go through the normal history rules and RLS).
-export default function LabProtocolRunner({ athleteId, viewerId }) {
+export default function LabProtocolRunner({ athleteId, viewerId, riderId = null }) {
   const [runs, setRuns] = useState([])
   const [loaded, setLoaded] = useState(false)
   const [protocol, setProtocol] = useState(LAB_PROTOCOL_IDS[0])
@@ -40,6 +43,12 @@ export default function LabProtocolRunner({ athleteId, viewerId }) {
     setRuns(res.runs)
     setLoaded(true)
   }, [athleteId])
+
+  // The aero (CdA) test works on the rider's own tests only, so it is offered outside coach context.
+  const aeroAvailable = !riderId
+  useEffect(() => {
+    if (aeroAvailable && new URLSearchParams(window.location.search).get('protocol') === AERO_PROTOCOL) setProtocol(AERO_PROTOCOL)
+  }, [aeroAvailable])
 
   useEffect(() => {
     if (athleteId) load()
@@ -105,7 +114,8 @@ export default function LabProtocolRunner({ athleteId, viewerId }) {
       await load()
     })
 
-  const p = LAB_PROTOCOLS[protocol]
+  const aero = aeroAvailable && protocol === AERO_PROTOCOL
+  const p = LAB_PROTOCOLS[protocol] || LAB_PROTOCOLS[LAB_PROTOCOL_IDS[0]]
   return (
     <div className="space-y-4" data-testid="lab-protocols">
       <section className={card}>
@@ -116,7 +126,15 @@ export default function LabProtocolRunner({ athleteId, viewerId }) {
               {LAB_PROTOCOLS[id].label}
             </button>
           ))}
+          {aeroAvailable && (
+            <button type="button" onClick={() => setProtocol(AERO_PROTOCOL)} className={aero ? primary : quiet} data-testid="lab-protocol-aero">
+              Aero test (CdA)
+            </button>
+          )}
         </div>
+        {aero ? (
+          <p className="mt-3 text-sm text-slate-700 dark:text-slate-200">Field-test your position and equipment (CdA) without a wind tunnel. Results are saved to your aero history below.</p>
+        ) : (<>
         <p className="mt-3 text-sm text-slate-700 dark:text-slate-200">{p.summary}</p>
         <ol className="mt-2 list-decimal pl-5 space-y-1 text-sm text-slate-700 dark:text-slate-200" data-testid="lab-brief">
           {p.steps.map((s) => (
@@ -129,12 +147,15 @@ export default function LabProtocolRunner({ athleteId, viewerId }) {
             Push to calendar
           </button>
         </div>
+        </>)}
       </section>
+
+      {aero && <AeroLabPanel />}
 
       {error && <div data-testid="lab-error"><ErrorNote>{error}</ErrorNote></div>}
       {notice && <StatusNote>{notice}</StatusNote>}
 
-      <section className="space-y-3">
+      {!aero && <section className="space-y-3">
         <h2 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Tests</h2>
         {loaded && runs.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-300" data-testid="lab-empty">No tests yet. Plan one above; it appears on the athlete&apos;s calendar.</p>}
         {runs.filter((r) => r.status !== 'cancelled').map((r) => {
@@ -175,7 +196,7 @@ export default function LabProtocolRunner({ athleteId, viewerId }) {
             </div>
           )
         })}
-      </section>
+      </section>}
     </div>
   )
 }

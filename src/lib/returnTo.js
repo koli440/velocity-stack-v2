@@ -64,7 +64,7 @@ const LABELS = [
   [/^\/riders$/, 'Riders'],
   [/^\/gears$/, 'Gear Architect'],
   [/^\/pursuit$/, 'Pursuit Strategist'],
-  [/^\/aero-lab$/, 'Aero Lab'],
+  [/^\/lab(\/protocols)?$/, 'Lab'],
   [/^\/templates$/, 'Templates'],
   [/^\/velodromes$/, 'Velodromes'],
   [/^\/settings$/, 'Settings'],
