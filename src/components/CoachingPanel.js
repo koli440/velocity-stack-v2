@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
 import ChatLink from './ChatLink'
 import MessageButton from './MessageButton'
+import EndCoachingDialog from './EndCoachingDialog'
 import BotBadge from './BotBadge'
 import { authorName } from '../lib/social'
 import { fetchPaymentDue, startCheckout } from '../lib/coachBilling'
@@ -57,6 +58,7 @@ export default function CoachingPanel({ userId }) {
   const [error, setError] = useState(null)
   // Invite the rider is about to accept while having a coach: shown as an explicit confirmation.
   const [confirming, setConfirming] = useState(null)
+  const [ending, setEnding] = useState(null)
   const [due, setDue] = useState([])
   const [appLinks, setAppLinks] = useState({})
   const [payMsg, setPayMsg] = useState(null)
@@ -146,7 +148,7 @@ export default function CoachingPanel({ userId }) {
                   type="button"
                   disabled={busy === g.coach.id}
                   className={btnQuiet}
-                  onClick={() => run(g.coach.id, () => endCoaching(supabase, g.coach.id))}
+                  onClick={() => setEnding({ id: g.coach.id, role: 'athlete', name: authorName(profiles.get(g.coach.coach_id)) })}
                 >
                   Revoke access
                 </button>
@@ -237,7 +239,7 @@ export default function CoachingPanel({ userId }) {
                 <>
                   <MessageButton relationshipId={row.id} />
                   <Link href={`/coach/${row.rider_id}/calendar`} className={btnPrimary}>Calendar</Link>
-                  <button type="button" disabled={busy === row.id} className={btnQuiet} onClick={() => run(row.id, () => endCoaching(supabase, row.id))}>
+                  <button type="button" disabled={busy === row.id} className={btnQuiet} onClick={() => setEnding({ id: row.id, role: 'coach', riderId: row.rider_id, name: authorName(profiles.get(row.rider_id)) })}>
                     End coaching
                   </button>
                 </>
@@ -284,6 +286,15 @@ export default function CoachingPanel({ userId }) {
             </Row>
           ))}
         </section>
+      )}
+      {ending && (
+        <EndCoachingDialog
+          role={ending.role}
+          name={ending.name}
+          riderId={ending.riderId}
+          onConfirm={() => run(ending.id, () => endCoaching(supabase, ending.id))}
+          onClose={() => setEnding(null)}
+        />
       )}
     </div>
   )

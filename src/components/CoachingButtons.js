@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import { adminBtn, adminCard } from './admin/AdminUi'
 import { riderName } from '../lib/riders'
+import EndCoachingDialog from './EndCoachingDialog'
 import {
   fetchCoachingStatus,
   fetchMyCoaching,
@@ -23,6 +24,7 @@ export default function CoachingButtons({ userId, rider }) {
   const [viewerHasCoach, setViewerHasCoach] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [ending, setEnding] = useState(false)
 
   const load = useCallback(async () => {
     if (!userId || !rider?.id || rider.id === userId) return
@@ -76,9 +78,18 @@ export default function CoachingButtons({ userId, rider }) {
         </button>
       )}
       {actions.end && state.id && (
-        <button type="button" disabled={busy} className={quiet} onClick={() => run(() => endCoaching(supabase, state.id))}>
+        <button type="button" disabled={busy} className={quiet} onClick={() => setEnding(true)}>
           {state.status === 'coach' ? 'Revoke access' : 'End coaching'}
         </button>
+      )}
+      {ending && (
+        <EndCoachingDialog
+          role={state.status === 'coach' ? 'athlete' : 'coach'}
+          name={riderName(rider)}
+          riderId={state.status === 'athlete' ? rider.id : null}
+          onConfirm={() => run(() => endCoaching(supabase, state.id))}
+          onClose={() => setEnding(false)}
+        />
       )}
       {state.status === 'athlete' && (
         <Link href={`/coach/${rider.id}/calendar`} className={primary}>Calendar</Link>
