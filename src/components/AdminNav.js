@@ -11,6 +11,7 @@ export const ADMIN_LINKS = [
   ['/admin/template-reruns', 'Template re-run'],
   ['/admin/partner-apps', 'Partner apps'],
   ['/admin/coach-module', 'Coach module'],
+  ['/admin/coach-cards', 'Coach card reports'],
 ]
 
 // Pill-style admin navigation; scrolls horizontally on narrow screens.
