@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import Avatar from './Avatar'
 import ChatLink from './ChatLink'
+import MessageButton from './MessageButton'
 import BotBadge from './BotBadge'
 import { authorName } from '../lib/social'
 import {
@@ -135,6 +136,7 @@ export default function CoachingPanel({ userId }) {
               }
             >
               <Person id={g.coach.coach_id} profiles={profiles} />
+              <MessageButton relationshipId={g.coach.id} />
             </Row>
           ) : (
             <p className="text-xs text-slate-600 dark:text-slate-300">You have no coach. Open a rider's profile to request one.</p>
@@ -203,6 +205,7 @@ export default function CoachingPanel({ userId }) {
               key={row.id}
               actions={
                 <>
+                  <MessageButton relationshipId={row.id} />
                   <Link href={`/coach/${row.rider_id}/calendar`} className={btnPrimary}>Calendar</Link>
                   <button type="button" disabled={busy === row.id} className={btnQuiet} onClick={() => run(row.id, () => endCoaching(supabase, row.id))}>
                     End coaching

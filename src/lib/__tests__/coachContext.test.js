@@ -130,5 +130,8 @@ test('module nav items (dashboard + directory) follow the flag and sit after Rid
   const nav = [{ key: 'home' }, { key: 'riders' }, { key: 'about' }]
   assert.deepEqual(c.sidebarItems(nav, null, false).map((i) => i.key), ['home', 'riders', 'about'])
   assert.deepEqual(c.sidebarItems(nav, null, true).map((i) => i.key), ['home', 'riders', 'coach-home', 'coach-directory', 'lab', 'about'])
+  assert.deepEqual(c.sidebarItems(nav, null, false, true).map((i) => i.key), ['home', 'riders', 'messages', 'about'])
+  assert.equal(c.sidebarItems(nav, null, false, true).find((i) => i.key === 'messages').icon, 'chat')
+  assert.ok(!c.sidebarItems(nav, 'rid', true, true).some((i) => i.key === 'messages'))
   assert.equal(c.COACH_MODULE_NAV_ITEMS.find((i) => i.key === 'coach-directory').href, '/coaches')
 })

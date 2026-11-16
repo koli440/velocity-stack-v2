@@ -98,8 +98,19 @@ export function withModuleNavItems(navItems) {
  * ONLY athlete-scoped pages (plus a way back to the coach dashboard); every item of the coach's own
  * pages (telemetry, tools, feedback, own settings...) is hidden so nothing silently exits the context.
  */
-export function sidebarItems(navItems, riderId, moduleEnabled = false) {
-  if (!riderId) return moduleEnabled ? withModuleNavItems(navItems) : navItems
+export const MESSAGES_NAV_ITEM = Object.freeze({ key: 'messages', label: 'Messages', icon: 'chat', href: '/chat' })
+
+/** Adds "Messages" after "Riders" (or last) for users with a chat-capable coaching relationship. */
+export function withMessagesItem(items) {
+  const at = items.findIndex((i) => i.key === 'riders')
+  return at < 0 ? [...items, MESSAGES_NAV_ITEM] : [...items.slice(0, at + 1), MESSAGES_NAV_ITEM, ...items.slice(at + 1)]
+}
+
+export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvailable = false) {
+  if (!riderId) {
+    const base = moduleEnabled ? withModuleNavItems(navItems) : navItems
+    return chatAvailable ? withMessagesItem(base) : base
+  }
   return [
     ...athletePages(moduleEnabled).map((p) => ({
       key: p.key,

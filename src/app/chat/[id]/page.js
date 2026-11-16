@@ -83,7 +83,7 @@ export default function ChatThreadPage() {
       <Link href="/chat" className="inline-flex items-center gap-1 min-h-[44px] text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-orange-600 dark:hover:text-orange-400">
         <Icon name="chevronLeft" /> Messages
       </Link>
-      {messages.length === 0 && <p className="text-sm text-center text-slate-600 dark:text-slate-300 py-8">No messages yet. Say hello.</p>}
+      {messages.length === 0 && <p className="text-sm text-center text-slate-600 dark:text-slate-300 py-8">No messages yet. Start the conversation below.</p>}
       <ul className="flex-1 space-y-3">
         {messages.map((m) => {
           const mine = m.sender_id === me

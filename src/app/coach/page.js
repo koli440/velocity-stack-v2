@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import ChatLink from '../../components/ChatLink'
+import MessageButton from '../../components/MessageButton'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import { fetchMyCoaching, groupRelationships, fetchCoachDashboard, authorName, COACHING_SETTINGS_PATH } from '../../lib/coaching'
@@ -72,6 +73,7 @@ export default function CoachDashboardPage() {
         riderId: rel.rider_id,
         profile: profiles.get(rel.rider_id) || null,
         stats: byRider.get(rel.rider_id) || null,
+        relationshipId: rel.id,
         unread: unreadByRider.get(rel.rider_id) || 0,
         fitness: fit.error ? null : fitness.get(rel.rider_id),
       }))
@@ -153,6 +155,7 @@ export default function CoachDashboardPage() {
                 </span>
                 <FitnessSummaryLine fitness={a.fitness} />
               </Link>
+              <MessageButton relationshipId={a.relationshipId} label={`Message ${name}`} className="mt-2" />
             </li>
           )
         })}

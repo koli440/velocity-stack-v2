@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { canEditMessage, chatErrorMessage, mergeMessages, totalUnread, EDIT_WINDOW_MS } from '../coachChat.js'
+import { canEditMessage, chatPath, chatErrorMessage, mergeMessages, totalUnread, EDIT_WINDOW_MS } from '../coachChat.js'
 import { describeNotification, notificationHref } from '../notifications.js'
 
 test('canEditMessage: own, not deleted, within window', () => {
@@ -16,6 +16,10 @@ test('mergeMessages sorts oldest first and de-duplicates by id', () => {
   const out = mergeMessages([{ id: '2', created_at: '2026-01-02', body: 'new' }], [{ id: '1', created_at: '2026-01-01' }, { id: '2', created_at: '2026-01-02', body: 'edited' }])
   assert.deepEqual(out.map((m) => m.id), ['1', '2'])
   assert.equal(out[1].body, 'edited')
+})
+
+test('chatPath uses the relationship id', () => {
+  assert.equal(chatPath('abc'), '/chat/abc')
 })
 
 test('totalUnread and error mapping', () => {
