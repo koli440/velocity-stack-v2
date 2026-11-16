@@ -123,6 +123,14 @@ const rpcAction = (name, params) => async (client, arg) => {
 export const inviteAthlete = rpcAction('invite_athlete', (riderId) => ({ p_rider: riderId }))
 export const requestCoach = rpcAction('request_coach', (coachId) => ({ p_coach: coachId }))
 export const acceptCoaching = rpcAction('accept_coaching', (id) => ({ p_id: id }))
+// Applications are accepted from their review screen; the standard accept RPC refuses them.
+export const acceptApplication = rpcAction('accept_application', (relationshipId) => ({ p_relationship: relationshipId }))
+export async function fetchApplicationLinks(client) {
+  const { data, error } = await client.rpc('my_application_links')
+  const map = {}
+  for (const l of error || !Array.isArray(data) ? [] : data) map[l.relationship_id] = l.application_id
+  return map
+}
 export const declineCoaching = rpcAction('decline_coaching', (id) => ({ p_id: id }))
 export const endCoaching = rpcAction('end_coaching', (id) => ({ p_id: id }))
 

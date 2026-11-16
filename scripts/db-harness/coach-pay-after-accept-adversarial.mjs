@@ -57,7 +57,7 @@ export async function run(c) {
   ok('package recorded', (await c.query(`SELECT package_id FROM onboarding_submissions WHERE id = $1`, [s.rows[0].id])).rows[0].package_id === paid)
   ok('still no payment due while pending', (await as(c, U.rider, `SELECT my_payment_due() AS d`)).rows[0].d.length === 0)
   const rel = (await c.query(`SELECT id FROM coaching_relationships WHERE coach_id=$1 AND rider_id=$2`, [U.coach, U.rider])).rows[0].id
-  ok('coach accepts', (await as(c, U.coach, `SELECT accept_coaching($1)`, [rel], { commit: true })).ok)
+  ok('coach accepts', (await as(c, U.coach, `SELECT accept_application($1)`, [rel], { commit: true })).ok)
   const due = (await as(c, U.rider, `SELECT my_payment_due() AS d`)).rows[0].d
   ok('payment due after acceptance', due.length === 1 && due[0].package_id === paid)
   ok('other riders see nothing', (await as(c, U.rider2, `SELECT my_payment_due() AS d`)).rows[0].d.length === 0)
@@ -70,7 +70,7 @@ export async function run(c) {
   await as(c, U.rider2, `SELECT 1`)
   ok('free package application', (await submit(U.rider2, free)).ok)
   const rel2 = (await c.query(`SELECT id FROM coaching_relationships WHERE coach_id=$1 AND rider_id=$2`, [U.coach, U.rider2])).rows[0].id
-  await as(c, U.coach, `SELECT accept_coaching($1)`, [rel2], { commit: true })
+  await as(c, U.coach, `SELECT accept_application($1)`, [rel2], { commit: true })
   ok('no prompt for a free package', (await as(c, U.rider2, `SELECT my_payment_due() AS d`)).rows[0].d.length === 0)
   ok('free package gets the plain accepted notification', (await c.query(`SELECT 1 FROM notifications WHERE user_id=$1 AND type='coach_accepted'`, [U.rider2])).rows.length === 1)
 }

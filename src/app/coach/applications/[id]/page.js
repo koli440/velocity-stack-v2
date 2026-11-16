@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
-import { acceptCoaching, declineCoaching } from '../../../../lib/coaching'
+import { acceptApplication, declineCoaching } from '../../../../lib/coaching'
 import { fetchCoachApplication, healthFlag } from '../../../../lib/coachOnboarding'
 import ApplicationView from '../../../../components/ApplicationView'
 import { athletePath } from '../../../../lib/coachContext'
@@ -49,7 +49,7 @@ export default function ApplicationPage() {
         <ApplicationView answers={app.answers} health={app.health} healthDeclined={app.health_declined} minor={app.minor} coachAnswers={app.coach_answers} questions={app.questions} />
         {pending ? (
           <div className="flex flex-col sm:flex-row gap-2">
-            <button disabled={busy} onClick={() => act(acceptCoaching, 'Accepted')} className={adminBtn.success}><Icon name="check" /> Accept</button>
+            <button disabled={busy} onClick={() => act(acceptApplication, 'Accepted')} className={adminBtn.success}><Icon name="check" /> Accept</button>
             <button disabled={busy} onClick={() => act(declineCoaching, 'Declined')} className={adminBtn.secondary}>Decline</button>
           </div>
         ) : (

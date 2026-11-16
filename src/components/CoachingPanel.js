@@ -15,6 +15,7 @@ import {
   replacementWarning,
   fetchMyCoaching,
   acceptCoaching,
+  fetchApplicationLinks,
   declineCoaching,
   endCoaching,
   coachingErrorMessage,
@@ -57,6 +58,7 @@ export default function CoachingPanel({ userId }) {
   // Invite the rider is about to accept while having a coach: shown as an explicit confirmation.
   const [confirming, setConfirming] = useState(null)
   const [due, setDue] = useState([])
+  const [appLinks, setAppLinks] = useState({})
   const [payMsg, setPayMsg] = useState(null)
 
   const load = useCallback(async () => {
@@ -66,6 +68,7 @@ export default function CoachingPanel({ userId }) {
     setRows(res.rows)
     setProfiles(res.profiles)
     setDue((await fetchPaymentDue(supabase)).due)
+    setAppLinks(await fetchApplicationLinks(supabase))
     setLoaded(true)
   }, [userId])
 
@@ -248,9 +251,13 @@ export default function CoachingPanel({ userId }) {
               key={row.id}
               actions={
                 <>
-                  <button type="button" disabled={busy === row.id} className={btnPrimary} onClick={() => run(row.id, () => acceptCoaching(supabase, row.id))}>
-                    Accept
-                  </button>
+                  {appLinks[row.id] ? (
+                    <Link href={`/coach/applications/${appLinks[row.id]}`} className={btnPrimary} data-testid="review-application">Review application</Link>
+                  ) : (
+                    <button type="button" disabled={busy === row.id} className={btnPrimary} onClick={() => run(row.id, () => acceptCoaching(supabase, row.id))}>
+                      Accept
+                    </button>
+                  )}
                   <button type="button" disabled={busy === row.id} className={btnQuiet} onClick={() => run(row.id, () => declineCoaching(supabase, row.id))}>
                     Decline
                   </button>
