@@ -2,15 +2,23 @@ import { notFound } from 'next/navigation'
 import LicenceBadge from '../../../../components/LicenceBadge'
 import PrintButton from '../../../../components/PrintButton'
 import { loadLabReport } from '../../../../lib/server/labReportStore'
+import Icon from '../../../../components/Icon'
+import { thresholdTiles, phenotypeRows, testSummary, bodyRows } from '../../../../lib/labReportView'
 import { cardPath, safeCoachMediaUrl } from '../../../../lib/coachCard'
 
 // Token-gated and never cached; revoking a link takes effect immediately.
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Lab report', robots: { index: false, follow: false }, alternates: { canonical: null } }
 
-const Row = ({ label, value }) => (value == null ? null : (
-  <div className="flex justify-between border-b border-slate-100 py-1 text-sm gap-3"><dt className="text-slate-600">{label}</dt><dd className="font-bold text-slate-900">{value}</dd></div>
-))
+const CARD = 'glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-4 sm:p-5 print:bg-white print:border-slate-300 print:shadow-none break-inside-avoid'
+const H2 = 'flex items-center gap-2 text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white mb-3 print:text-black'
+
+const Row = ({ label, value }) => (
+  <div className="flex justify-between gap-3 py-2 border-b last:border-0 border-slate-200 dark:border-slate-600 text-sm print:border-slate-300">
+    <dt className="text-slate-700 dark:text-slate-300 print:text-slate-700">{label}</dt>
+    <dd className="font-bold text-slate-900 dark:text-white print:text-black">{value}</dd>
+  </div>
+)
 
 export default async function LabReportPage({ params }) {
   const report = await loadLabReport(params.token)
@@ -18,52 +26,87 @@ export default async function LabReportPage({ params }) {
   const s = report.snapshot
   const coach = report.coach
   const logo = safeCoachMediaUrl(coach?.logo_url)
+  const tiles = thresholdTiles(s.thresholds)
+  const pheno = phenotypeRows(s.phenotype)
+  const body = bodyRows(s.forms)
+  const tests = Array.isArray(s.tests) ? s.tests : []
   return (
-    <article className="max-w-2xl mx-auto p-5 sm:p-8 space-y-5 bg-white text-slate-900 rounded-2xl border border-slate-200 shadow-sm print:p-0 print:border-0 print:shadow-none" data-testid="lab-report">
-      <header className="flex items-center gap-3">
-        {logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt="" className="h-14 w-14 object-contain" data-testid="report-logo" />
-        )}
-        <div className="min-w-0">
-          {coach && <p className="text-sm font-bold">{coach.slug ? <a href={cardPath(coach.slug)}>{coach.name}</a> : coach.name}</p>}
-          {coach && <LicenceBadge licence={coach.licence} />}
+    <article className="max-w-3xl mx-auto space-y-4 text-slate-900 dark:text-white print:max-w-none print:text-black" data-testid="lab-report">
+      <header className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder border-t-4 border-t-orange-500 p-4 sm:p-6 space-y-4 print:bg-white print:border-slate-300 break-inside-avoid">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-orange-700 dark:text-orange-400">
+            <Icon name="flask" /> VelocityStack Lab report
+          </span>
+          <div className="ml-auto"><PrintButton /></div>
         </div>
-        <div className="ml-auto"><PrintButton /></div>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-black break-words">{report.title}</h1>
+          <p className="mt-1 text-sm text-slate-700 dark:text-slate-300 print:text-slate-700">
+            <b className="text-slate-900 dark:text-white print:text-black">{report.athlete_name}</b> · {String(report.created_at).slice(0, 10)}
+          </p>
+        </div>
+        {coach && (
+          <div className="flex items-center gap-3 pt-3 border-t border-slate-200 dark:border-slate-600 print:border-slate-300">
+            {logo && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt="" className="h-12 w-12 object-contain rounded-lg" data-testid="report-logo" />
+            )}
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Coach</p>
+              <p className="text-sm font-black">{coach.slug ? <a className="hover:underline" href={cardPath(coach.slug)}>{coach.name}</a> : coach.name}</p>
+              <LicenceBadge licence={coach.licence} />
+            </div>
+          </div>
+        )}
+        {report.note && <p className="text-sm whitespace-pre-wrap break-words text-slate-800 dark:text-slate-200 print:text-black">{report.note}</p>}
       </header>
-      <div>
-        <h1 className="text-2xl font-black break-words">{report.title}</h1>
-        <p className="text-sm text-slate-600">{report.athlete_name} · {String(report.created_at).slice(0, 10)}</p>
-        {report.note && <p className="mt-2 text-sm whitespace-pre-wrap">{report.note}</p>}
-      </div>
-      {s.thresholds && (
-        <section><h2 className="text-sm font-black uppercase tracking-tight mb-1">Thresholds{s.thresholds.as_of ? ` (as of ${s.thresholds.as_of})` : ''}</h2>
-          <dl>
-            <Row label="FTP" value={s.thresholds.ftp_w != null ? `${s.thresholds.ftp_w} W` : null} />
-            <Row label="LT1" value={s.thresholds.lt1_power_w != null ? `${s.thresholds.lt1_power_w} W${s.thresholds.lt1_hr ? ` · ${s.thresholds.lt1_hr} bpm` : ''}` : null} />
-            <Row label="LT2" value={s.thresholds.lt2_power_w != null ? `${s.thresholds.lt2_power_w} W${s.thresholds.lt2_hr ? ` · ${s.thresholds.lt2_hr} bpm` : ''}` : null} />
-          </dl></section>
+
+      {tiles.length > 0 && (
+        <section aria-label="Key results" data-testid="report-kpis">
+          <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+            Thresholds{s.thresholds?.as_of ? ` (as of ${s.thresholds.as_of})` : ''}
+          </p>
+          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {tiles.map((t) => (
+              <li key={t.key} className={`${CARD} !p-4 border-l-4 border-l-orange-500`}>
+                <p className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 print:text-slate-700">{t.label}</p>
+                <p className="text-3xl font-black text-slate-900 dark:text-white print:text-black">{t.value}<span className="text-base font-bold ml-1">{t.unit}</span></p>
+                {t.sub && <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 print:text-slate-700">{t.sub}</p>}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
-      {Array.isArray(s.tests) && s.tests.length > 0 && (
-        <section><h2 className="text-sm font-black uppercase tracking-tight mb-1">Field tests</h2>
-          <ul className="text-sm space-y-1 text-slate-800">{s.tests.map((t, i) => (
-            <li key={i}>{t.date} · {t.protocol}{t.ftp != null ? ` · FTP ${t.ftp} W` : ''}{t.cp != null ? ` · CP ${t.cp} W` : ''}</li>
-          ))}</ul></section>
+      {tests.length > 0 && (
+        <section className={CARD}>
+          <h2 className={H2}><Icon name="stopwatch" /> Field tests</h2>
+          <ul className="space-y-2">
+            {tests.map((t, i) => (
+              <li key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 p-3 text-sm print:border-slate-300">
+                <span className="font-bold">{t.date}</span>
+                {testSummary(t).map((x, j) => (
+                  <span key={j} className="px-2 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-900 border border-sky-300 dark:bg-sky-900/50 dark:text-sky-100 dark:border-sky-700 print:bg-white print:text-black">{x}</span>
+                ))}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
-      {s.phenotype && (
-        <section><h2 className="text-sm font-black uppercase tracking-tight mb-1">Phenotype: {s.phenotype.label}</h2>
-          <dl>
-            {['5s', '1m', '5m', '20m'].map((k) => <Row key={k} label={`Best ${k}`} value={s.phenotype[k] != null ? `${s.phenotype[k]} W/kg` : null} />)}
-          </dl></section>
+      {s.phenotype && pheno.length > 0 && (
+        <section className={CARD}>
+          <h2 className={H2}><Icon name="bolt" /> Phenotype: {s.phenotype.label}</h2>
+          <dl>{pheno.map((r) => <Row key={r.label} {...r} />)}</dl>
+        </section>
       )}
-      {s.forms && (
-        <section><h2 className="text-sm font-black uppercase tracking-tight mb-1">Body composition</h2>
-          <dl>
-            <Row label="Weight" value={s.forms.weight_kg != null ? `${s.forms.weight_kg} kg` : null} />
-            <Row label="Body fat" value={s.forms.body_fat_pct != null ? `${s.forms.body_fat_pct} %` : null} />
-          </dl></section>
+      {body.length > 0 && (
+        <section className={CARD}>
+          <h2 className={H2}><Icon name="ruler" /> Body composition</h2>
+          <dl>{body.map((r) => <Row key={r.label} {...r} />)}</dl>
+        </section>
       )}
-      <footer className="pt-2 text-xs text-slate-600">Shared via VelocityStack. This report is a snapshot and can be revoked by its owner.</footer>
+      <footer className="px-1 text-xs text-slate-700 dark:text-slate-300 print:text-slate-700">
+        Shared via VelocityStack. This report is a snapshot and can be revoked by its owner.
+      </footer>
     </article>
   )
 }
