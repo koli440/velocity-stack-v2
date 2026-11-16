@@ -49,3 +49,4 @@ Coach card + directory: `MIG=<repo>/supabase/migrations/20270152000000_coach_car
 Coach onboarding: `MIG=<repo>/supabase/migrations/20270153000000_coach_onboarding.sql node harness.mjs <repo>/supabase/migrations ./onboarding-adversarial.mjs`
 Coach chat: `MIG=<repo>/supabase/migrations/20270154000000_coach_chat.sql node harness.mjs <repo>/supabase/migrations ./chat-adversarial.mjs`
 Coach licences: `MIG=<repo>/supabase/migrations/20270155000000_coach_licences.sql node harness.mjs <repo>/supabase/migrations ./licence-adversarial.mjs`
+Coach billing: `MIG=<repo>/supabase/migrations/20270156000000_coach_billing.sql node harness.mjs <repo>/supabase/migrations ./billing-adversarial.mjs`

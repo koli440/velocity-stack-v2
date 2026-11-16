@@ -1,5 +1,6 @@
-import LicenceBadge from '../../../components/LicenceBadge'
 import { notFound } from 'next/navigation'
+import LicenceBadge from '../../../components/LicenceBadge'
+import BuyPackageButton from '../../../components/BuyPackageButton'
 import { loadCoachCard } from '../../../lib/server/coachCardStore'
 import { accentOf, cardDescription, cardPath, priceLabel } from '../../../lib/coachCard'
 import { safeAvatarUrl } from '../../../lib/recap'
@@ -68,6 +69,7 @@ export default async function CoachCardPage({ params }) {
                     <span className={`text-sm font-bold ${accent.text}`}>{priceLabel(p)}</span>
                   </div>
                   {p.description && <p className="text-sm text-slate-600 dark:text-slate-400">{p.description}</p>}
+                  {p.kind !== 'free' && <BuyPackageButton packageId={p.id} />}
                 </li>
               ))}
             </ul>

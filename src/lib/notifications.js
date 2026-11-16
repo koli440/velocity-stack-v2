@@ -45,6 +45,12 @@ export function describeNotification(notification, actor) {
       return 'Your coaching licence is expiring or has expired'
     case 'coach_message':
       return `${name} sent you a message`
+    case 'subscription_started':
+      return `${name} started a paid coaching subscription`
+    case 'subscription_ended':
+      return `${name} ended a paid coaching subscription`
+    case 'payment_failed':
+      return `A coaching payment from ${name} failed`
     case 'onboarding_submitted':
       return `${name} applied to be coached by you`
     case 'activity_comment': {
@@ -104,6 +110,10 @@ export function notificationHref(notification) {
       return '/settings/coach-card'
     case 'coach_message':
       return '/chat'
+    case 'subscription_started':
+    case 'subscription_ended':
+    case 'payment_failed':
+      return '/settings/coach-card'
     case 'onboarding_submitted':
       return '/coach'
     case 'suggestion_submitted':
