@@ -100,7 +100,7 @@ export default function CoachingPanel({ userId }) {
   return (
     <div id="coaching" className="glass-dense p-5 md:p-6 rounded-2xl border bg-white dark:bg-surface-darkCard border-slate-200 dark:border-surface-darkBorder space-y-4 scroll-mt-20">
       <div>
-        <h3 className="text-xs font-black uppercase tracking-tight text-slate-900 dark:text-white">Coaching</h3>
+        <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Coaching</h3>
         <p className="text-xs text-slate-600 dark:text-slate-300">
           A coach can read everything of yours, including private activities, power and heart-rate data, personal bests and
           your FTP, weight and lactate history. Privacy-zone locations stay hidden from them, and your e-mail and connection
