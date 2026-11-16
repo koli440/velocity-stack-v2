@@ -1,0 +1,2 @@
+# Reports
+Branded shareable report page `/lab/report/<token>` and print-to-PDF stylesheet: coach card logo, name, licence badge (`coach_licence_public`), selected results (thresholds, phenotype, timeline). Created by the coach or athlete; share token is explicit opt-in, revocable; only chosen sections are exposed through a SECURITY DEFINER RPC callable by anon with the token. Health-like data is included only if the athlete enabled sharing.
