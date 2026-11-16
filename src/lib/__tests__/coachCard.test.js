@@ -14,6 +14,15 @@ test('isValidSlug mirrors the DB check', () => {
   for (const bad of ['ab', '-ab', 'ab-', 'Ab_c', 'a'.repeat(31), '', null]) assert.ok(!c.isValidSlug(bad), String(bad))
 })
 
+test('free period label and validation', () => {
+  assert.equal(c.priceLabel({ kind: 'subscription', interval: 'month', amount_cents: 8000, currency: 'eur', trial_days: 14 }), 'EUR 80 / month, first 14 days free')
+  assert.equal(c.priceLabel({ kind: 'one_time', amount_cents: 8000, currency: 'eur', trial_days: 14 }), 'EUR 80')
+  const base = { slug: 'abc', packages: [{ title: 'P', kind: 'subscription', interval: 'month', amount_cents: 8000 }] }
+  assert.equal(c.validateCard({ ...base, packages: [{ ...base.packages[0], trial_days: 90 }] }), null)
+  assert.match(c.validateCard({ ...base, packages: [{ ...base.packages[0], trial_days: 91 }] }), /free period/)
+  assert.match(c.validateCard({ ...base, packages: [{ ...base.packages[0], trial_days: -1 }] }), /free period/)
+})
+
 test('priceLabel', () => {
   assert.equal(c.priceLabel({ kind: 'free' }), 'Free')
   assert.equal(c.priceLabel({ kind: 'subscription', interval: 'month', amount_cents: 8000, currency: 'eur' }), 'EUR 80 / month')
