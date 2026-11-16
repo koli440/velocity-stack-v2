@@ -13,6 +13,11 @@ export const PACKAGE_MAX = 6
 export const PACKAGE_TITLE_MAX = 60
 export const PACKAGE_DESC_MAX = 300
 export const DISCIPLINE_OPTIONS = Object.freeze(['track', 'road', 'gravel', 'mtb', 'time trial', 'triathlon', 'endurance', 'sprint'])
+export const COACH_MEDIA_BUCKET = 'coach-media'
+export const MAX_COACH_MEDIA_BYTES = 5 * 1024 * 1024
+export const ALLOWED_COACH_MEDIA_TYPES = Object.freeze(['image/jpeg', 'image/png', 'image/webp'])
+export const MEDIA_KINDS = Object.freeze(['logo', 'banner'])
+const MEDIA_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
 export const CURRENCIES = Object.freeze(['eur', 'gbp', 'usd'])
 export const INTERVALS = Object.freeze({ month: 'month', quarter: 'quarter', year: 'year' })
 export const PACKAGE_KINDS = Object.freeze({ subscription: 'Subscription', one_time: 'One-time', free: 'Free' })
@@ -98,6 +103,7 @@ export function coachCardErrorMessage(error) {
   if (/not enabled/i.test(msg)) return 'The coach module is not available for your account yet.'
   if (/already taken/i.test(msg)) return 'That link name is already taken.'
   if (/Invalid or reserved/i.test(msg)) return 'That link name is not allowed. Use 3-30 letters, numbers or dashes.'
+  if (/Invalid (logo|banner) image/i.test(msg)) return 'That image is not valid. Upload it again.'
   if (/Too many/i.test(msg)) return msg
   if (/At most 6/i.test(msg)) return 'At most 6 packages.'
   if (/Create your coach card/i.test(msg)) return 'Save your coach card first.'
@@ -119,6 +125,37 @@ export function directoryQuery({ q = '', discipline = '' } = {}) {
   return s ? `${COACH_DIRECTORY_PATH}?${s}` : COACH_DIRECTORY_PATH
 }
 
+/** @returns {string|null} an error message, or null when the file can be uploaded as card media */
+export function validateCoachMediaFile(file) {
+  if (!file) return 'No file selected'
+  if (!ALLOWED_COACH_MEDIA_TYPES.includes(file.type)) return 'Only JPG, PNG or WebP images are allowed'
+  if (file.size > MAX_COACH_MEDIA_BYTES) return 'Image is larger than 5 MB'
+  return null
+}
+
+// A new object name per upload keeps caches from serving the old image; the database only accepts this shape.
+export function buildCoachMediaPath({ userId, kind, mimeType, version = Date.now() }) {
+  return `${userId}/${kind}-${version}.${MEDIA_EXT[mimeType] || 'jpg'}`
+}
+
+/** Same rule as the database: only the coach's own coach-media objects of the matching kind. */
+export function isCoachMediaUrl(url, { userId, kind }) {
+  if (!url || !userId || !MEDIA_KINDS.includes(kind)) return false
+  return new RegExp(`^https://[^/?#@]+/storage/v1/object/public/${COACH_MEDIA_BUCKET}/${userId}/${kind}-[0-9]+\\.(jpg|png|webp)$`).test(String(url))
+}
+
+/** URL of a card image that is safe to render: https on the Supabase host, inside the coach-media bucket. */
+export function safeCoachMediaUrl(url, supabaseUrl = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_URL : '') {
+  try {
+    const base = new URL(String(supabaseUrl || ''))
+    const u = new URL(String(url || ''))
+    if (u.protocol !== 'https:' || u.host !== base.host || u.username || u.password) return null
+    return u.pathname.startsWith(`/storage/v1/object/public/${COACH_MEDIA_BUCKET}/`) ? u.toString() : null
+  } catch {
+    return null
+  }
+}
+
 // ---- Data access ---------------------------------------------------------------------------
 
 export async function fetchMyCoachCard(client) {
@@ -137,6 +174,8 @@ export async function saveCoachCard(client, card) {
       languages: card.languages || [],
       location: card.location || '',
       accepting_athletes: card.accepting_athletes !== false,
+      ...(card.logo_url !== undefined ? { logo_url: card.logo_url || '' } : {}),
+      ...(card.banner_url !== undefined ? { banner_url: card.banner_url || '' } : {}),
       max_athletes: card.max_athletes === '' || card.max_athletes == null ? null : Number(card.max_athletes),
       packages: (card.packages || []).map((p) => ({
         id: p.id || null,
@@ -151,6 +190,27 @@ export async function saveCoachCard(client, card) {
     },
   })
   return { slug: data || null, error }
+}
+
+/** Uploads a logo/banner file and returns its public URL (not yet saved on the card). */
+export async function uploadCoachMedia(client, { userId, kind, file }) {
+  const invalid = validateCoachMediaFile(file)
+  if (invalid) return { url: null, path: null, error: new Error(invalid) }
+  if (!userId || !MEDIA_KINDS.includes(kind)) return { url: null, path: null, error: new Error('Not signed in') }
+  const path = buildCoachMediaPath({ userId, kind, mimeType: file.type })
+  const bucket = client.storage.from(COACH_MEDIA_BUCKET)
+  const { error } = await bucket.upload(path, file, { contentType: file.type, cacheControl: '3600' })
+  if (error) return { url: null, path: null, error }
+  return { url: bucket.getPublicUrl(path).data?.publicUrl || null, path, error: null }
+}
+
+/** Best effort clean-up: deletes the coach's stored files of one kind, except `keepPath`. */
+export async function removeCoachMediaObjects(client, { userId, kind, keepPath = null }) {
+  if (!userId || !MEDIA_KINDS.includes(kind)) return
+  const bucket = client.storage.from(COACH_MEDIA_BUCKET)
+  const { data } = await bucket.list(userId)
+  const stale = (data || []).filter((o) => o.name.startsWith(`${kind}-`)).map((o) => `${userId}/${o.name}`).filter((p) => p !== keepPath)
+  if (stale.length) await bucket.remove(stale)
 }
 
 export async function setCoachCardVisibility(client, isPublic, isListed) {

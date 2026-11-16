@@ -54,3 +54,22 @@ test('error messages', () => {
   assert.match(c.coachCardErrorMessage({ message: 'This link name is already taken' }), /taken/)
   assert.equal(c.coachCardErrorMessage({ message: '?' }), 'Something went wrong. Please try again.')
 })
+
+test('coach media file validation and paths', () => {
+  assert.equal(c.validateCoachMediaFile({ type: 'image/png', size: 1000 }), null)
+  assert.ok(c.validateCoachMediaFile({ type: 'image/gif', size: 1000 }))
+  assert.ok(c.validateCoachMediaFile({ type: 'image/png', size: 5 * 1024 * 1024 + 1 }))
+  assert.ok(c.validateCoachMediaFile(null))
+  assert.equal(c.buildCoachMediaPath({ userId: 'u1', kind: 'logo', mimeType: 'image/webp', version: 7 }), 'u1/logo-7.webp')
+})
+
+test('coach media urls must be the coach own object of that kind', () => {
+  const base = 'https://x.supabase.co/storage/v1/object/public/coach-media'
+  assert.ok(c.isCoachMediaUrl(`${base}/u1/logo-123.png`, { userId: 'u1', kind: 'logo' }))
+  assert.ok(!c.isCoachMediaUrl(`${base}/u1/logo-123.png`, { userId: 'u1', kind: 'banner' }))
+  assert.ok(!c.isCoachMediaUrl(`${base}/u2/logo-123.png`, { userId: 'u1', kind: 'logo' }))
+  assert.ok(!c.isCoachMediaUrl(`https://evil.test/storage/v1/object/public/avatars/u1/logo-1.png`, { userId: 'u1', kind: 'logo' }))
+  assert.equal(c.safeCoachMediaUrl(`${base}/u1/logo-1.png`, 'https://x.supabase.co'), `${base}/u1/logo-1.png`)
+  assert.equal(c.safeCoachMediaUrl(`${base}/u1/logo-1.png`, 'https://other.supabase.co'), null)
+  assert.equal(c.safeCoachMediaUrl('https://x.supabase.co/storage/v1/object/public/avatars/u1/a.png', 'https://x.supabase.co'), null)
+})

@@ -3,10 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Icon from './Icon'
+import { useCoachModule } from './useCoachModule'
 import { OPEN_SETTINGS_EVENT } from '../lib/consent'
 import { parseCoachPath, chromeVisibility } from '../lib/coachContext'
 
 export default function Footer() {
+  const coachModule = useCoachModule()
   const showLinks = chromeVisibility(parseCoachPath(usePathname()).riderId).footerLinks
   return (
     <footer className="mt-auto glass-nav border-t border-slate-200 dark:border-surface-darkBorder bg-white/50 dark:bg-surface-darkCard/40 backdrop-blur-xs py-4 px-6 text-xs text-slate-500 dark:text-slate-400">
@@ -42,6 +44,12 @@ export default function Footer() {
             <Icon name="bug" /> Report a Bug
           </Link>
           </>}
+
+          {coachModule && (
+            <Link href="/coaches" className="hover:text-slate-900 dark:hover:text-white transition">
+              Coaches
+            </Link>
+          )}
 
           <Link href="/blog" className="hover:text-slate-900 dark:hover:text-white transition">
             Blog

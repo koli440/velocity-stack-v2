@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import LicenceBadge from '../../../components/LicenceBadge'
 import BuyPackageButton from '../../../components/BuyPackageButton'
 import { loadCoachCard } from '../../../lib/server/coachCardStore'
-import { accentOf, cardDescription, cardPath, priceLabel } from '../../../lib/coachCard'
+import { accentOf, cardDescription, cardPath, priceLabel, safeCoachMediaUrl } from '../../../lib/coachCard'
 import { safeAvatarUrl } from '../../../lib/recap'
 import ReportCoachCard from '../../../components/ReportCoachCard'
 import Icon from '../../../components/Icon'
@@ -31,9 +31,15 @@ export default async function CoachCardPage({ params }) {
   if (!card) notFound()
   const accent = accentOf(card.accent)
   const avatar = safeAvatarUrl(card.avatar_url)
+  const banner = safeCoachMediaUrl(card.banner_url)
+  const logo = safeCoachMediaUrl(card.logo_url)
   return (
     <article className="max-w-2xl mx-auto p-4 sm:p-6 space-y-4" data-testid="coach-card">
       <div className={`${'glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder'} overflow-hidden`}>
+      {banner && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={banner} alt="" className="h-32 sm:h-44 w-full object-cover" data-testid="coach-banner" />
+      )}
       <div className={`h-2 ${accent.bar}`} />
       <div className="p-4 sm:p-6 space-y-4">
         <header className="flex flex-col items-center text-center sm:flex-row sm:text-left gap-4">
@@ -51,6 +57,10 @@ export default async function CoachCardPage({ params }) {
             {card.headline && <p className={`text-base font-bold ${accent.text}`}>{card.headline}</p>}
             {card.location && <p className="text-sm text-slate-600 dark:text-slate-300">{card.location}</p>}
           </div>
+          {logo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logo} alt={`${card.name} logo`} className="h-16 w-16 sm:ml-auto shrink-0 rounded-xl object-contain bg-white border border-slate-200 dark:border-slate-700 p-1" data-testid="coach-logo" />
+          )}
         </header>
         {(card.disciplines.length > 0 || card.languages.length > 0) && (
           <ul className="flex flex-wrap justify-center sm:justify-start gap-2">
