@@ -36,8 +36,10 @@ export async function run(c) {
   const list = async (u, t) => (await as(c, u, `SELECT chat_messages_list($1) AS l`, [t])).rows[0]?.l
 
   // Flag off
-  ok('send refused while flag off', !(await send(U.coach, R1, 'hi')).ok)
-  ok('summary refused while flag off', !(await as(c, U.rider, `SELECT chat_threads_summary()`)).ok)
+  ok('flag off: summary still lists the coach for the rider', (await as(c, U.rider, `SELECT chat_threads_summary() AS s`)).rows[0].s.some((t) => t.id === R1))
+  ok('flag off: send still works', (await send(U.coach, R1, 'hi (flag off)')).ok)
+  await c.query(`DELETE FROM chat_messages WHERE thread_id = $1`, [R1])
+  await c.query(`DELETE FROM chat_threads WHERE id = $1`, [R1])
   await as(c, U.admin, `SELECT admin_coach_module_allow($1, true)`, [U.coach], { commit: true })
 
   // Basic flow
@@ -150,5 +152,6 @@ export async function run(c) {
   await c.query(`DELETE FROM blocks`)
   ok('unblocked reads again', (await list(U.rider2, R2)) !== null)
   await as(c, U.admin, `SELECT admin_coach_module_allow($1, false)`, [U.coach], { commit: true })
-  ok('flag off removes access', (await list(U.rider2, R2)) === null && !(await send(U.rider2, R2, 'x')).ok)
+  const R5 = (await c.query(`INSERT INTO coaching_relationships(coach_id, rider_id, initiated_by, status) VALUES ($1,$2,$2,'active') RETURNING id`, [U.coach, U.admin])).rows[0].id
+  ok('removing the flag does not remove chat access', (await list(U.admin, R5))?.can_send === true && (await send(U.admin, R5, 'x')).ok)
 }
