@@ -8,6 +8,10 @@ export const LAB_FEATURES = Object.freeze([
   { key: 'durability', label: 'Durability', desc: 'Fresh versus fatigued 5-minute power after about 2000 kJ.', icon: 'flask' },
   { key: 'decoupling', label: 'Efficiency and decoupling', desc: 'Aerobic decoupling (Pw:HR) and efficiency factor across steady rides.', icon: 'flask' },
   { key: 'forms', label: 'Field forms', desc: 'Body composition, mobility checklist and sprint test with history.', icon: 'flask' },
+  { key: 'fueling', label: 'Fueling and glucose', desc: 'Glucose before, during and after rides against carbs per hour and power; fasted vs fed. Not medical advice.', icon: 'flask' },
+  { key: 'fit', label: 'Bike-fit log', desc: 'Dated saddle, reach, cleat and crank changes compared with power and comfort.', icon: 'flask' },
+  { key: 'pedalling', label: 'Pedalling efficiency', desc: 'Left/right balance, torque effectiveness and smoothness trended across rides.', icon: 'flask' },
+  { key: 'cadence', label: 'Cadence and torque profile', desc: 'Power at set cadences to find your most effective rpm.', icon: 'flask' },
   { key: 'reports', label: 'Reports', desc: 'Branded, revocable share links with logo and licence badge; print to PDF.', icon: 'flask' },
 ])
 
