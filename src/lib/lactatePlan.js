@@ -1,5 +1,5 @@
-// Lactate step test: fixed instruction (read-only for everyone) and editable prepared steps
-// (docs/lab/lactate-step-test.md). Steps are % of FTP.
+// Lactate step test defaults (docs/lab/lactate-step-test.md): a fixed, read-only instruction and the
+// default steps (% of FTP) that prefill the "New step test" form, which is the only step definition.
 export const LACTATE_INSTRUCTION = [
   'Do the test on a smart trainer or a flat road, rested, fuelled and with the same equipment you train with.',
   'Warm up 10-15 minutes easy. Ride each step at the target power, steady, for the full step length.',
@@ -13,31 +13,11 @@ export const DEFAULT_LACTATE_PLAN = Object.freeze({
   steps: Object.freeze([50, 60, 70, 80, 90, 100, 110].map((pct) => Object.freeze({ pct }))),
 })
 
-/** Cleans plan input from the editor. Returns { plan } or { error }. */
-export function normalizePlan(raw) {
-  const minutes = Number(raw?.step_minutes)
+/** Step length for this test: whole minutes 1-20. */
+export function normalizeStepMinutes(raw) {
+  const minutes = Number(raw)
   if (!Number.isInteger(minutes) || minutes < 1 || minutes > 20) return { error: 'Step length must be 1 to 20 minutes' }
-  const steps = []
-  for (const s of raw?.steps || []) {
-    if (s?.pct === '' || s?.pct == null) continue
-    const pct = Number(s.pct)
-    if (!(pct >= 20 && pct <= 200)) return { error: 'Each step needs a percentage of FTP between 20 and 200' }
-    steps.push({ pct: Math.round(pct) })
-  }
-  if (steps.length < 3) return { error: 'Enter at least 3 steps' }
-  if (steps.length > 20) return { error: 'At most 20 steps' }
-  return { plan: { step_minutes: minutes, steps } }
-}
-
-/** Plan from the lab_lactate_plan_get RPC, falling back to the defaults. */
-export function resolvePlan(data) {
-  const custom = !!data?.custom
-  return {
-    custom,
-    fromCoach: !!data?.from_coach,
-    editable: data ? !!data.editable : true,
-    plan: custom ? { step_minutes: data.step_minutes, steps: data.steps } : DEFAULT_LACTATE_PLAN,
-  }
+  return { minutes }
 }
 
 /** Entry rows for the form: target watts per step when FTP is known. */
