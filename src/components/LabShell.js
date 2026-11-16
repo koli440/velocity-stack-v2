@@ -6,8 +6,9 @@ import { supabase } from '../lib/supabase'
 import { LAB_FEATURES, labBasePath, labFeature } from '../lib/labFeatures'
 import LabProtocolRunner from './LabProtocolRunner'
 import LabLactateTest from './LabLactateTest'
+import LabScheduler from './LabScheduler'
 
-const FEATURE_COMPONENTS = { protocols: LabProtocolRunner, lactate: LabLactateTest }
+const FEATURE_COMPONENTS = { protocols: LabProtocolRunner, lactate: LabLactateTest, schedule: LabScheduler }
 
 // Lab pages for a coached athlete (riderId set, /coach/<id>/lab) or the signed-in user's own results (/lab).
 // Access is decided by the database (is_coach_of / own rows); errors surface in the components.
@@ -31,7 +32,7 @@ export default function LabShell({ riderId = null, feature = null }) {
         {active && <Link href={base} className="text-xs font-bold text-indigo-600">All lab tools</Link>}
       </div>
       {Feature ? (
-        <Feature athleteId={athleteId} viewerId={viewerId} />
+        <Feature athleteId={athleteId} viewerId={viewerId} riderId={riderId} />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2" data-testid="lab-index">
           {LAB_FEATURES.map((f) => (
