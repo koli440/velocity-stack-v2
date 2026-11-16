@@ -39,6 +39,10 @@ export function describeNotification(notification, actor) {
       return `${name} (your coach) updated your training settings`
     case 'coach_note_shared':
       return `${name} (your coach) shared a note with you`
+    case 'licence_reviewed':
+      return 'Your coaching licence was reviewed'
+    case 'licence_expiring':
+      return 'Your coaching licence is expiring or has expired'
     case 'coach_message':
       return `${name} sent you a message`
     case 'onboarding_submitted':
@@ -95,6 +99,9 @@ export function notificationHref(notification) {
       return '/settings#physiology'
     case 'coach_note_shared':
       return COACHING_HREF
+    case 'licence_reviewed':
+    case 'licence_expiring':
+      return '/settings/coach-card'
     case 'coach_message':
       return '/chat'
     case 'onboarding_submitted':

@@ -48,3 +48,4 @@ Coach module flag + notes: `MIG=<repo>/supabase/migrations/20270151000000_coach_
 Coach card + directory: `MIG=<repo>/supabase/migrations/20270152000000_coach_cards.sql node harness.mjs <repo>/supabase/migrations ./coach-card-adversarial.mjs`
 Coach onboarding: `MIG=<repo>/supabase/migrations/20270153000000_coach_onboarding.sql node harness.mjs <repo>/supabase/migrations ./onboarding-adversarial.mjs`
 Coach chat: `MIG=<repo>/supabase/migrations/20270154000000_coach_chat.sql node harness.mjs <repo>/supabase/migrations ./chat-adversarial.mjs`
+Coach licences: `MIG=<repo>/supabase/migrations/20270155000000_coach_licences.sql node harness.mjs <repo>/supabase/migrations ./licence-adversarial.mjs`
