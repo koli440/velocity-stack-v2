@@ -3,7 +3,7 @@ import LicenceBadge from '../../../../components/LicenceBadge'
 import PrintButton from '../../../../components/PrintButton'
 import { loadLabReport } from '../../../../lib/server/labReportStore'
 import Icon from '../../../../components/Icon'
-import { thresholdTiles, phenotypeRows, testSummary, bodyRows } from '../../../../lib/labReportView'
+import { thresholdTiles, phenotypeRows, testSummary, bodyRows, lactateRows, durabilityLines, decouplingLines, aeroLines, fuelingLines, fitRows, pedallingRows, cadenceRows } from '../../../../lib/labReportView'
 import { cardPath, safeCoachMediaUrl } from '../../../../lib/coachCard'
 
 // Token-gated and never cached; revoking a link takes effect immediately.
@@ -30,6 +30,16 @@ export default async function LabReportPage({ params }) {
   const pheno = phenotypeRows(s.phenotype)
   const body = bodyRows(s.forms)
   const tests = Array.isArray(s.tests) ? s.tests : []
+  const lists = [
+    ['Lactate step test', 'flask', lactateRows(s.lactate), null],
+    ['Durability', 'bolt', null, durabilityLines(s.durability)],
+    ['Efficiency and decoupling', 'bolt', null, decouplingLines(s.decoupling)],
+    ['Aero tests', 'bolt', null, aeroLines(s.aero)],
+    ['Fueling and glucose', 'flask', null, fuelingLines(s.fueling), 'Performance and fueling insight, not medical advice.'],
+    ['Bike fit', 'ruler', fitRows(s.fit), null],
+    ['Pedalling efficiency', 'bolt', pedallingRows(s.pedalling), null],
+    ['Cadence profile', 'bolt', cadenceRows(s.cadence), null],
+  ]
   return (
     <article className="max-w-3xl mx-auto space-y-4 text-slate-900 dark:text-white print:max-w-none print:text-black" data-testid="lab-report">
       <header className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder border-t-4 border-t-orange-500 p-4 sm:p-6 space-y-4 print:bg-white print:border-slate-300 break-inside-avoid">
@@ -96,6 +106,7 @@ export default async function LabReportPage({ params }) {
         <section className={CARD}>
           <h2 className={H2}><Icon name="bolt" /> Phenotype: {s.phenotype.label}</h2>
           <dl>{pheno.map((r) => <Row key={r.label} {...r} />)}</dl>
+          {s.phenotype.age_note && <p className="mt-2 text-xs text-slate-700 dark:text-slate-300 print:text-slate-700" data-testid="report-age-note">{s.phenotype.age_note}</p>}
         </section>
       )}
       {body.length > 0 && (
@@ -104,6 +115,14 @@ export default async function LabReportPage({ params }) {
           <dl>{body.map((r) => <Row key={r.label} {...r} />)}</dl>
         </section>
       )}
+      {lists.filter(([, , rows, ls]) => (rows && rows.length) || (ls && ls.length)).map(([title, icon, rows, ls, note]) => (
+        <section key={title} className={CARD} data-testid="report-extra">
+          <h2 className={H2}><Icon name={icon} /> {title}</h2>
+          {rows && <dl>{rows.map((r) => <Row key={r.label} {...r} />)}</dl>}
+          {ls && <ul className="space-y-1 text-sm">{ls.map((l) => <li key={l}>{l}</li>)}</ul>}
+          {note && <p className="mt-2 text-xs text-slate-700 dark:text-slate-300 print:text-slate-700">{note}</p>}
+        </section>
+      ))}
       <footer className="px-1 text-xs text-slate-700 dark:text-slate-300 print:text-slate-700">
         Shared via VelocityStack. This report is a snapshot and can be revoked by its owner.
       </footer>

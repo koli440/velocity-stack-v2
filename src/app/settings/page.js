@@ -39,6 +39,7 @@ export default function SettingsPage() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [nickname, setNickname] = useState('')
+  const [birthYear, setBirthYear] = useState('')
   const [homeTrackId, setHomeTrackId] = useState('')
   const [trainingStamp, setTrainingStamp] = useState(null)
   const coachNames = useCoachNames(trainingStamp ? [trainingStamp] : [])
@@ -78,6 +79,7 @@ export default function SettingsPage() {
         setFirstName(data.first_name || '')
         setLastName(data.last_name || '')
         setNickname(data.nickname || '')
+        setBirthYear(data.birth_year ? String(data.birth_year) : '')
         setHomeTrackId(data.home_track_id || '')
         setTrainingStamp(data)
         setDefaultChainring(toGearField(data.default_chainring))
@@ -154,6 +156,7 @@ export default function SettingsPage() {
       first_name: firstName.trim() || null,
       last_name: lastName.trim() || null,
       nickname: nickname.trim() || null,
+      birth_year: /^(19|20)\d{2}$/.test(birthYear.trim()) ? Number(birthYear.trim()) : null,
       home_track_id: homeTrackId || null,
       default_chainring: gear.chainring,
       default_cog: gear.cog,
@@ -269,6 +272,21 @@ export default function SettingsPage() {
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+
+          <div>
+            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+              Year of birth (private; used for the Lab age adjustment)
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              value={birthYear}
+              onChange={(e) => setBirthYear(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
             />
           </div>

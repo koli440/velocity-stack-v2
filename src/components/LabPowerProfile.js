@@ -10,8 +10,8 @@ const card = adminCard
 const input = adminInput
 const PERIODS = [['90', 'Last 90 days'], ['365', 'Last year']]
 
-// Power profile and phenotype from the athlete's best 5 s / 1 min / 5 min / 20 min power. Age and sex are
-// only used for this view and are not stored.
+// Power profile and phenotype from the athlete's best 5 s / 1 min / 5 min / 20 min power. Age defaults to the
+// year of birth in Settings (still editable here); sex is only used for this view.
 export default function LabPowerProfile({ athleteId }) {
   const [curves, setCurves] = useState(null)
   const [weight, setWeight] = useState('')
@@ -32,6 +32,8 @@ export default function LabPowerProfile({ athleteId }) {
       if (acts.error) return setError('Could not load rides')
       setError(null)
       setCurves((acts.data || []).map((a) => a.curves_data?.Power || null))
+      const ageRes = await supabase.rpc('lab_athlete_age', { p_athlete: athleteId })
+      if (live && ageRes.data) setAge((cur) => cur || String(ageRes.data))
       const w = weightAt(wh.history, new Date().toISOString().slice(0, 10))
       if (w) setWeight((cur) => cur || String(w))
     })()
