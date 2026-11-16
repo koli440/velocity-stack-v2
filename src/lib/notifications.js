@@ -39,6 +39,8 @@ export function describeNotification(notification, actor) {
       return `${name} (your coach) updated your training settings`
     case 'coach_note_shared':
       return `${name} (your coach) shared a note with you`
+    case 'coach_message':
+      return `${name} sent you a message`
     case 'onboarding_submitted':
       return `${name} applied to be coached by you`
     case 'activity_comment': {
@@ -93,6 +95,8 @@ export function notificationHref(notification) {
       return '/settings#physiology'
     case 'coach_note_shared':
       return COACHING_HREF
+    case 'coach_message':
+      return '/chat'
     case 'onboarding_submitted':
       return '/coach'
     case 'suggestion_submitted':

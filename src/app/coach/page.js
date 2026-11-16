@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import ChatLink from '../../components/ChatLink'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import { fetchMyCoaching, groupRelationships, fetchCoachDashboard, authorName, COACHING_SETTINGS_PATH } from '../../lib/coaching'
@@ -97,6 +98,7 @@ export default function CoachDashboardPage() {
   return (
     <div className="space-y-6" data-testid="coach-dashboard">
       <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Coach dashboard</h1>
+      <ChatLink />
       <CoachApplications />
       {state.loading && <p className="text-xs text-slate-400">Loading…</p>}
       {state.error && <p className="text-xs text-red-500">Could not load everything: {state.error.message}</p>}

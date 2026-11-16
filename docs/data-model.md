@@ -374,3 +374,4 @@ New function `coach_fitness_activities(p_riders uuid[] default null, p_days int 
 
 ## Coach cards (feature flag `coach_module`)
 `coach_cards` (one per coach: slug, headline, bio, accent, disciplines, languages, location, `is_public`, `is_listed`, `accepting_athletes`, `max_athletes`), `coach_packages` (text packages: kind subscription/one_time/free, interval, `amount_cents`, currency; reserved `stripe_*` ids), `coach_card_edit_log` (rate limit), `coach_card_reports`. RLS on, no client privileges; all access via RPCs (see docs/coaching.md). Migration `20270152000000_coach_cards.sql`.
+`chat_threads` (id = coaching relationship id), `chat_messages` (body ≤ 4000, optional own-activity / planned-workout link, soft delete), `chat_reads`, `chat_log` (rate limit), `chat_reports` (body snapshot). RLS on; only a participant SELECT policy on `chat_messages` (for realtime); everything else via RPCs. Migration `20270154000000_coach_chat.sql`.
