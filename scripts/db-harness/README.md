@@ -46,3 +46,4 @@ Admin Respect stats RPC: `MIG=<repo>/supabase/migrations/20270140000000_admin_re
 
 Coach module flag + notes: `MIG=<repo>/supabase/migrations/20270151000000_coach_module_flag_and_notes.sql node harness.mjs <repo>/supabase/migrations ./coach-notes-adversarial.mjs`
 Coach card + directory: `MIG=<repo>/supabase/migrations/20270152000000_coach_cards.sql node harness.mjs <repo>/supabase/migrations ./coach-card-adversarial.mjs`
+Coach onboarding: `MIG=<repo>/supabase/migrations/20270153000000_coach_onboarding.sql node harness.mjs <repo>/supabase/migrations ./onboarding-adversarial.mjs`
