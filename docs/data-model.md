@@ -371,3 +371,6 @@ New function `coach_fitness_activities(p_riders uuid[] default null, p_days int 
 
 ## Season recap (`20270149000000_season_recap.sql`)
 `season_recap_shares(user_id, season_year, slug)` (RLS on, no client grants) holds the opt-in public link; `season_recap(year)`, `get/enable/revoke_season_recap_share` and the anon `get_shared_season_recap(slug)` are SECURITY DEFINER RPCs. See `docs/season-recap.md`.
+
+## Coach cards (feature flag `coach_module`)
+`coach_cards` (one per coach: slug, headline, bio, accent, disciplines, languages, location, `is_public`, `is_listed`, `accepting_athletes`, `max_athletes`), `coach_packages` (text packages: kind subscription/one_time/free, interval, `amount_cents`, currency; reserved `stripe_*` ids), `coach_card_edit_log` (rate limit), `coach_card_reports`. RLS on, no client privileges; all access via RPCs (see docs/coaching.md). Migration `20270152000000_coach_cards.sql`.
