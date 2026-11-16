@@ -65,11 +65,16 @@ test('public content and tool pages keep the app menu for visitors', () => {
 test('login page offers the two public tools as cards', async () => {
   const { LOGIN_TOOL_CARDS } = await import('../signupCatch.js')
   const { ICON_SET } = await import('../iconSet.js')
-  assert.deepEqual(LOGIN_TOOL_CARDS.map((c) => c.href), ['/gears', '/pursuit'])
+  assert.deepEqual(LOGIN_TOOL_CARDS.map((c) => c.href), ['/gears', '/pursuit', '/coaches'])
   for (const c of LOGIN_TOOL_CARDS) {
-    assert.ok(isPublicToolPath(c.href))
+    assert.ok(isPublicToolPath(c.href) || isPublicContentPath(c.href))
     assert.ok(ICON_SET[c.icon])
     assert.ok(c.description.length > 10)
   }
   assert.match(fs.readFileSync('src/app/login/page.js', 'utf8'), /LOGIN_TOOL_CARDS/)
+})
+
+test('coach directory and cards are public pages, coach dashboard is not', () => {
+  for (const p of ['/coaches', '/coaches/', '/c/some-coach', '/c/some-coach/apply']) assert.ok(isPublicContentPath(p), p)
+  for (const p of ['/coach', '/coach/applications/1', '/coachesx', '/cx']) assert.ok(!isPublicContentPath(p), p)
 })
