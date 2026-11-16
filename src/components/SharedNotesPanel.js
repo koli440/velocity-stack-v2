@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Icon from './Icon'
+import { adminBtn } from './admin/AdminUi'
 import { useCoachModule } from './useCoachModule'
 import { fetchSharedNotes, hideSharedNote, NOTE_TAG_LABELS } from '../lib/coachNotes'
 
@@ -27,25 +29,25 @@ export default function SharedNotesPanel() {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3" data-testid="shared-notes">
-      <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">Notes from my coach</h2>
-      <ul className="space-y-2">
+    <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4" data-testid="shared-notes">
+      <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2"><Icon name="notes" /> Notes from my coach</h2>
+      <ul className="space-y-3">
         {notes.map((n) => (
-          <li key={n.id} className="space-y-1">
+          <li key={n.id} className="space-y-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-slate-900 dark:text-white">
-                {n.title || n.note_date} <span className="font-normal text-slate-500">· {n.coach_name}</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">
+                {n.title || n.note_date} <span className="font-normal text-slate-600 dark:text-slate-300">· {n.coach_name}</span>
               </span>
               <button
-                className="px-3 py-1.5 rounded-lg text-[11px] font-bold border border-slate-300 dark:border-slate-700 text-slate-500"
+                className={adminBtn.secondary}
                 onClick={() => hide(n.id)}
               >
                 Hide
               </button>
             </div>
-            <p className="text-xs whitespace-pre-wrap text-slate-700 dark:text-slate-300">{n.body}</p>
+            <p className="text-sm whitespace-pre-wrap text-slate-800 dark:text-slate-200">{n.body}</p>
             {(n.tags || []).length > 0 && (
-              <p className="text-[10px] text-slate-500">{n.tags.map((t) => NOTE_TAG_LABELS[t] || t).join(', ')}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">{n.tags.map((t) => NOTE_TAG_LABELS[t] || t).join(', ')}</p>
             )}
           </li>
         ))}

@@ -7,6 +7,8 @@ import { useCoachModule } from './useCoachModule'
 import {
   answersToForm, deleteOnboarding, editOnboarding, fetchMyOnboarding, onboardingErrorMessage, withdrawOnboarding,
 } from '../lib/coachOnboarding'
+import Icon from './Icon'
+import { adminBtn } from './admin/AdminUi'
 import ApplicationView from './ApplicationView'
 import OnboardingForm from './OnboardingForm'
 
@@ -30,15 +32,15 @@ export default function MyOnboardingPanel() {
     load()
   }
   return (
-    <section id="onboarding" className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-4" data-testid="my-onboarding">
-      <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">My onboarding answers</h2>
+    <section id="onboarding" className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4 scroll-mt-20" data-testid="my-onboarding">
+      <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2"><Icon name="clipboard" /> My onboarding answers</h2>
       {rows.map((r) => (
-        <div key={r.id} className="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-3">
+        <div key={r.id} className="space-y-3 border-t border-slate-200 dark:border-slate-700 pt-4">
           <p className="text-sm font-bold text-slate-900 dark:text-white">
-            {r.coach_name} <span className="font-normal text-slate-500">· {r.status === 'withdrawn' ? 'consent withdrawn' : r.relationship_status === 'active' ? 'coaching' : r.relationship_status || 'submitted'}</span>
+            {r.coach_name} <span className="font-normal text-slate-600 dark:text-slate-300">· {r.status === 'withdrawn' ? 'consent withdrawn' : r.relationship_status === 'active' ? 'coaching' : r.relationship_status || 'submitted'}</span>
           </p>
           {r.setup.length > 0 && (
-            <ul className="text-xs text-slate-600 dark:text-slate-300 list-disc pl-5" data-testid="onboarding-setup">
+            <ul className="text-sm text-slate-700 dark:text-slate-200 list-disc pl-5" data-testid="onboarding-setup">
               {r.setup.map((s, i) => <li key={i}>{SETUP_LABELS[s.target] || s.target}: {s.status}{s.detail ? ` (${s.detail})` : ''}</li>)}
             </ul>
           )}
@@ -57,20 +59,20 @@ export default function MyOnboardingPanel() {
             />
           ) : (
             <details>
-              <summary className="text-xs font-bold cursor-pointer">View answers</summary>
+              <summary className="min-h-[44px] flex items-center text-sm font-bold cursor-pointer text-slate-900 dark:text-white">View answers</summary>
               <ApplicationView answers={r.answers} health={r.health} healthDeclined={r.health_declined} coachAnswers={r.coach_answers} />
             </details>
           )}
-          <div className="flex flex-wrap gap-3 text-xs font-bold">
-            {r.status === 'submitted' && editing !== r.id && <button className="underline" onClick={() => setEditing(r.id)}>Edit</button>}
-            {editing === r.id && <button className="underline" onClick={() => setEditing(null)}>Cancel</button>}
-            {r.status === 'submitted' && <button className="underline" onClick={() => run(withdrawOnboarding, r.id, 'Consent withdrawn', 'Withdraw consent? The coach loses access and a pending request is cancelled.')}>Withdraw consent</button>}
-            <button className="underline text-red-600" onClick={() => run(deleteOnboarding, r.id, 'Answers deleted', 'Delete these answers permanently?')}>Delete answers</button>
-            {r.coach_slug && <Link className="underline" href={`/c/${r.coach_slug}`}>Coach card</Link>}
+          <div className="flex flex-wrap gap-2">
+            {r.status === 'submitted' && editing !== r.id && <button className={adminBtn.secondary} onClick={() => setEditing(r.id)}><Icon name="edit" /> Edit</button>}
+            {editing === r.id && <button className={adminBtn.secondary} onClick={() => setEditing(null)}>Cancel</button>}
+            {r.status === 'submitted' && <button className={adminBtn.secondary} onClick={() => run(withdrawOnboarding, r.id, 'Consent withdrawn', 'Withdraw consent? The coach loses access and a pending request is cancelled.')}>Withdraw consent</button>}
+            <button className={adminBtn.danger} onClick={() => run(deleteOnboarding, r.id, 'Answers deleted', 'Delete these answers permanently?')}><Icon name="trash" /> Delete answers</button>
+            {r.coach_slug && <Link className={adminBtn.secondary} href={`/c/${r.coach_slug}`}>Coach card</Link>}
           </div>
         </div>
       ))}
-      {msg && <p className={`text-xs font-bold ${msg.error ? 'text-rose-600' : 'text-emerald-600'}`}>{msg.text}</p>}
+      {msg && <p role={msg.error ? 'alert' : 'status'} className={`text-sm font-bold ${msg.error ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{msg.text}</p>}
     </section>
   )
 }
