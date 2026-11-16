@@ -148,6 +148,21 @@ export async function run(c) {
     ok('dual role lists both threads (' + order + ')', sum.length === 2 && sum.some((t) => t.role === 'rider' && t.other_id === myCoach) && sum.some((t) => t.role === 'coach' && t.other_id === myAthlete))
   }
 
+  // Pending relationship: openable read-only (not "not found"), cannot send, invitee can tell it is theirs
+  {
+    const coachP = uid(), riderP = uid()
+    for (const [id, n] of [[coachP, 'pcoach'], [riderP, 'prider']]) {
+      await c.query(`INSERT INTO auth.users(id,email) VALUES ($1,$2)`, [id, n + uid() + '@x.test'])
+      await c.query(`INSERT INTO public.profiles(id, nickname) VALUES ($1,$2) ON CONFLICT (id) DO UPDATE SET nickname = EXCLUDED.nickname`, [id, n])
+    }
+    const RP = (await c.query(`INSERT INTO coaching_relationships(coach_id, rider_id, initiated_by, status) VALUES ($1,$2,$2,'pending') RETURNING id`, [coachP, riderP])).rows[0].id
+    const asker = await list(riderP, RP), invitee = await list(coachP, RP)
+    ok('pending opens read-only for requester', asker?.status === 'pending' && asker.can_send === false && asker.initiated_by_me === true)
+    ok('pending opens read-only for invitee', invitee?.status === 'pending' && invitee.can_send === false && invitee.initiated_by_me === false)
+    ok('pending is not openable by a third party', (await list(U.rider, RP)) === null)
+    ok('pending cannot send', !(await send(riderP, RP, 'hi')).ok)
+  }
+
   // Ending: rider keeps read access, coach loses it, nobody sends
   await as(c, U.coach, `SELECT end_coaching($1)`, [R1], { commit: true })
   ok('coach loses access', (await list(U.coach, R1)) === null)
