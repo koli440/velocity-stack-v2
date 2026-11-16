@@ -442,7 +442,7 @@ export default function SettingsPage() {
         </div>
       </form>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-6">
         <CoachingPanel userId={user?.id} />
         <SharedNotesPanel />
         <MyOnboardingPanel />
