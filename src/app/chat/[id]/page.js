@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import {
-  canEditMessage, chatErrorMessage, deleteMessage, editMessage, fetchMessages, fetchReferenceCandidates, referenceParams, markRead, mergeMessages,
+  canEditMessage, chatErrorMessage, deleteMessage, editMessage, fetchMessages, fetchReferenceCandidates, referenceParams, threadStateMessage, markRead, mergeMessages,
   MAX_MESSAGE_LENGTH, reportMessage, sendMessage,
 } from '../../../lib/coachChat'
 import { acceptCoaching, declineCoaching } from '../../../lib/coaching'
@@ -21,14 +21,16 @@ export default function ChatThreadPage() {
   const [body, setBody] = useState('')
   const [msg, setMsg] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [loadError, setLoadError] = useState(null)
   const [ref, setRef] = useState(null)
   const [picker, setPicker] = useState(null)
   const bottom = useRef(null)
 
   const load = useCallback(async () => {
-    const { thread: t } = await fetchMessages(supabase, id)
+    const { thread: t, error } = await fetchMessages(supabase, id)
     setThread(t)
-    if (t) {
+    setLoadError(error)
+    if (t?.messages?.length || t?.can_send) {
       setMessages(mergeMessages(t.messages))
       markRead(supabase, id)
     }
@@ -53,7 +55,12 @@ export default function ChatThreadPage() {
 
   if (thread === undefined) return <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Loading conversation…</p>
   if (!thread) return <div className={`${adminCard} max-w-2xl mx-auto text-sm text-slate-700 dark:text-slate-200 space-y-3`}>
-    <p>Conversation not found or no longer available.</p>
+    <p data-testid="chat-unavailable">{threadStateMessage(null, loadError)}</p>
+    <Link href="/chat" className={adminBtn.secondary}><Icon name="chevronLeft" /> Messages</Link>
+  </div>
+
+  if (thread.status && !['pending', 'active', 'ended'].includes(thread.status)) return <div className={`${adminCard} max-w-2xl mx-auto text-sm text-slate-700 dark:text-slate-200 space-y-3`} data-testid="chat-unavailable">
+    <p>{threadStateMessage(thread)}</p>
     <Link href="/chat" className={adminBtn.secondary}><Icon name="chevronLeft" /> Messages</Link>
   </div>
 

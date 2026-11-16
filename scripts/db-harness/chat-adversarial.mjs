@@ -131,9 +131,25 @@ export async function run(c) {
   ok('mark read on empty thread is a no-op', (await as(c, U.outsider, `SELECT mark_chat_read($1)`, [R3])).ok)
   ok('first message from rider creates thread', (await send(U.outsider, R3, 'hello coach')).ok)
   await as(c, U.coach, `SELECT end_coaching($1)`, [R3], { commit: true })
-  ok('ended thread with history is readable by rider only', (await list(U.outsider, R3))?.can_send === false && (await list(U.coach, R3)) === null)
+  ok('ended thread with history is readable by rider only', (await list(U.outsider, R3))?.can_send === false && (await list(U.coach, R3))?.status === 'ended_coach' && (await list(U.coach, R3)).messages.length === 0)
   const R4 = (await c.query(`INSERT INTO coaching_relationships(coach_id, rider_id, initiated_by, status) VALUES ($1,$2,$2,'ended') RETURNING id`, [U.coach, U.admin])).rows[0].id
-  ok('ended relationship without messages is not openable', (await list(U.admin, R4)) === null)
+  ok('ended relationship without messages gives a reason state', (await list(U.admin, R4))?.can_send === false)
+
+  // Invariant: every row chat_threads_summary lists must open (non-null chat_messages_list) for the same user;
+  // participants never get NULL (reason states), strangers do.
+  {
+    const users = [U.coach, U.rider, U.outsider, U.admin]
+    for (const u of users) {
+      const sum = (await as(c, u, `SELECT chat_threads_summary() AS s`)).rows[0].s
+      for (const t of sum) ok('listed row opens: ' + t.status + '/' + t.role, (await list(u, t.id)) !== null)
+    }
+    const all = (await c.query(`SELECT id, coach_id, rider_id, status FROM coaching_relationships`)).rows
+    for (const r of all) {
+      ok('participant never gets NULL (' + r.status + ')', (await list(r.coach_id, r.id)) !== null && (await list(r.rider_id, r.id)) !== null)
+    }
+    ok('stranger still gets NULL', all.length > 0 && (await list(uid(), all[0].id)) === null)
+  }
+
 
   // Dual role: one account coaches an athlete AND is the rider of its own coach (both creation orders)
   for (const order of ['asCoachFirst', 'asRiderFirst']) {
@@ -183,7 +199,7 @@ export async function run(c) {
 
   // Ending: rider keeps read access, coach loses it, nobody sends
   await as(c, U.coach, `SELECT end_coaching($1)`, [R1], { commit: true })
-  ok('coach loses access', (await list(U.coach, R1)) === null)
+  ok('coach loses access (reason state, no messages)', (await list(U.coach, R1))?.status === 'ended_coach' && (await list(U.coach, R1)).messages.length === 0)
   ok('coach summary drops ended thread', (await as(c, U.coach, `SELECT chat_threads_summary() AS s`)).rows[0].s.length === 1)
   ok('rider still reads', (await list(U.rider, R1)).can_send === false)
   ok('rider summary keeps ended thread read-only', (await as(c, U.rider, `SELECT chat_threads_summary() AS s`)).rows[0].s[0].can_send === false)
@@ -193,7 +209,7 @@ export async function run(c) {
 
   // Block and flag removal
   await c.query(`INSERT INTO blocks(blocker_id, blocked_id) VALUES ($1, $2)`, [U.rider2, U.coach])
-  ok('blocked pair cannot read', (await list(U.rider2, R2)) === null)
+  ok('blocked pair cannot read (reason state, no messages)', (await list(U.rider2, R2))?.status === 'blocked' && (await list(U.rider2, R2)).messages.length === 0)
   ok('blocked pair cannot send', !(await send(U.rider2, R2, 'x')).ok)
   await c.query(`DELETE FROM blocks`)
   ok('unblocked reads again', (await list(U.rider2, R2)) !== null)

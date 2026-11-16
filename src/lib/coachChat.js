@@ -45,6 +45,18 @@ export async function fetchMessages(client, thread, before = null) {
   const { data, error } = await client.rpc('chat_messages_list', { p_thread: thread, p_before: before, p_limit: 50 })
   return { thread: data || null, error }
 }
+
+// Why a listed conversation cannot be written to (shown instead of a generic "not found").
+export function threadStateMessage(thread, error) {
+  if (error) return `Could not load this conversation (${error.message || 'network error'}). Try again.`
+  switch (thread?.status) {
+    case 'blocked': return 'This conversation is unavailable because one of you has blocked the other.'
+    case 'declined': return 'This coaching request was declined, so there is no conversation.'
+    case 'ended_coach': return 'This coaching relationship has ended, so you no longer have access to the conversation.'
+    case 'ended_no_history': return 'This coaching relationship has ended and there were no messages.'
+    default: return 'Conversation not found or no longer available.'
+  }
+}
 export async function fetchReferenceCandidates(client, thread) {
   const { data, error } = await client.rpc('chat_reference_candidates', { p_thread: thread })
   return { activities: data?.activities || [], workouts: data?.workouts || [], error }
