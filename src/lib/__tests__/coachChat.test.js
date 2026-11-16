@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { canEditMessage, chatPath, threadHref, referenceParams, chatErrorMessage, mergeMessages, totalUnread, EDIT_WINDOW_MS } from '../coachChat.js'
+import { canEditMessage, chatPath, threadHref, referenceParams, threadStateMessage, chatErrorMessage, mergeMessages, totalUnread, EDIT_WINDOW_MS } from '../coachChat.js'
 import { describeNotification, notificationHref } from '../notifications.js'
 
 test('canEditMessage: own, not deleted, within window', () => {
@@ -43,4 +43,11 @@ test('referenceParams only carries a mention id (never a workout/activity link)'
   assert.deepEqual(referenceParams({ type: 'activity', id: 'a1' }), { activityId: 'a1', workoutId: null })
   assert.deepEqual(referenceParams({ type: 'workout', id: 'w1' }), { activityId: null, workoutId: 'w1' })
   assert.deepEqual(referenceParams(null), { activityId: null, workoutId: null })
+})
+
+test('threadStateMessage explains the reason', () => {
+  assert.match(threadStateMessage({ status: 'blocked' }), /blocked/)
+  assert.match(threadStateMessage({ status: 'ended_coach' }), /ended/)
+  assert.match(threadStateMessage({ status: 'declined' }), /declined/)
+  assert.match(threadStateMessage(null, { message: 'boom' }), /boom/)
 })
