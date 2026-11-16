@@ -5,7 +5,7 @@ import * as o from '../coachOnboarding.js'
 const base = { dob: '1990-05-05', events: [], blackout: [], weekdays: {} }
 
 test('buildAnswers drops empty fields and coerces numbers', () => {
-  const a = o.buildAnswers({ ...base, ftp_w: '280', weight_kg: '72.5', height_cm: '', main_goal: ' race ', platforms: 'Garmin, ,Strava',
+  const a = o.buildAnswers({ ...base, ftp_w: '280', weight_kg: '72.5', height_cm: '', main_goal: ' race ', equipment_items: ['power_meter', 'bogus', 'zwift'],
     events: [{ name: 'Nationals', date: '2027-01-01', priority: 'A' }, { name: '', date: '2027-02-01' }],
     blackout: [{ date: '2027-03-01', note: '' }, { date: '' }], weekdays: { mon: 'short', tue: '' } })
   assert.deepEqual(a.about, { dob: '1990-05-05', weight_kg: 72.5 })
@@ -13,12 +13,12 @@ test('buildAnswers drops empty fields and coerces numbers', () => {
   assert.equal(a.goals.main_goal, 'race')
   assert.deepEqual(a.goals.events, [{ name: 'Nationals', date: '2027-01-01', priority: 'A' }])
   assert.deepEqual(a.availability, { weekdays: { mon: 'short' }, blackout: [{ date: '2027-03-01' }] })
-  assert.deepEqual(a.equipment.platforms, ['Garmin', 'Strava'])
+  assert.deepEqual(a.equipment, { items: ['power_meter', 'zwift'] })
   assert.ok(!('height_cm' in a.about))
 })
 
 test('answersToForm round-trips buildAnswers', () => {
-  const f = { ...base, ftp_w: 280, main_goal: 'race', events: [{ name: 'N', date: '2027-01-01', priority: 'A' }], platforms: 'Garmin, Strava', weekdays: { sat: 'long' } }
+  const f = { ...base, ftp_w: 280, main_goal: 'race', events: [{ name: 'N', date: '2027-01-01', priority: 'A' }], equipment_items: ['hr_monitor'], weekdays: { sat: 'long' } }
   const again = o.buildAnswers(o.answersToForm(o.buildAnswers(f)))
   assert.deepEqual(again, o.buildAnswers(f))
 })
@@ -48,4 +48,23 @@ test('healthFlag and consent hash', async () => {
   assert.equal(o.PARQ_QUESTIONS.length, 7)
   assert.match(await o.consentHash(), /^[0-9a-f]{64}$/)
   assert.notEqual(await o.consentHash('a'), await o.consentHash('b'))
+})
+
+test('old free-text equipment answers are not re-emitted when editing', () => {
+  const old = { equipment: { power_meter: 'Quarq', platforms: ['Zwift'] } }
+  assert.deepEqual(o.answersToForm(old).equipment_items, [])
+  assert.ok(!('equipment' in o.buildAnswers(o.answersToForm(old))))
+})
+
+test('loadProfilePrefill maps latest weight, FTP and thresholds', async () => {
+  const rows = {
+    weight_history: [{ weight_kg: '72.5' }], ftp_history: [{ ftp_w: 280, effective_from: '2026-10-01' }],
+    lactate_threshold_history: [{ lt1_power_w: 200, lt2_power_w: 260 }],
+  }
+  const q = (t) => { const c = { select: () => c, eq: () => c, order: () => c, limit: async () => ({ data: rows[t] }) }; return c }
+  const { values, fields } = await o.loadProfilePrefill({ from: q }, 'u1')
+  assert.deepEqual(values, { weight_kg: '72.5', ftp_w: '280', ftp_date: '2026-10-01', lt1_w: '200', lt2_w: '260' })
+  assert.equal(fields.length, 5)
+  const none = await o.loadProfilePrefill({ from: () => { const c = { select: () => c, eq: () => c, order: () => c, limit: async () => ({ data: [] }) }; return c } }, 'u1')
+  assert.deepEqual(none.values, {})
 })

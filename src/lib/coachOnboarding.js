@@ -22,6 +22,11 @@ export const AVAILABILITY = Object.freeze({ none: 'Not available', short: 'Short
 export const SEX_OPTIONS = Object.freeze({ female: 'Female', male: 'Male', other: 'Other', na: 'Prefer not to say' })
 export const STRUCTURE_OPTIONS = Object.freeze({ none: 'No structure', self: 'Self-planned', plan: 'Following a plan', coach: 'With a coach' })
 export const PRIORITIES = Object.freeze(['A', 'B', 'C'])
+export const EQUIPMENT_ITEMS = Object.freeze({
+  power_meter: 'Power meter', hr_monitor: 'Heart rate monitor', smart_trainer: 'Smart trainer', head_unit: 'Bike computer / head unit',
+  road_bike: 'Road bike', tt_bike: 'TT / triathlon bike', gravel_bike: 'Gravel bike', mtb: 'Mountain bike', indoor_bike: 'Indoor / spin bike',
+  zwift: 'Zwift', trainerroad: 'TrainerRoad', rouvy: 'Rouvy', other: 'Other equipment',
+})
 export const MAX_EVENTS = 5
 export const MAX_BLACKOUT = 10
 export const MAX_COACH_QUESTIONS = 5
@@ -74,10 +79,7 @@ export function buildAnswers(f) {
       lt2_w: num(f.lt2_w), indoor_pct: num(f.indoor_pct), other_sports: txt(f.other_sports),
     }),
     availability: prune({ hours_per_week: num(f.hours_per_week), contact_style: txt(f.contact_style), weekdays, blackout }),
-    equipment: prune({
-      power_meter: txt(f.power_meter), hr: txt(f.hr), smart_trainer: txt(f.smart_trainer), head_unit: txt(f.head_unit), bike_type: txt(f.bike_type),
-      platforms: String(f.platforms || '').split(',').map((s) => s.trim()).filter(Boolean).slice(0, 10),
-    }),
+    equipment: prune({ items: (f.equipment_items || []).filter((k) => k in EQUIPMENT_ITEMS) }),
   }
   return Object.fromEntries(Object.entries(out).filter(([, v]) => Object.keys(v).length > 0))
 }
@@ -85,11 +87,11 @@ export function buildAnswers(f) {
 /** Inverse of buildAnswers, for editing a stored submission. */
 export function answersToForm(a = {}) {
   const f = {
-    ...(a.about || {}), ...(a.goals || {}), ...(a.history || {}), ...(a.availability || {}), ...(a.equipment || {}),
+    ...(a.about || {}), ...(a.goals || {}), ...(a.history || {}), ...(a.availability || {}),
     events: (a.goals?.events || []).map((e) => ({ name: e.name || '', date: e.date || '', priority: e.priority || 'B' })),
     blackout: (a.availability?.blackout || []).map((b) => ({ date: b.date || '', note: b.note || '' })),
     weekdays: { ...(a.availability?.weekdays || {}) },
-    platforms: (a.equipment?.platforms || []).join(', '),
+    equipment_items: (a.equipment?.items || []).filter((k) => k in EQUIPMENT_ITEMS),
   }
   return f
 }
@@ -170,4 +172,23 @@ export async function fetchMyQuestions(client) {
 export async function saveQuestions(client, questions) {
   const { error } = await client.rpc('save_coach_questions', { p: questions.map((q) => q.trim()).filter(Boolean) })
   return { error }
+}
+
+/**
+ * Values already stored on the rider's profile (weight, latest FTP, latest thresholds) as form fields.
+ * Nothing else is stored on the profile (no date of birth, sex, height or max HR), so those stay manual.
+ * Returns { values, fields }: `fields` are the form names that came from the profile.
+ */
+export async function loadProfilePrefill(supabase, userId) {
+  const values = {}
+  const [w, f, lt] = await Promise.all([
+    supabase.from('weight_history').select('weight_kg').eq('user_id', userId).order('effective_from', { ascending: false }).limit(1),
+    supabase.from('ftp_history').select('ftp_w, effective_from').eq('user_id', userId).order('effective_from', { ascending: false }).limit(1),
+    supabase.from('lactate_threshold_history').select('lt1_power_w, lt2_power_w').eq('user_id', userId).order('effective_from', { ascending: false }).limit(1),
+  ])
+  if (w.data?.[0]?.weight_kg != null) values.weight_kg = String(Number(w.data[0].weight_kg))
+  if (f.data?.[0]) { values.ftp_w = String(f.data[0].ftp_w); values.ftp_date = f.data[0].effective_from }
+  if (lt.data?.[0]?.lt1_power_w) values.lt1_w = String(lt.data[0].lt1_power_w)
+  if (lt.data?.[0]?.lt2_power_w) values.lt2_w = String(lt.data[0].lt2_power_w)
+  return { values, fields: Object.keys(values) }
 }

@@ -1,5 +1,5 @@
 import { adminCard } from './admin/AdminUi'
-import { AVAILABILITY, SEX_OPTIONS, STRUCTURE_OPTIONS, PARQ_QUESTIONS } from '../lib/coachOnboarding'
+import { EQUIPMENT_ITEMS, AVAILABILITY, SEX_OPTIONS, STRUCTURE_OPTIONS, PARQ_QUESTIONS } from '../lib/coachOnboarding'
 
 const Row = ({ k, v }) => (v === undefined || v === null || v === '' ? null : (
   <div className="flex flex-col sm:flex-row sm:gap-2 text-sm"><dt className="sm:w-40 shrink-0 text-slate-600 dark:text-slate-300 font-semibold">{k}</dt><dd className="text-slate-900 dark:text-white whitespace-pre-line break-words">{String(v)}</dd></div>
@@ -33,6 +33,7 @@ export default function ApplicationView({ answers = {}, health, healthDeclined, 
         {(v.blackout || []).map((b, i) => <Row key={i} k="Unavailable" v={[b.date, b.note].filter(Boolean).join(' · ')} />)}
       </Block>
       <Block title="Equipment">
+        <Row k="Has" v={(e.items || []).map((k) => EQUIPMENT_ITEMS[k]).filter(Boolean).join(', ')} />
         <Row k="Power meter" v={e.power_meter} /><Row k="Heart rate" v={e.hr} /><Row k="Smart trainer" v={e.smart_trainer} /><Row k="Head unit" v={e.head_unit} />
         <Row k="Bike" v={e.bike_type} /><Row k="Platforms" v={(e.platforms || []).join(', ')} />
       </Block>
