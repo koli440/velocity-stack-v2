@@ -25,3 +25,4 @@ Coach-facing physiology lab, flag-gated by `coach_module`. Specs below; each lin
 - 3 Test scheduler: implemented.
 - 4 Power profile: implemented.
 - 5 Durability: implemented.
+- 6 Efficiency and decoupling: implemented.
