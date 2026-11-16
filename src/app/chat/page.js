@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import { fetchThreads } from '../../lib/coachChat'
+import Avatar from '../../components/Avatar'
+import Icon from '../../components/Icon'
+import { AdminPage, ErrorNote, adminCard, adminMuted } from '../../components/admin/AdminUi'
 
 export default function ChatListPage() {
   const router = useRouter()
@@ -18,23 +21,35 @@ export default function ChatListPage() {
     })()
   }, [router])
   return (
-    <div className="space-y-4 max-w-2xl mx-auto" data-testid="chat-list">
-      <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Messages</h1>
-      {state.loading && <p className="text-xs text-slate-400">Loading…</p>}
-      {state.error && <p className="text-sm text-slate-500">Messages are not available for your account yet.</p>}
-      {!state.loading && !state.error && state.threads.length === 0 && <p className="text-sm text-slate-500">No conversations yet. Chat opens when a coaching relationship is active.</p>}
-      <ul className="divide-y divide-slate-200 dark:divide-slate-800 rounded-2xl border border-slate-200 dark:border-slate-800">
-        {state.threads.map((t) => (
-          <li key={t.id}>
-            <Link href={`/chat/${t.id}`} className="flex items-center justify-between gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-900">
-              <span className="text-sm font-bold text-slate-900 dark:text-white">
-                {t.other_name} <span className="font-normal text-slate-500">· {t.role === 'coach' ? 'athlete' : 'coach'}{t.status === 'ended' ? ' · ended' : ''}</span>
-              </span>
-              {t.unread > 0 && <span className="rounded-full bg-orange-500 text-white text-[10px] px-1.5 py-0.5">{t.unread}</span>}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <AdminPage title="Messages" description="Conversations with your coach or athletes." back={{ href: '/', label: 'Home' }} width="max-w-2xl">
+      <div data-testid="chat-list" className="space-y-4">
+        {state.loading && <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Loading conversations…</p>}
+        {state.error && <ErrorNote>Messages are not available for your account yet.</ErrorNote>}
+        {!state.loading && !state.error && state.threads.length === 0 && (
+          <div className={`${adminCard} flex flex-col items-center gap-2 text-center py-8`}>
+            <Icon name="chat" size={28} className="text-slate-500 dark:text-slate-400" />
+            <p className="text-sm font-bold text-slate-900 dark:text-white">No conversations yet</p>
+            <p className={`text-sm ${adminMuted}`}>Chat opens when a coaching relationship is active.</p>
+          </div>
+        )}
+        {state.threads.length > 0 && (
+          <ul className={`${adminCard} !p-0 overflow-hidden divide-y divide-slate-200 dark:divide-surface-darkBorder`}>
+            {state.threads.map((t) => (
+              <li key={t.id}>
+                <Link href={`/chat/${t.id}`} className="flex items-center gap-3 px-4 py-3 min-h-[64px] hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500">
+                  <Avatar name={t.other_name} size="w-10 h-10" textSize="text-sm" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold text-slate-900 dark:text-white">{t.other_name}</span>
+                    <span className={`block truncate text-xs ${adminMuted}`}>{t.role === 'coach' ? 'Athlete' : 'Coach'}{t.status === 'ended' ? ' · ended' : ''}</span>
+                  </span>
+                  {t.unread > 0 && <span className="shrink-0 min-w-[24px] text-center rounded-full bg-orange-500 text-white text-xs font-bold px-2 py-0.5" aria-label={`${t.unread} unread`}>{t.unread}</span>}
+                  <Icon name="chevronRight" className="shrink-0 text-slate-500 dark:text-slate-400" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </AdminPage>
   )
 }
