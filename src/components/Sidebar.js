@@ -29,7 +29,7 @@ export default function Sidebar({
     return () => { cancelled = true }
   }, [signedIn, pathname])
   const unread = totalUnread(threads)
-  const items = sidebarItems(NAV_ITEMS, riderId, moduleEnabled, threads.length > 0, signedIn)
+  const items = sidebarItems(NAV_ITEMS, riderId, moduleEnabled, threads.length > 0, signedIn, threads)
   const chrome = chromeVisibility(riderId)
 
   const handleNavigate = (path) => {

@@ -98,9 +98,9 @@ test('sidebarItems hides the coach\'s own pages in athlete context', async () =>
   const hrefs = items.map((i) => i.href)
   assert.deepEqual(hrefs, [
     `/coach/${RID}`, `/coach/${RID}/activities`, `/coach/${RID}/calendar`, `/coach/${RID}/fitness`, `/coach/${RID}/pb-vault`,
-    `/coach/${RID}/templates`, `/coach/${RID}/physiology`, `/coach/${RID}/lab`, '/coach',
+    `/coach/${RID}/templates`, `/coach/${RID}/physiology`, `/coach/${RID}/lab`, '/chat', '/coach',
   ])
-  assert.ok(hrefs.every((h) => h.startsWith('/coach')))
+  assert.ok(hrefs.every((h) => h.startsWith('/coach') || h === '/chat'))
   assert.ok(!items.some((i) => ['home', 'gears', 'feedback', 'about', 'settings'].includes(i.key)))
   const [overview, activities] = items
   assert.equal(c.isSidebarItemActive(overview, `/coach/${RID}`), true)
@@ -132,7 +132,7 @@ test('module nav items (dashboard + directory) follow the flag and sit after Rid
   assert.deepEqual(c.sidebarItems(nav, null, true).map((i) => i.key), ['home', 'riders', 'lab', 'coach-home', 'coach-directory', 'about'])
   assert.deepEqual(c.sidebarItems(nav, null, false, true).map((i) => i.key), ['home', 'riders', 'messages', 'lab', 'about'])
   assert.equal(c.sidebarItems(nav, null, false, true).find((i) => i.key === 'messages').icon, 'chat')
-  assert.ok(!c.sidebarItems(nav, 'rid', true, true).some((i) => i.key === 'messages'))
+  assert.ok(c.sidebarItems(nav, 'rid', true, true).some((i) => i.key === 'messages'))
   assert.equal(c.COACH_MODULE_NAV_ITEMS.find((i) => i.key === 'coach-directory').href, '/coaches')
   const anon = c.sidebarItems(NAV_ITEMS, null, false, false, false)
   const keys = anon.map((i) => i.key)
@@ -144,4 +144,19 @@ test('module nav items (dashboard + directory) follow the flag and sit after Rid
   assert.ok(!c.sidebarItems(NAV_ITEMS, null, false, false, true).some((i) => i.key === 'coach-directory'), 'signed-in without the flag unchanged')
   assert.ok(c.sidebarItems(nav, 'rid', false).some((i) => i.key === 'lab'), 'lab tab in athlete context without the flag')
   assert.ok(!c.COACH_MODULE_PAGES.some((p) => p.key === 'lab'))
+})
+
+test('athlete context has Messages (no flag needed) opening the thread with that athlete', async () => {
+  const c = await import('../coachContext.js')
+  for (const flag of [false, true]) {
+    assert.ok(c.sidebarItems(NAV_ITEMS, RID, flag).some((i) => i.key === 'messages' && i.href === '/chat'))
+  }
+  const threads = [
+    { id: 't-old', role: 'coach', other_id: RID, status: 'ended' },
+    { id: 't-other', role: 'coach', other_id: 'someone-else', status: 'active' },
+    { id: 't-1', role: 'coach', other_id: RID, status: 'active' },
+  ]
+  const m = c.sidebarItems(NAV_ITEMS, RID, false, true, true, threads).find((i) => i.key === 'messages')
+  assert.equal(m.href, '/chat/t-1')
+  assert.equal(c.athleteMessagesHref([], RID), '/chat')
 })
