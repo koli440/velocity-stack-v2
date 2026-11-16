@@ -8,7 +8,7 @@ import { supabase } from '../../../../lib/supabase'
 import { AdminPage, AdminMessage, StatusNote, adminCard, adminMuted } from '../../../../components/admin/AdminUi'
 import OnboardingForm from '../../../../components/OnboardingForm'
 import {
-  CONSENT_TEXT, DRAFT_KEY, fetchApplyInfo, onboardingErrorMessage, submitOnboarding,
+  CONSENT_TEXT, DRAFT_KEY, fetchApplyInfo, loadProfilePrefill, onboardingErrorMessage, submitOnboarding,
 } from '../../../../lib/coachOnboarding'
 
 // Apply to a coach: login, consent, questionnaire. A draft lives in sessionStorage only (never sent before submit).
@@ -18,6 +18,7 @@ export default function ApplyPage() {
   const [state, setState] = useState({ loading: true, info: null, draft: null })
   const [done, setDone] = useState(false)
   const [packageId, setPackageId] = useState('')
+  const [prefill, setPrefill] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -25,12 +26,13 @@ export default function ApplyPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) return router.push(`/login?next=${encodeURIComponent(`/c/${slug}/apply`)}`)
       const { info } = await fetchApplyInfo(supabase, slug)
+      const pre = await loadProfilePrefill(supabase, session.user.id).catch(() => ({ values: {}, fields: [] }))
       let draft = null
       try { draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY(slug)) || 'null') } catch { draft = null }
       const wanted = new URLSearchParams(window.location.search).get('package')
       const ids = (info?.packages || []).map((p) => p.id)
       const initial = ids.includes(info?.package_id) ? info.package_id : ids.includes(wanted) ? wanted : ''
-      if (!cancelled) { setPackageId(initial); setState({ loading: false, info, draft }) }
+      if (!cancelled) { setPrefill(pre.values); setPackageId(initial); setState({ loading: false, info, draft }) }
     })()
     return () => { cancelled = true }
   }, [slug, router])
@@ -72,7 +74,8 @@ export default function ApplyPage() {
         </fieldset>
       )}
       <OnboardingForm
-        initial={state.draft ? { form: state.draft } : undefined}
+        initial={{ form: { events: [], blackout: [], weekdays: {}, ...prefill, ...(state.draft || {}) } }}
+        fromProfile={prefill}
         questions={info.questions}
         consentText={CONSENT_TEXT}
         submitLabel="Send application"

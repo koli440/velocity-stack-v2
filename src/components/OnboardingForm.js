@@ -4,17 +4,18 @@ import { useState } from 'react'
 import { adminCard, adminInput, adminBtn } from './admin/AdminUi'
 import {
   AVAILABILITY, MAX_BLACKOUT, MAX_EVENTS, PARQ_QUESTIONS, PRIORITIES, SEX_OPTIONS, STRUCTURE_OPTIONS, WEEKDAYS,
-  buildAnswers, isMinor, validateForm,
+  EQUIPMENT_ITEMS, buildAnswers, isMinor, validateForm,
 } from '../lib/coachOnboarding'
 
 const field = adminInput
 const lbl = 'block text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1'
 const h2 = 'text-base font-extrabold text-slate-900 dark:text-white'
 
-function Input({ label, form, set, name, type = 'text', ...rest }) {
+function Input({ label, form, set, name, type = 'text', fromProfile, ...rest }) {
+  const prefilled = fromProfile && name in fromProfile && String(form[name] ?? '') === String(fromProfile[name])
   return (
     <label className="block">
-      <span className={lbl}>{label}</span>
+      <span className={lbl}>{label}{prefilled && <span className="ml-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400" data-testid="from-profile">from your profile</span>}</span>
       <input className={field} type={type} value={form[name] ?? ''} onChange={(e) => set({ [name]: e.target.value })} {...rest} />
     </label>
   )
@@ -24,7 +25,7 @@ function Input({ label, form, set, name, type = 'text', ...rest }) {
  * Questionnaire used by the apply flow and by "edit my answers".
  * `initial` = { form, health, healthDeclined, coachAnswers }; `onSubmit` receives the RPC payload.
  */
-export default function OnboardingForm({ initial, questions = [], consentRequired = true, consentText, submitLabel = 'Submit', onSubmit, onChange }) {
+export default function OnboardingForm({ initial, questions = [], consentRequired = true, consentText, submitLabel = 'Submit', onSubmit, onChange, fromProfile }) {
   const [form, setForm] = useState(initial?.form || { events: [], blackout: [], weekdays: {} })
   const [parq, setParq] = useState(initial?.health?.parq || Array(7).fill(false))
   const [healthNotes, setHealthNotes] = useState(initial?.health?.notes || '')
@@ -70,7 +71,7 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
             </select>
           </label>
           <Input label="Height (cm)" type="number" form={form} set={set} name="height_cm" />
-          <Input label="Weight (kg)" type="number" step="0.1" form={form} set={set} name="weight_kg" />
+          <Input label="Weight (kg)" type="number" step="0.1" form={form} set={set} name="weight_kg" fromProfile={fromProfile} />
           <Input label="Country" form={form} set={set} name="country" maxLength={60} />
           <Input label="Language" form={form} set={set} name="language" maxLength={40} />
         </div>
@@ -113,11 +114,11 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
               {Object.entries(STRUCTURE_OPTIONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </label>
-          <Input label="FTP (W)" type="number" form={form} set={set} name="ftp_w" />
-          <Input label="FTP test date" type="date" form={form} set={set} name="ftp_date" />
+          <Input label="FTP (W)" type="number" form={form} set={set} name="ftp_w" fromProfile={fromProfile} />
+          <Input label="FTP test date" type="date" form={form} set={set} name="ftp_date" fromProfile={fromProfile} />
           <Input label="Max heart rate" type="number" form={form} set={set} name="max_hr" />
-          <Input label="LT1 (W)" type="number" form={form} set={set} name="lt1_w" />
-          <Input label="LT2 (W)" type="number" form={form} set={set} name="lt2_w" />
+          <Input label="LT1 (W)" type="number" form={form} set={set} name="lt1_w" fromProfile={fromProfile} />
+          <Input label="LT2 (W)" type="number" form={form} set={set} name="lt2_w" fromProfile={fromProfile} />
           <Input label="Indoor share (%)" type="number" form={form} set={set} name="indoor_pct" />
         </div>
         <Input label="Other sports" form={form} set={set} name="other_sports" maxLength={200} />
@@ -153,13 +154,17 @@ export default function OnboardingForm({ initial, questions = [], consentRequire
 
       <section className={`${adminCard} space-y-3`}>
         <h2 className={h2}>Equipment</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input label="Power meter" form={form} set={set} name="power_meter" maxLength={100} />
-          <Input label="Heart rate" form={form} set={set} name="hr" maxLength={100} />
-          <Input label="Smart trainer" form={form} set={set} name="smart_trainer" maxLength={100} />
-          <Input label="Head unit" form={form} set={set} name="head_unit" maxLength={100} />
-          <Input label="Bike type" form={form} set={set} name="bike_type" maxLength={100} />
-          <Input label="Platforms (comma separated)" form={form} set={set} name="platforms" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" data-testid="equipment-checkboxes">
+          {Object.entries(EQUIPMENT_ITEMS).map(([k, label]) => (
+            <label key={k} className="flex items-center gap-3 min-h-[44px] text-sm text-slate-900 dark:text-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={(form.equipment_items || []).includes(k)}
+                onChange={(e) => set({ equipment_items: e.target.checked ? [...(form.equipment_items || []), k] : (form.equipment_items || []).filter((x) => x !== k) })}
+              />
+              {label}
+            </label>
+          ))}
         </div>
       </section>
 

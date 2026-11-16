@@ -83,6 +83,10 @@ export async function run(c) {
     'bad weekday': answers({ availability: { weekdays: { funday: 'long' } } }),
     'too many blackout': answers({ availability: { blackout: Array(11).fill({ date: day(5) }) } }),
     'platforms not strings': answers({ equipment: { platforms: [1] } }),
+    'unknown equipment item': answers({ equipment: { items: ['power_meter', 'rocket'] } }),
+    'equipment items not array': answers({ equipment: { items: 'power_meter' } }),
+    'equipment item not string': answers({ equipment: { items: [1] } }),
+    'too many equipment items': answers({ equipment: { items: Array(21).fill('zwift') } }),
     'section not object': answers({ goals: 'x' }),
     'too large': answers({ goals: { goal_text: 'x'.repeat(900), why_now: 'y'.repeat(900), main_goal: 'z' }, equipment: { platforms: Array(10).fill('p'.repeat(30)) }, history: { other_sports: 'o'.repeat(200) }, about: { dob: '1990-05-05', country: 'c'.repeat(60) } }),
   }
@@ -90,6 +94,10 @@ export async function run(c) {
     if (name === 'too large') continue
     ok('rejects ' + name, !(await submit(U.rider, 'coach-one', { a })).ok)
   }
+  ok('equipment checkboxes accepted', (await submit(U.rider3, 'coach-two', { a: answers({ equipment: { items: ['power_meter', 'smart_trainer', 'other'] } }) })).ok)
+  ok('checkboxes stored', (await c.query(`SELECT answers->'equipment'->'items' AS i FROM onboarding_submissions WHERE rider_id=$1`, [U.rider3])).rows[0].i.length === 3)
+  await c.query(`DELETE FROM coaching_relationships WHERE rider_id=$1`, [U.rider3])
+  await c.query(`DELETE FROM onboarding_submissions WHERE rider_id=$1`, [U.rider3])
   ok('rejects bad health shape', !(await submit(U.rider, 'coach-one', { h: { parq: [true] } })).ok)
   ok('rejects health with declined', !(await submit(U.rider, 'coach-one', { declined: true })).ok)
   ok('rejects unknown coach answer key', !(await submit(U.rider, 'coach-one', { q: { 9: 'x' } })).ok)
