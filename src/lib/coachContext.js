@@ -29,6 +29,7 @@ export const ATHLETE_PAGES = Object.freeze([
 // Pages of the coach module (behind the `coach_module` feature flag, see docs/coaching.md).
 export const COACH_MODULE_PAGES = Object.freeze([
   { key: 'notes', label: 'Notes', sub: '/notes' },
+  { key: 'lab', label: 'Lab', sub: '/lab' },
 ])
 
 /** Athlete tab/sidebar pages; module pages only when the signed-in user has the coach module. */
@@ -76,12 +77,14 @@ const ATHLETE_ICONS = Object.freeze({
   templates: 'clipboard',
   physiology: 'settings',
   notes: 'clipboard',
+  lab: 'flask',
 })
 
 // Own (non-athlete-context) nav entries of the coach module, shown after "Riders" while the flag is on for the user.
 export const COACH_MODULE_NAV_ITEMS = Object.freeze([
   { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true },
   { key: 'coach-directory', label: 'Coach directory', icon: 'search', href: '/coaches' },
+  { key: 'lab', label: 'Lab', icon: 'flask', href: '/lab' },
 ])
 
 export function withModuleNavItems(navItems) {
