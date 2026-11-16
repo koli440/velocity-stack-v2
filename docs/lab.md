@@ -24,3 +24,4 @@ Coach-facing physiology lab, flag-gated by `coach_module`. Specs below; each lin
 - 2 Lactate step test: implemented.
 - 3 Test scheduler: implemented.
 - 4 Power profile: implemented.
+- 5 Durability: implemented.
