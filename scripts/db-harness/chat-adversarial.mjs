@@ -120,6 +120,10 @@ export async function run(c) {
   ok('no thread row yet', (await c.query(`SELECT 1 FROM chat_threads WHERE id = $1`, [R1])).rowCount === 0 || true)
   const R3 = await rel(U.outsider)
   ok('coach opens empty thread', (await list(U.coach, R3))?.can_send === true)
+  const sumFor = async (u) => (await as(c, u, `SELECT chat_threads_summary() AS s`)).rows[0]?.s
+  const rs = (await sumFor(U.outsider)).find((t) => t.id === R3)
+  ok('rider summary lists active coach with no messages', rs && rs.can_send === true && rs.last_message_at === null && rs.role === 'rider' && rs.other_id === U.coach)
+  ok('coach summary lists athlete with no messages', (await sumFor(U.coach)).some((t) => t.id === R3 && t.role === 'coach'))
   ok('rider opens empty thread', (await list(U.outsider, R3))?.can_send === true)
   ok('third party cannot open empty thread', (await list(U.rider, R3)) === null)
   ok('mark read on empty thread is a no-op', (await as(c, U.outsider, `SELECT mark_chat_read($1)`, [R3])).ok)
