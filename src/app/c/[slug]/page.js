@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation'
 import LicenceBadge from '../../../components/LicenceBadge'
-import BuyPackageButton from '../../../components/BuyPackageButton'
 import { loadCoachCard } from '../../../lib/server/coachCardStore'
 import { accentOf, cardDescription, cardPath, priceLabel, safeCoachMediaUrl } from '../../../lib/coachCard'
 import { safeAvatarUrl } from '../../../lib/recap'
 import ReportCoachCard from '../../../components/ReportCoachCard'
+import Link from 'next/link'
 import Icon from '../../../components/Icon'
 import ApplyToCoachButton from '../../../components/ApplyToCoachButton'
 
@@ -81,7 +81,7 @@ export default async function CoachCardPage({ params }) {
                     <span className={`text-base font-extrabold ${accent.text}`}>{priceLabel(p)}</span>
                   </div>
                   {p.description && <p className="text-sm text-slate-700 dark:text-slate-300 break-words">{p.description}</p>}
-                  {p.kind !== 'free' && <BuyPackageButton packageId={p.id} />}
+                  {card.accepting_athletes && <Link href={`/c/${card.slug}/apply?package=${p.id}`} className="inline-block text-sm font-bold underline text-orange-700 dark:text-orange-400">Apply with this package</Link>}
                 </li>
               ))}
             </ul>

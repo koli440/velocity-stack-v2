@@ -136,10 +136,10 @@ export async function fetchApplyInfo(client, slug) {
   const { data, error } = await client.rpc('coach_apply_info', { p_slug: slug })
   return { info: error ? null : data || null, error }
 }
-export async function submitOnboarding(client, slug, { answers, health, healthDeclined, coachAnswers }) {
+export async function submitOnboarding(client, slug, { answers, health, healthDeclined, coachAnswers, packageId }) {
   const { data, error } = await client.rpc('submit_onboarding', {
     p_slug: slug, p_answers: answers, p_health: health || null, p_health_declined: !!healthDeclined,
-    p_coach_answers: coachAnswers || {}, p_consent_version: CONSENT_VERSION, p_consent_hash: await consentHash(),
+    p_coach_answers: coachAnswers || {}, p_consent_version: CONSENT_VERSION, p_consent_hash: await consentHash(), p_package: packageId || null,
   })
   return { id: error ? null : data, error }
 }

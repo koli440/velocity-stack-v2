@@ -8,6 +8,8 @@ import ChatLink from './ChatLink'
 import MessageButton from './MessageButton'
 import BotBadge from './BotBadge'
 import { authorName } from '../lib/social'
+import { fetchPaymentDue, startCheckout } from '../lib/coachBilling'
+import { priceLabel } from '../lib/coachCard'
 import {
   groupRelationships,
   replacementWarning,
@@ -54,6 +56,8 @@ export default function CoachingPanel({ userId }) {
   const [error, setError] = useState(null)
   // Invite the rider is about to accept while having a coach: shown as an explicit confirmation.
   const [confirming, setConfirming] = useState(null)
+  const [due, setDue] = useState([])
+  const [payMsg, setPayMsg] = useState(null)
 
   const load = useCallback(async () => {
     if (!userId) return
@@ -61,6 +65,7 @@ export default function CoachingPanel({ userId }) {
     if (res.error) setError('Could not load coaching.')
     setRows(res.rows)
     setProfiles(res.profiles)
+    setDue((await fetchPaymentDue(supabase)).due)
     setLoaded(true)
   }, [userId])
 
@@ -89,6 +94,15 @@ export default function CoachingPanel({ userId }) {
   const empty =
     !g.coach && !g.athletes.length && !g.incomingInvites.length && !g.incomingRequests.length &&
     !g.outgoingInvites.length && !g.outgoingRequests.length
+
+  const pay = async (item) => {
+    setBusy(`pay-${item.package_id}`)
+    setPayMsg(null)
+    const r = await startCheckout(item.package_id)
+    if (r.url) return window.location.assign(r.url)
+    setPayMsg(r.error)
+    setBusy(null)
+  }
 
   const acceptInvite = (row) => {
     if (g.coach && confirming !== row.id) {
@@ -141,6 +155,19 @@ export default function CoachingPanel({ userId }) {
           ) : (
             <p className="text-xs text-slate-600 dark:text-slate-300">You have no coach. Open a rider's profile to request one.</p>
           )}
+
+          {due.map((item) => (
+            <div key={item.package_id} className="rounded-xl border border-orange-500/30 p-3 space-y-1.5" data-testid="pay-for-plan">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Pay for your plan</p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {nameOf(item.coach_id)} accepted you. Start your plan: {item.title} {priceLabel({ ...item, interval: item.interval }) || ''}
+              </p>
+              <button type="button" disabled={busy === `pay-${item.package_id}`} className={btnPrimary} onClick={() => pay(item)}>
+                {busy === `pay-${item.package_id}` ? 'Opening checkout…' : 'Pay for your plan'}
+              </button>
+              {payMsg && <p role="alert" className="text-xs font-semibold text-red-700 dark:text-red-300">{payMsg}</p>}
+            </div>
+          ))}
 
           {g.incomingInvites.map((row) => {
             const warning = replacementWarning({ currentCoachName, newCoachName: nameOf(row.coach_id) })
