@@ -20,6 +20,9 @@ export function chatErrorMessage(error) {
 export const canEditMessage = (m, userId, now = Date.now()) =>
   !!m && !m.deleted && m.sender_id === userId && now - new Date(m.created_at).getTime() <= EDIT_WINDOW_MS
 
+// A chat reference is a mention card only: exactly these two params are sent and nothing links or completes a workout.
+export const referenceParams = (ref) => ({ activityId: ref?.type === 'activity' ? ref.id : null, workoutId: ref?.type === 'workout' ? ref.id : null })
+
 export const chatPath = (relationshipId) => `/chat/${relationshipId}`
 
 // Every /chat row (pending included) opens its own relationship thread, never a profile page.
@@ -41,6 +44,10 @@ export async function fetchThreads(client) {
 export async function fetchMessages(client, thread, before = null) {
   const { data, error } = await client.rpc('chat_messages_list', { p_thread: thread, p_before: before, p_limit: 50 })
   return { thread: data || null, error }
+}
+export async function fetchReferenceCandidates(client, thread) {
+  const { data, error } = await client.rpc('chat_reference_candidates', { p_thread: thread })
+  return { activities: data?.activities || [], workouts: data?.workouts || [], error }
 }
 export async function sendMessage(client, thread, body, { activityId = null, workoutId = null } = {}) {
   const { data, error } = await client.rpc('send_chat_message', { p_thread: thread, p_body: body, p_activity: activityId, p_workout: workoutId })

@@ -163,6 +163,24 @@ export async function run(c) {
     ok('pending cannot send', !(await send(riderP, RP, 'hi')).ok)
   }
 
+  // Reference candidates + references are mention-only: no activity/workout link or completion is written
+  {
+    const a1 = await act(U.rider)
+    const w1 = (await c.query(`INSERT INTO planned_workouts(rider_id, workout_date, title) VALUES ($1, current_date, 'wk') RETURNING id`, [U.rider])).rows[0].id
+    const cand = async (u, t) => (await as(c, u, `SELECT chat_reference_candidates($1) AS x`, [t])).rows[0]?.x
+    const fromCoach = await cand(U.coach, R1), fromRider = await cand(U.rider, R1)
+    ok('coach sees rider candidates', fromCoach?.activities.some((x) => x.id === a1) && fromCoach.workouts.some((x) => x.id === w1))
+    ok('rider sees own candidates', fromRider?.activities.some((x) => x.id === a1))
+    ok('third party gets no candidates', (await cand(U.outsider, R1)) === null)
+    const before = (await c.query(`SELECT to_jsonb(w) AS j FROM planned_workouts w WHERE id = $1`, [w1])).rows[0].j
+    const actBefore = (await c.query(`SELECT to_jsonb(a) AS j FROM activities a WHERE id = $1`, [a1])).rows[0].j
+    ok('coach sends activity + workout references', (await send(U.coach, R1, 'look', a1, w1)).ok)
+    const after = (await c.query(`SELECT to_jsonb(w) AS j FROM planned_workouts w WHERE id = $1`, [w1])).rows[0].j
+    const actAfter = (await c.query(`SELECT to_jsonb(a) AS j FROM activities a WHERE id = $1`, [a1])).rows[0].j
+    ok('reference does not link/complete the workout', JSON.stringify(before) === JSON.stringify(after) && after.activity_id === null)
+    ok('reference does not change the activity', JSON.stringify(actBefore) === JSON.stringify(actAfter))
+  }
+
   // Ending: rider keeps read access, coach loses it, nobody sends
   await as(c, U.coach, `SELECT end_coaching($1)`, [R1], { commit: true })
   ok('coach loses access', (await list(U.coach, R1)) === null)
