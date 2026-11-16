@@ -13,3 +13,4 @@ Guided field tests: FTP ramp, 20-minute, 8-minute, CP3/CP12, CP5/CP20.
 - Apply uses `applyThreshold` (FTP history, "set by coach" and RLS rules); `lab_run_mark_applied` then records what was applied. Zones follow the FTP unless custom zones are set. CP tests propose FTP = CP (the coach can pick another value in physiology).
 - Decision: the lab is not flag-gated: athletes use their own lab with or without a coach; own results at `/lab/protocols`.
 - Routes: `/coach/<id>/lab[/protocols]` (coach) and `/lab[/protocols]` (athlete). Harness: `lab-runs-adversarial.mjs`.
+- Aero test (CdA) (merged from the former Aero Lab): a protocol button in the runner (`AeroLabPanel`, own view only; coaches use it from their own Lab since tests are owned by the rider). `/aero-lab` redirects to `/lab/protocols?protocol=aero`; the separate sidebar item is gone; data (`aero_tests`, `/api/aero-tests`) and calculations (`src/lib/aeroLab.js`) are unchanged.

@@ -51,7 +51,7 @@ test('nav items: public ones stay open, the rest are gated for visitors', async 
   const publicKeys = NAV_ITEMS.filter(isNavItemPublic).map((i) => i.key)
   assert.deepEqual(publicKeys, ['home', 'gears', 'pursuit', 'velodromes', 'about'])
   const gated = NAV_ITEMS.filter((i) => isNavItemLocked(i, false)).map((i) => i.key)
-  assert.deepEqual(gated, ['calendar', 'fitness', 'pb-vault', 'riders', 'aero-lab', 'templates', 'feedback', 'settings'])
+  assert.deepEqual(gated, ['calendar', 'fitness', 'pb-vault', 'riders', 'templates', 'feedback', 'settings'])
   assert.equal(NAV_ITEMS.filter((i) => isNavItemLocked(i, true)).length, 0)
 })
 
