@@ -31,8 +31,7 @@ export async function run(c) {
   const save = (u, a, s = steps, d = '2027-01-10') => as(c, u, `SELECT * FROM lab_lactate_save($1, $2, $3::jsonb, '{"lt1":{"power":150}}'::jsonb)`, [a, d, s], { commit: true })
 
   ok('table has no client privileges', !(await as(c, U.coach, `SELECT * FROM lab_lactate_tests`)).ok)
-  ok('flag off: coach cannot save', !(await save(U.coach, U.rider)).ok)
-  await as(c, U.admin, `SELECT admin_coach_module_allow($1, true)`, [U.coach], { commit: true })
+  ok('works without the coach module flag', (await as(c, U.coach, `SELECT * FROM lab_lactate_list($1)`, [U.rider])).ok)
   ok('anon cannot list', !(await as(c, null, `SELECT lab_lactate_list($1)`, [U.rider])).ok)
   ok('stranger cannot save', !(await save(U.stranger, U.rider)).ok)
   ok('too few steps rejected', !(await save(U.coach, U.rider, JSON.stringify([{ power: 1, lactate: 1 }]))).ok)

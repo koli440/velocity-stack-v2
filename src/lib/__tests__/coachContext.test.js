@@ -93,12 +93,12 @@ test('describeCoachEdit and coach_edited notification link', async () => {
 
 test('sidebarItems hides the coach\'s own pages in athlete context', async () => {
   const c = await import('../coachContext.js')
-  assert.equal(c.sidebarItems(NAV_ITEMS, null), NAV_ITEMS)
+  assert.deepEqual(c.sidebarItems(NAV_ITEMS, null).filter((i) => i.key !== 'lab'), NAV_ITEMS)
   const items = c.sidebarItems(NAV_ITEMS, RID)
   const hrefs = items.map((i) => i.href)
   assert.deepEqual(hrefs, [
     `/coach/${RID}`, `/coach/${RID}/activities`, `/coach/${RID}/calendar`, `/coach/${RID}/fitness`, `/coach/${RID}/pb-vault`,
-    `/coach/${RID}/templates`, `/coach/${RID}/physiology`, '/coach',
+    `/coach/${RID}/templates`, `/coach/${RID}/physiology`, `/coach/${RID}/lab`, '/coach',
   ])
   assert.ok(hrefs.every((h) => h.startsWith('/coach')))
   assert.ok(!items.some((i) => ['home', 'gears', 'feedback', 'about', 'settings'].includes(i.key)))
@@ -128,10 +128,12 @@ import * as c from '../coachContext.js'
 
 test('module nav items (dashboard + directory) follow the flag and sit after Riders', () => {
   const nav = [{ key: 'home' }, { key: 'riders' }, { key: 'about' }]
-  assert.deepEqual(c.sidebarItems(nav, null, false).map((i) => i.key), ['home', 'riders', 'about'])
-  assert.deepEqual(c.sidebarItems(nav, null, true).map((i) => i.key), ['home', 'riders', 'coach-home', 'coach-directory', 'lab', 'about'])
-  assert.deepEqual(c.sidebarItems(nav, null, false, true).map((i) => i.key), ['home', 'riders', 'messages', 'about'])
+  assert.deepEqual(c.sidebarItems(nav, null, false).map((i) => i.key), ['home', 'riders', 'lab', 'about'])
+  assert.deepEqual(c.sidebarItems(nav, null, true).map((i) => i.key), ['home', 'riders', 'lab', 'coach-home', 'coach-directory', 'about'])
+  assert.deepEqual(c.sidebarItems(nav, null, false, true).map((i) => i.key), ['home', 'riders', 'messages', 'lab', 'about'])
   assert.equal(c.sidebarItems(nav, null, false, true).find((i) => i.key === 'messages').icon, 'chat')
   assert.ok(!c.sidebarItems(nav, 'rid', true, true).some((i) => i.key === 'messages'))
   assert.equal(c.COACH_MODULE_NAV_ITEMS.find((i) => i.key === 'coach-directory').href, '/coaches')
+  assert.ok(c.sidebarItems(nav, 'rid', false).some((i) => i.key === 'lab'), 'lab tab in athlete context without the flag')
+  assert.ok(!c.COACH_MODULE_PAGES.some((p) => p.key === 'lab'))
 })

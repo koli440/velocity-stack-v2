@@ -1,10 +1,10 @@
 # Lab module (coach)
 
-Coach-facing physiology lab, flag-gated by `coach_module`. Specs below; each links to a detailed spec in `docs/lab/`.
+Coach-facing physiology lab. **Not flag-gated**: it is not part of the coach business layer (card, onboarding, licences, billing, directory), so any active coach/athlete relationship and every athlete themselves can use it regardless of `coach_module`. Specs below; each links to a detailed spec in `docs/lab/`.
 
 ## Common rules
-- Routes: coach `/coach/<riderId>/lab[/<feature>]` (access via `is_coach_of`), athlete own view `/lab[/<feature>]`. Link "Lab" added to `COACH_MODULE_PAGES` in `src/lib/coachContext.js`.
-- All data via SECURITY DEFINER RPCs that call `coach_module_require()`, scope to `auth.uid()` or `is_coach_of(auth.uid(), athlete)`. No client table privileges.
+- Routes: coach `/coach/<riderId>/lab[/<feature>]` (access via `is_coach_of`), athlete own view `/lab[/<feature>]`. "Lab" is an unconditional athlete-context tab (`ATHLETE_PAGES`) and own-nav item (`withLabItem`) in `src/lib/coachContext.js`.
+- All data via SECURITY DEFINER RPCs that call `lab_gate()` (authenticated + self or `is_coach_of`; no flag), scope to `auth.uid()` or `is_coach_of(auth.uid(), athlete)`. No client table privileges.
 - Health-like data (lactate, body composition, mobility) stays private per existing privacy rules: visible to the athlete and their active coach only, never in public cards or reports unless the athlete shares a report.
 - Migrations additive and idempotent; one DB harness test per feature in `scripts/db-harness/`; pure calculation logic in `src/lib/` with unit tests; news entry per user-visible PR.
 - No external secrets; reminders via pg_cron + existing notifications.
