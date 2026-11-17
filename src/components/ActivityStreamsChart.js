@@ -184,7 +184,7 @@ function MetricLane({ metric, data, mode, syncId, highlightWindows, lt, zones, z
 const ZOOM_STEP = 1.5
 const PAN_STEP = 0.25
 
-const iconBtn = 'inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500'
+const iconBtn = 'inline-flex items-center justify-center h-11 w-11 lg:h-8 lg:w-8 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500'
 
 function ChartPanel({ data, mode, zoom, setZoom, highlightWindows, lt, zones, ftp, enlarged, idSuffix }) {
   const [drag, setDrag] = useState(null) // { startPx, endPx } relative to the plot area
@@ -252,7 +252,7 @@ function ChartPanel({ data, mode, zoom, setZoom, highlightWindows, lt, zones, ft
           <button type="button" className={iconBtn} onClick={() => pan(PAN_STEP)} disabled={!zoom} aria-label="Pan right" title="Pan right (→)"><Icon name="chevronRight" size={16} /></button>
           <button type="button" className={iconBtn} onClick={zoomOut} disabled={!zoom} aria-label="Zoom out" title="Zoom out (-)"><Icon name="zoomOut" size={16} /></button>
           <button type="button" className={iconBtn} onClick={zoomIn} aria-label="Zoom in" title="Zoom in (+)"><Icon name="zoomIn" size={16} /></button>
-          <button type="button" onClick={() => setZoom(null)} disabled={!zoom} className="h-8 px-3 rounded-lg text-[11px] font-bold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
+          <button type="button" onClick={() => setZoom(null)} disabled={!zoom} className="min-h-[44px] lg:min-h-0 h-auto lg:h-8 px-3 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
             Reset zoom
           </button>
           {zoom && (
@@ -354,7 +354,7 @@ export default function ActivityStreamsChart({ timeSeries = {}, highlightWindows
           key={opt.key}
           type="button"
           onClick={() => switchMode(opt.key)}
-          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+          className={`min-h-[44px] lg:min-h-0 px-3 py-1 rounded-lg text-xs font-bold transition ${
             mode === opt.key
               ? 'bg-orange-500 text-white shadow-xs'
               : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'

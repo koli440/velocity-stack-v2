@@ -81,23 +81,23 @@ export default function GymSessionSection({ client, activityId, ownerId, coachCo
   return (
     <>
     <GymLoadBreakdown client={client} activityId={activityId} refreshKey={loadRev} onLoad={onLoadChanged} autoScore={canEdit} />
-    <section className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4" data-testid="gym-sets">
+    <section className="glass-dense bg-white dark:bg-surface-darkCard p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4" data-testid="gym-sets">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Exercises &amp; sets</h3>
         <div className="flex items-center gap-3">
-          <p className="text-[11px] font-bold text-violet-600 dark:text-violet-400" data-testid="gym-totals">
+          <p className="text-xs font-bold text-violet-700 dark:text-violet-300" data-testid="gym-totals">
             {totals.exercises} exercises · {totals.sets} sets · {totals.reps} reps
             {totals.volumeKg > 0 ? ` · ${Math.round(kgToUnit(totals.volumeKg, unit)).toLocaleString()} ${unit} volume` : ''}
           </p>
           {canEdit && (
-            <button type="button" onClick={() => setEditing(true)} data-testid="gym-edit" className="px-3 py-1 rounded-lg bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 text-[11px] font-black uppercase">
+            <button type="button" onClick={() => setEditing(true)} data-testid="gym-edit" className="min-h-[44px] lg:min-h-0 px-4 py-1 rounded-lg bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 text-xs font-black uppercase">
               Edit
             </button>
           )}
         </div>
       </div>
       {stamp && (
-        <p className="text-[10px] text-slate-400" data-testid="gym-edited">
+        <p className="text-xs text-slate-600 dark:text-slate-300" data-testid="gym-edited">
           Edited {stamp.edited_by_coach ? 'by your coach' : 'by the rider'} · {new Date(stamp.edited_at).toLocaleDateString()} · re-imports will not overwrite these values.
           Estimated 1RM uses the Epley formula and is only an estimate.
         </p>
@@ -109,15 +109,15 @@ export default function GymSessionSection({ client, activityId, ownerId, coachCo
           <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/60 flex flex-wrap items-baseline justify-between gap-2">
             <span className="text-sm font-black text-slate-800 dark:text-slate-100">{ex.name}</span>
             {best && (
-              <span className="text-[10px] font-bold text-slate-400" data-testid="gym-best">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-300" data-testid="gym-best">
                 Best set {best.set.reps} × {fmtW(best.set.weight_kg, unit)} · est. 1RM ≈ {fmtW(best.e1rm, unit)}
               </span>
             )}
           </div>
-          {ex.notes && <p className="px-4 py-1 text-[11px] text-slate-500">{ex.notes}</p>}
-          <table className="w-full text-xs">
+          {ex.notes && <p className="px-4 py-1 text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap break-words">{ex.notes}</p>}
+          <div className="overflow-x-auto"><table className="w-full min-w-[34rem] text-xs">
             <thead>
-              <tr className="text-left text-[10px] uppercase tracking-wider text-slate-400">
+              <tr className="text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-300">
                 <th className="px-4 py-1.5 font-bold">Set</th>
                 <th className="px-2 py-1.5 font-bold">Reps</th>
                 <th className="px-2 py-1.5 font-bold">Weight / height</th>
@@ -155,7 +155,7 @@ export default function GymSessionSection({ client, activityId, ownerId, coachCo
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
         )
       })}

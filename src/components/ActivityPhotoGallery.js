@@ -142,7 +142,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
   if (!isOwner && photos.length === 0) return null
 
   return (
-    <div className="glass-dense bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
+    <div className="glass-dense bg-white dark:bg-surface-darkCard p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
           Photos ({photos.length})
@@ -187,7 +187,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
 
       {lightbox && (
         <Portal lockScroll><div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 p-4 bg-slate-950/90"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-slate-950/90"
           role="dialog"
           aria-modal="true"
           onClick={() => setLightboxId(null)}
@@ -198,7 +198,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
           <img
             src={lightbox.url}
             alt={`Activity photo ${lightboxIndex + 1}`}
-            className="max-h-[80vh] max-w-full rounded-xl select-none"
+            className="max-h-[75dvh] max-w-full object-contain rounded-xl select-none"
             onClick={(e) => e.stopPropagation()}
           />
           {multi && (
@@ -231,7 +231,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
             <button
               type="button"
               onClick={() => setLightboxId(null)}
-              className="min-h-[44px] px-4 rounded-xl text-xs font-bold bg-slate-800 text-white"
+              className="min-h-[44px] px-4 rounded-xl text-sm font-bold bg-slate-800 text-white"
             >
               Close
             </button>
@@ -239,7 +239,7 @@ export default function ActivityPhotoGallery({ activityId, ownerId }) {
               <button
                 type="button"
                 onClick={() => handleDelete(lightbox)}
-                className="min-h-[44px] px-4 rounded-xl text-xs font-bold bg-slate-900 text-rose-400 border border-rose-400/40"
+                className="min-h-[44px] px-4 rounded-xl text-sm font-bold bg-slate-900 text-rose-300 border border-rose-400/40"
               >
                 Delete
               </button>
