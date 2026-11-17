@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createHmac } from 'node:crypto'
-import { buildCheckoutParams, ensureConnectedCustomer, encodeForm, handleStripeEvent, planStripeEvent, stripeConfig, stripeFetch, verifyStripeSignature } from '../server/stripe.js'
+import { accountStatusFlags, buildAccountV2Params, createCoachAccountV2, createOnboardingLink, stripeV2Fetch, buildCheckoutParams, ensureConnectedCustomer, encodeForm, handleStripeEvent, planStripeEvent, stripeConfig, stripeFetch, verifyStripeSignature } from '../server/stripe.js'
 import { billingErrorMessage, connectStateLabel } from '../coachBilling.js'
 import { describeNotification, notificationHref } from '../notifications.js'
 
@@ -147,4 +147,58 @@ test('ensureConnectedCustomer: one customer per coach account and rider, created
   assert.equal(seen.init.headers['Stripe-Account'], 'acct_1')
   assert.match(seen.init.headers['Idempotency-Key'], /^cus-acct_1-/)
   assert.deepEqual(calls.at(-1), ['billing_set_customer', { p_coach: ID(1), p_rider: ID(2), p_customer: 'cus_new' }])
+})
+
+test('Accounts v2: no legacy type, Stripe collects losses, merchant card payments', () => {
+  const p = buildAccountV2Params({ coachId: ID(1), email: 'c@x.test', country: 'DE' })
+  assert.equal(p.type, undefined)
+  assert.equal(p.defaults.responsibilities.losses_collector, 'stripe')
+  assert.equal(p.defaults.responsibilities.fees_collector, 'stripe')
+  assert.equal(p.dashboard, 'express')
+  assert.equal(p.configuration.merchant.capabilities.card_payments.requested, true)
+  assert.equal(p.identity.country, 'de')
+  assert.equal(p.metadata.coach_id, ID(1))
+})
+
+test('createCoachAccountV2 uses /v2 JSON with version header and falls back to the full dashboard', async () => {
+  const cfg = stripeConfig({ STRIPE_SECRET_KEY: 'sk_test_k' })
+  const calls = []
+  const f = async (url, init) => {
+    calls.push({ url, init })
+    return calls.length === 1 ? { ok: false, status: 400, json: async () => ({ error: { message: 'preview' } }) } : { ok: true, json: async () => ({ id: 'acct_v2' }) }
+  }
+  const a = await createCoachAccountV2(cfg, { coachId: ID(1), country: 'DE' }, { fetchImpl: f })
+  assert.equal(a.id, 'acct_v2')
+  assert.equal(calls[0].url, 'https://api.stripe.com/v2/core/accounts')
+  assert.match(calls[0].init.headers['Stripe-Version'], /preview$/)
+  assert.equal(calls[0].init.headers['Content-Type'], 'application/json')
+  assert.equal(JSON.parse(calls[1].init.body).dashboard, 'full')
+  assert.doesNotMatch(calls[1].init.headers['Stripe-Version'], /preview/)
+  await assert.rejects(() => stripeV2Fetch(stripeConfig({}), 'GET', '/v2/x'), /not configured/)
+})
+
+test('onboarding link: v2 account link, v1 fallback for legacy accounts', async () => {
+  const cfg = stripeConfig({ STRIPE_SECRET_KEY: 'sk_test_k' })
+  const urls = []
+  const ok = async (url, init) => { urls.push(url); return { ok: true, json: async () => ({ url: 'https://stripe.test/l' }) } }
+  assert.equal(await createOnboardingLink(cfg, 'acct_1', 'https://x.test', { fetchImpl: ok }), 'https://stripe.test/l')
+  assert.deepEqual(urls, ['https://api.stripe.com/v2/core/account_links'])
+  urls.length = 0
+  const legacy = async (url) => { urls.push(url); return urls.length === 1 ? { ok: false, status: 400, json: async () => ({}) } : { ok: true, json: async () => ({ url: 'u1' }) } }
+  assert.equal(await createOnboardingLink(cfg, 'acct_1', 'https://x.test', { fetchImpl: legacy }), 'u1')
+  assert.equal(urls[1], 'https://api.stripe.com/v1/account_links')
+})
+
+test('account status flags for v2 and v1 accounts; thin v2 events sync through a fetch', async () => {
+  const v2 = { object: 'v2.core.account', identity: { country: 'de' }, configuration: { merchant: { capabilities: { card_payments: { status: 'active' }, stripe_balance: { payouts: { status: 'active' } } } } }, requirements: { entries: [] } }
+  assert.deepEqual(accountStatusFlags(v2), { charges: true, payouts: true, details: true, country: 'DE' })
+  assert.equal(accountStatusFlags({ ...v2, configuration: { merchant: { capabilities: { card_payments: { status: 'restricted' } } } } }).charges, false)
+  assert.equal(accountStatusFlags({ object: 'account', charges_enabled: true }).charges, true)
+  const thin = { id: 'evt_t', type: 'v2.core.account[configuration.merchant].capability_status_updated', related_object: { id: 'acct_v2' } }
+  assert.deepEqual(planStripeEvent(thin), { sync_account: 'acct_v2' })
+  const calls = []
+  const svc = { rpc: async (n, a) => { calls.push([n, a]); return { data: true } } }
+  await handleStripeEvent(svc, thin, async () => ({ charges: true, payouts: false, details: true, country: 'DE' }))
+  assert.deepEqual(calls.map((c) => c[0]), ['billing_record_event', 'billing_apply_account', 'billing_finish_event'])
+  assert.equal(calls[1][1].p_charges, true)
 })
