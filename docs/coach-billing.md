@@ -41,3 +41,5 @@ Who pays which fee: the athlete pays the package price to the coach (merchant of
 (the athlete pays no extra fee); the platform fee is 0 % (`STRIPE_APPLICATION_FEE_PERCENT`; if ever raised it is an `application_fee_*` on each payment, on the coach's side);
 Stripe pays out to the coach's bank account. Tax/VAT, refunds and disputes are handled by the coach in their Stripe Express dashboard.
 Platform subscription billing for coach plans (`docs/coach-plans.md`) is out of scope and not charged.
+
+**Country (required):** Stripe requires `identity.country` before `configuration.merchant` can be set, so the Payments panel shows a required country select (EU/EEA + UK/CH, preselected from the browser locale) and `POST /api/billing/connect/onboard` returns `400 "Choose your country"` when a new account would be created without one. Create payload: `dashboard`, `identity.country`, `contact_email`, `defaults.responsibilities.{fees,losses}_collector = stripe`, `configuration.merchant.capabilities.card_payments.requested`, `metadata.coach_id`; account link: `use_case.account_onboarding.{configurations:['merchant'],refresh_url,return_url}`.

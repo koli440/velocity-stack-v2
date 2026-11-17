@@ -12,9 +12,24 @@ export function billingErrorMessage(message, status) {
   if (status === 503) return 'Payments are not available yet.'
   if (status === 401) return 'Sign in to continue.'
   const m = String(message || '')
-  if (/accepted you|cannot take payments|under 18|not available|own package/i.test(m)) return m
+  if (/accepted you|cannot take payments|under 18|not available|own package|choose your country/i.test(m)) return m
   return 'Something went wrong. Please try again.'
 }
+
+// Countries offered for the connected account (Stripe-supported EU/EEA + UK/CH). Sent as identity.country, which Stripe
+// requires before the merchant configuration can be set.
+export const CONNECT_COUNTRIES = {
+  AT: 'Austria', BE: 'Belgium', BG: 'Bulgaria', HR: 'Croatia', CY: 'Cyprus', CZ: 'Czechia', DK: 'Denmark', EE: 'Estonia',
+  FI: 'Finland', FR: 'France', DE: 'Germany', GR: 'Greece', HU: 'Hungary', IE: 'Ireland', IT: 'Italy', LV: 'Latvia',
+  LI: 'Liechtenstein', LT: 'Lithuania', LU: 'Luxembourg', MT: 'Malta', NL: 'Netherlands', NO: 'Norway', PL: 'Poland',
+  PT: 'Portugal', RO: 'Romania', SK: 'Slovakia', SI: 'Slovenia', ES: 'Spain', SE: 'Sweden', CH: 'Switzerland', GB: 'United Kingdom',
+}
+export const normalizeConnectCountry = (c) => {
+  const u = String(c || '').toUpperCase()
+  return Object.prototype.hasOwnProperty.call(CONNECT_COUNTRIES, u) ? u : null
+}
+// Best-effort preselection from the browser locale (region part); the coach can change it.
+export const guessConnectCountry = (locale) => normalizeConnectCountry(String(locale || '').split(/[-_]/)[1])
 
 export const startConnectOnboarding = (country) => post('/api/billing/connect/onboard', { country })
 export const startCheckout = (packageId) => post('/api/billing/checkout', { packageId })

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { adminCard, adminMuted, adminBtn } from './admin/AdminUi'
 import { FEE_BREAKDOWN, STRIPE_SETUP_STEPS } from '../lib/coachPlans'
-import { connectStateLabel, fetchBillingStatus, startConnectOnboarding, subscriptionStatusLabel } from '../lib/coachBilling'
+import { CONNECT_COUNTRIES, guessConnectCountry, connectStateLabel, fetchBillingStatus, startConnectOnboarding, subscriptionStatusLabel } from '../lib/coachBilling'
 
 // Coach side of payments: Stripe Connect onboarding state and a read-only list of paying athletes.
 // Coaching is never gated by payment; this is information for the coach.
@@ -11,12 +11,13 @@ export default function CoachBillingPanel() {
   const [s, setS] = useState(undefined)
   const [msg, setMsg] = useState(null)
   const [busy, setBusy] = useState(false)
-  useEffect(() => { fetchBillingStatus().then(setS) }, [])
+  const [country, setCountry] = useState('')
+  useEffect(() => { fetchBillingStatus().then(setS); setCountry(guessConnectCountry(navigator.language) || '') }, [])
   if (!s) return null
 
   const connect = async () => {
     setBusy(true); setMsg(null)
-    const r = await startConnectOnboarding()
+    const r = await startConnectOnboarding(country)
     if (r.url) window.location.assign(r.url)
     else { setMsg(r.error); setBusy(false) }
   }
@@ -33,8 +34,17 @@ export default function CoachBillingPanel() {
         <ul className="list-disc pl-5 mt-1 space-y-1 text-slate-800 dark:text-slate-200">{FEE_BREAKDOWN.map((x) => <li key={x}>{x}</li>)}</ul>
       </details>
       <p className="text-sm font-semibold text-slate-900 dark:text-white">{connectStateLabel(s)}</p>
+      {s.configured && !s.connected && (
+        <label className="block text-sm font-semibold text-slate-900 dark:text-white">
+          Country where you operate
+          <select value={country} onChange={(e) => setCountry(e.target.value)} required data-testid="connect-country" className="mt-1 block rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm">
+            <option value="">Choose your country</option>
+            {Object.entries(CONNECT_COUNTRIES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+          </select>
+        </label>
+      )}
       {s.configured && !(s.charges_enabled && s.payouts_enabled) && (
-        <button type="button" disabled={busy} onClick={connect} className={adminBtn.primary}>
+        <button type="button" disabled={busy || (!s.connected && !country)} onClick={connect} className={adminBtn.primary}>
           {s.connected ? 'Continue setup' : 'Set up payments'}
         </button>
       )}
