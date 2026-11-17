@@ -8,6 +8,7 @@ import CoachQuestionsEditor from '../../../components/CoachQuestionsEditor'
 import CoachLicenceEditor from '../../../components/CoachLicenceEditor'
 import CoachBillingPanel from '../../../components/CoachBillingPanel'
 import Icon from '../../../components/Icon'
+import AutoTextarea from '../../../components/AutoTextarea'
 import { AdminPage, AdminMessage, ErrorNote, StatusNote, adminCard, adminInput, adminBtn, adminMuted } from '../../../components/admin/AdminUi'
 import {
   ACCENTS, BIO_MAX, CURRENCIES, DISCIPLINE_OPTIONS, HEADLINE_MAX, INTERVALS, PACKAGE_KINDS, PACKAGE_MAX,
@@ -135,18 +136,12 @@ export default function CoachCardSettingsPage() {
         </div>
         <div>
           <label className={label} htmlFor="cc-bio">About you</label>
-          <textarea id="cc-bio" rows={6} className={field} value={card.bio} maxLength={BIO_MAX} onChange={(e) => set({ bio: e.target.value })} />
+          <AutoTextarea id="cc-bio" rows={6} className={`${field} py-2`} maxPx={420} value={card.bio} maxLength={BIO_MAX} onChange={(e) => set({ bio: e.target.value })} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className={label} htmlFor="cc-loc">Location</label>
             <input id="cc-loc" className={field} value={card.location} maxLength={60} onChange={(e) => set({ location: e.target.value })} />
-          </div>
-          <div>
-            <label className={label} htmlFor="cc-accent">Colour</label>
-            <select id="cc-accent" className={field} value={card.accent} onChange={(e) => set({ accent: e.target.value })}>
-              {Object.keys(ACCENTS).map((a) => <option key={a}>{a}</option>)}
-            </select>
           </div>
           <div>
             <label className={label} htmlFor="cc-disc">Disciplines (comma separated)</label>
@@ -158,10 +153,16 @@ export default function CoachCardSettingsPage() {
             <input id="cc-lang" className={field} value={langs} onChange={(e) => setLangs(e.target.value)} />
           </div>
           <div>
+            <label className={label} htmlFor="cc-accent">Colour</label>
+            <select id="cc-accent" className={field} value={card.accent} onChange={(e) => set({ accent: e.target.value })}>
+              {Object.keys(ACCENTS).map((a) => <option key={a}>{a}</option>)}
+            </select>
+          </div>
+          <div>
             <label className={label} htmlFor="cc-max">Athlete limit (empty = no limit)</label>
             <input id="cc-max" type="number" min="1" max="500" className={field} value={card.max_athletes} onChange={(e) => set({ max_athletes: e.target.value })} />
           </div>
-          <label className="flex items-center gap-3 min-h-[44px] text-sm font-semibold text-slate-800 dark:text-slate-100 self-end">
+          <label className="flex items-center gap-3 min-h-[44px] px-3 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-800 dark:text-slate-100 sm:col-span-2">
             <input type="checkbox" className="h-5 w-5 accent-orange-500" checked={card.accepting_athletes} onChange={(e) => set({ accepting_athletes: e.target.checked })} /> Accepting new athletes
           </label>
         </div>
@@ -173,35 +174,53 @@ export default function CoachCardSettingsPage() {
             <p className={hint}>Shown as text on your card; online payment comes later.</p>
           </div>
           {card.packages.map((p, i) => (
-            <div key={p.id || i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 space-y-2">
-              <input aria-label="Package title" className={field} value={p.title || ''} maxLength={60} onChange={(e) => setPkg(i, { title: e.target.value })} />
-              <textarea aria-label="Package description" rows={2} className={field} value={p.description || ''} maxLength={300} onChange={(e) => setPkg(i, { description: e.target.value })} />
-              <div className="flex flex-wrap gap-2">
-                <select aria-label="Package type" className={field + ' sm:!w-auto'} value={p.kind} onChange={(e) => setPkg(i, { kind: e.target.value })}>
-                  {Object.entries(PACKAGE_KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-                {p.kind === 'subscription' && (
-                  <select aria-label="Renews" className={field + ' sm:!w-auto'} value={p.interval || ''} onChange={(e) => setPkg(i, { interval: e.target.value })}>
-                    <option value="">Renews…</option>
-                    {Object.keys(INTERVALS).map((k) => <option key={k}>{k}</option>)}
+            <div key={p.id || i} className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 sm:p-4 space-y-4">
+              <div>
+                <label className={label} htmlFor={`pk-title-${i}`}>Name</label>
+                <input id={`pk-title-${i}`} className={field} value={p.title || ''} maxLength={60} onChange={(e) => setPkg(i, { title: e.target.value })} />
+              </div>
+              <div>
+                <label className={label} htmlFor={`pk-desc-${i}`}>Description</label>
+                <AutoTextarea id={`pk-desc-${i}`} rows={2} className={`${field} !min-h-[5.5rem] py-2`} value={p.description || ''} maxLength={300} onChange={(e) => setPkg(i, { description: e.target.value })} />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <label className={label} htmlFor={`pk-kind-${i}`}>Type</label>
+                  <select id={`pk-kind-${i}`} className={field} value={p.kind} onChange={(e) => setPkg(i, { kind: e.target.value })}>
+                    {Object.entries(PACKAGE_KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
-                )}
+                </div>
                 {p.kind === 'subscription' && (
-                  <label className="flex items-center gap-1.5 text-xs font-semibold">
-                    Free days
-                    <input aria-label="Free period in days" type="number" min="0" max="90" step="1" className={field + ' sm:!w-20'} value={p.trial_days || 0}
-                      onChange={(e) => setPkg(i, { trial_days: e.target.value === '' ? 0 : Math.round(Number(e.target.value)) })} />
-                  </label>
+                  <div>
+                    <label className={label} htmlFor={`pk-int-${i}`}>Billing period</label>
+                    <select id={`pk-int-${i}`} className={field} value={p.interval || ''} onChange={(e) => setPkg(i, { interval: e.target.value })}>
+                      <option value="">Select…</option>
+                      {Object.keys(INTERVALS).map((k) => <option key={k}>{k}</option>)}
+                    </select>
+                  </div>
                 )}
                 {p.kind !== 'free' && (
-                  <>
-                    <input aria-label="Price" type="number" min="0" step="0.01" className={field + ' sm:!w-28'} value={p.amount_cents == null ? '' : p.amount_cents / 100}
-                      onChange={(e) => setPkg(i, { amount_cents: e.target.value === '' ? null : Math.round(Number(e.target.value) * 100) })} />
-                    <select aria-label="Currency" className={field + ' sm:!w-auto'} value={p.currency || 'eur'} onChange={(e) => setPkg(i, { currency: e.target.value })}>
-                      {CURRENCIES.map((c) => <option key={c} value={c}>{c.toUpperCase()}</option>)}
-                    </select>
-                  </>
+                  <div>
+                    <label className={label} htmlFor={`pk-price-${i}`}>Price</label>
+                    <div className="flex gap-2">
+                      <input id={`pk-price-${i}`} type="number" inputMode="decimal" min="0" step="0.01" className={`${field} min-w-0`} value={p.amount_cents == null ? '' : p.amount_cents / 100}
+                        onChange={(e) => setPkg(i, { amount_cents: e.target.value === '' ? null : Math.round(Number(e.target.value) * 100) })} />
+                      <select aria-label="Currency" className={`${field} !w-24 shrink-0`} value={p.currency || 'eur'} onChange={(e) => setPkg(i, { currency: e.target.value })}>
+                        {CURRENCIES.map((c) => <option key={c} value={c}>{c.toUpperCase()}</option>)}
+                      </select>
+                    </div>
+                  </div>
                 )}
+                {p.kind === 'subscription' && (
+                  <div>
+                    <label className={label} htmlFor={`pk-trial-${i}`}>Free trial days</label>
+                    <input id={`pk-trial-${i}`} type="number" inputMode="numeric" min="0" max="90" step="1" className={field} value={p.trial_days || 0}
+                      onChange={(e) => setPkg(i, { trial_days: e.target.value === '' ? 0 : Math.round(Number(e.target.value)) })} />
+                    <p className={hint}>0 = no trial</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end">
                 <button type="button" className={adminBtn.danger} onClick={() => set({ packages: card.packages.filter((_, j) => j !== i) })}><Icon name="trash" /> Remove</button>
               </div>
             </div>
