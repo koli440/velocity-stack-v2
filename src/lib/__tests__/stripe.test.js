@@ -1,3 +1,4 @@
+import { guessConnectCountry, normalizeConnectCountry } from '../coachBilling.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createHmac } from 'node:crypto'
@@ -201,4 +202,17 @@ test('account status flags for v2 and v1 accounts; thin v2 events sync through a
   await handleStripeEvent(svc, thin, async () => ({ charges: true, payouts: false, details: true, country: 'DE' }))
   assert.deepEqual(calls.map((c) => c[0]), ['billing_record_event', 'billing_apply_account', 'billing_finish_event'])
   assert.equal(calls[1][1].p_charges, true)
+})
+
+test('connect countries: normalised, guessed from locale; v2 payload always carries identity.country', () => {
+  assert.equal(normalizeConnectCountry('cz'), 'CZ')
+  assert.equal(normalizeConnectCountry('US'), null)
+  assert.equal(normalizeConnectCountry(''), null)
+  assert.equal(guessConnectCountry('cs-CZ'), 'CZ')
+  assert.equal(guessConnectCountry('en'), null)
+  assert.equal(buildAccountV2Params({ coachId: ID(1), country: 'CZ' }).identity.country, 'cz')
+})
+
+test('missing country message is shown to the coach', () => {
+  assert.equal(billingErrorMessage('Choose your country', 400), 'Choose your country')
 })
