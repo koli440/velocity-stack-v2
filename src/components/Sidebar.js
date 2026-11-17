@@ -8,6 +8,7 @@ import { parseCoachPath, sidebarItems, isSidebarItemActive, isContextNavActive, 
 import Icon from './Icon'
 import { supabase } from '../lib/supabase'
 import { fetchThreads, totalUnread } from '../lib/coachChat'
+import { fetchPaymentOverview } from '../lib/coachBilling'
 import { loginHref } from '../lib/signupCatch'
 import { useCoachModule } from './useCoachModule'
 
@@ -28,8 +29,15 @@ export default function Sidebar({
     fetchThreads(supabase).then(({ threads: t, error }) => { if (!cancelled) setThreads(error ? [] : t) })
     return () => { cancelled = true }
   }, [signedIn, pathname])
+  const [hasPayments, setHasPayments] = useState(false)
+  useEffect(() => {
+    if (!signedIn) return setHasPayments(false)
+    let cancelled = false
+    fetchPaymentOverview(supabase).then(({ overview }) => { if (!cancelled) setHasPayments(overview.as_rider.length + overview.as_coach.length > 0) })
+    return () => { cancelled = true }
+  }, [signedIn])
   const unread = totalUnread(threads)
-  const items = sidebarItems(NAV_ITEMS, riderId, moduleEnabled, threads.length > 0, signedIn, threads)
+  const items = sidebarItems(NAV_ITEMS, riderId, moduleEnabled, threads.length > 0, signedIn, threads, hasPayments)
   const chrome = chromeVisibility(riderId)
 
   const handleNavigate = (path) => {

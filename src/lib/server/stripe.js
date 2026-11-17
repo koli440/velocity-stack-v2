@@ -143,6 +143,15 @@ const uuidOr = (v) => (typeof v === 'string' && UUID.test(v) ? v : null)
 const iso = (s) => (Number.isFinite(s) ? new Date(s * 1000).toISOString() : null)
 const SUB_STATUSES = new Set(['incomplete', 'incomplete_expired', 'trialing', 'active', 'past_due', 'canceled', 'unpaid', 'paused'])
 
+// Stripe recurring {interval, interval_count} -> our package interval.
+function intervalKey(r) {
+  if (!r?.interval) return null
+  const n = r.interval_count || 1
+  if (r.interval === 'year' && n === 1) return 'year'
+  if (r.interval === 'month') return n === 1 ? 'month' : n === 3 ? 'quarter' : null
+  return null
+}
+
 // Pure mapping from a Stripe event to the database call it needs (or null when it is not relevant). Connect events carry
 // `account` (the coach's connected account); the database resolves the coach from it, never from metadata.
 export function planStripeEvent(event) {
@@ -168,10 +177,13 @@ export function planStripeEvent(event) {
       const status = event.type.endsWith('deleted') ? 'canceled' : o.status
       if (!SUB_STATUSES.has(status)) return null
       const end = o.current_period_end ?? o.items?.data?.[0]?.current_period_end
+      const price = o.items?.data?.[0]?.price || o.items?.data?.[0]?.plan || {}
       return { rpc: 'billing_apply_subscription', args: {
         p_sub: o.id, p_customer: typeof o.customer === 'string' ? o.customer : null, p_status: status, p_period_end: iso(end),
         p_cancel_at_end: !!o.cancel_at_period_end, p_coach: uuidOr(m.coach_id), p_rider: uuidOr(m.rider_id),
-        p_relationship: uuidOr(m.relationship_id), p_package: uuidOr(m.package_id), p_account: account } }
+        p_relationship: uuidOr(m.relationship_id), p_package: uuidOr(m.package_id), p_account: account,
+        p_amount: Number.isInteger(price.unit_amount) ? price.unit_amount : Number.isInteger(price.amount) ? price.amount : null,
+        p_currency: o.currency || price.currency || null, p_interval: intervalKey(price.recurring || price), p_trial_end: iso(o.trial_end) } }
     }
     case 'invoice.paid':
     case 'invoice.payment_failed': {
@@ -179,16 +191,17 @@ export function planStripeEvent(event) {
       if (typeof sub !== 'string') return null
       const paid = event.type === 'invoice.paid'
       return { rpc: 'billing_apply_payment', args: { p_event: event.id, p_sub: sub, p_kind: paid ? 'payment' : 'failed',
-        p_amount: paid ? o.amount_paid : o.amount_due, p_currency: o.currency, p_fee: o.application_fee_amount ?? 0, p_account: account } }
+        p_amount: paid ? o.amount_paid : o.amount_due, p_currency: o.currency, p_fee: o.application_fee_amount ?? 0, p_account: account,
+        p_package: uuidOr(o.subscription_details?.metadata?.package_id), p_receipt: o.hosted_invoice_url || null } }
     }
     case 'checkout.session.completed': {
       if (o.mode !== 'payment' || o.payment_status !== 'paid') return null
       return { rpc: 'billing_apply_payment', args: { p_event: event.id, p_sub: '', p_kind: 'payment', p_amount: o.amount_total,
-        p_currency: o.currency, p_fee: 0, p_account: account } }
+        p_currency: o.currency, p_fee: 0, p_account: account, p_package: uuidOr(o.metadata?.package_id), p_receipt: null } }
     }
     case 'charge.refunded':
       return { rpc: 'billing_apply_payment', args: { p_event: event.id, p_sub: '', p_kind: 'refund', p_amount: o.amount_refunded,
-        p_currency: o.currency, p_fee: 0, p_account: account } }
+        p_currency: o.currency, p_fee: 0, p_account: account, p_package: null, p_receipt: o.receipt_url || null } }
     default:
       return null
   }

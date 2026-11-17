@@ -13,6 +13,9 @@ import { localDayKey } from '../../lib/fitnessForm'
 import { athletePath, formatLastActivity, weeklyVolume } from '../../lib/coachContext'
 import Avatar from '../../components/Avatar'
 import BotBadge from '../../components/BotBadge'
+import PaymentBadge from '../../components/PaymentBadge'
+import { fetchPaymentOverview } from '../../lib/coachBilling'
+import { subscriptionsByCounterparty } from '../../lib/paymentStatus'
 import CoachPlanMeter from '../../components/CoachPlanMeter'
 import CoachApplications from '../../components/CoachApplications'
 import Icon from '../../components/Icon'
@@ -61,19 +64,22 @@ export default function CoachDashboardPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) return router.push('/login')
       const me = session.user.id
-      const [{ rows, profiles, error }, dash, { counts: unreadByRider }, fit] = await Promise.all([
+      const [{ rows, profiles, error }, dash, { counts: unreadByRider }, fit, { overview }] = await Promise.all([
         fetchMyCoaching(supabase, me),
         fetchCoachDashboard(supabase),
         fetchCoachUnreadComments(supabase),
         // One batched, coach-gated call for all athletes (paged past the 1000-row cap); never the raw activities table.
         fetchCoachFitnessRows(supabase),
+        fetchPaymentOverview(supabase),
       ])
       if (cancelled) return
       const groups = groupRelationships(rows, me)
+      const paying = subscriptionsByCounterparty(overview.as_coach)
       const byRider = new Map(dash.rows.map((r) => [r.rider_id, r]))
       const fitness = summarizeAthletes(fit.rows, groups.athletes.map((r) => r.rider_id), localDayKey(new Date()))
       const athletes = groups.athletes.map((rel) => ({
         riderId: rel.rider_id,
+        paymentSub: paying.get(rel.rider_id) || null,
         profile: profiles.get(rel.rider_id) || null,
         stats: byRider.get(rel.rider_id) || null,
         relationshipId: rel.id,
@@ -145,6 +151,7 @@ export default function CoachDashboardPage() {
                         </span>
                       )}
                     </span>
+                    {a.paymentSub && <span className="block"><PaymentBadge sub={a.paymentSub} /></span>}
                     <span className="block text-sm text-slate-600 dark:text-slate-300">
                       Last activity: {formatLastActivity(a.stats?.last_activity_at)}
                     </span>

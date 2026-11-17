@@ -9,7 +9,10 @@ import MessageButton from './MessageButton'
 import EndCoachingDialog from './EndCoachingDialog'
 import BotBadge from './BotBadge'
 import { authorName } from '../lib/social'
-import { fetchPaymentDue, startCheckout } from '../lib/coachBilling'
+import { fetchPaymentDue, fetchPaymentOverview, startCheckout } from '../lib/coachBilling'
+import { subscriptionsByCounterparty } from '../lib/paymentStatus'
+import PaymentStatusCard from './PaymentStatusCard'
+import PaymentBadge from './PaymentBadge'
 import { priceLabel } from '../lib/coachCard'
 import {
   groupRelationships,
@@ -62,6 +65,7 @@ export default function CoachingPanel({ userId }) {
   const [due, setDue] = useState([])
   const [appLinks, setAppLinks] = useState({})
   const [payMsg, setPayMsg] = useState(null)
+  const [payments, setPayments] = useState({ rider: new Map(), coach: new Map() })
 
   const load = useCallback(async () => {
     if (!userId) return
@@ -70,6 +74,8 @@ export default function CoachingPanel({ userId }) {
     setRows(res.rows)
     setProfiles(res.profiles)
     setDue((await fetchPaymentDue(supabase)).due)
+    const { overview } = await fetchPaymentOverview(supabase)
+    setPayments({ rider: subscriptionsByCounterparty(overview.as_rider), coach: subscriptionsByCounterparty(overview.as_coach) })
     setAppLinks(await fetchApplicationLinks(supabase))
     setLoaded(true)
   }, [userId])
@@ -154,13 +160,16 @@ export default function CoachingPanel({ userId }) {
                 </button>
               }
             >
-              <Person id={g.coach.coach_id} profiles={profiles} />
+              <Person id={g.coach.coach_id} profiles={profiles}>
+                <PaymentBadge sub={payments.rider.get(g.coach.coach_id)} due={due.some((d) => d.coach_id === g.coach.coach_id)} />
+              </Person>
               <MessageButton relationshipId={g.coach.id} />
             </Row>
           ) : (
             <p className="text-xs text-slate-600 dark:text-slate-300">You have no coach. Open a rider's profile to request one.</p>
           )}
 
+          {g.coach && <PaymentStatusCard role="rider" name={nameOf(g.coach.coach_id)} sub={payments.rider.get(g.coach.coach_id)} counterpartyId={g.coach.coach_id} />}
           {due.map((item) => (
             <div key={item.package_id} className="rounded-xl border border-orange-500/30 p-3 space-y-1.5" data-testid="pay-for-plan">
               <p className="text-sm font-bold text-slate-900 dark:text-white">Pay for your plan</p>
@@ -245,8 +254,13 @@ export default function CoachingPanel({ userId }) {
                 </>
               }
             >
-              <Person id={row.rider_id} profiles={profiles} />
+              <Person id={row.rider_id} profiles={profiles}>
+                <PaymentBadge sub={payments.coach.get(row.rider_id)} />
+              </Person>
             </Row>
+          ))}
+          {g.athletes.map((row) => (
+            <PaymentStatusCard key={`pay-${row.id}`} role="coach" name={nameOf(row.rider_id)} sub={payments.coach.get(row.rider_id)} counterpartyId={row.rider_id} />
           ))}
           {g.incomingRequests.map((row) => (
             <Row

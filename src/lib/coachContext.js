@@ -129,11 +129,20 @@ export function athleteMessagesHref(threads, riderId) {
   return t ? `/chat/${t.id}` : '/chat'
 }
 
-export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvailable = false, signedIn = true, threads = []) {
+export const PAYMENTS_NAV_ITEM = Object.freeze({ key: 'payments', label: 'Payments', icon: 'notes', href: '/payments' })
+
+/** Adds "Payments" after "Messages"/"Riders" for users who pay or are paid for coaching (not flag-gated). */
+export function withPaymentsItem(items) {
+  const at = Math.max(items.findIndex((i) => i.key === 'messages'), items.findIndex((i) => i.key === 'riders'))
+  return at < 0 ? [...items, PAYMENTS_NAV_ITEM] : [...items.slice(0, at + 1), PAYMENTS_NAV_ITEM, ...items.slice(at + 1)]
+}
+
+export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvailable = false, signedIn = true, threads = [], hasPayments = false) {
   if (!riderId) {
     const listed = signedIn ? (moduleEnabled ? withModuleNavItems(navItems) : navItems) : withPublicDirectoryItem(navItems)
     const base = withLabItem(listed)
-    return chatAvailable ? withMessagesItem(base) : base
+    const withChat = chatAvailable ? withMessagesItem(base) : base
+    return signedIn && hasPayments ? withPaymentsItem(withChat) : withChat
   }
   return [
     ...athletePages(moduleEnabled).map((p) => ({
