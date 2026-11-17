@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getRequestUser } from '../../../../lib/supabaseServer'
 import { getServiceClient } from '../../../../lib/server/connections'
 import { appOrigin } from '../../../../lib/server/appUrl'
-import { buildCheckoutParams, stripeConfig, stripeFetch } from '../../../../lib/server/stripe'
+import { buildCheckoutParams, ensureConnectedCustomer, stripeConfig, stripeFetch } from '../../../../lib/server/stripe'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,8 +18,9 @@ export async function POST(req) {
   const { data: ctx, error } = await service.rpc('billing_checkout_context', { p_rider: user.id, p_package: body.packageId })
   if (error) return NextResponse.json({ error: error.message.replace(/^.*?:\s*/, '') }, { status: 400 })
   try {
-    const params = buildCheckoutParams(ctx, user.id, appOrigin(req), cfg.applicationFeePercent)
-    const session = await stripeFetch(cfg, 'POST', '/v1/checkout/sessions', params)
+    const customer = await ensureConnectedCustomer(cfg, service, ctx, user.id)
+    const params = buildCheckoutParams(ctx, user.id, appOrigin(req), cfg.applicationFeePercent, customer)
+    const session = await stripeFetch(cfg, 'POST', '/v1/checkout/sessions', params, { stripeAccount: ctx.stripe_account_id })
     return NextResponse.json({ url: session.url })
   } catch (err) {
     console.warn('Checkout failed:', err?.message)

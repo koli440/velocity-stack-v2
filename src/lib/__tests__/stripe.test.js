@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createHmac } from 'node:crypto'
-import { buildCheckoutParams, encodeForm, handleStripeEvent, planStripeEvent, stripeConfig, stripeFetch, verifyStripeSignature } from '../server/stripe.js'
+import { buildCheckoutParams, ensureConnectedCustomer, encodeForm, handleStripeEvent, planStripeEvent, stripeConfig, stripeFetch, verifyStripeSignature } from '../server/stripe.js'
 import { billingErrorMessage, connectStateLabel } from '../coachBilling.js'
 import { describeNotification, notificationHref } from '../notifications.js'
 
@@ -46,20 +46,20 @@ test('verifyStripeSignature: valid, tampered, stale, malformed', () => {
 test('planStripeEvent maps fixture events', () => {
   assert.deepEqual(planStripeEvent({ id: 'e', type: 'account.updated', data: { object: { id: 'acct_1', charges_enabled: true, payouts_enabled: false, details_submitted: true, country: 'DE' } } }),
     { rpc: 'billing_apply_account', args: { p_account: 'acct_1', p_charges: true, p_payouts: false, p_details: true, p_country: 'DE' } })
-  const sub = planStripeEvent({ id: 'e', type: 'customer.subscription.updated', data: { object: { id: 'sub_1', customer: 'cus_1', status: 'active', current_period_end: 1_800_000_000, cancel_at_period_end: true, metadata: META } } })
+  const sub = planStripeEvent({ id: 'e', type: 'customer.subscription.updated', account: 'acct_1', data: { object: { id: 'sub_1', customer: 'cus_1', status: 'active', current_period_end: 1_800_000_000, cancel_at_period_end: true, metadata: META } } })
   assert.equal(sub.args.p_coach, ID(1)); assert.equal(sub.args.p_cancel_at_end, true); assert.match(sub.args.p_period_end, /^2027-/)
-  const del = planStripeEvent({ id: 'e', type: 'customer.subscription.deleted', data: { object: { id: 'sub_1', status: 'active', metadata: META } } })
+  const del = planStripeEvent({ id: 'e', type: 'customer.subscription.deleted', account: 'acct_1', data: { object: { id: 'sub_1', status: 'active', metadata: META } } })
   assert.equal(del.args.p_status, 'canceled')
-  const forged = planStripeEvent({ id: 'e', type: 'customer.subscription.created', data: { object: { id: 'sub_1', status: 'active', metadata: { coach_id: 'x; drop', rider_id: ID(2) } } } })
+  const forged = planStripeEvent({ id: 'e', type: 'customer.subscription.created', account: 'acct_1', data: { object: { id: 'sub_1', status: 'active', metadata: { coach_id: 'x; drop', rider_id: ID(2) } } } })
   assert.equal(forged.args.p_coach, null)
-  assert.equal(planStripeEvent({ id: 'e', type: 'customer.subscription.created', data: { object: { id: 's', status: 'weird' } } }), null)
-  const paid = planStripeEvent({ id: 'evt_p', type: 'invoice.paid', data: { object: { subscription: 'sub_1', amount_paid: 9000, currency: 'eur' } } })
+  assert.equal(planStripeEvent({ id: 'e', type: 'customer.subscription.created', account: 'acct_1', data: { object: { id: 's', status: 'weird' } } }), null)
+  const paid = planStripeEvent({ id: 'evt_p', type: 'invoice.paid', account: 'acct_1', data: { object: { subscription: 'sub_1', amount_paid: 9000, currency: 'eur' } } })
   assert.deepEqual([paid.args.p_kind, paid.args.p_amount, paid.args.p_event], ['payment', 9000, 'evt_p'])
-  assert.equal(planStripeEvent({ id: 'e', type: 'invoice.payment_failed', data: { object: { subscription: 'sub_1', amount_due: 9000, currency: 'eur' } } }).args.p_kind, 'failed')
+  assert.equal(planStripeEvent({ id: 'e', type: 'invoice.payment_failed', account: 'acct_1', data: { object: { subscription: 'sub_1', amount_due: 9000, currency: 'eur' } } }).args.p_kind, 'failed')
   assert.equal(planStripeEvent({ id: 'e', type: 'invoice.paid', data: { object: { amount_paid: 1 } } }), null)
   assert.equal(planStripeEvent({ id: 'e', type: 'checkout.session.completed', data: { object: { mode: 'subscription' } } }), null)
-  assert.equal(planStripeEvent({ id: 'e', type: 'checkout.session.completed', data: { object: { mode: 'payment', payment_status: 'paid', amount_total: 5000, currency: 'eur', metadata: { destination: 'acct_1' } } } }).args.p_account, 'acct_1')
-  assert.equal(planStripeEvent({ id: 'e', type: 'charge.refunded', data: { object: { amount_refunded: 100, currency: 'eur', transfer_data: { destination: 'acct_1' } } } }).args.p_kind, 'refund')
+  assert.equal(planStripeEvent({ id: 'e', type: 'checkout.session.completed', account: 'acct_1', data: { object: { mode: 'payment', payment_status: 'paid', amount_total: 5000, currency: 'eur' } } }).args.p_account, 'acct_1')
+  assert.equal(planStripeEvent({ id: 'e', type: 'charge.refunded', account: 'acct_1', data: { object: { amount_refunded: 100, currency: 'eur' } } }).args.p_kind, 'refund')
   assert.equal(planStripeEvent({ id: 'e', type: 'something.else', data: { object: {} } }), null)
   assert.equal(planStripeEvent(null), null)
 })
@@ -79,12 +79,14 @@ test('handleStripeEvent is idempotent and retriable', async () => {
   assert.deepEqual(await handleStripeEvent(mk(true), { id: 'x', type: 'ping', data: { object: {} } }), { handled: false })
 })
 
-test('buildCheckoutParams: destination charges, metadata, optional fee', () => {
+test('buildCheckoutParams: direct charges, metadata, optional fee', () => {
   const ctx = { coach_id: ID(1), relationship_id: ID(3), package_id: ID(4), stripe_account_id: 'acct_1', title: 'Plan', kind: 'subscription', interval: 'quarter', amount_cents: 9000, currency: 'eur' }
   const p = buildCheckoutParams(ctx, ID(2), 'https://x.test', 0)
   assert.equal(p.mode, 'subscription')
   assert.deepEqual(p.line_items[0].price_data.recurring, { interval: 'month', interval_count: 3 })
-  assert.equal(p.subscription_data.transfer_data.destination, 'acct_1')
+  assert.equal(p.subscription_data.transfer_data, undefined)
+  assert.equal(p.customer, undefined)
+  assert.equal(buildCheckoutParams(ctx, ID(2), 'https://x.test', 0, 'cus_1').customer, 'cus_1')
   assert.equal(p.subscription_data.application_fee_percent, undefined)
   assert.equal(p.subscription_data.metadata.rider_id, ID(2))
   assert.equal(buildCheckoutParams(ctx, ID(2), 'https://x.test', 10).subscription_data.application_fee_percent, 10)
@@ -94,7 +96,8 @@ test('buildCheckoutParams: destination charges, metadata, optional fee', () => {
   assert.equal(buildCheckoutParams({ ...ctx, kind: 'one_time', trial_days: 14 }, ID(2), 'https://x.test', 0).payment_intent_data.trial_period_days, undefined)
   assert.equal(one.mode, 'payment')
   assert.equal(one.payment_intent_data.application_fee_amount, 900)
-  assert.equal(one.metadata.destination, 'acct_1')
+  assert.equal(one.metadata.destination, undefined)
+  assert.equal(one.payment_intent_data.transfer_data, undefined)
 })
 
 test('billing labels, errors and notifications', () => {
@@ -107,4 +110,41 @@ test('billing labels, errors and notifications', () => {
   assert.equal(notificationHref({ type: 'subscription_started' }), '/settings/coach-card')
   assert.match(describeNotification({ type: 'payment_requested', actor_nickname: 'Sam' }), /pay for your plan/)
   assert.equal(notificationHref({ type: 'payment_requested' }), '/settings#coaching')
+})
+
+test('direct charges: Stripe-Account header on connected-account calls', async () => {
+  const cfg = stripeConfig({ STRIPE_SECRET_KEY: 'sk_test_k' })
+  let seen
+  const f = async (url, init) => { seen = { url, init }; return { ok: true, json: async () => ({ id: 'cus_1' }) } }
+  await stripeFetch(cfg, 'POST', '/v1/checkout/sessions', {}, { stripeAccount: 'acct_1', fetchImpl: f })
+  assert.equal(seen.init.headers['Stripe-Account'], 'acct_1')
+  await stripeFetch(cfg, 'POST', '/v1/accounts', {}, { fetchImpl: f })
+  assert.equal(seen.init.headers['Stripe-Account'], undefined)
+  await assert.rejects(() => stripeFetch(cfg, 'POST', '/v1/x', {}, { stripeAccount: 'cus_evil', fetchImpl: f }), /Invalid payment account/)
+})
+
+test('connect webhooks need the account; account.updated falls back to the object id', () => {
+  const inv = { id: 'e', type: 'invoice.paid', data: { object: { subscription: 'sub_1', amount_paid: 1, currency: 'eur' } } }
+  assert.equal(planStripeEvent(inv), null)
+  assert.equal(planStripeEvent({ ...inv, account: 'bad id' }), null)
+  assert.equal(planStripeEvent({ ...inv, account: 'acct_9' }).args.p_account, 'acct_9')
+  assert.equal(planStripeEvent({ id: 'e', type: 'account.updated', account: 'acct_9', data: { object: { id: 'acct_9' } } }).args.p_account, 'acct_9')
+  assert.equal(planStripeEvent({ id: 'e', type: 'account.updated', data: { object: { id: 'acct_8' } } }).args.p_account, 'acct_8')
+  const sub = planStripeEvent({ id: 'e', type: 'customer.subscription.updated', account: 'acct_9', data: { object: { id: 'sub_1', status: 'active', metadata: { coach_id: ID(1) } } } })
+  assert.equal(sub.args.p_account, 'acct_9')
+})
+
+test('ensureConnectedCustomer: one customer per coach account and rider, created on the connected account', async () => {
+  const cfg = stripeConfig({ STRIPE_SECRET_KEY: 'sk_test_k' })
+  const ctx = { coach_id: ID(1), stripe_account_id: 'acct_1' }
+  const calls = []
+  const svc = (existing) => ({ rpc: async (n, a) => { calls.push([n, a]); return n === 'billing_get_customer' ? { data: existing } : { data: a.p_customer } } })
+  assert.equal(await ensureConnectedCustomer(cfg, svc('cus_old'), ctx, ID(2)), 'cus_old')
+  assert.equal(calls.length, 1)
+  let seen
+  const f = async (url, init) => { seen = { url, init }; return { ok: true, json: async () => ({ id: 'cus_new' }) } }
+  assert.equal(await ensureConnectedCustomer(cfg, svc(null), ctx, ID(2), { fetchImpl: f }), 'cus_new')
+  assert.equal(seen.init.headers['Stripe-Account'], 'acct_1')
+  assert.match(seen.init.headers['Idempotency-Key'], /^cus-acct_1-/)
+  assert.deepEqual(calls.at(-1), ['billing_set_customer', { p_coach: ID(1), p_rider: ID(2), p_customer: 'cus_new' }])
 })

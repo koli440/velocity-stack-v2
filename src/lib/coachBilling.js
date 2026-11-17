@@ -18,7 +18,7 @@ export function billingErrorMessage(message, status) {
 
 export const startConnectOnboarding = (country) => post('/api/billing/connect/onboard', { country })
 export const startCheckout = (packageId) => post('/api/billing/checkout', { packageId })
-export const openBillingPortal = () => post('/api/billing/portal')
+export const openBillingPortal = (coachId) => post('/api/billing/portal', coachId ? { coachId } : {})
 
 export async function fetchBillingStatus() {
   const res = await fetch('/api/billing/connect/status', { headers: await authHeader() })

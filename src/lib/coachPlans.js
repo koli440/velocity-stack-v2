@@ -33,15 +33,16 @@ export const tierPriceLabel = (t) => (t.price_cents === 0 ? 'Free' : 'Price to b
 export const isPlanLimitError = (e) => /plan athlete limit/i.test(String(e?.message || e || ''))
 
 export const FEE_BREAKDOWN = Object.freeze([
-  'The athlete pays the package price shown on your card (plus any tax you configure in Stripe).',
-  "Stripe's processing fee is deducted from your payment: you, the coach, pay it. The athlete pays no extra fee.",
-  'The platform fee is 0 % at launch (STRIPE_APPLICATION_FEE_PERCENT); if it is ever raised it is announced first and also comes out of your side.',
-  'Stripe pays the rest out to your bank account on its payout schedule.',
+  'You are the merchant of record: the athlete pays you directly and the money goes straight to your Stripe account. The platform never holds it.',
+  "Stripe's processing fee is charged to your Stripe account by Stripe; you pay it. The athlete pays no extra fee.",
+  'The platform fee is 0 % at launch (STRIPE_APPLICATION_FEE_PERCENT). If it is ever raised it is announced first and is taken from each payment on your side.',
+  'Tax/VAT, invoices, refunds and disputes are your responsibility, handled in your own Stripe Express dashboard.',
 ])
 
 export const STRIPE_SETUP_STEPS = Object.freeze([
-  'Press "Set up payments" below: you are sent to Stripe (Express account).',
+  'Press "Set up payments" below: you are sent to Stripe to create your Express account.',
   'Confirm your identity and business details and add the bank account for payouts.',
   'Come back here: the status turns to ready once Stripe enables charges and payouts.',
   'Add paid packages to your coach card. Athletes pay only after you accepted them.',
+  'Manage payouts, tax settings, refunds and disputes in your Stripe Express dashboard.',
 ])
