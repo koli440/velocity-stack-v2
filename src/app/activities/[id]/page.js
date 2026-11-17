@@ -380,21 +380,21 @@ function ActivityDetail() {
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
       <Link
         href={backHref}
-        className="inline-flex text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-white transition items-center gap-1.5"
+        className="inline-flex min-h-[44px] lg:min-h-0 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition items-center gap-1.5"
       >
         {backLabel}
       </Link>
 
       {/* 1. Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 w-full sm:w-auto">
           {rider?.id ? (
             <Link href={`/riders/${rider.id}`} className="shrink-0 rounded-full" aria-label={`${riderName}'s profile`}>
               <Avatar url={rider.avatar_url} name={riderName} size="w-[72px] h-[72px]" textSize="text-2xl" className="ring-2 ring-orange-500 ring-offset-2 ring-offset-white" />
             </Link>
           ) : null}
           <div className="space-y-1 min-w-0">
-            <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white break-words">
               {activity.title || (activity.activity_type === 'gym' ? 'Gym Session' : isRunActivity(activity) ? activitySport(activity).label : 'Velodrome Session')}
             </h1>
             {activity.activity_type === 'gym' && (
@@ -432,7 +432,7 @@ function ActivityDetail() {
             />
             <ActivityPlannedLink client={supabase} activity={activity} />
             {activity.tracks?.name && (
-              <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+              <span className="inline-block max-w-full break-words text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
                 {activity.tracks.name}
               </span>
             )}
@@ -445,11 +445,11 @@ function ActivityDetail() {
             <ActivityReactions activityId={activityId} />
           </div>
         {!sharedView && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setShowEdit(true)}
-              className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wider transition"
+              className="min-h-[44px] lg:min-h-0 py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wider transition"
             >
               <Icon name="edit" /> Edit
             </button>
@@ -457,7 +457,7 @@ function ActivityDetail() {
               type="button"
               onClick={handleReroll}
               disabled={rerolling}
-              className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
+              className="min-h-[44px] lg:min-h-0 py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
             >
               <Icon name="dice" /> Reroll name
             </button>
@@ -465,7 +465,7 @@ function ActivityDetail() {
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={deleting}
-              className="py-2 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
+              className="min-h-[44px] lg:min-h-0 py-2 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-700 dark:text-rose-300 font-bold text-xs uppercase tracking-wider transition disabled:opacity-50"
             >
               <Icon name="trash" /> Delete Activity
             </button>
@@ -479,10 +479,10 @@ function ActivityDetail() {
       )}
 
       {showDeleteConfirm && (
-        <Portal lockScroll><div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
-          <div className="w-full max-w-sm space-y-4 bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl">
+        <Portal lockScroll><div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-slate-950/60 overflow-y-auto" role="alertdialog" aria-modal="true" aria-label="Confirm delete">
+          <div className="w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto space-y-4 bg-white dark:bg-surface-darkCard p-5 sm:p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xl">
             <h2 className="text-base font-black text-slate-900 dark:text-white">Delete this activity?</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-600 dark:text-slate-300 break-words">
               This permanently deletes &quot;{activity.title || 'Velodrome Session'}&quot; and all linked data (curves, analysis, photos). This cannot be undone.
             </p>
             <div className="flex justify-end gap-2">
@@ -490,7 +490,7 @@ function ActivityDetail() {
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleting}
-                className="py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300"
+                className="min-h-[44px] py-2 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200"
               >
                 Cancel
               </button>
@@ -526,7 +526,7 @@ function ActivityDetail() {
       {(activity.ride_type || rideGears.length > 0 || activity.bike_model || activity.handlebar_setup || activity.helmet || activity.tracks || activity.perceived_exertion) && (
         <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
           {activity.tracks && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl min-w-0 break-words bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <span><Icon name="velodrome" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
                 {activity.tracks.name} ({activity.tracks.length_m} m)
@@ -534,7 +534,7 @@ function ActivityDetail() {
             </div>
           )}
           {(activity.ride_type || rideGears.length > 0) && (
-            <div className="flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-xl min-w-0 break-words bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <span className="font-bold text-slate-800 dark:text-slate-200">{rideTypeLabel(activity.ride_type)}</span>
               {rideTypeHasGear(activity.ride_type) && rideGears.length > 0 && (
                 <span className="font-mono font-bold text-slate-600 dark:text-slate-300">
@@ -545,19 +545,19 @@ function ActivityDetail() {
             </div>
           )}
           {activity.bike_model && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl min-w-0 break-words bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <span><Icon name="bike" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{activity.bike_model}</span>
             </div>
           )}
           {activity.handlebar_setup && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl min-w-0 break-words bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <span><Icon name="target" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{activity.handlebar_setup}</span>
             </div>
           )}
           {activity.helmet && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl min-w-0 break-words bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <span><Icon name="helmet" /></span>
               <span className="font-bold text-slate-800 dark:text-slate-200">{activity.helmet}</span>
             </div>
@@ -573,7 +573,7 @@ function ActivityDetail() {
 
       {/* 2b. GPS route map (only for activities with a satellite recording; other riders get it only if the owner shares it, trimmed server-side) */}
       {Array.isArray(activity.time_series?.latitude) && activity.time_series.latitude.length > 1 && (
-        <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+        <div className="glass-dense bg-white dark:bg-surface-darkCard p-4 sm:p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs min-w-0 overflow-hidden">
           <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Icon name="map" /> Route Map
           </h3>
@@ -582,7 +582,7 @@ function ActivityDetail() {
             longitude={activity.time_series.longitude}
           />
           {sharedView && (
-            <p className="mt-2 text-[11px] text-slate-400">
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
               Shared by the rider. Parts of the route inside their privacy zone are hidden.
             </p>
           )}
@@ -631,7 +631,7 @@ function ActivityDetail() {
 
       {/* 5. Bottom panel: velodrome, ride type, gears and gear segments (own activities only) */}
       {!sharedView && !isGym && (
-      <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+      <div className="bg-white dark:bg-surface-darkCard p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Icon name="settings" /> Track & Gearing Setup for this Ride
         </h3>
@@ -674,7 +674,7 @@ function ActivityDetail() {
 
       {/* 5b. Coach editor (athlete context): ride type, gears and segments via the audited RPC */}
       {sharedView && !isGym && coachRiderId && coachRiderId === activity?.user_id && (
-      <div className="bg-white dark:bg-surface-darkCard p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
+      <div className="bg-white dark:bg-surface-darkCard p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-1 flex items-center gap-2">
           <Icon name="settings" /> Ride type &amp; gears (coach)
         </h3>

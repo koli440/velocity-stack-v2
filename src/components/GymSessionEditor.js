@@ -32,7 +32,7 @@ export function useWeightUnit() {
 }
 
 const input = 'w-full min-w-[3.5rem] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-violet-500'
-const small = 'px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40'
+const small = 'min-h-[44px] lg:min-h-0 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40'
 
 /** Uncontrolled decimal input: keeps the raw text while typing ("0." / "0,19"), commits a parsed number. */
 function DecimalInput({ onValue, min, max, className, ...rest }) {
@@ -198,9 +198,9 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
             <button type="button" className={`${small} text-red-600`} onClick={() => removeExercise(i)}>Remove</button>
           </div>
           {!ex.catalogue_id && ex.name.trim() && (
-            <p className="text-[10px] text-slate-400">Not matched to the exercise list yet. Names that match a known exercise or its other names are linked when you save; otherwise pick one from the list for better load estimates.</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300">Not matched to the exercise list yet. Names that match a known exercise or its other names are linked when you save; otherwise pick one from the list for better load estimates.</p>
           )}
-          {isUnilateral(ex) && <p className="text-[10px] text-slate-400">One side at a time: record the total reps for both sides.</p>}
+          {isUnilateral(ex) && <p className="text-xs text-slate-600 dark:text-slate-300">One side at a time: record the total reps for both sides.</p>}
           {more && (
             <input className={input} value={ex.notes || ''} maxLength={1000} placeholder="Exercise notes" aria-label="Exercise notes"
               onChange={(e) => change((r) => { r[i].notes = e.target.value; return r })} />
@@ -209,7 +209,7 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-[10px] uppercase tracking-wider text-slate-400">
+                <tr className="text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   <th className="px-1 py-1">#</th><th className="px-1">Type</th>{colsOf(ex).duration && !more && <th className="px-1">Time (s)</th>}<th className="px-1">Reps</th>{colsOf(ex).height && <th className="px-1">Height (cm)</th>}{colsOf(ex).weight && <th className="px-1">{colsOf(ex).jump ? `Added (${unit})` : `Weight (${unit})`}</th>}
                   <th className="px-1">RPE</th><th className="px-1">Rest (s)</th>
                   {more && <><th className="px-1">RIR</th><th className="px-1">Tempo</th><th className="px-1">Side</th><th className="px-1">Load</th><th className="px-1">Time (s)</th><th className="px-1">Notes</th></>}
@@ -274,7 +274,7 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
         {error && <span className="text-[11px] font-bold text-red-600" role="alert" data-testid="gym-edit-error">{error}</span>}
         <button type="button" className={small} onClick={onCancel} disabled={saving}>Cancel</button>
         <button type="button" onClick={save} disabled={saving} data-testid="gym-save"
-          className="px-4 py-1.5 rounded-lg bg-violet-600 text-white text-[11px] font-black uppercase disabled:opacity-50">
+          className="min-h-[44px] lg:min-h-0 px-4 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-black uppercase disabled:opacity-50">
           {saving ? 'Saving…' : 'Save'}
         </button>
       </div>
@@ -288,7 +288,7 @@ export default function GymSessionEditor({ client, activityId, ownerId, detail, 
           onConfirm={(list) => (picker.mode === 'change' ? changePicked(picker.index, list[0]) : addPicked(list))}
         />
       )}
-      <p className="text-[10px] text-slate-400">Weights are stored in kg; jump heights in cm. RPE 1-10 in steps of 0.5; RIR is optional. Estimated 1RM (Epley) is an estimate and ignores warm-ups.</p>
+      <p className="text-xs text-slate-600 dark:text-slate-300">Weights are stored in kg; jump heights in cm. RPE 1-10 in steps of 0.5; RIR is optional. Estimated 1RM (Epley) is an estimate and ignores warm-ups.</p>
     </section>
   )
 }

@@ -31,11 +31,11 @@ export default function RaceTagToggle({ client, activity, onChanged, readOnly = 
 
   return (
     <div>
-      <label className={`inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full cursor-pointer ${isRace ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300'}`}>
+      <label className={`inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider px-3 py-2 lg:py-1 min-h-[44px] lg:min-h-0 rounded-full cursor-pointer ${isRace ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300'}`}>
         <input type="checkbox" checked={isRace} disabled={saving} onChange={toggle} className="accent-emerald-500 w-3.5 h-3.5" />
         <Icon name="trophy" size="1.1em" />Race
       </label>
-      {isRace && <p className="mt-1 text-[11px] text-slate-400">{raceTagOrigin(activity)}</p>}
+      {isRace && <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{raceTagOrigin(activity)}</p>}
       {error && <p className="mt-1 text-xs font-bold text-rose-500">{error}</p>}
     </div>
   )

@@ -55,7 +55,7 @@ const GROUP_COLORS = {
   Load: { border: 'border-l-amber-400', label: 'text-amber-500 dark:text-amber-400' },
   'Heart Rate & Cadence': { border: 'border-l-rose-400', label: 'text-rose-500 dark:text-rose-400' },
 }
-const DEFAULT_GROUP_COLOR = { border: 'border-l-slate-300 dark:border-l-slate-700', label: 'text-slate-400' }
+const DEFAULT_GROUP_COLOR = { border: 'border-l-slate-300 dark:border-l-slate-700', label: 'text-slate-600 dark:text-slate-300' }
 
 function MetricCard({ label, value, hint, badge, accent = DEFAULT_GROUP_COLOR }) {
   return (
@@ -63,11 +63,11 @@ function MetricCard({ label, value, hint, badge, accent = DEFAULT_GROUP_COLOR })
       className={`p-3 rounded-xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder border-l-4 ${accent.border} space-y-0.5`}
     >
       <div className="flex items-center justify-between gap-1">
-        <span className={`text-[10px] uppercase font-bold block ${accent.label}`}>{label}</span>
+        <span className={`text-xs uppercase font-bold block ${accent.label}`}>{label}</span>
         {badge}
       </div>
-      <div className="text-base font-black text-slate-900 dark:text-white">{value}</div>
-      {hint && <div className="text-[10px] text-slate-400">{hint}</div>}
+      <div className="text-base font-black text-slate-900 dark:text-white break-words">{value}</div>
+      {hint && <div className="text-xs text-slate-600 dark:text-slate-300">{hint}</div>}
     </div>
   )
 }
@@ -352,7 +352,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="py-1.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[10px] uppercase tracking-wider transition flex items-center gap-1.5"
+            className="min-h-[44px] lg:min-h-0 py-1.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5"
           >
             <Icon name="settings" /> Manage Metrics
             {hiddenIds.length > 0 && (
@@ -363,7 +363,7 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
           </button>
 
           {menuOpen && (
-            <div className="glass-popover absolute right-0 mt-2 w-64 max-h-80 overflow-y-auto rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder shadow-lg z-20 p-2 space-y-1">
+            <div className="glass-popover absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] max-h-80 overflow-y-auto rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder shadow-lg z-20 p-2 space-y-1">
               {metrics.map((m) => {
                 const isHidden = hiddenIds.includes(m.id)
                 return (

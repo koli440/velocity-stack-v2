@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { PLANNED_COLUMNS, linkPlannedActivity, unlinkPlannedActivity } from '../lib/plannedWorkouts'
 
-const btn = 'text-[11px] font-bold px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-600 hover:border-orange-500 disabled:opacity-50'
+const btn = 'min-h-[44px] lg:min-h-0 text-xs font-bold px-3 py-0.5 rounded-md border border-slate-300 dark:border-slate-600 hover:border-orange-500 disabled:opacity-50'
 
 /**
  * "Planned workout" line on the activity page: shows the workout this activity completes, whether it was linked
