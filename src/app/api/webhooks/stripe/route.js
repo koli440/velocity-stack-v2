@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServiceClient } from '../../../../lib/server/connections'
-import { handleStripeEvent, stripeConfig, verifyStripeSignature } from '../../../../lib/server/stripe'
+import { fetchAccountFlags, handleStripeEvent, stripeConfig, verifyStripeSignature } from '../../../../lib/server/stripe'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +22,7 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
   try {
-    const r = await handleStripeEvent(service, event)
+    const r = await handleStripeEvent(service, event, (id) => fetchAccountFlags(cfg, id))
     return NextResponse.json({ received: true, handled: r.handled })
   } catch (err) {
     console.warn('Stripe webhook failed:', event?.type, event?.id, err?.message)
