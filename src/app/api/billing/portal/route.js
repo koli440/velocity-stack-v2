@@ -19,7 +19,7 @@ export async function POST(req) {
   if (!data?.customer) return NextResponse.json({ error: 'No subscription found' }, { status: 404 })
   try {
     const session = await stripeFetch(cfg, 'POST', '/v1/billing_portal/sessions', {
-      customer: data.customer, return_url: `${appOrigin(req)}/settings/coach-card`,
+      customer: data.customer, return_url: `${appOrigin(req)}/payments`,
     }, { stripeAccount: data.stripe_account_id })
     return NextResponse.json({ url: session.url })
   } catch (err) {

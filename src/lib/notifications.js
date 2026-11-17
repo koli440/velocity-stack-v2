@@ -4,6 +4,7 @@
 import { fetchProfilesByIds, authorName } from './social.js'
 import { reviewPath } from './suggestions.js'
 import { fetchCommentInfo, activityCommentsHref } from './activityComments.js'
+import { paymentNotificationText } from './paymentStatus.js'
 import { reactionNotificationText } from './activityReactions.js'
 
 export const NOTIFICATION_PAGE_SIZE = 20
@@ -18,6 +19,8 @@ function coachedAthlete(notification) {
 
 export function describeNotification(notification, actor) {
   const name = actor ? authorName(actor) : 'A rider'
+  const paid = paymentNotificationText(notification, name)
+  if (paid) return paid
   switch (notification?.type) {
     case 'new_follower':
       return `${name} started following you`
@@ -131,7 +134,7 @@ export function notificationHref(notification) {
     case 'subscription_started':
     case 'subscription_ended':
     case 'payment_failed':
-      return '/settings/coach-card'
+      return '/payments'
     case 'onboarding_submitted':
       return '/coach'
     case 'suggestion_submitted':
@@ -155,7 +158,7 @@ export async function fetchNotifications(client, userId, limit = NOTIFICATION_PA
   if (!userId) return { notifications: [], error: null }
   const { data, error } = await client
     .from('notifications')
-    .select('id, type, actor_id, suggestion_id, activity_id, event_count, created_at, read_at')
+    .select('id, type, actor_id, suggestion_id, activity_id, event_count, created_at, read_at, payment_info')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)

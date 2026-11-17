@@ -56,3 +56,15 @@ export async function fetchPaymentDue(client) {
   const { data, error } = await client.rpc('my_payment_due')
   return { due: error ? [] : data || [], error }
 }
+
+/** Subscriptions I pay (as_rider) and receive (as_coach); owner-scoped, no coach-module flag needed. */
+export async function fetchPaymentOverview(client) {
+  const { data, error } = await client.rpc('my_payment_overview')
+  return { overview: error || !data ? { as_rider: [], as_coach: [] } : data, error }
+}
+
+/** role 'rider' = payments I made, 'coach' = payments I received. */
+export async function fetchPayments(client, role) {
+  const { data, error } = await client.rpc('my_payments', { p_role: role })
+  return { rows: error || !data ? [] : data.rows || [], totals: error || !data ? [] : data.month_totals || [], error }
+}

@@ -43,3 +43,13 @@ Stripe pays out to the coach's bank account. Tax/VAT, refunds and disputes are h
 Platform subscription billing for coach plans (`docs/coach-plans.md`) is out of scope and not charged.
 
 **Country (required):** Stripe requires `identity.country` before `configuration.merchant` can be set, so the Payments panel shows a required country select (EU/EEA + UK/CH, preselected from the browser locale) and `POST /api/billing/connect/onboard` returns `400 "Choose your country"` when a new account would be created without one. Create payload: `dashboard`, `identity.country`, `contact_email`, `defaults.responsibilities.{fees,losses}_collector = stripe`, `configuration.merchant.capabilities.card_payments.requested`, `metadata.coach_id`; account link: `use_case.account_onboarding.{configurations:['merchant'],refresh_url,return_url}`.
+
+## Payment visibility
+
+Both sides see who pays whom inside the app (no card data, owner-scoped, **not** gated by `coach_module`, so existing paying athletes keep access):
+
+- `my_payment_overview()` returns `as_rider` / `as_coach` subscriptions (package, amount, interval, status, trial end, next payment, last payment). Rendered as a payment card in Settings → Coaching, a status badge (Paid / Payment due / Free period until…) in the athlete's coach row and the coach dashboard athlete list.
+- `my_payments(role, limit)` feeds `/payments` ("My payments" / "Payments received"): date, counterparty, package, amount, status incl. refunded, Stripe receipt link, plus gross month totals.
+- Stripe's own fees are not stored in `payments_ledger` (`fee_cents` is only the platform fee, default 0), so no estimate is shown; the page points to the Stripe dashboard.
+- Payment notifications name the counterparty and amount (`notifications.payment_info`); failed payments notify both coach and athlete. "Manage payment" opens the Stripe billing portal on the coach's account.
+- Sidebar shows "Payments" when the user has any payment relationship.
