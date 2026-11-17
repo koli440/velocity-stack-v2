@@ -26,3 +26,13 @@ Package active and not free; not your own package; flag enabled for both sides; 
 - Stripe Tax / VAT is not configured by us; each coach is the merchant of record and sets their own tax settings in Stripe.
 - No refund/dispute policy text on the card yet (coach terms live in the package description).
 - Going live requires: live keys in the host environment, a live webhook endpoint, relaxing the `sk_test_` guard on purpose, and a review of the minors policy and terms.
+
+## Setup steps and fee breakdown (coach-facing explainer)
+Shown in-app on the coach card Payments panel ("How payments and fees work").
+1. Set up payments: Stripe Express onboarding (identity, business details, payout bank account).
+2. Status turns ready when Stripe enables charges and payouts.
+3. Add paid packages; athletes pay only after the coach accepted them.
+
+Who pays which fee: the athlete pays the package price; Stripe's processing fee is paid by the coach (deducted from the payout);
+the platform fee is 0 % (`STRIPE_APPLICATION_FEE_PERCENT`, unchanged); Stripe pays out the rest to the coach.
+Platform subscription billing for coach plans (`docs/coach-plans.md`) is out of scope and not charged.

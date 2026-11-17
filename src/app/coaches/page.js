@@ -4,6 +4,7 @@ import { DISCIPLINE_OPTIONS, accentOf, cardPath, safeCoachMediaUrl } from '../..
 import { noindex } from '../../lib/seo'
 import Icon from '../../components/Icon'
 import LicenceBadge from '../../components/LicenceBadge'
+import FoundingBadge from '../../components/FoundingBadge'
 
 // Local copies: AdminUi is a client module, so its string constants are not usable in a server component.
 const CARD = 'glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder'
@@ -66,6 +67,7 @@ export default async function CoachesPage({ searchParams }) {
                     </div>
                   </div>
                   <LicenceBadge licence={c.licence} />
+                  <FoundingBadge founding={c.founding} />
                   {c.headline && <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3">{c.headline}</p>}
                   {(c.disciplines || []).length > 0 && (
                     <ul className="flex flex-wrap gap-1.5">

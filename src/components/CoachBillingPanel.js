@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { adminCard, adminMuted, adminBtn } from './admin/AdminUi'
+import { FEE_BREAKDOWN, STRIPE_SETUP_STEPS } from '../lib/coachPlans'
 import { connectStateLabel, fetchBillingStatus, startConnectOnboarding, subscriptionStatusLabel } from '../lib/coachBilling'
 
 // Coach side of payments: Stripe Connect onboarding state and a read-only list of paying athletes.
@@ -25,6 +26,12 @@ export default function CoachBillingPanel() {
       <p className={`text-sm ${adminMuted}`}>
         Athletes pay you directly through Stripe once you have accepted them. Stripe handles identity checks and payouts. Access to coaching is never blocked by payment.
       </p>
+      <details className="text-sm" data-testid="payments-explainer">
+        <summary className="cursor-pointer font-bold text-slate-900 dark:text-white">How payments and fees work</summary>
+        <ol className="list-decimal pl-5 mt-2 space-y-1 text-slate-800 dark:text-slate-200">{STRIPE_SETUP_STEPS.map((x) => <li key={x}>{x}</li>)}</ol>
+        <p className="mt-3 font-bold text-slate-900 dark:text-white">Who pays which fee</p>
+        <ul className="list-disc pl-5 mt-1 space-y-1 text-slate-800 dark:text-slate-200">{FEE_BREAKDOWN.map((x) => <li key={x}>{x}</li>)}</ul>
+      </details>
       <p className="text-sm font-semibold text-slate-900 dark:text-white">{connectStateLabel(s)}</p>
       {s.configured && !(s.charges_enabled && s.payouts_enabled) && (
         <button type="button" disabled={busy} onClick={connect} className={adminBtn.primary}>

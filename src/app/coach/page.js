@@ -13,6 +13,7 @@ import { localDayKey } from '../../lib/fitnessForm'
 import { athletePath, formatLastActivity, weeklyVolume } from '../../lib/coachContext'
 import Avatar from '../../components/Avatar'
 import BotBadge from '../../components/BotBadge'
+import CoachPlanMeter from '../../components/CoachPlanMeter'
 import CoachApplications from '../../components/CoachApplications'
 import Icon from '../../components/Icon'
 import { AdminPage, EmptyState, ErrorNote, adminBtn, adminCard, adminInput, adminMuted } from '../../components/admin/AdminUi'
@@ -103,6 +104,7 @@ export default function CoachDashboardPage() {
     <AdminPage title="Coach dashboard" description="Your athletes, applications and pending invites." back={null} width="max-w-5xl">
       <div className="space-y-6" data-testid="coach-dashboard">
         <ChatLink />
+        <CoachPlanMeter />
         <CoachApplications />
         {state.loading && <p className={`text-sm ${adminMuted}`} role="status">Loading athletes…</p>}
         {state.error && <ErrorNote>{`Could not load everything: ${state.error.message}`}</ErrorNote>}
