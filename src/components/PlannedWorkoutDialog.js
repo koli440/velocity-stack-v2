@@ -1,5 +1,6 @@
 'use client'
 
+import AutoTextarea from './AutoTextarea'
 import { useEffect, useMemo, useState } from 'react'
 import Portal from './Portal'
 import useScrollLock from './useScrollLock'
@@ -204,9 +205,9 @@ export default function PlannedWorkoutDialog({
               <a href={DSL_GUIDE_PATH} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline">DSL guide</a>
             </span>
           </div>
-          <textarea
+          <AutoTextarea
             id="planned-dsl-text"
-            className={`${field} mt-0 min-h-[7rem] font-mono text-xs ${parsed.errors.length ? 'border-rose-500' : ''}`}
+            className={`${field} mt-0 min-h-[7rem] font-mono text-sm sm:text-xs ${parsed.errors.length ? 'border-rose-500' : ''}`}
             value={dsl}
             maxLength={PLANNED_DSL_MAX}
             spellCheck={false}
@@ -223,7 +224,7 @@ export default function PlannedWorkoutDialog({
         </div>
         <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
           Notes
-          <textarea className={`${field} min-h-[5rem]`} value={description} maxLength={PLANNED_DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} />
+          <AutoTextarea className={`${field} min-h-[5rem]`} value={description} maxLength={PLANNED_DESCRIPTION_MAX} onChange={(e) => setDescription(e.target.value)} />
         </label>
 
         {summary && (
@@ -231,7 +232,7 @@ export default function PlannedWorkoutDialog({
             <div className="font-bold text-slate-900 dark:text-white">Structure</div>
             <WorkoutPreviewChart manifest={shownManifest} ftp={ftp} />
             {parsed.errors.length > 0 && <div className="text-[11px] font-semibold text-amber-600">Showing the last valid version of the definition.</div>}
-            <pre className="whitespace-pre-wrap font-sans text-slate-600 dark:text-slate-300">{summary.lines.join('\n')}</pre>
+            <pre className="whitespace-pre-wrap break-words font-sans text-slate-600 dark:text-slate-300">{summary.lines.join('\n')}</pre>
             <div className="text-slate-500 dark:text-slate-400">
               {summary.durationS ? `~${formatDuration(summary.durationS)} h${summary.partial ? '+' : ''}` : ''}
               {summary.load ? `${summary.durationS ? ' · ' : ''}load ~${summary.load}${summary.loadAssumed ? '*' : ''}` : ''}

@@ -475,7 +475,7 @@ function ActivityDetail() {
       </div>
 
       {activity.description && (
-        <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{activity.description}</p>
+        <p className="whitespace-pre-wrap break-words text-sm text-slate-600 dark:text-slate-300">{activity.description}</p>
       )}
 
       {showDeleteConfirm && (

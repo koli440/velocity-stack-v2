@@ -2,6 +2,7 @@
 
 // Manual gym session (issue #335): date, title, duration and notes first, then the exercise / set editor.
 
+import AutoTextarea from '../../../components/AutoTextarea'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -71,7 +72,7 @@ export default function NewGymSessionPage() {
               <input className={field} inputMode="numeric" value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>
           </div>
           <label className="block space-y-1"><span className="text-xs uppercase font-bold text-slate-400">Notes</span>
-            <textarea className={field} rows={3} maxLength={2000} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
+            <AutoTextarea className={field} rows={3} maxLength={2000} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
           {error && <p className="text-xs font-bold text-red-600" role="alert">{error}</p>}
           <button type="submit" disabled={saving} className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-black uppercase disabled:opacity-50">
             {saving ? 'Creating…' : 'Add exercises & sets'}

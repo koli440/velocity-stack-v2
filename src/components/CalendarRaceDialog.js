@@ -1,5 +1,6 @@
 'use client'
 
+import AutoTextarea from './AutoTextarea'
 import { useMemo, useState } from 'react'
 import Portal from './Portal'
 import useScrollLock from './useScrollLock'
@@ -136,7 +137,7 @@ export default function CalendarRaceDialog({ race, day, dayLabel, names, viewerI
         </label>
         <label className={label}>
           Notes
-          <textarea className={`${field} min-h-[4rem]`} value={notes} maxLength={RACE_NOTES_MAX} onChange={(e) => setNotes(e.target.value)} />
+          <AutoTextarea className={`${field} min-h-[4rem]`} value={notes} maxLength={RACE_NOTES_MAX} onChange={(e) => setNotes(e.target.value)} />
         </label>
         {race && (
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-xs space-y-1" data-testid="race-link">

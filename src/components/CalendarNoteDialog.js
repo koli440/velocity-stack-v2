@@ -1,5 +1,6 @@
 'use client'
 
+import AutoTextarea from './AutoTextarea'
 import { useState } from 'react'
 import Portal from './Portal'
 import useScrollLock from './useScrollLock'
@@ -70,7 +71,7 @@ export default function CalendarNoteDialog({ note, dayLabel, names, viewerId, on
         </label>
         <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
           Note
-          <textarea
+          <AutoTextarea
             className={`${field} min-h-[6rem]`}
             value={body}
             maxLength={NOTE_BODY_MAX}
