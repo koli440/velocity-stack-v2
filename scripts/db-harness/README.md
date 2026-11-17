@@ -68,3 +68,4 @@ Coach chat: `MIG=<repo>/supabase/migrations/20270154000000_coach_chat.sql node h
 Coach licences: `MIG=<repo>/supabase/migrations/20270155000000_coach_licences.sql node harness.mjs <repo>/supabase/migrations ./licence-adversarial.mjs`
 Coach billing: `MIG=<repo>/supabase/migrations/20270156000000_coach_billing.sql node harness.mjs <repo>/supabase/migrations ./billing-adversarial.mjs`
 Coach plans: `MIG=<repo>/supabase/migrations/20270182000000_coach_plans.sql node harness.mjs <repo>/supabase/migrations ./coach-plans-adversarial.mjs`
+Direct charges: `MIG=<repo>/supabase/migrations/20270183000000_coach_billing_direct_charges.sql node harness.mjs <repo>/supabase/migrations ./billing-direct-charges-adversarial.mjs`

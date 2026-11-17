@@ -23,6 +23,7 @@ test('tier labels, error detection and fee text', () => {
   assert.ok(isPlanLimitError({ message: 'Coach plan athlete limit reached' }))
   assert.ok(!isPlanLimitError({ message: 'other' }))
   assert.ok(FEE_BREAKDOWN.some((x) => /STRIPE_APPLICATION_FEE_PERCENT/.test(x)))
+  assert.ok(FEE_BREAKDOWN.some((x) => /merchant of record/.test(x)) && FEE_BREAKDOWN.some((x) => /disputes/.test(x)))
 })
 
 test('wiring: nav link, badges, meter and explainer exist', () => {
