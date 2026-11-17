@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import LicenceBadge from '../../../components/LicenceBadge'
+import FoundingBadge from '../../../components/FoundingBadge'
 import { loadCoachCard } from '../../../lib/server/coachCardStore'
 import { accentOf, cardDescription, cardPath, priceLabel, safeCoachMediaUrl } from '../../../lib/coachCard'
 import { safeAvatarUrl } from '../../../lib/recap'
@@ -54,6 +55,7 @@ export default async function CoachCardPage({ params }) {
           <div className="min-w-0 space-y-1">
             <h1 className="text-2xl font-black text-slate-900 dark:text-white break-words">{card.name}</h1>
             <LicenceBadge licence={card.licence} />
+            <FoundingBadge founding={card.founding} />
             {card.headline && <p className={`text-base font-bold ${accent.text}`}>{card.headline}</p>}
             {card.location && <p className="text-sm text-slate-600 dark:text-slate-300">{card.location}</p>}
           </div>
