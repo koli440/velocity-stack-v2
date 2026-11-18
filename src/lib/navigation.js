@@ -87,14 +87,13 @@ export function buildNavTree({ signedIn = true, isAdmin = false, moduleEnabled =
     const f = LAB_FEATURES.find((x) => x.key === k)
     return { key: `lab-${k}`, label: f.label, href: `/lab/${k}` }
   }), ['/lab']))
+  tree.push(L.about, L.feedback)
+  tree.push(group('settings', 'Settings', 'settings', signedIn && hasPayments ? [...settingsChildren(), { key: 'settings-payments', label: 'Payments', href: '/payments' }] : settingsChildren(), ['/settings', '/connections', '/payments']))
   if (signedIn && isAdmin) {
     tree.push(group('admin', 'Admin', 'check', ADMIN_LINKS.map(([href, label]) => ({
       key: `admin-${href.replace(/\W+/g, '-').replace(/^-|-$/g, '')}`, label, href, exact: href === '/admin',
     })), ['/admin']))
   }
-
-  tree.push(group('settings', 'Settings', 'settings', signedIn && hasPayments ? [...settingsChildren(), { key: 'settings-payments', label: 'Payments', href: '/payments' }] : settingsChildren(), ['/settings', '/connections', '/payments']))
-  tree.push(L.about, L.feedback)
   return tree
 }
 
