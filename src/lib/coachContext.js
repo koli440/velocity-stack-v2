@@ -2,18 +2,11 @@
 // (/coach/<riderId>/...); nothing is stored. Access is enforced by the database (is_coach_of),
 // this module just derives the context and builds hrefs.
 
+import { LAB_FEATURES, labBasePath } from './labFeatures.js'
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export const COACH_HOME_PATH = '/coach'
-
-// Nav items that show the athlete's data when in athlete context (key -> sub path).
-// Everything else (feed/home, notifications, own settings, tools, about...) stays the coach's own.
-export const ATHLETE_NAV = Object.freeze({
-  calendar: '/calendar',
-  'pb-vault': '/pb-vault',
-  templates: '/templates',
-  settings: '/physiology', // the sidebar "Settings" entry becomes the athlete's physiology settings
-})
 
 // Extra athlete-only pages that have no sidebar entry of their own in the coach's context.
 export const ATHLETE_PAGES = Object.freeze([
@@ -50,25 +43,6 @@ export function athletePath(riderId, sub = '') {
   return `${COACH_HOME_PATH}/${riderId}${sub}`
 }
 
-/** Sidebar href of a nav item: athlete pages in athlete context, own pages otherwise. */
-export function navHref(item, riderId) {
-  if (riderId && Object.prototype.hasOwnProperty.call(ATHLETE_NAV, item.key)) {
-    return athletePath(riderId, ATHLETE_NAV[item.key])
-  }
-  return item.href
-}
-
-/** Active state of a nav item (athlete routes only highlight their athlete-aware items). */
-export function isContextNavActive(item, pathname, riderId) {
-  if (!item.href) return false
-  if (riderId) {
-    const href = navHref(item, riderId)
-    if (href === item.href) return false
-    return pathname === href || pathname.startsWith(`${href}/`)
-  }
-  return item.exact ? pathname === item.href : pathname.startsWith(item.href)
-}
-
 const ATHLETE_ICONS = Object.freeze({
   overview: 'home',
   activities: 'bike',
@@ -81,87 +55,29 @@ const ATHLETE_ICONS = Object.freeze({
   lab: 'flask',
 })
 
-// Own (non-athlete-context) nav entries of the coach module, shown after "Riders" while the flag is on for the user.
-export const COACH_MODULE_NAV_ITEMS = Object.freeze([
-  { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true, leavesContext: true },
-  { key: 'coach-directory', label: 'Coach directory', icon: 'search', href: '/coaches' },
-])
-
-export const LAB_NAV_ITEM = Object.freeze({ key: 'lab', label: 'Lab', icon: 'flask', href: '/lab' })
-
-export function withModuleNavItems(navItems) {
-  const at = navItems.findIndex((i) => i.key === 'riders')
-  if (at < 0) return [...navItems, ...COACH_MODULE_NAV_ITEMS]
-  return [...navItems.slice(0, at + 1), ...COACH_MODULE_NAV_ITEMS, ...navItems.slice(at + 1)]
-}
-
-/**
- * Sidebar / mobile drawer items. Outside athlete context: the coach's own items. In athlete context
- * ONLY athlete-scoped pages (plus a way back to the coach dashboard); every item of the coach's own
- * pages (telemetry, tools, feedback, own settings...) is hidden so nothing silently exits the context.
- */
-export const MESSAGES_NAV_ITEM = Object.freeze({ key: 'messages', label: 'Messages', icon: 'chat', href: '/chat' })
-
-/** Adds "Messages" after "Riders" (or last) for users with a chat-capable coaching relationship. */
-export function withMessagesItem(items) {
-  const at = items.findIndex((i) => i.key === 'riders')
-  return at < 0 ? [...items, MESSAGES_NAV_ITEM] : [...items.slice(0, at + 1), MESSAGES_NAV_ITEM, ...items.slice(at + 1)]
-}
-
-/** Adds the (unflagged) "Lab" entry after "Riders" (or last). */
-export function withLabItem(items) {
-  const at = items.findIndex((i) => i.key === 'riders')
-  return at < 0 ? [...items, LAB_NAV_ITEM] : [...items.slice(0, at + 1), LAB_NAV_ITEM, ...items.slice(at + 1)]
-}
-
-export const COACH_DIRECTORY_NAV_ITEM = COACH_MODULE_NAV_ITEMS[1]
-
-/** Logged-out visitors: the public coach directory, after the public tools (Pursuit Strategist). */
-export function withPublicDirectoryItem(items) {
-  if (items.some((i) => i.key === COACH_DIRECTORY_NAV_ITEM.key)) return items
-  const at = items.findIndex((i) => i.key === 'pursuit')
-  return at < 0 ? [...items, COACH_DIRECTORY_NAV_ITEM] : [...items.slice(0, at + 1), COACH_DIRECTORY_NAV_ITEM, ...items.slice(at + 1)]
-}
-
 /** Thread with this athlete (coach side), else the Messages list where the start-conversation flow lives. */
 export function athleteMessagesHref(threads, riderId) {
   const t = (threads || []).find((x) => x.role === 'coach' && String(x.other_id) === String(riderId) && x.status !== 'ended')
   return t ? `/chat/${t.id}` : '/chat'
 }
 
-export const PAYMENTS_NAV_ITEM = Object.freeze({ key: 'payments', label: 'Payments', icon: 'notes', href: '/payments' })
-
-/** Adds "Payments" after "Messages"/"Riders" for users who pay or are paid for coaching (not flag-gated). */
-export function withPaymentsItem(items) {
-  const at = Math.max(items.findIndex((i) => i.key === 'messages'), items.findIndex((i) => i.key === 'riders'))
-  return at < 0 ? [...items, PAYMENTS_NAV_ITEM] : [...items.slice(0, at + 1), PAYMENTS_NAV_ITEM, ...items.slice(at + 1)]
-}
-
-export function sidebarItems(navItems, riderId, moduleEnabled = false, chatAvailable = false, signedIn = true, threads = [], hasPayments = false) {
-  if (!riderId) {
-    const listed = signedIn ? (moduleEnabled ? withModuleNavItems(navItems) : navItems) : withPublicDirectoryItem(navItems)
-    const base = withLabItem(listed)
-    const withChat = chatAvailable ? withMessagesItem(base) : base
-    return signedIn && hasPayments ? withPaymentsItem(withChat) : withChat
-  }
+/**
+ * Menu tree of the athlete context: a "Viewing <name>" group with the athlete pages (the Lab carries its
+ * features as sub-items), then Messages and the way back to the coach dashboard.
+ */
+export function buildAthleteTree(riderId, athleteName, moduleEnabled = false, threads = []) {
+  const children = athletePages(moduleEnabled).map((p) => {
+    const item = { key: p.key, label: p.label, icon: ATHLETE_ICONS[p.key] || 'home', href: athletePath(riderId, p.sub), exact: !p.sub }
+    if (p.key === 'lab') {
+      item.children = LAB_FEATURES.map((f) => ({ key: `lab-${f.key}`, label: f.label, href: `${labBasePath(riderId)}/${f.key}` }))
+    }
+    return item
+  })
   return [
-    ...athletePages(moduleEnabled).map((p) => ({
-      key: p.key,
-      label: p.label,
-      icon: ATHLETE_ICONS[p.key] || 'home',
-      href: athletePath(riderId, p.sub),
-      exact: !p.sub,
-    })),
+    { key: 'athlete', type: 'group', label: `Viewing ${athleteName || 'athlete'}`, icon: 'users', children, matches: [athletePath(riderId)] },
     { key: 'messages', label: 'Messages', icon: 'chat', href: athleteMessagesHref(threads, riderId), exact: true },
     { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true, leavesContext: true },
   ]
-}
-
-/** Active state for sidebarItems() entries. */
-export function isSidebarItemActive(item, pathname) {
-  if (!item.href) return false
-  if (item.key === 'coach-home') return false
-  return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
 }
 
 /** Which global chrome pieces to show. In athlete context the coach's own tools are hidden. */

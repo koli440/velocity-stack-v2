@@ -21,6 +21,7 @@ import {
 } from '../lib/templateComparison'
 
 import ChartTooltip from '@/components/ChartTooltip'
+import SegmentedTabs from '@/components/SegmentedTabs'
 import { TOOLTIP_CURSOR_LINE } from '@/lib/chartTooltip'
 const VERDICT_STYLE = {
   better: { text: 'Better', cls: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', icon: 'chevronUp' },
@@ -274,13 +275,7 @@ export default function TemplateRunAnalysis({ run, history, reference, analysis,
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-2">
             <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400">Fade curve</h4>
-            <div className="flex gap-1 text-[10px] font-black uppercase tracking-wider" role="group" aria-label="Chart values">
-              {[['pct', '% of best rep'], ['value', metric.label]].map(([key, label]) => (
-                <button key={key} type="button" aria-pressed={chartMode === key} onClick={() => onChartModeChange(key)} className={`px-2 py-1 rounded-lg ${chartMode === key ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-400'}`}>
-                  {label}
-                </button>
-              ))}
-            </div>
+            <SegmentedTabs label="Chart values" tabs={[['pct', '% of best rep'], ['value', metric.label]]} value={chartMode} onChange={onChartModeChange} />
           </div>
           <RepChart analysis={analysis} reference={reference} match={match} mode={chartMode} />
         </div>

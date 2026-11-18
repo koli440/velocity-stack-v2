@@ -1,8 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { formatMoney, priceText, paymentBadge, paymentSentence, paymentNotificationText } from '../paymentStatus.js'
-import { withPaymentsItem, sidebarItems } from '../coachContext.js'
-import { NAV_ITEMS } from '../navigation.js'
 
 test('money and price text', () => {
   assert.match(formatMoney(5000, 'eur'), /50/)
@@ -22,11 +20,4 @@ test('notification names counterparty and amount', () => {
   assert.match(t, /Jana started paying you/)
   const f = paymentNotificationText({ type: 'payment_failed', payment_info: { role: 'rider' } }, 'Coach X')
   assert.match(f, /Coach X/)
-})
-
-test('payments nav item after messages, only when requested', () => {
-  const base = [{ key: 'a' }, { key: 'messages' }, { key: 'b' }]
-  assert.deepEqual(withPaymentsItem(base).map((i) => i.key), ['a', 'messages', 'payments', 'b'])
-  assert.ok(!sidebarItems(NAV_ITEMS, null, false, false, true, [], false).some((i) => i.key === 'payments'))
-  assert.ok(sidebarItems(NAV_ITEMS, null, false, false, true, [], true).some((i) => i.key === 'payments'))
 })

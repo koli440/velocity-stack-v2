@@ -3,8 +3,9 @@ import assert from 'node:assert/strict'
 import {
   parseCoachPath,
   athletePath,
-  navHref,
-  isContextNavActive,
+  buildAthleteTree,
+  athleteMessagesHref,
+  COACH_MODULE_PAGES,
   bannerText,
   viewingAsOptions,
   formatLastActivity,
@@ -12,11 +13,11 @@ import {
   formatDistanceKm,
   weeklyVolume,
 } from '../coachContext.js'
-import { NAV_ITEMS, isNavItemLocked } from '../navigation.js'
+import { isLeafActive, isNodeActive, activeGroupKey } from '../navState.js'
+import { LAB_FEATURES } from '../labFeatures.js'
 
 const RID = '11111111-2222-3333-4444-555555555555'
 const ME = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
-const item = (key) => NAV_ITEMS.find((i) => i.key === key)
 
 test('parseCoachPath extracts rider and subpath, rejects non-uuids', () => {
   assert.deepEqual(parseCoachPath(`/coach/${RID}`), { riderId: RID, subPath: '' })
@@ -27,23 +28,34 @@ test('parseCoachPath extracts rider and subpath, rejects non-uuids', () => {
   assert.deepEqual(parseCoachPath(undefined), { riderId: null, subPath: '' })
 })
 
-test('navHref only rewrites athlete-aware items', () => {
-  assert.equal(navHref(item('calendar'), RID), `/coach/${RID}/calendar`)
-  assert.equal(navHref(item('pb-vault'), RID), `/coach/${RID}/pb-vault`)
-  assert.equal(navHref(item('templates'), RID), `/coach/${RID}/templates`)
-  assert.equal(navHref(item('settings'), RID), `/coach/${RID}/physiology`)
-  // social/account pages stay the coach's own
-  assert.equal(navHref(item('home'), RID), '/')
-  assert.equal(navHref(item('about'), RID), '/about')
-  assert.equal(navHref(item('calendar'), null), '/calendar')
+test('athlete tree: Viewing group with pages, Lab features, Messages and the way back', () => {
+  const tree = buildAthleteTree(RID, 'Amy')
+  assert.deepEqual(tree.map((n) => n.key), ['athlete', 'messages', 'coach-home'])
+  const [g] = tree
+  assert.equal(g.type, 'group')
+  assert.equal(g.label, 'Viewing Amy')
+  assert.deepEqual(g.children.map((c) => c.key), ['overview', 'activities', 'calendar', 'fitness', 'pb-vault', 'templates', 'physiology', 'lab'])
+  assert.equal(buildAthleteTree(RID, null)[0].label, 'Viewing athlete')
+  const lab = g.children.find((c) => c.key === 'lab')
+  assert.equal(lab.href, `/coach/${RID}/lab`)
+  assert.deepEqual(lab.children.map((c) => c.href), LAB_FEATURES.map((f) => `/coach/${RID}/lab/${f.key}`))
+  assert.ok(buildAthleteTree(RID, 'Amy', true)[0].children.some((c) => c.key === 'notes'))
+  assert.ok(!buildAthleteTree(RID, 'Amy')[0].children.some((c) => c.key === 'notes'))
+  // nothing of the coach's own pages: every href stays in the athlete context (or Messages / dashboard)
+  const hrefs = [...g.children, ...lab.children, ...tree.slice(1)].map((n) => n.href)
+  assert.ok(hrefs.every((h) => h.startsWith('/coach') || h === '/chat'))
 })
 
-test('isContextNavActive highlights per context', () => {
-  assert.equal(isContextNavActive(item('calendar'), `/coach/${RID}/calendar`, RID), true)
-  assert.equal(isContextNavActive(item('settings'), `/coach/${RID}/physiology`, RID), true)
-  assert.equal(isContextNavActive(item('home'), `/coach/${RID}`, RID), false)
-  assert.equal(isContextNavActive(item('calendar'), '/calendar', null), true)
-  assert.equal(isContextNavActive(item('home'), '/', null), true)
+test('athlete tree active state', () => {
+  const tree = buildAthleteTree(RID, 'Amy')
+  const [overview, activities] = tree[0].children
+  assert.equal(isLeafActive(overview, `/coach/${RID}`), true)
+  assert.equal(isLeafActive(overview, `/coach/${RID}/calendar`), false)
+  assert.equal(isLeafActive(activities, `/coach/${RID}/activities/abc`), true)
+  assert.equal(activeGroupKey(tree, `/coach/${RID}/lab/durability`), 'athlete')
+  assert.equal(isNodeActive(tree[0].children.at(-1), `/coach/${RID}/lab/durability`), true)
+  assert.equal(isLeafActive(tree.at(-1), '/coach'), true)
+  assert.equal(activeGroupKey(tree, '/chat'), null)
 })
 
 test('viewingAsOptions lists only my active athletes, sorted', () => {
@@ -91,24 +103,6 @@ test('describeCoachEdit and coach_edited notification link', async () => {
   assert.equal(notificationHref({ type: 'coach_invite' }), '/settings/coaching')
 })
 
-test('sidebarItems hides the coach\'s own pages in athlete context', async () => {
-  const c = await import('../coachContext.js')
-  assert.deepEqual(c.sidebarItems(NAV_ITEMS, null).filter((i) => i.key !== 'lab'), NAV_ITEMS)
-  const items = c.sidebarItems(NAV_ITEMS, RID)
-  const hrefs = items.map((i) => i.href)
-  assert.deepEqual(hrefs, [
-    `/coach/${RID}`, `/coach/${RID}/activities`, `/coach/${RID}/calendar`, `/coach/${RID}/fitness`, `/coach/${RID}/pb-vault`,
-    `/coach/${RID}/templates`, `/coach/${RID}/physiology`, `/coach/${RID}/lab`, '/chat', '/coach',
-  ])
-  assert.ok(hrefs.every((h) => h.startsWith('/coach') || h === '/chat'))
-  assert.ok(!items.some((i) => ['home', 'gears', 'feedback', 'about', 'settings'].includes(i.key)))
-  const [overview, activities] = items
-  assert.equal(c.isSidebarItemActive(overview, `/coach/${RID}`), true)
-  assert.equal(c.isSidebarItemActive(overview, `/coach/${RID}/calendar`), false)
-  assert.equal(c.isSidebarItemActive(activities, `/coach/${RID}/activities/abc`), true)
-  assert.equal(c.isSidebarItemActive(items.at(-1), '/coach'), false)
-})
-
 test('chrome visibility and context-preserving links', async () => {
   const c = await import('../coachContext.js')
   assert.ok(Object.values(c.chromeVisibility(null)).every(Boolean))
@@ -126,37 +120,17 @@ test('chrome visibility and context-preserving links', async () => {
 
 import * as c from '../coachContext.js'
 
-test('module nav items (dashboard + directory) follow the flag and sit after Riders', () => {
-  const nav = [{ key: 'home' }, { key: 'riders' }, { key: 'about' }]
-  assert.deepEqual(c.sidebarItems(nav, null, false).map((i) => i.key), ['home', 'riders', 'lab', 'about'])
-  assert.deepEqual(c.sidebarItems(nav, null, true).map((i) => i.key), ['home', 'riders', 'lab', 'coach-home', 'coach-directory', 'about'])
-  assert.deepEqual(c.sidebarItems(nav, null, false, true).map((i) => i.key), ['home', 'riders', 'messages', 'lab', 'about'])
-  assert.equal(c.sidebarItems(nav, null, false, true).find((i) => i.key === 'messages').icon, 'chat')
-  assert.ok(c.sidebarItems(nav, 'rid', true, true).some((i) => i.key === 'messages'))
-  assert.equal(c.COACH_MODULE_NAV_ITEMS.find((i) => i.key === 'coach-directory').href, '/coaches')
-  const anon = c.sidebarItems(NAV_ITEMS, null, false, false, false)
-  const keys = anon.map((i) => i.key)
-  assert.equal(keys.indexOf('coach-directory'), keys.indexOf('pursuit') + 1)
-  assert.equal(anon.find((i) => i.key === 'coach-directory').icon, c.COACH_MODULE_NAV_ITEMS.find((i) => i.key === 'coach-directory').icon)
-  assert.ok(keys.includes('gears') && keys.includes('pursuit') && !keys.includes('coach-home'))
-  assert.equal(isNavItemLocked(anon.find((i) => i.key === 'coach-directory'), false), false)
-  assert.equal(isNavItemLocked(anon.find((i) => i.key === 'riders'), false), true)
-  assert.ok(!c.sidebarItems(NAV_ITEMS, null, false, false, true).some((i) => i.key === 'coach-directory'), 'signed-in without the flag unchanged')
-  assert.ok(c.sidebarItems(nav, 'rid', false).some((i) => i.key === 'lab'), 'lab tab in athlete context without the flag')
-  assert.ok(!c.COACH_MODULE_PAGES.some((p) => p.key === 'lab'))
+test('lab is not a flagged module page', () => {
+  assert.ok(!COACH_MODULE_PAGES.some((p) => p.key === 'lab'))
 })
 
-test('athlete context has Messages (no flag needed) opening the thread with that athlete', async () => {
-  const c = await import('../coachContext.js')
-  for (const flag of [false, true]) {
-    assert.ok(c.sidebarItems(NAV_ITEMS, RID, flag).some((i) => i.key === 'messages' && i.href === '/chat'))
-  }
+test('athlete Messages opens the thread with that athlete', () => {
+  assert.equal(buildAthleteTree(RID, 'Amy')[1].href, '/chat')
   const threads = [
     { id: 't-old', role: 'coach', other_id: RID, status: 'ended' },
     { id: 't-other', role: 'coach', other_id: 'someone-else', status: 'active' },
     { id: 't-1', role: 'coach', other_id: RID, status: 'active' },
   ]
-  const m = c.sidebarItems(NAV_ITEMS, RID, false, true, true, threads).find((i) => i.key === 'messages')
-  assert.equal(m.href, '/chat/t-1')
-  assert.equal(c.athleteMessagesHref([], RID), '/chat')
+  assert.equal(buildAthleteTree(RID, 'Amy', false, threads)[1].href, '/chat/t-1')
+  assert.equal(athleteMessagesHref([], RID), '/chat')
 })

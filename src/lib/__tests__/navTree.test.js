@@ -56,7 +56,7 @@ test('messages lists the 5 most recent conversations plus View all', () => {
   assert.equal(messages.children.at(-1).label, 'View all')
 })
 
-test('flat athlete-context items stay available', () => {
+test('flat top-level tool list is unchanged', () => {
   assert.equal(NAV_ITEMS.length, 12)
 })
 
@@ -118,6 +118,9 @@ test('drawer and bottom bar wiring', () => {
   const bar = read('BottomNav.js')
   assert.match(bar, /lg:hidden/)
   assert.match(bar, /safe-area-inset-bottom/)
+  assert.match(bar, /'Overview'/)
+  assert.match(read('Sidebar.js'), /buildAthleteTree/)
+  assert.match(read('SegmentedTabs.js'), /min-h-\[44px\] sm:min-h-0/)
   assert.match(read('NavTree.js'), /min-h-\[44px\]/)
 })
 
@@ -148,6 +151,7 @@ test('in-page tab strips are gone; pages use the breadcrumb', () => {
   const r = (p) => readFileSync(new URL(p, import.meta.url), 'utf8')
   assert.doesNotMatch(r('../../app/riders/page.js'), /SegmentedTabs/)
   assert.doesNotMatch(r('../../app/admin/layout.js'), /AdminNav/)
-  assert.match(r('../../components/LabShell.js'), /riderId && <nav aria-label="Lab tools"/)
+  assert.doesNotMatch(r('../../components/LabShell.js'), /aria-label="Lab tools"/)
+  assert.doesNotMatch(r('../../app/coach/[riderId]/layout.js'), /Athlete sections/)
   assert.match(r('../../app/templates/page.js'), /<PageBreadcrumb/)
 })

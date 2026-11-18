@@ -77,10 +77,11 @@ Context is URL based, never stored (`src/lib/coachContext.js` parses/builds the 
 | `/coach/<id>/physiology` | The four history panels + gear defaults, editable by the coach |
 
 - `app/coach/[riderId]/layout.js` checks `get_athlete_profile` (which only answers for an active coach), shows the
-  persistent indigo banner "Coaching: <Name> - Exit" and the athlete tab bar; anyone else sees "not coaching".
+  persistent banner "Coaching: <Name> - Exit"; anyone else sees "not coaching". There is no in-page tab bar: the athlete pages live in the menu.
 - The top-right user menu has a "Viewing as" section (Me + athletes, only when the user has athletes).
-- In athlete context (`/coach/<id>/...`) the sidebar/mobile drawer shows ONLY athlete pages (Overview, Activities, Calendar,
-  Personal Bests, Templates, Physiology) plus "Coach dashboard" (`sidebarItems`). The coach's own pages are hidden: telemetry,
+- In athlete context (`/coach/<id>/...`) the sidebar/mobile drawer shows ONLY a "Viewing <name>" group (Overview, Activities, Calendar,
+  Fitness, Personal Bests, Templates, Physiology, Lab with its features as sub-items, Notes with the coach module), Messages and
+  "Coach dashboard" (`buildAthleteTree` in `coachContext.js`). The mobile bottom bar shows Overview, Activities, Calendar and Menu. The coach's own pages are hidden: telemetry,
   tools, About/Feedback, own settings, search, Add/Sync, notifications bell, footer links, admin link (`chromeVisibility`).
   Leaving is always explicit: banner "Exit" / "Coach dashboard", and the user menu "Viewing as" (Me / athletes / Coach dashboard).
   In-page links of reused components (calendar chips, activity detail back link, template runs, curve tooltips) keep the

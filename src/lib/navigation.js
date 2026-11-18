@@ -2,8 +2,8 @@ import { isPublicContentPath, isPublicToolPath } from './publicPaths.js'
 import { LAB_FEATURES } from './labFeatures.js'
 import { ADMIN_LINKS } from './adminLinks.js'
 
-// Menu definition (icon = key in lib/iconSet). NAV_ITEMS is the flat list used in athlete context
-// (coachContext.sidebarItems); NAV_TREE / buildNavTree() is the grouped menu used everywhere else.
+// Menu definition (icon = key in lib/iconSet). NAV_ITEMS is the flat list of top-level tools
+// (public/locked state); buildNavTree() is the grouped menu, coachContext.buildAthleteTree() the athlete-context one.
 const L = {
   home: {
     key: 'home', label: 'Rider Telemetry', icon: 'home', href: '/', exact: true,

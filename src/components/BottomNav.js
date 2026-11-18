@@ -3,15 +3,16 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Icon from './Icon'
-import { parseCoachPath } from '../lib/coachContext'
+import { parseCoachPath, athletePath } from '../lib/coachContext'
 import { totalUnread } from '../lib/coachChat'
 import { badgeLabel } from '../lib/navState'
 import useNavThreads from './useNavThreads'
 
 // Fixed bottom bar below lg: Home, Calendar, Messages (only with conversations) and Menu (opens the drawer).
-// Hidden for logged-out visitors and inside an athlete context (see showsBottomNav).
-export function showsBottomNav(signedIn, pathname) {
-  return !!signedIn && !parseCoachPath(pathname).riderId
+// Inside an athlete context it shows Overview, Activities, Calendar of that athlete and Menu.
+// Hidden for logged-out visitors (see showsBottomNav).
+export function showsBottomNav(signedIn) {
+  return !!signedIn
 }
 
 export const BOTTOM_NAV_PAD = 'pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0'
@@ -19,7 +20,8 @@ export const BOTTOM_NAV_PAD = 'pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:
 export default function BottomNav({ signedIn, onOpenMenu }) {
   const pathname = usePathname() || ''
   const threads = useNavThreads(signedIn)
-  if (!showsBottomNav(signedIn, pathname)) return null
+  if (!showsBottomNav(signedIn)) return null
+  const { riderId } = parseCoachPath(pathname)
   const unread = badgeLabel(totalUnread(threads))
   const tab = 'relative flex flex-1 flex-col items-center justify-center gap-0.5 min-h-[56px] text-[11px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500'
   const tone = (active) => (active ? 'text-emerald-600 dark:text-brand-neon font-bold' : 'text-slate-500 dark:text-slate-400')
@@ -42,9 +44,19 @@ export default function BottomNav({ signedIn, onOpenMenu }) {
       data-testid="bottom-nav"
       className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex border-t border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard glass-nav pb-[env(safe-area-inset-bottom)] print:hidden"
     >
-      {link('/', 'Home', 'home', pathname === '/')}
-      {link('/calendar', 'Calendar', 'calendar', pathname === '/calendar' || pathname.startsWith('/calendar/'))}
-      {threads.length > 0 && link('/chat', 'Messages', 'chat', pathname === '/chat' || pathname.startsWith('/chat/'), unread)}
+      {riderId ? (
+        <>
+          {link(athletePath(riderId), 'Overview', 'home', pathname === athletePath(riderId))}
+          {link(athletePath(riderId, '/activities'), 'Activities', 'bike', pathname.startsWith(athletePath(riderId, '/activities')))}
+          {link(athletePath(riderId, '/calendar'), 'Calendar', 'calendar', pathname.startsWith(athletePath(riderId, '/calendar')))}
+        </>
+      ) : (
+        <>
+          {link('/', 'Home', 'home', pathname === '/')}
+          {link('/calendar', 'Calendar', 'calendar', pathname === '/calendar' || pathname.startsWith('/calendar/'))}
+          {threads.length > 0 && link('/chat', 'Messages', 'chat', pathname === '/chat' || pathname.startsWith('/chat/'), unread)}
+        </>
+      )}
       <button type="button" onClick={onOpenMenu} aria-label="Open navigation menu" className={`${tab} ${tone(false)}`}>
         <Icon name="menu" size={22} />
         Menu

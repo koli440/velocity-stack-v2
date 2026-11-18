@@ -200,7 +200,7 @@ export default function AppShell({ children }) {
       />
 
       {/* 2. Main application body */}
-      <div className={`flex-1 flex flex-col min-w-0 ${showsBottomNav(!!user, pathname) ? BOTTOM_NAV_PAD : ''}`}>
+      <div className={`flex-1 flex flex-col min-w-0 ${showsBottomNav(!!user) ? BOTTOM_NAV_PAD : ''}`}>
         <TopNav
           user={user}
           profile={profile}
