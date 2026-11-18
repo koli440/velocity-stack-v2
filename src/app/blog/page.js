@@ -1,8 +1,7 @@
-import Link from 'next/link'
-import { loadPublishedPosts } from '../../lib/server/blogContent'
-import { BLOG_PATH, BLOG_TITLE, BLOG_DESCRIPTION, formatPostDate, instantIso, breadcrumbJsonLd } from '../../lib/blog'
+import { loadPublishedPosts, authorAvatar } from '../../lib/server/blogContent'
+import { BLOG_PATH, BLOG_TITLE, BLOG_DESCRIPTION, feedCardData, breadcrumbJsonLd } from '../../lib/blog'
 import { jsonLdString } from '../../lib/trackLanding'
-import { TagList } from '../../components/blog/BlogBody'
+import BlogCard from '../../components/blog/BlogCard'
 
 // Scheduled posts appear on their date: the list is rebuilt from the files at most every 15 minutes (docs/blog.md).
 export const revalidate = 900
@@ -15,35 +14,25 @@ export const metadata = {
   twitter: { card: 'summary_large_image', title: BLOG_TITLE, description: BLOG_DESCRIPTION },
 }
 
-export default function BlogIndexPage() {
+export default async function BlogIndexPage() {
   const posts = loadPublishedPosts()
+  const avatarUrl = await authorAvatar()
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(breadcrumbJsonLd(null)) }} />
       <header className="mb-8">
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">Blog</h1>
         <p className="mt-2 text-slate-600 dark:text-slate-400">
-          A plain journal from the person who builds VelocityStack. <a href={`${BLOG_PATH}/rss.xml`} className="underline">RSS</a>
+          A plain journal from the person who builds VelocityStack. <a href={`${BLOG_PATH}/rss.xml`} className="underline inline-flex items-center min-h-[44px]">RSS</a>
         </p>
       </header>
       {posts.length === 0 ? (
-        <p className="text-slate-600 dark:text-slate-400">Nothing here yet.</p>
+        <p className="glass-dense rounded-2xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-6 text-center text-slate-600 dark:text-slate-300">Nothing here yet.</p>
       ) : (
-        <ul className="divide-y divide-slate-200 dark:divide-surface-darkBorder">
+        <ul className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
           {posts.map((p) => (
-            <li key={p.slug} className="py-6 first:pt-0">
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                <time dateTime={instantIso(p.date)}>{formatPostDate(p.date)}</time> · {p.minutes} min read
-              </p>
-              <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                <Link href={`${BLOG_PATH}/${p.slug}`} className="hover:underline">
-                  {p.title}
-                </Link>
-              </h2>
-              <p className="mt-2 text-slate-700 dark:text-slate-300">{p.summary}</p>
-              <div className="mt-3">
-                <TagList tags={p.tags} />
-              </div>
+            <li key={p.slug} className="min-w-0">
+              <BlogCard card={feedCardData(p, avatarUrl)} testId="blog-index-card" className="h-full" />
             </li>
           ))}
         </ul>
