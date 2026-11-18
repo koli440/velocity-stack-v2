@@ -25,7 +25,7 @@ export function safePushUrl(path) {
 }
 
 export function testPushPayload() {
-  return { title: PUSH_TITLE, body: 'Test notification: push is working on this device.', url: '/settings', tag: 'test' }
+  return { title: PUSH_TITLE, body: 'Test notification: push is working on this device.', url: '/settings/preferences', tag: 'test' }
 }
 
 /** True when a notification is too old to be worth a pop-up (e.g. after an outage). */

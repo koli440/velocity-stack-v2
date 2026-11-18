@@ -67,7 +67,7 @@ const LABELS = [
   [/^\/lab(\/protocols)?$/, 'Lab'],
   [/^\/templates$/, 'Templates'],
   [/^\/velodromes$/, 'Velodromes'],
-  [/^\/settings$/, 'Settings'],
+  [/^\/settings(\/(preferences|gear|physiology|privacy|coaching))?$/, 'Settings'],
   [/^\/whats-new$/, "What's new"],
 ]
 

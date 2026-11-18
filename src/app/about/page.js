@@ -55,7 +55,7 @@ const GROUPS = [
     title: 'Riders and privacy',
     items: [
       { name: 'Riders', text: 'Find and follow other riders and see the sessions they share. A rider can require approval for new followers.', href: '/riders', cta: 'Find riders' },
-      { name: 'Privacy zone', text: 'Set a zone around home: other riders see rides masked inside it. Your raw GPS file and connection keys are never shared.', href: '/settings', cta: 'Set a zone' },
+      { name: 'Privacy zone', text: 'Set a zone around home: other riders see rides masked inside it. Your raw GPS file and connection keys are never shared.', href: '/settings/privacy', cta: 'Set a zone' },
     ],
   },
   {
@@ -188,7 +188,7 @@ export default function AboutPage() {
           ))}
         </dl>
         <p className="mt-4 text-sm">
-          <Link href="/settings" className={link}>Manage coaching in Settings &rarr;</Link>
+          <Link href="/settings/coaching" className={link}>Manage coaching in Settings &rarr;</Link>
         </p>
       </div>
 

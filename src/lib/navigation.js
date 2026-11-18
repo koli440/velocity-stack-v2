@@ -46,21 +46,12 @@ export const NAV_ITEMS = [
 // Lab pages listed in the menu (labels come from the lab feature registry).
 export const LAB_MENU_KEYS = Object.freeze(['protocols', 'lactate', 'schedule', 'profile', 'durability', 'decoupling', 'forms', 'reports'])
 
-// Flip to true once the split settings routes exist (PR 3); until then Profile and Connections are the only settings entries.
-export const SETTINGS_SUBPAGES = false
-
 export const MESSAGES_PREVIEW_LIMIT = 5
 
 const COACH_DASHBOARD = { key: 'coach-home', label: 'Coach dashboard', href: '/coach', exact: true, leavesContext: true }
 const COACH_DIRECTORY = { key: 'coach-directory', label: 'Coach directory', href: '/coaches' }
 
 function settingsChildren() {
-  if (!SETTINGS_SUBPAGES) {
-    return [
-      { key: 'settings-profile', label: 'Profile', href: '/settings' },
-      { key: 'settings-connections', label: 'Connections', href: '/connections' },
-    ]
-  }
   return [
     { key: 'settings-profile', label: 'Profile', href: '/settings', exact: true },
     { key: 'settings-preferences', label: 'Preferences', href: '/settings/preferences' },
@@ -103,7 +94,7 @@ export function buildNavTree({ signedIn = true, isAdmin = false, moduleEnabled =
     })), ['/admin']))
   }
 
-  tree.push(group('settings', 'Settings', 'settings', settingsChildren(), ['/settings']))
+  tree.push(group('settings', 'Settings', 'settings', settingsChildren(), ['/settings', '/connections']))
   tree.push(L.about, L.feedback)
   return tree
 }

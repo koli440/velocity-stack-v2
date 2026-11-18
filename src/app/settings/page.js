@@ -2,105 +2,40 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import { signInMethods } from '../../lib/oauthProfile'
-import VelodromePicker from '../../components/VelodromePicker'
-import { fetchTracks } from '../../lib/lookups'
-import PrivacyZonePanel from '../../components/PrivacyZonePanel'
-import LactateThresholdPanel from '../../components/LactateThresholdPanel'
-import PowerZonesPanel from '../../components/PowerZonesPanel'
-import FtpHistoryPanel from '../../components/FtpHistoryPanel'
-import WeightHistoryPanel from '../../components/WeightHistoryPanel'
-import CoachingPanel from '../../components/CoachingPanel'
-import SharedNotesPanel from '../../components/SharedNotesPanel'
-import MyOnboardingPanel from '../../components/MyOnboardingPanel'
-import CoachCardLink from '../../components/CoachCardLink'
-import CoachBadge, { useCoachNames } from '../../components/CoachBadge'
-import CoachEditsList from '../../components/CoachEditsList'
-import { PROFILE_UPDATED_EVENT } from '../../lib/navigation'
-import Icon from '../../components/Icon'
 import Avatar from '../../components/Avatar'
-import PushNotificationsToggle from '../../components/PushNotificationsToggle'
-import GearPicker from '../../components/GearPicker'
-import { RIDE_TYPES, DEFAULT_RIDE_TYPE, effectiveRideType } from '../../lib/rideType'
-import { parseGear, toGearField } from '../../lib/gear'
-import { readGlassPref, writeGlassPref } from '../../lib/glass'
-import { fetchRequireFollowApproval, setRequireFollowApproval } from '../../lib/social'
+import SettingsShell, { SaveBar, settingsCard, settingsInput, settingsLabel } from '../../components/SettingsShell'
+import useSettingsProfile from '../../components/useSettingsProfile'
+import { formFromRow, legacySettingsRedirect } from '../../lib/settingsProfile'
 import { uploadAvatar, removeAvatar, validateAvatarFile, ALLOWED_AVATAR_TYPES } from '../../lib/avatars'
 
-
-export default function SettingsPage() {
+export default function SettingsProfilePage() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
-  const [tracks, setTracks] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const { user, row, loading, saving, saved, setSaved, save } = useSettingsProfile()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [nickname, setNickname] = useState('')
   const [birthYear, setBirthYear] = useState('')
-  const [homeTrackId, setHomeTrackId] = useState('')
-  const [trainingStamp, setTrainingStamp] = useState(null)
-  const coachNames = useCoachNames(trainingStamp ? [trainingStamp] : [])
-  const [defaultChainring, setDefaultChainring] = useState('')
-  const [defaultCog, setDefaultCog] = useState('')
-  const [crankLength, setCrankLength] = useState('165.0')
-  const [defaultRideType, setDefaultRideType] = useState(DEFAULT_RIDE_TYPE)
-  const [themePref, setThemePref] = useState('dark')
-
-  const [discoverableByEmail, setDiscoverableByEmail] = useState(true)
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [avatarBusy, setAvatarBusy] = useState(false)
   const [avatarError, setAvatarError] = useState('')
-  const [emailNotifications, setEmailNotifications] = useState(true)
-  const [includeGym, setIncludeGym] = useState(true)
-  const [reactionsEnabled, setReactionsEnabled] = useState(true)
-  const [reactionNotifications, setReactionNotifications] = useState(true)
-  const [requireApproval, setRequireApproval] = useState(false)
-  const [glassEnabled, setGlassEnabled] = useState(true)
+
+  // Old /settings#coaching, #physiology and #onboarding links now live on their own pages.
+  useEffect(() => {
+    const target = legacySettingsRedirect(window.location.hash)
+    if (target) router.replace(target)
+  }, [router])
 
   useEffect(() => {
-    setGlassEnabled(readGlassPref())
-  }, [])
-
-  useEffect(() => {
-    if (!user?.id) return
-
-    const loadProfile = async () => {
-      setLoading(true)
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (data) {
-        setFirstName(data.first_name || '')
-        setLastName(data.last_name || '')
-        setNickname(data.nickname || '')
-        setBirthYear(data.birth_year ? String(data.birth_year) : '')
-        setHomeTrackId(data.home_track_id || '')
-        setTrainingStamp(data)
-        setDefaultChainring(toGearField(data.default_chainring))
-        setDefaultCog(toGearField(data.default_cog))
-        setCrankLength(data.crank_length_mm ? String(data.crank_length_mm) : '165.0')
-        setDefaultRideType(effectiveRideType(data.default_ride_type))
-        setThemePref(data.theme_preference || 'dark')
-        setDiscoverableByEmail(data.discoverable_by_email !== false)
-        setEmailNotifications(data.email_notifications !== false)
-        setReactionsEnabled(data.reactions_enabled !== false)
-        setReactionNotifications(data.reaction_notifications !== false)
-        setIncludeGym(data.include_gym_in_fitness !== false)
-        setAvatarUrl(data.avatar_url || null)
-      }
-      const approval = await fetchRequireFollowApproval(supabase, user.id)
-      setRequireApproval(!!approval.value)
-      setLoading(false)
-    }
-
-    loadProfile()
-  }, [user?.id])
+    if (!row) return
+    const f = formFromRow(row)
+    setFirstName(f.firstName)
+    setLastName(f.lastName)
+    setNickname(f.nickname)
+    setBirthYear(f.birthYear)
+    setAvatarUrl(f.avatarUrl)
+  }, [row])
 
   // Image changes are saved immediately (independent of the Save button).
   const handleAvatarChange = async (e) => {
@@ -129,80 +64,17 @@ export default function SettingsPage() {
     else setAvatarUrl(null)
   }
 
-  // Saved immediately (independent of the Save button), as in the former follow panel.
-  const handleRequireApprovalChange = async (checked) => {
-    const previous = requireApproval
-    setRequireApproval(checked)
-    const { error } = await setRequireFollowApproval(supabase, { userId: user.id, value: checked })
-    if (error) {
-      setRequireApproval(previous)
-      alert('Error while saving follow setting: ' + error.message)
-    }
-  }
-
-  const handleSave = async (e) => {
+  const handleSave = (e) => {
     e.preventDefault()
-    if (!user?.id) return
-    const gear = parseGear(defaultChainring, defaultCog)
-    if (!gear.valid) {
-      alert(gear.error)
-      return
-    }
-
-    setLoading(true)
-    setSaved(false)
-    const updates = {
-      id: user.id,
-      first_name: firstName.trim() || null,
-      last_name: lastName.trim() || null,
-      nickname: nickname.trim() || null,
-      birth_year: /^(19|20)\d{2}$/.test(birthYear.trim()) ? Number(birthYear.trim()) : null,
-      home_track_id: homeTrackId || null,
-      default_chainring: gear.chainring,
-      default_cog: gear.cog,
-      crank_length_mm: crankLength ? parseFloat(crankLength) : 165.0,
-      default_ride_type: defaultRideType,
-      theme_preference: themePref,
-      discoverable_by_email: discoverableByEmail,
-      email_notifications: emailNotifications,
-      reactions_enabled: reactionsEnabled,
-      reaction_notifications: reactionNotifications,
-      include_gym_in_fitness: includeGym,
-      updated_at: new Date().toISOString(),
-    }
-
-    const { error } = await supabase.from('profiles').upsert(updates)
-    setLoading(false)
-
-    if (error) {
-      alert('Error while saving profile: ' + error.message)
-    } else {
-      window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT))
-      setSaved(true)
-    }
+    save('profile', { firstName, lastName, nickname, birthYear })
   }
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) setUser(session.user)
-      else router.push('/login')
-    })
-    fetchTracks(supabase).then(({ data }) => setTracks(data || []))
-  }, [router])
+  const edit = (set) => (e) => { set(e.target.value); setSaved(false) }
 
   return (
-    <section className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-          <Icon name="settings" /> Settings
-        </h1>
-        <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
-          Athlete profile, gear defaults, privacy and connections.
-        </p>
-      </div>
-
+    <SettingsShell page="profile" title="Profile" description="Your photo, name and how you sign in.">
       <form onSubmit={handleSave} className="space-y-6">
-        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
+        <section className={`${settingsCard} space-y-4`}>
           <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Profile</h2>
           <div className="flex items-center gap-4">
             <Avatar
@@ -219,7 +91,7 @@ export default function SettingsPage() {
                     type="file"
                     accept={ALLOWED_AVATAR_TYPES.join(',')}
                     onChange={handleAvatarChange}
-                    disabled={avatarBusy}
+                    disabled={avatarBusy || !user}
                     className="hidden"
                   />
                 </label>
@@ -241,58 +113,27 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                First Name
-              </label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              />
+              <label className={settingsLabel}>First Name</label>
+              <input type="text" value={firstName} onChange={edit(setFirstName)} className={settingsInput} />
             </div>
             <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                Last Name
-              </label>
-              <input
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              />
+              <label className={settingsLabel}>Last Name</label>
+              <input type="text" value={lastName} onChange={edit(setLastName)} className={settingsInput} />
             </div>
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Nickname (shown to other riders)
-            </label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            />
+            <label className={settingsLabel}>Nickname (shown to other riders)</label>
+            <input type="text" value={nickname} onChange={edit(setNickname)} className={settingsInput} />
           </div>
-
 
           <div>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Year of birth (private; used for the Lab age adjustment)
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={4}
-              value={birthYear}
-              onChange={(e) => setBirthYear(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            />
+            <label className={settingsLabel}>Year of birth (private; used for the Lab age adjustment)</label>
+            <input type="text" inputMode="numeric" maxLength={4} value={birthYear} onChange={edit(setBirthYear)} className={settingsInput} />
           </div>
-
         </section>
-        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-2">
+
+        <section className={`${settingsCard} space-y-2`}>
           <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Sign-in methods</h2>
           <p className="text-[11px] text-slate-600 dark:text-slate-300">
             {signInMethods(user).map((m) => (m === 'google' ? 'Google' : m === 'email' ? 'Email and password' : m)).join(', ') || 'Email and password'}
@@ -303,176 +144,9 @@ export default function SettingsPage() {
             </p>
           )}
         </section>
-        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
-          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Preferences</h2>
-          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={glassEnabled}
-              onChange={(e) => {
-                setGlassEnabled(e.target.checked)
-                writeGlassPref(e.target.checked)
-              }}
-            />
-            <span>Background photo &amp; glass effects</span>
-          </label>
 
-          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={discoverableByEmail}
-              onChange={(e) => setDiscoverableByEmail(e.target.checked)}
-            />
-            <span>Let riders find me by typing my exact e-mail address (your e-mail is never shown)</span>
-          </label>
-
-          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={requireApproval}
-              onChange={(e) => handleRequireApprovalChange(e.target.checked)}
-            />
-            <span>Require my approval for new followers (existing followers are kept)</span>
-          </label>
-
-          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={emailNotifications}
-              onChange={(e) => setEmailNotifications(e.target.checked)}
-            />
-            <span>Email me about new notifications (followers, comments, mentions)</span>
-          </label>
-
-          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={reactionsEnabled}
-              onChange={(e) => setReactionsEnabled(e.target.checked)}
-              data-testid="reactions-enabled"
-            />
-            <span>Let riders who can see my activities give them respect (existing ones are kept)</span>
-          </label>
-
-          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={reactionNotifications}
-              onChange={(e) => setReactionNotifications(e.target.checked)}
-              data-testid="reaction-notifications"
-            />
-            <span>Notify me when someone gives respect (in the app, push and email)</span>
-          </label>
-
-          <PushNotificationsToggle />
-
-          <label className="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={includeGym}
-              onChange={(e) => setIncludeGym(e.target.checked)}
-              data-testid="include-gym-in-fitness"
-            />
-            <span>Include gym sessions in fitness (estimated loads in Fitness, Fatigue &amp; Form; your coach sees this choice)</span>
-          </label>
-
-        </section>
-        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6 space-y-4">
-          <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Gear defaults <CoachBadge row={trainingStamp} names={coachNames} /></h2>
-          <div>
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Home Velodrome
-            </label>
-            <VelodromePicker tracks={tracks} value={homeTrackId} onChange={setHomeTrackId} favoriteId={null} emptyLabel="-- No Home Track --" compact />
-          </div>
-
-          <div className="max-w-xs">
-            <label htmlFor="default-ride-type" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-              Default ride type
-            </label>
-            <select
-              id="default-ride-type"
-              value={defaultRideType}
-              onChange={(e) => setDefaultRideType(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-            >
-              {RIDE_TYPES.map((t) => (
-                <option key={t.key} value={t.key}>{t.label}</option>
-              ))}
-            </select>
-            <p className="mt-1 text-[10px] text-slate-400">Applied to new imports and uploads. You can change a ride&apos;s type later.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <GearPicker
-              label="Default gear (optional)"
-              chainring={defaultChainring}
-              cog={defaultCog}
-              onChange={(g) => { setDefaultChainring(g.chainring); setDefaultCog(g.cog) }}
-              showStats
-              className="sm:col-span-2"
-            />
-
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-                Crank (mm)
-              </label>
-              <input
-                type="number"
-                step="0.5"
-                value={crankLength}
-                onChange={(e) => setCrankLength(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-          </div>
-
-        </section>
-        <div id="physiology" className="space-y-6">
-          <FtpHistoryPanel userId={user?.id} />
-          <WeightHistoryPanel userId={user?.id} />
-          <LactateThresholdPanel userId={user?.id} />
-          <PowerZonesPanel userId={user?.id} />
-          <CoachEditsList riderId={user?.id} />
-        </div>
-
-        <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-5 md:p-6">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Connections</h3>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Garmin, Wahoo, SRM, Intervals.icu and Strava: choose where your rides come from.
-          </p>
-          <Link href="/connections" className="mt-3 inline-block px-3 py-2 rounded-xl bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 text-[11px] font-bold uppercase tracking-wider">
-            Manage connections
-          </Link>
-        </section>
-
-        <PrivacyZonePanel userId={user?.id} />
-
-        <div className="sticky bottom-4 flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={loading || !user}
-            className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50"
-          >
-            {loading ? 'Saving profile...' : 'Save Changes'}
-          </button>
-          {saved && <span className="text-xs font-bold text-emerald-500">Saved</span>}
-        </div>
+        <SaveBar saving={saving} disabled={loading || !user} saved={saved} />
       </form>
-
-      <div className="mt-6 space-y-6">
-        <CoachingPanel userId={user?.id} />
-        <SharedNotesPanel />
-        <MyOnboardingPanel />
-        <CoachCardLink />
-      </div>
-
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        <Link href="/privacy" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Privacy Policy</Link>
-        {' · '}
-        <Link href="/terms" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Terms of Service</Link>
-        {' · To access, export or delete your data, see the Privacy Policy.'}
-      </p>
-    </section>
+    </SettingsShell>
   )
 }

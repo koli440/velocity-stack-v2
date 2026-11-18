@@ -95,7 +95,7 @@ export function describeNotification(notification, actor) {
 }
 
 export const FOLLOW_REQUESTS_HREF = '/riders?tab=following#follow-requests'
-export const COACHING_HREF = '/settings#coaching'
+export const COACHING_HREF = '/settings/coaching'
 
 // Where a notification leads, computed from type + stored columns (no stored link).
 // Requests land on the page where they can be approved or declined; that page copes with
@@ -116,7 +116,7 @@ export function notificationHref(notification) {
     case 'coach_replaced':
       return COACHING_HREF
     case 'coach_edited':
-      return '/settings#physiology'
+      return '/settings/physiology'
     case 'coach_note_shared':
       return COACHING_HREF
     case 'licence_submitted':

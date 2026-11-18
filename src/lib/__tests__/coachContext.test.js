@@ -87,8 +87,8 @@ test('describeCoachEdit and coach_edited notification link', async () => {
     'Amy updated FTP · 2026-06-10',
   )
   assert.equal(describeCoachEdit({ table_name: 'weird', action: 'x' }), 'Your coach changed settings')
-  assert.equal(notificationHref({ type: 'coach_edited' }), '/settings#physiology')
-  assert.equal(notificationHref({ type: 'coach_invite' }), '/settings#coaching')
+  assert.equal(notificationHref({ type: 'coach_edited' }), '/settings/physiology')
+  assert.equal(notificationHref({ type: 'coach_invite' }), '/settings/coaching')
 })
 
 test('sidebarItems hides the coach\'s own pages in athlete context', async () => {

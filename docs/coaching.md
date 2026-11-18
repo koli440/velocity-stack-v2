@@ -10,8 +10,8 @@
 
 **Notification links** (`notificationHref` in `src/lib/notifications.js`, computed client-side, so old rows work too):
 `follow_request` → `/riders?tab=following#follow-requests`; `new_follower`/`follow_approved` → the rider's profile;
-`coach_invite`/`coach_request`/`coach_accepted`/`coach_ended`/`coach_replaced` → `/settings#coaching`; `coach_edited` →
-`/settings#physiology`. Both target pages scroll to the section and say so when the request is no longer pending.
+`coach_invite`/`coach_request`/`coach_accepted`/`coach_ended`/`coach_replaced` → `/settings/coaching`; `coach_edited` →
+`/settings/physiology`. Both target pages scroll to the section and say so when the request is no longer pending.
 Comment notifications (`activity_comment`, `comment_mention`) for the athlete's coach link into `/coach/<rider>/activities/<id>#comments`
 and read as coaching context ("ann (your athlete) commented on their activity", "ann commented on Bob's activity"), never
 "an activity you follow"; the notification email uses the same wording (`withCoachContext` in `src/lib/notificationEmail.js`).
@@ -87,7 +87,7 @@ Context is URL based, never stored (`src/lib/coachContext.js` parses/builds the 
   context via `contextualHref` / `activityBackHref`. The Coach/Rider toggle was removed.
 - Rider side: history rows and the "Gear defaults" heading show a "Set by coach <name> - date" badge
   (`CoachBadge`), settings lists the audit trail ("Coach changes"), and the `coach_edited` notification links to
-  `/settings#physiology`.
+  `/settings/physiology`.
 - All of this is convenience only; every write is checked by RLS / SECURITY DEFINER functions (see above).
 
 Choices made: "weekly volume" is the last 7 days; PBs/templates are read-only in athlete context; activity detail

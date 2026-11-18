@@ -44,14 +44,14 @@ export default function ApplyPage() {
   if (info.has_active_coach) return <AdminMessage>You already have an active coach. End that coaching first to apply to someone else.</AdminMessage>
   if (!info.accepting_athletes) return <AdminMessage>{info.name} is not accepting new athletes right now.</AdminMessage>
   if (info.submission_status === 'submitted') {
-    return <AdminMessage>You already applied to {info.name}. Review or withdraw your answers in <Link href="/settings#onboarding" className="font-bold underline text-orange-700 dark:text-orange-400">Settings</Link>.</AdminMessage>
+    return <AdminMessage>You already applied to {info.name}. Review or withdraw your answers in <Link href="/settings/coaching#onboarding" className="font-bold underline text-orange-700 dark:text-orange-400">Settings</Link>.</AdminMessage>
   }
   if (done) {
     return (
       <AdminPage title="Application sent" back={{ href: `/c/${slug}`, label: info.name }} width="max-w-xl">
         <div className={`${adminCard} space-y-2`} data-testid="apply-done">
           <StatusNote>Your application was sent.</StatusNote>
-          <p className={`text-sm ${adminMuted}`}>{info.name} will review it. You can edit, withdraw or delete your answers anytime in <Link href="/settings#onboarding" className="font-bold underline text-orange-700 dark:text-orange-400">Settings</Link>.</p>
+          <p className={`text-sm ${adminMuted}`}>{info.name} will review it. You can edit, withdraw or delete your answers anytime in <Link href="/settings/coaching#onboarding" className="font-bold underline text-orange-700 dark:text-orange-400">Settings</Link>.</p>
         </div>
       </AdminPage>
     )

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
+import PageBreadcrumb from '../../components/PageBreadcrumb'
+import { settingsCrumbs } from '../../lib/settingsProfile'
 import ConnectionsPage from '../../components/ConnectionsPage'
 
 export default function Connections() {
@@ -19,10 +21,10 @@ export default function Connections() {
   return (
     <section className="max-w-3xl mx-auto space-y-4">
       <div>
+        <PageBreadcrumb items={settingsCrumbs('connections')} className="mb-2" />
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Connections</h1>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Where your rides come from, in order of preference. Back to{' '}
-          <Link href="/settings" className="font-semibold text-emerald-600 dark:text-brand-neon hover:underline">Settings</Link>.
+          Where your rides come from, in order of preference.
         </p>
       </div>
       {checked && !userId ? (

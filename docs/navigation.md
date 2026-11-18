@@ -11,7 +11,7 @@ The menu is defined once in `src/lib/navigation.js` and rendered by one componen
 
 `NAV_ITEMS` stays as the flat list used by the athlete-context sidebar (`sidebarItems` in `coachContext.js`), which is unchanged: inside `/coach/<riderId>/...` only athlete pages are shown and the bottom bar is hidden.
 
-Settings entries point to `/settings` and `/connections` until the split settings routes exist; set `SETTINGS_SUBPAGES = true` in `navigation.js` to switch to the final hrefs.
+Settings is split into pages: **Profile** `/settings`, **Preferences** `/settings/preferences`, **Gear and defaults** `/settings/gear`, **Physiology** `/settings/physiology`, **Connections** `/connections`, **Privacy** `/settings/privacy`, **Coaching** `/settings/coaching` (the coach card stays at `/settings/coach-card`). Each page shows a `Settings › <Page>` breadcrumb (`SettingsShell`). Pages that edit profile fields (Profile, Preferences, Gear) have their own form and Save button and save only their own columns (`buildProfileUpdate` in `src/lib/settingsProfile.js`, used by `useSettingsProfile`), so one page can never overwrite another page's values. Old `/settings#coaching`, `#onboarding` and `#physiology` links redirect to the new pages (`legacySettingsRedirect`).
 
 ## Messages list
 `useNavThreads` (`src/components/useNavThreads.js`) fetches `chat_threads_summary` once (shared, deduplicated, refreshed on navigation) for the sidebar, drawer and bottom bar. The menu shows the 5 most recent conversations (`recentThreads`, newest message first) with unread counts and a *View all* link to `/chat`.
