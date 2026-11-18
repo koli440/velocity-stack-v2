@@ -92,11 +92,43 @@ export function NavTreeView({ tree, pathname, search = '', signedIn, unread = 0,
   const renderItem = (item, level = 0) => {
     const kids = item.children || []
     if (!kids.length) return renderLeaf(item, { level })
+    if (level === 0) return renderSection(item)
     const childActive = kids.some((c) => isLeafActive(c, pathname, search))
     return (
       <div key={item.key} className="space-y-0.5">
         {renderLeaf(item, { level, parentActive: childActive })}
         {kids.map((c) => renderItem(c, level + 1))}
+      </div>
+    )
+  }
+
+  // Top-level entry with sub-items: the label navigates (and opens the section), the chevron toggles it.
+  const renderSection = (item) => {
+    const isOpen = open === item.key
+    const kids = item.children
+    const holdsActive = isNodeActive(item, pathname, search)
+    const here = isLeafActive(item, pathname, search) && !kids.some((c) => isLeafActive(c, pathname, search))
+    const openIt = () => { setOpen(item.key); try { window.localStorage.setItem(OPEN_GROUPS_KEY, serializeOpenGroup(item.key)) } catch { /* storage unavailable */ } }
+    return (
+      <div key={item.key}>
+        <div className={`flex items-center rounded-xl ${here ? ACTIVE : !isOpen && holdsActive ? ANCESTOR : IDLE}`}>
+          <Link href={item.href} onClick={() => { openIt(); if (onNavigate) onNavigate() }} aria-current={here ? 'page' : undefined}
+            className={`flex-1 min-w-0 flex items-center gap-3 pl-4 rounded-xl text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${row}`}>
+            {item.icon && <Icon name={item.icon} size={18} />}
+            <span className="flex-1 truncate">{item.label}</span>
+            {item.key === 'messages' && <Badge n={unread} testId="sidebar-unread" />}
+          </Link>
+          <button type="button" onClick={() => flip(item.key)} aria-expanded={isOpen} aria-controls={`nav-group-${item.key}`}
+            aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label}`}
+            className={`shrink-0 flex items-center justify-center rounded-xl px-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${touch ? 'min-h-[44px] min-w-[44px]' : 'py-2.5'}`}>
+            <Icon name={isOpen ? 'chevronDown' : 'chevronRight'} size={14} />
+          </button>
+        </div>
+        {isOpen && (
+          <div id={`nav-group-${item.key}`} className="mt-0.5 mb-1 space-y-0.5">
+            {kids.map((c) => renderItem(c, 1))}
+          </div>
+        )}
       </div>
     )
   }

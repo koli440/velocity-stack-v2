@@ -4,6 +4,9 @@ export const OPEN_GROUPS_KEY = 'velocity:nav-open-groups'
 
 export const isGroup = (node) => node?.type === 'group'
 
+/** Accordion sections: groups plus top-level entries with sub-items (Rider Telemetry, Messages). */
+export const isCollapsible = (node) => isGroup(node) || (node?.children || []).length > 0
+
 function splitHref(href) {
   const [path, query = ''] = String(href || '').split('?')
   return { path: path || '/', params: new URLSearchParams(query) }
@@ -37,7 +40,7 @@ export function groupContains(group, pathname, search = '') {
 
 /** Key of the group that holds the current page (null when the page is a top-level entry). */
 export function activeGroupKey(tree, pathname, search = '') {
-  const g = tree.find((n) => isGroup(n) && groupContains(n, pathname, search))
+  const g = tree.find((n) => isCollapsible(n) && isNodeActive(n, pathname, search))
   return g ? g.key : null
 }
 
