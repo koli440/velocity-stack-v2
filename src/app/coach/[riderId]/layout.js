@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
+import { fetchThreads } from '../../../lib/coachChat'
 import { fetchAthleteProfile } from '../../../lib/coaching'
 import { AthleteContext } from '../../../components/AthleteContext'
 import Icon from '../../../components/Icon'
 import { adminBtn, adminCard } from '../../../components/admin/AdminUi'
-import { athleteChatPath, bannerText, parseCoachPath, rendersBeforeAthleteLoaded } from '../../../lib/coachContext'
+import { athleteChatPath, athleteThread, bannerText, parseCoachPath, rendersBeforeAthleteLoaded } from '../../../lib/coachContext'
 
 // Wraps every athlete page: verifies (via the database) that the viewer actively coaches the
 // rider, shows the persistent "Coaching: <Name> - Exit" banner (athlete pages live in the menu).
@@ -34,8 +35,9 @@ export default function AthleteLayout({ children }) {
       if (cancelled) return
       setAthlete(a)
       if (a) {
-        const { data: rel } = await supabase.from('coaching_relationships').select('id')
-          .eq('coach_id', session.user.id).eq('rider_id', riderId).eq('status', 'active').maybeSingle()
+        // coaching_relationships is not readable by clients: chat_threads_summary lists every active relationship (thread id = relationship id).
+        const { threads } = await fetchThreads(supabase)
+        const rel = athleteThread(threads, riderId)
         if (!cancelled) setRelationshipId(rel?.id || null)
       }
       setState(a ? 'ok' : 'denied')
