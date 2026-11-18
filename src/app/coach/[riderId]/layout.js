@@ -4,12 +4,11 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
-import { chatPath } from '../../../lib/coachChat'
 import { fetchAthleteProfile } from '../../../lib/coaching'
 import { AthleteContext } from '../../../components/AthleteContext'
 import Icon from '../../../components/Icon'
 import { adminBtn, adminCard } from '../../../components/admin/AdminUi'
-import { bannerText, parseCoachPath, rendersBeforeAthleteLoaded } from '../../../lib/coachContext'
+import { athleteChatPath, bannerText, parseCoachPath, rendersBeforeAthleteLoaded } from '../../../lib/coachContext'
 
 // Wraps every athlete page: verifies (via the database) that the viewer actively coaches the
 // rider, shows the persistent "Coaching: <Name> - Exit" banner (athlete pages live in the menu).
@@ -60,7 +59,7 @@ export default function AthleteLayout({ children }) {
   }
 
   return (
-    <AthleteContext.Provider value={{ riderId, athlete }}>
+    <AthleteContext.Provider value={{ riderId, athlete, relationshipId }}>
       <div
         role="status"
         data-testid="coach-banner"
@@ -69,7 +68,7 @@ export default function AthleteLayout({ children }) {
         <span className="text-sm font-extrabold">{bannerText(athlete?.display_name)}</span>
         <span className="flex flex-wrap items-center gap-x-2">
           {relationshipId && (
-            <Link href={chatPath(relationshipId)} data-testid="message-athlete" className="inline-flex items-center min-h-[44px] lg:min-h-[32px] px-1 text-sm font-bold underline underline-offset-2 hover:text-orange-100">
+            <Link href={athleteChatPath(riderId)} data-testid="message-athlete" className="inline-flex items-center min-h-[44px] lg:min-h-[32px] px-1 text-sm font-bold underline underline-offset-2 hover:text-orange-100">
               Message
             </Link>
           )}

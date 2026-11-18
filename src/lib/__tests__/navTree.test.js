@@ -30,7 +30,8 @@ test('top-level order with every conditional item present', () => {
 
 test('lab group links the lab pages', () => {
   const lab = find(buildNavTree(), 'lab')
-  assert.deepEqual(lab.children.map((c) => c.href), ['/lab/protocols', '/lab/lactate', '/lab/schedule', '/lab/profile', '/lab/durability', '/lab/decoupling', '/lab/forms', '/lab/reports'])
+  assert.deepEqual(lab.children.filter((c) => c.type === 'label').map((c) => c.label), ['Tests', 'Analysis', 'Data'])
+  assert.deepEqual(lab.children.filter((c) => c.href).map((c) => c.href), ['/lab/protocols', '/lab/lactate', '/lab/schedule', '/lab/profile', '/lab/durability', '/lab/decoupling', '/lab/forms', '/lab/reports'])
 })
 
 test('coaching, admin and messages are conditional', () => {
@@ -134,6 +135,7 @@ test('drawer and bottom bar wiring', () => {
   assert.match(bar, /lg:hidden/)
   assert.match(bar, /safe-area-inset-bottom/)
   assert.match(bar, /'Overview'/)
+  assert.match(bar, /athleteChatPath\(riderId\), 'Messages'/)
   assert.match(read('Sidebar.js'), /buildAthleteTree/)
   assert.match(read('SegmentedTabs.js'), /min-h-\[44px\] sm:min-h-0/)
   assert.match(read('NavTree.js'), /min-h-\[44px\]/)

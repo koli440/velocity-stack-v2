@@ -81,8 +81,8 @@ export function NavTreeView({ tree, pathname, search = '', signedIn, unread = 0,
         className={`${cls} ${active ? ACTIVE : IDLE}`}
       >
         {!sub && item.icon && <Icon name={item.icon} size={18} />}
-        <span className="flex-1 truncate">{item.label}</span>
-        {item.key === 'messages' && <Badge n={unread} testId="sidebar-unread" />}
+        <span className={sub ? 'flex-1 min-w-0 break-words' : 'flex-1 truncate'}>{item.label}</span>
+        {item.key === 'messages' && <Badge n={item.unread ?? unread} testId="sidebar-unread" />}
         {sub && item.unread > 0 && <Badge n={item.unread} />}
       </Link>
     )
@@ -90,6 +90,12 @@ export function NavTreeView({ tree, pathname, search = '', signedIn, unread = 0,
 
   // level 0: top-level entry (icon); level 1: child of a group or top-level entry; level 2: nested (e.g. Riders > Find)
   const renderItem = (item, level = 0) => {
+    if (item.type === 'label') {
+      return <p key={item.key} className="pl-11 pr-3 pt-2 pb-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{item.label}</p>
+    }
+    if (item.type === 'header') {
+      return <p key={item.key} className="px-4 pb-1 text-xs font-extrabold uppercase tracking-wide text-slate-500 dark:text-slate-400 break-words" data-testid="athlete-menu-header">{item.label}</p>
+    }
     const kids = item.children || []
     if (!kids.length) return renderLeaf(item, { level })
     if (level === 0) return renderSection(item)
@@ -116,7 +122,7 @@ export function NavTreeView({ tree, pathname, search = '', signedIn, unread = 0,
             className={`flex-1 min-w-0 flex items-center gap-3 pl-4 rounded-xl text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${row}`}>
             {item.icon && <Icon name={item.icon} size={18} />}
             <span className="flex-1 truncate">{item.label}</span>
-            {item.key === 'messages' && <Badge n={unread} testId="sidebar-unread" />}
+            {item.key === 'messages' && <Badge n={item.unread ?? unread} testId="sidebar-unread" />}
           </Link>
           <button type="button" onClick={() => flip(item.key)} aria-expanded={isOpen} aria-controls={`nav-group-${item.key}`}
             aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label}`}

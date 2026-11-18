@@ -4,7 +4,6 @@ import {
   parseCoachPath,
   athletePath,
   buildAthleteTree,
-  athleteMessagesHref,
   COACH_MODULE_PAGES,
   bannerText,
   viewingAsOptions,
@@ -13,8 +12,8 @@ import {
   formatDistanceKm,
   weeklyVolume,
 } from '../coachContext.js'
-import { isLeafActive, isNodeActive, activeGroupKey } from '../navState.js'
-import { LAB_FEATURES } from '../labFeatures.js'
+import { isLeafActive, isNodeActive, activeGroupKey, flattenNav } from '../navState.js'
+import { LAB_FEATURES, labSections } from '../labFeatures.js'
 
 const RID = '11111111-2222-3333-4444-555555555555'
 const ME = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
@@ -28,34 +27,39 @@ test('parseCoachPath extracts rider and subpath, rejects non-uuids', () => {
   assert.deepEqual(parseCoachPath(undefined), { riderId: null, subPath: '' })
 })
 
-test('athlete tree: Viewing group with pages, Lab features, Messages and the way back', () => {
+test('athlete tree: header, grouped pages, sectioned Lab, Messages and the way back', () => {
   const tree = buildAthleteTree(RID, 'Amy')
-  assert.deepEqual(tree.map((n) => n.key), ['athlete', 'messages', 'coach-home'])
-  const [g] = tree
-  assert.equal(g.type, 'group')
-  assert.equal(g.label, 'Viewing Amy')
-  assert.deepEqual(g.children.map((c) => c.key), ['overview', 'activities', 'calendar', 'fitness', 'pb-vault', 'templates', 'physiology', 'lab'])
+  assert.deepEqual(tree.map((n) => n.key), ['athlete', 'overview', 'training', 'pb-vault', 'physiology', 'lab', 'messages', 'coach-home'])
+  assert.equal(tree[0].type, 'header')
+  assert.equal(tree[0].label, 'Viewing Amy')
   assert.equal(buildAthleteTree(RID, null)[0].label, 'Viewing athlete')
-  const lab = g.children.find((c) => c.key === 'lab')
-  assert.equal(lab.href, `/coach/${RID}/lab`)
-  assert.deepEqual(lab.children.map((c) => c.href), LAB_FEATURES.map((f) => `/coach/${RID}/lab/${f.key}`))
-  assert.ok(buildAthleteTree(RID, 'Amy', true)[0].children.some((c) => c.key === 'notes'))
-  assert.ok(!buildAthleteTree(RID, 'Amy')[0].children.some((c) => c.key === 'notes'))
-  // nothing of the coach's own pages: every href stays in the athlete context (or Messages / dashboard)
-  const hrefs = [...g.children, ...lab.children, ...tree.slice(1)].map((n) => n.href)
-  assert.ok(hrefs.every((h) => h.startsWith('/coach') || h === '/chat'))
+  const training = tree.find((n) => n.key === 'training')
+  assert.deepEqual(training.children.map((c) => c.label), ['Activities', 'Calendar', 'Fitness', 'Templates'])
+  assert.ok(training.children.every((c) => !c.icon))
+  const lab = tree.find((n) => n.key === 'lab')
+  assert.equal(lab.type, 'group')
+  assert.deepEqual(lab.children.filter((c) => c.type === 'label').map((c) => c.label), ['Tests', 'Analysis', 'Data'])
+  assert.deepEqual(lab.children.filter((c) => c.href).map((c) => c.href), [...LAB_FEATURES].sort((a, b) => ['Tests', 'Analysis', 'Data'].indexOf(a.section) - ['Tests', 'Analysis', 'Data'].indexOf(b.section)).map((f) => `/coach/${RID}/lab/${f.key}`))
+  assert.deepEqual(lab.children.map((c) => c.label).slice(0, 4), ['Tests', 'Protocol runner', 'Lactate step test', 'Test scheduler'])
+  assert.ok(buildAthleteTree(RID, 'Amy', true).some((c) => c.key === 'notes'))
+  assert.ok(!tree.some((c) => c.key === 'notes'))
+  const hrefs = flattenNav(tree).filter((n) => n.href).map((n) => n.href)
+  assert.ok(hrefs.every((h) => h.startsWith('/coach')))
 })
 
 test('athlete tree active state', () => {
   const tree = buildAthleteTree(RID, 'Amy')
-  const [overview, activities] = tree[0].children
+  const overview = tree.find((n) => n.key === 'overview')
+  const activities = tree.find((n) => n.key === 'training').children[0]
   assert.equal(isLeafActive(overview, `/coach/${RID}`), true)
   assert.equal(isLeafActive(overview, `/coach/${RID}/calendar`), false)
   assert.equal(isLeafActive(activities, `/coach/${RID}/activities/abc`), true)
-  assert.equal(activeGroupKey(tree, `/coach/${RID}/lab/durability`), 'athlete')
-  assert.equal(isNodeActive(tree[0].children.at(-1), `/coach/${RID}/lab/durability`), true)
+  assert.equal(activeGroupKey(tree, `/coach/${RID}/lab/durability`), 'lab')
+  assert.equal(activeGroupKey(tree, `/coach/${RID}/activities/abc`), 'training')
+  assert.equal(activeGroupKey(tree, `/coach/${RID}/physiology`), null)
+  assert.equal(isNodeActive(tree.find((n) => n.key === 'lab'), `/coach/${RID}/lab/durability`), true)
   assert.equal(isLeafActive(tree.at(-1), '/coach'), true)
-  assert.equal(activeGroupKey(tree, '/chat'), null)
+  assert.equal(isLeafActive(tree.find((n) => n.key === 'messages'), `/coach/${RID}/chat`), true)
 })
 
 test('viewingAsOptions lists only my active athletes, sorted', () => {
@@ -124,13 +128,24 @@ test('lab is not a flagged module page', () => {
   assert.ok(!COACH_MODULE_PAGES.some((p) => p.key === 'lab'))
 })
 
-test('athlete Messages opens the thread with that athlete', () => {
-  assert.equal(buildAthleteTree(RID, 'Amy')[1].href, '/chat')
+test('athlete Messages stays in the athlete context and carries this thread\'s unread', () => {
+  const messages = (threads) => buildAthleteTree(RID, 'Amy', false, threads).find((n) => n.key === 'messages')
+  assert.equal(messages().href, `/coach/${RID}/chat`)
+  assert.equal(messages().unread, 0)
   const threads = [
-    { id: 't-old', role: 'coach', other_id: RID, status: 'ended' },
-    { id: 't-other', role: 'coach', other_id: 'someone-else', status: 'active' },
-    { id: 't-1', role: 'coach', other_id: RID, status: 'active' },
+    { id: 't-old', role: 'coach', other_id: RID, status: 'ended', unread: 9 },
+    { id: 't-other', role: 'coach', other_id: 'someone-else', status: 'active', unread: 4 },
+    { id: 't-1', role: 'coach', other_id: RID, status: 'active', unread: 2 },
   ]
-  assert.equal(buildAthleteTree(RID, 'Amy', false, threads)[1].href, '/chat/t-1')
-  assert.equal(athleteMessagesHref([], RID), '/chat')
+  assert.equal(messages(threads).unread, 2)
+  assert.equal(c.athleteThread(threads, RID).id, 't-1')
+  assert.equal(c.athleteThread([], RID), null)
+  assert.equal(parseCoachPath(`/coach/${RID}/chat`).riderId, RID)
+})
+
+test('lab sections: every feature has one, unsectioned ones go under Other', () => {
+  assert.ok(LAB_FEATURES.every((f) => ['Tests', 'Analysis', 'Data'].includes(f.section)))
+  assert.deepEqual(labSections().map((s) => s.label), ['Tests', 'Analysis', 'Data'])
+  const s = labSections([{ key: 'x', label: 'X' }, { key: 'y', label: 'Y', section: 'Data' }])
+  assert.deepEqual(s.map((g) => g.label), ['Data', 'Other'])
 })
