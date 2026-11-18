@@ -5,7 +5,7 @@ The menu is defined once in `src/lib/navigation.js` and rendered by one componen
 ## Structure
 `buildNavTree({ signedIn, isAdmin, moduleEnabled, threads, hasPayments })` returns the tree for the user's own context:
 
-- Top level: **Rider Telemetry** (sub-items *My sessions* `/` and *Following* `/?scope=following`), **Personal Best Vault**, **Messages** (only when the user has conversations), **Payments** (only with a payment relationship).
+- Top level: **Rider Telemetry** (sub-items *My sessions* `/` and *Following* `/?scope=following`), **Personal Best Vault**, **Messages** (only when the user has conversations). Rider Telemetry and Messages are collapsible; Payments lives under Settings.
 - Collapsible groups: **Training**, **Lab** (`/lab/<key>`, keys in `LAB_MENU_KEYS`, labels from `labFeatures.js`), **Tools**, **Community** (Riders with *Find* / *Following*; Coach directory for logged-out visitors and coach-module users), **Coaching** (coach module only), **Admin** (admins only; `ADMIN_LINKS` in `src/lib/adminLinks.js`), **Settings**.
 - Then **About** and **Feedback**.
 
