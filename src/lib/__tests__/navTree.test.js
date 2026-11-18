@@ -5,7 +5,7 @@ import { NAV_ITEMS, buildNavTree, recentThreads, isNavItemLocked, MESSAGES_PREVI
 import { ADMIN_LINKS } from '../adminLinks.js'
 import {
   isLeafActive, isNodeActive, activeGroupKey, groupContains, parseOpenGroups, serializeOpenGroups,
-  withActiveGroupOpen, toggleGroup, badgeLabel,
+  withActiveGroupOpen, toggleGroup, badgeLabel, breadcrumbTrail,
 } from '../navState.js'
 
 const keys = (tree) => tree.map((n) => n.key)
@@ -119,4 +119,35 @@ test('drawer and bottom bar wiring', () => {
   assert.match(bar, /lg:hidden/)
   assert.match(bar, /safe-area-inset-bottom/)
   assert.match(read('NavTree.js'), /min-h-\[44px\]/)
+})
+
+test('templates sub-items follow ?tab= and open the Training group', () => {
+  const tree = buildNavTree({ signedIn: true })
+  const tpl = find(tree, 'training').children.find((c) => c.key === 'templates')
+  assert.deepEqual(tpl.children.map((c) => c.query.tab), ['public', 'mine', 'favorites', 'system'])
+  assert.equal(isLeafActive(tpl.children[1], '/templates', 'tab=mine'), true)
+  assert.equal(isLeafActive(tpl.children[1], '/templates', 'tab=public'), false)
+  assert.equal(activeGroupKey(tree, '/templates', 'tab=favorites'), 'training')
+})
+
+test('breadcrumb trail from the menu tree', () => {
+  const tree = buildNavTree({ signedIn: true, isAdmin: true, moduleEnabled: true })
+  const labels = (p, s) => breadcrumbTrail(tree, p, s).map((c) => c.label)
+  assert.deepEqual(labels('/lab/durability'), ['Lab', 'Durability'])
+  assert.deepEqual(labels('/admin/chat-reports'), ['Admin', 'Chat reports'])
+  assert.deepEqual(labels('/admin'), ['Admin', 'Dashboard'])
+  assert.deepEqual(labels('/riders', 'tab=following'), ['Riders', 'Following'])
+  assert.deepEqual(labels('/riders'), ['Riders', 'Find'])
+  assert.deepEqual(labels('/templates', 'tab=mine'), ['Templates', 'Mine'])
+  assert.deepEqual(labels('/nowhere'), [])
+  assert.equal(breadcrumbTrail(tree, '/lab/durability')[0].href, '/lab')
+  assert.equal(breadcrumbTrail(tree, '/lab/durability')[1].href, undefined)
+})
+
+test('in-page tab strips are gone; pages use the breadcrumb', () => {
+  const r = (p) => readFileSync(new URL(p, import.meta.url), 'utf8')
+  assert.doesNotMatch(r('../../app/riders/page.js'), /SegmentedTabs/)
+  assert.doesNotMatch(r('../../app/admin/layout.js'), /AdminNav/)
+  assert.match(r('../../components/LabShell.js'), /riderId && <nav aria-label="Lab tools"/)
+  assert.match(r('../../app/templates/page.js'), /<PageBreadcrumb/)
 })

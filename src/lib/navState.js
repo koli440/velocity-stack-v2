@@ -70,3 +70,32 @@ export function badgeLabel(n, cap = 99) {
   if (v <= 0) return ''
   return v > cap ? `${cap}+` : String(v)
 }
+
+/**
+ * Breadcrumb for the current page from the menu tree: [group (only for groups that are sections of their own,
+ * i.e. with `matches`), parent leaf with sub-items, active leaf]. Empty when the page is not in the tree.
+ */
+export function breadcrumbTrail(tree, pathname, search = '') {
+  const crumb = (n, last) => ({ label: n.label, href: last ? undefined : (n.href || n.matches?.[0]) })
+  const deepest = (nodes) => {
+    const hits = nodes.filter((c) => isLeafActive(c, pathname, search))
+    return hits.sort((a, b) => String(b.href).length - String(a.href).length)[0] || null
+  }
+  for (const node of tree) {
+    if (isGroup(node)) {
+      const leaf = deepest(node.children || [])
+      if (!leaf) continue
+      const trail = []
+      if (node.matches?.length) trail.push(crumb(node, false))
+      const child = deepest(leaf.children || [])
+      trail.push(crumb(leaf, !child))
+      if (child) trail.push(crumb(child, true))
+      return trail
+    }
+    if (isLeafActive(node, pathname, search)) {
+      const child = deepest(node.children || [])
+      return child ? [crumb(node, false), crumb(child, true)] : [crumb(node, true)]
+    }
+  }
+  return []
+}

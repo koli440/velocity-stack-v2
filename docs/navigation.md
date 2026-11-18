@@ -21,3 +21,9 @@ Settings entries point to `/settings` and `/connections` until the split setting
 - Query-aware items (`?scope=`, `?tab=`) are active by comparing the query with the item's defaults. `Dashboard` follows `?scope=` changes so the menu and the Feed tabs stay in sync.
 - Logged-out visitors keep the locked-item behaviour (`isNavItemLocked`).
 - Desktop (lg+): persistent sidebar with indented single-line sub-items. Below lg: the same tree in the drawer with 44px rows plus a fixed bottom bar (`BottomNav`: Home, Calendar, Messages, Menu) that respects safe-area insets. The bar is hidden for logged-out visitors and in athlete context.
+
+## Sections live in the menu, not in the page
+- Lab features, Admin pages, Riders (*Find* / *Following*) and Templates (*Public* / *Mine* / *Favorites* / *System*, `?tab=`) are menu entries; the in-page tab strips and the admin pill bar are gone. `ADMIN_LINKS` stays the shared source for the Admin group.
+- `PageBreadcrumb` (`src/components/PageBreadcrumb.js`) shows the trail ("Lab › Durability", "Admin › Chat reports", "Riders › Following"). `breadcrumbTrail(tree, pathname, search)` in `navState.js` derives it from the menu tree; the admin layout uses `PathBreadcrumb`.
+- `/templates` and `/riders` read `?tab=`; `/templates` writes the default (`mine` signed in, `public` visitors) into the URL so the menu highlights it.
+- `LabShell` keeps its feature strip only in athlete context (`riderId`, `/coach/<id>/lab`) until the athlete bar replaces it.

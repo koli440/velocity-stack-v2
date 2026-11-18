@@ -1,6 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import PageBreadcrumb from '../../components/PageBreadcrumb'
 import { supabase, getAuthHeader } from '../../lib/supabase'
 import { parseJsonResponse } from '../../lib/httpJson'
 import TemplateCreatorModal from '../../components/TemplateCreatorModal'
@@ -22,7 +24,9 @@ const TAB_LABELS = { mine: 'Mine', favorites: 'Favorites', public: 'Public', sys
 
 // Analysis template menu (issue #44): browse and manage analysis templates. Anonymous
 // visitors can browse System and Public templates; everything else needs an account.
-export default function TemplatesPage() {
+function TemplatesContent() {
+  const router = useRouter()
+  const requested = useSearchParams().get('tab')
   const [userId, setUserId] = useState(null)
   const [authReady, setAuthReady] = useState(false)
   const [templates, setTemplates] = useState([])
@@ -30,7 +34,6 @@ export default function TemplatesPage() {
   const [favoriteIds, setFavoriteIds] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState(null)
-  const [tab, setTab] = useState('public')
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [sort, setSort] = useState('name')
@@ -96,7 +99,6 @@ export default function TemplatesPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const id = session?.user?.id || null
       setUserId(id)
-      setTab(id ? 'mine' : 'public')
       setAuthReady(true)
       load()
     })
@@ -107,6 +109,11 @@ export default function TemplatesPage() {
   }, [loadStats])
 
   const tabs = visibleTabs(userId)
+  // The section comes from ?tab= (set by the menu); signed-in users land on Mine, visitors on Public.
+  const tab = tabs.includes(requested) ? requested : userId ? 'mine' : 'public'
+  useEffect(() => {
+    if (authReady && requested !== tab) router.replace(`/templates?tab=${tab}`, { scroll: false })
+  }, [authReady, requested, tab, router])
   // Templates only known through coach runs (the rider cannot read a coach's private template).
   const visibleIds = new Set(templates.map((t) => t.id))
   const coachOnly = Object.entries(stats).filter(([id]) => !visibleIds.has(id))
@@ -206,6 +213,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-5">
+      <PageBreadcrumb items={[{ label: 'Templates', href: '/templates' }, { label: TAB_LABELS[tab] }]} />
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Analysis Templates</h1>
@@ -228,20 +236,6 @@ export default function TemplatesPage() {
             </button>
           </div>
         )}
-      </div>
-
-      <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-900/60 rounded-xl w-fit">
-        {tabs.map((k) => (
-          <button
-            key={k}
-            onClick={() => setTab(k)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-              tab === k ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-            }`}
-          >
-            {TAB_LABELS[k]}
-          </button>
-        ))}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -388,5 +382,13 @@ export default function TemplatesPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function TemplatesPage() {
+  return (
+    <Suspense fallback={null}>
+      <TemplatesContent />
+    </Suspense>
   )
 }

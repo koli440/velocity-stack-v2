@@ -24,7 +24,15 @@ const L = {
   },
   gears: { key: 'gears', label: 'Gear Architect', icon: 'gears', href: '/gears' },
   pursuit: { key: 'pursuit', label: 'Pursuit Strategist', icon: 'stopwatch', href: '/pursuit' },
-  templates: { key: 'templates', label: 'Templates', icon: 'clipboard', href: '/templates' },
+  templates: {
+    key: 'templates', label: 'Templates', icon: 'clipboard', href: '/templates',
+    children: [
+      { key: 'templates-public', label: 'Public', href: '/templates?tab=public', query: { tab: 'public' } },
+      { key: 'templates-mine', label: 'Mine', href: '/templates?tab=mine', query: { tab: 'mine' } },
+      { key: 'templates-favorites', label: 'Favorites', href: '/templates?tab=favorites', query: { tab: 'favorites' } },
+      { key: 'templates-system', label: 'System', href: '/templates?tab=system', query: { tab: 'system' } },
+    ],
+  },
   velodromes: { key: 'velodromes', label: 'Velodromes', icon: 'velodrome', href: '/velodromes' },
   about: { key: 'about', label: 'About', icon: 'book', href: '/about' },
   feedback: { key: 'feedback', label: 'Feedback', icon: 'bulb', href: '/feedback' },

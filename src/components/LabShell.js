@@ -15,6 +15,7 @@ import LabDecoupling from './LabDecoupling'
 import LabFieldForms from './LabFieldForms'
 import { LabBikeFit, LabCadence, LabFueling, LabPedalling } from './LabMeasurements'
 import LabReports from './LabReports'
+import PageBreadcrumb from './PageBreadcrumb'
 
 const FEATURE_COMPONENTS = { protocols: LabProtocolRunner, lactate: LabLactateTest, schedule: LabScheduler, profile: LabPowerProfile, durability: LabDurability, decoupling: LabDecoupling, forms: LabFieldForms, fueling: LabFueling, fit: LabBikeFit, pedalling: LabPedalling, cadence: LabCadence, reports: LabReports }
 
@@ -39,7 +40,8 @@ export default function LabShell({ riderId = null, feature = null }) {
       width="max-w-4xl"
     >
       <div className="space-y-5" data-testid="lab-shell">
-        <nav aria-label="Lab tools" className="-mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto">
+        {!riderId && <PageBreadcrumb items={[{ label: 'Lab', href: active ? base : undefined }, ...(active ? [{ label: active.label }] : [])]} />}
+        {riderId && <nav aria-label="Lab tools" className="-mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto">
           <ul className="flex gap-2 w-max sm:w-auto sm:flex-wrap pb-1">
             {LAB_FEATURES.map((f) => {
               const on = active?.key === f.key
@@ -53,7 +55,7 @@ export default function LabShell({ riderId = null, feature = null }) {
               )
             })}
           </ul>
-        </nav>
+        </nav>}
         {Feature ? (
           <Feature athleteId={athleteId} viewerId={viewerId} riderId={riderId} />
         ) : (
