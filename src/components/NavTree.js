@@ -8,7 +8,7 @@ import { NAV_LOCKED_LABEL, isNavItemLocked } from '../lib/navigation'
 import { loginHref } from '../lib/signupCatch'
 import {
   OPEN_GROUPS_KEY, activeGroupKey, badgeLabel, isGroup, isLeafActive, isNodeActive,
-  parseOpenGroups, serializeOpenGroups, toggleGroup, withActiveGroupOpen,
+  parseOpenGroup, serializeOpenGroup, toggleGroup, withActiveGroupOpen,
 } from '../lib/navState'
 
 const ACTIVE = 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-brand-neon font-bold'
@@ -30,27 +30,30 @@ function Badge({ n, testId }) {
  * (see NavTree below); `touch` gives every row a 44px tap target.
  */
 export function NavTreeView({ tree, pathname, search = '', signedIn, unread = 0, touch = false, onNavigate }) {
-  const [open, setOpen] = useState([])
+  const [open, setOpen] = useState(null)
   const activeKey = activeGroupKey(tree, pathname, search)
 
   useEffect(() => {
-    try { setOpen((cur) => withActiveGroupOpen(parseOpenGroups(window.localStorage.getItem(OPEN_GROUPS_KEY)).concat(cur), activeKey)) } catch { setOpen((cur) => withActiveGroupOpen(cur, activeKey)) }
+    let saved = null
+    try { saved = parseOpenGroup(window.localStorage.getItem(OPEN_GROUPS_KEY)) } catch { /* storage unavailable */ }
+    setOpen((cur) => withActiveGroupOpen(cur || saved, activeKey))
   }, [activeKey])
 
   const flip = (key) => {
     const next = toggleGroup(open, key)
     setOpen(next)
-    try { window.localStorage.setItem(OPEN_GROUPS_KEY, serializeOpenGroups(next)) } catch { /* storage unavailable */ }
+    try { window.localStorage.setItem(OPEN_GROUPS_KEY, serializeOpenGroup(next)) } catch { /* storage unavailable */ }
   }
 
   const row = touch ? 'min-h-[44px] py-2.5' : 'py-2.5'
   const subRow = touch ? 'min-h-[44px] py-2.5' : 'py-1.5'
   const base = `w-full text-left flex items-center gap-3 px-4 rounded-xl text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${row}`
 
-  const renderLeaf = (item, { sub = false, parentActive = false } = {}) => {
+  const renderLeaf = (item, { level = 0, parentActive = false } = {}) => {
+    const sub = level > 0
     const locked = isNavItemLocked(item, signedIn)
     const cls = sub
-      ? `w-full flex items-center gap-2 pl-11 pr-3 rounded-lg text-[13px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${subRow}`
+      ? `w-full flex items-center gap-2 ${level > 1 ? 'pl-16' : 'pl-11'} pr-3 rounded-lg text-[13px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${subRow}`
       : base
     if (locked) {
       return (
@@ -85,20 +88,21 @@ export function NavTreeView({ tree, pathname, search = '', signedIn, unread = 0,
     )
   }
 
-  const renderItem = (item) => {
+  // level 0: top-level entry (icon); level 1: child of a group or top-level entry; level 2: nested (e.g. Riders > Find)
+  const renderItem = (item, level = 0) => {
     const kids = item.children || []
-    if (!kids.length) return renderLeaf(item)
+    if (!kids.length) return renderLeaf(item, { level })
     const childActive = kids.some((c) => isLeafActive(c, pathname, search))
     return (
       <div key={item.key} className="space-y-0.5">
-        {renderLeaf(item, { parentActive: childActive })}
-        {kids.map((c) => renderLeaf(c, { sub: true }))}
+        {renderLeaf(item, { level, parentActive: childActive })}
+        {kids.map((c) => renderItem(c, level + 1))}
       </div>
     )
   }
 
   const renderGroup = (g) => {
-    const isOpen = open.includes(g.key)
+    const isOpen = open === g.key
     const holdsActive = isNodeActive(g, pathname, search)
     return (
       <div key={g.key}>
@@ -115,7 +119,7 @@ export function NavTreeView({ tree, pathname, search = '', signedIn, unread = 0,
         </button>
         {isOpen && (
           <div id={`nav-group-${g.key}`} className="mt-0.5 mb-1 space-y-0.5">
-            {g.children.map(renderItem)}
+            {g.children.map((c) => renderItem(c, 1))}
           </div>
         )}
       </div>
@@ -124,7 +128,7 @@ export function NavTreeView({ tree, pathname, search = '', signedIn, unread = 0,
 
   return (
     <nav aria-label="Main" className="space-y-1">
-      {tree.map((n) => (isGroup(n) ? renderGroup(n) : renderItem(n)))}
+      {tree.map((n) => (isGroup(n) ? renderGroup(n) : renderItem(n, 0)))}
     </nav>
   )
 }

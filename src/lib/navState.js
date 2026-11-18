@@ -41,27 +41,27 @@ export function activeGroupKey(tree, pathname, search = '') {
   return g ? g.key : null
 }
 
-/** Remembered open groups, tolerant of missing or corrupt storage. */
-export function parseOpenGroups(raw) {
+/** Remembered open group (accordion: one at a time), tolerant of missing or corrupt storage and of the old list format. */
+export function parseOpenGroup(raw) {
   try {
     const v = JSON.parse(raw)
-    return Array.isArray(v) ? v.filter((k) => typeof k === 'string') : []
+    const k = Array.isArray(v) ? v[0] : v
+    return typeof k === 'string' && k ? k : null
   } catch {
-    return []
+    return typeof raw === 'string' && raw && !raw.startsWith('[') && !raw.startsWith('{') ? raw : null
   }
 }
 
-export const serializeOpenGroups = (keys) => JSON.stringify([...new Set(keys)])
+export const serializeOpenGroup = (key) => JSON.stringify(key || null)
 
-/** Remembered groups plus the group of the current page (which always opens). */
-export function withActiveGroupOpen(openKeys, activeKey) {
-  const keys = [...(openKeys || [])]
-  if (activeKey && !keys.includes(activeKey)) keys.push(activeKey)
-  return keys
+/** The group of the current page always opens (closing the others); a top-level page keeps the remembered one. */
+export function withActiveGroupOpen(openKey, activeKey) {
+  return activeKey || openKey || null
 }
 
-export function toggleGroup(openKeys, key) {
-  return (openKeys || []).includes(key) ? openKeys.filter((k) => k !== key) : [...(openKeys || []), key]
+/** Opening a group closes the others; clicking the open one collapses it. */
+export function toggleGroup(openKey, key) {
+  return openKey === key ? null : key
 }
 
 /** Total unread of the list shown in the menu badge ("9+" style cap for the compact bottom bar). */

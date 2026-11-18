@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { NAV_ITEMS, buildNavTree, recentThreads, isNavItemLocked, MESSAGES_PREVIEW_LIMIT } from '../navigation.js'
 import { ADMIN_LINKS } from '../adminLinks.js'
 import {
-  isLeafActive, isNodeActive, activeGroupKey, groupContains, parseOpenGroups, serializeOpenGroups,
+  isLeafActive, isNodeActive, activeGroupKey, groupContains, parseOpenGroup, serializeOpenGroup,
   withActiveGroupOpen, toggleGroup, badgeLabel, breadcrumbTrail,
 } from '../navState.js'
 
@@ -93,16 +93,20 @@ test('the group of the current page is found for auto-open', () => {
 })
 
 test('open groups are remembered safely', () => {
-  assert.deepEqual(parseOpenGroups(null), [])
-  assert.deepEqual(parseOpenGroups('not json'), [])
-  assert.deepEqual(parseOpenGroups('{"a":1}'), [])
-  assert.deepEqual(parseOpenGroups('["lab",3,"tools"]'), ['lab', 'tools'])
-  assert.equal(serializeOpenGroups(['lab', 'lab', 'tools']), '["lab","tools"]')
-  assert.deepEqual(withActiveGroupOpen(['tools'], 'lab'), ['tools', 'lab'])
-  assert.deepEqual(withActiveGroupOpen(['lab'], 'lab'), ['lab'])
-  assert.deepEqual(withActiveGroupOpen(['lab'], null), ['lab'])
-  assert.deepEqual(toggleGroup(['lab'], 'lab'), [])
-  assert.deepEqual(toggleGroup(['lab'], 'tools'), ['lab', 'tools'])
+  assert.equal(parseOpenGroup(null), null)
+  assert.equal(parseOpenGroup('not json'), 'not json')
+  assert.equal(parseOpenGroup('{"a":1}'), null)
+  assert.equal(parseOpenGroup('"lab"'), 'lab')
+  assert.equal(parseOpenGroup('["lab","tools"]'), 'lab')
+  assert.equal(serializeOpenGroup('lab'), '"lab"')
+  assert.equal(serializeOpenGroup(null), 'null')
+  assert.equal(parseOpenGroup('null'), null)
+  assert.equal(withActiveGroupOpen('tools', 'lab'), 'lab')
+  assert.equal(withActiveGroupOpen('lab', null), 'lab')
+  assert.equal(withActiveGroupOpen(null, null), null)
+  assert.equal(toggleGroup('lab', 'lab'), null)
+  assert.equal(toggleGroup('lab', 'tools'), 'tools')
+  assert.equal(toggleGroup(null, 'tools'), 'tools')
 })
 
 test('unread badge label is capped', () => {
