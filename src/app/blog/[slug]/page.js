@@ -73,13 +73,13 @@ export default async function BlogPostPage({ params }) {
   const avatarUrl = await authorAvatar()
 
   return (
-    <article id="blog-post" className="max-w-2xl mx-auto">
+    <article id="blog-post" className="max-w-2xl mx-auto min-w-0 break-words">
       <BlogTracker slug={post.slug} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(blogPostingJsonLd(post, avatarUrl)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(breadcrumbJsonLd(post)) }} />
 
       <nav aria-label="Breadcrumb" className="mb-4 text-xs text-slate-500 dark:text-slate-400">
-        <Link href={BLOG_PATH} className="hover:underline">Blog</Link>
+        <Link href={BLOG_PATH} className="inline-flex items-center min-h-[44px] hover:underline">Back to blog</Link>
       </nav>
 
       <header className="space-y-4">
