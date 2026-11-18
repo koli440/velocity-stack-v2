@@ -71,15 +71,11 @@ const group = (key, label, icon, children, matches = []) => ({ key, label, icon,
  * groups ({ type: 'group', children }). Messages carries the live conversation list as children.
  */
 export function buildNavTree({ signedIn = true, isAdmin = false, moduleEnabled = false, threads = [], hasPayments = false } = {}) {
-  const tree = [L.home, L.pbVault]
+  const tree = [L.home]
+  tree.push(group('training', 'Training', 'calendar', [L.calendar, L.fitness, L.templates]))
   const messages = messagesNode(threads)
   if (messages) tree.push(messages)
-
-  tree.push(group('training', 'Training', 'calendar', [L.calendar, L.fitness, L.templates]))
-  tree.push(group('lab', 'Lab', 'flask', LAB_MENU_KEYS.map((k) => {
-    const f = LAB_FEATURES.find((x) => x.key === k)
-    return { key: `lab-${k}`, label: f.label, href: `/lab/${k}` }
-  }), ['/lab']))
+  tree.push(L.pbVault)
   tree.push(group('tools', 'Tools', 'gears', [L.gears, L.pursuit, L.velodromes]))
 
   const community = [L.riders]
@@ -87,6 +83,10 @@ export function buildNavTree({ signedIn = true, isAdmin = false, moduleEnabled =
   tree.push(group('community', 'Community', 'users', community))
 
   if (signedIn && moduleEnabled) tree.push(group('coaching', 'Coaching', 'users', [COACH_DASHBOARD], ['/coach']))
+  tree.push(group('lab', 'Lab', 'flask', LAB_MENU_KEYS.map((k) => {
+    const f = LAB_FEATURES.find((x) => x.key === k)
+    return { key: `lab-${k}`, label: f.label, href: `/lab/${k}` }
+  }), ['/lab']))
   if (signedIn && isAdmin) {
     tree.push(group('admin', 'Admin', 'check', ADMIN_LINKS.map(([href, label]) => ({
       key: `admin-${href.replace(/\W+/g, '-').replace(/^-|-$/g, '')}`, label, href, exact: href === '/admin',

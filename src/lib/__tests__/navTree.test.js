@@ -14,11 +14,16 @@ const th = (id, minutes, extra = {}) => ({ id, other_name: `Rider ${id}`, unread
 
 test('menu tree: top level, groups and their order', () => {
   const tree = buildNavTree({ signedIn: true })
-  assert.deepEqual(keys(tree), ['home', 'pb-vault', 'training', 'lab', 'tools', 'community', 'settings', 'about', 'feedback'])
+  assert.deepEqual(keys(tree), ['home', 'training', 'pb-vault', 'tools', 'community', 'lab', 'settings', 'about', 'feedback'])
   assert.deepEqual(find(tree, 'training').children.map((c) => c.label), ['Calendar', 'Fitness', 'Templates'])
   assert.deepEqual(find(tree, 'tools').children.map((c) => c.label), ['Gear Architect', 'Pursuit Strategist', 'Velodromes'])
   assert.deepEqual(find(tree, 'home').children.map((c) => c.href), ['/', '/?scope=following'])
   assert.deepEqual(find(tree, 'community').children[0].children.map((c) => c.href), ['/riders?tab=find', '/riders?tab=following'])
+})
+
+test('top-level order with every conditional item present', () => {
+  const tree = buildNavTree({ signedIn: true, isAdmin: true, moduleEnabled: true, threads: [th('a', 1)] })
+  assert.deepEqual(keys(tree), ['home', 'training', 'messages', 'pb-vault', 'tools', 'community', 'coaching', 'lab', 'admin', 'settings', 'about', 'feedback'])
 })
 
 test('lab group links the lab pages', () => {
