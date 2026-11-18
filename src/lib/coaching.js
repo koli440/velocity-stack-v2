@@ -5,7 +5,7 @@
 import { fetchProfilesByIds, authorName } from './social.js'
 import { SHARED_FEED_COLUMNS, DEFAULT_ACTIVITIES_PAGE_SIZE } from './activityPagination.js'
 
-export const COACHING_SETTINGS_PATH = '/settings#coaching'
+export const COACHING_SETTINGS_PATH = '/settings/coaching'
 
 /**
  * Splits the caller's relationships (rows from my_coaching()) into the groups the UI shows.

@@ -1,7 +1,8 @@
 'use client'
 
 import SegmentedTabs from './SegmentedTabs'
-import { useState, useEffect, useRef } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { fetchActivitiesPage, DEFAULT_ACTIVITIES_PAGE_SIZE } from '../lib/activityPagination'
 import Link from 'next/link'
@@ -20,6 +21,18 @@ import OnboardingChecklist from './OnboardingChecklist'
 import RecapBanner from './RecapBanner'
 import { withOwnAuthorAvatar } from '../lib/blogFeed'
 import { BLOG_AUTHOR } from '../lib/blog'
+
+// Keeps the feed scope in sync when the URL changes without a remount (menu: "My sessions" / "Following").
+function ScopeUrlSync({ onScope }) {
+  const search = useSearchParams()?.toString() ?? ''
+  const first = useRef(true)
+  useEffect(() => {
+    if (first.current) { first.current = false; return }
+    onScope(scopeFromSearch(search))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
+  return null
+}
 
 export default function Dashboard({ initialActivities = [] }) {
   const [user, setUser] = useState(null)
@@ -191,6 +204,19 @@ export default function Dashboard({ initialActivities = [] }) {
     return () => window.removeEventListener(ACTIVITIES_CHANGED_EVENT, handler)
   })
 
+  const changeScope = (value) => {
+    setScope(value)
+    window.sessionStorage.removeItem(snapshotKey(value))
+    window.history.replaceState(window.history.state, '', feedPath(value))
+    if (value === 'following') {
+      followingInit.current = true
+      reloadFollowingFeed()
+    }
+  }
+  const syncScopeFromUrl = (value) => {
+    if (value !== liveRef.current.scope) changeScope(value)
+  }
+
   liveRef.current = { scope, count: scope === 'following' ? followingActivities.length : activities.length }
 
   // Tab from the URL + saved snapshot (read before the first feed load so depth is restored).
@@ -267,6 +293,7 @@ export default function Dashboard({ initialActivities = [] }) {
         <OnboardingChecklist />
         <RecapBanner />
 
+        <Suspense fallback={null}><ScopeUrlSync onScope={syncScopeFromUrl} /></Suspense>
         {/* Feed scope */}
         <SegmentedTabs
           label="Feed scope"
@@ -275,15 +302,7 @@ export default function Dashboard({ initialActivities = [] }) {
             ['following', 'Following'],
           ]}
           value={scope}
-          onChange={(value) => {
-            setScope(value)
-            window.sessionStorage.removeItem(snapshotKey(value))
-            window.history.replaceState(window.history.state, '', feedPath(value))
-            if (value === 'following') {
-              followingInit.current = true
-              reloadFollowingFeed()
-            }
-          }}
+          onChange={changeScope}
         />
 
         {scope === 'mine' ? (

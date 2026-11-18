@@ -10,8 +10,8 @@
 
 **Notification links** (`notificationHref` in `src/lib/notifications.js`, computed client-side, so old rows work too):
 `follow_request` → `/riders?tab=following#follow-requests`; `new_follower`/`follow_approved` → the rider's profile;
-`coach_invite`/`coach_request`/`coach_accepted`/`coach_ended`/`coach_replaced` → `/settings#coaching`; `coach_edited` →
-`/settings#physiology`. Both target pages scroll to the section and say so when the request is no longer pending.
+`coach_invite`/`coach_request`/`coach_accepted`/`coach_ended`/`coach_replaced` → `/settings/coaching`; `coach_edited` →
+`/settings/physiology`. Both target pages scroll to the section and say so when the request is no longer pending.
 Comment notifications (`activity_comment`, `comment_mention`) for the athlete's coach link into `/coach/<rider>/activities/<id>#comments`
 and read as coaching context ("ann (your athlete) commented on their activity", "ann commented on Bob's activity"), never
 "an activity you follow"; the notification email uses the same wording (`withCoachContext` in `src/lib/notificationEmail.js`).
@@ -77,17 +77,18 @@ Context is URL based, never stored (`src/lib/coachContext.js` parses/builds the 
 | `/coach/<id>/physiology` | The four history panels + gear defaults, editable by the coach |
 
 - `app/coach/[riderId]/layout.js` checks `get_athlete_profile` (which only answers for an active coach), shows the
-  persistent indigo banner "Coaching: <Name> - Exit" and the athlete tab bar; anyone else sees "not coaching".
+  persistent banner "Coaching: <Name> - Exit"; anyone else sees "not coaching". There is no in-page tab bar: the athlete pages live in the menu.
 - The top-right user menu has a "Viewing as" section (Me + athletes, only when the user has athletes).
-- In athlete context (`/coach/<id>/...`) the sidebar/mobile drawer shows ONLY athlete pages (Overview, Activities, Calendar,
-  Personal Bests, Templates, Physiology) plus "Coach dashboard" (`sidebarItems`). The coach's own pages are hidden: telemetry,
+- In athlete context (`/coach/<id>/...`) the sidebar/mobile drawer shows ONLY a "Viewing <name>" group (Overview, Activities, Calendar,
+  Fitness, Personal Bests, Templates, Physiology, Lab with its features as sub-items, Notes with the coach module), Messages and
+  "Coach dashboard" (`buildAthleteTree` in `coachContext.js`). The mobile bottom bar shows Overview, Activities, Calendar and Menu. The coach's own pages are hidden: telemetry,
   tools, About/Feedback, own settings, search, Add/Sync, notifications bell, footer links, admin link (`chromeVisibility`).
   Leaving is always explicit: banner "Exit" / "Coach dashboard", and the user menu "Viewing as" (Me / athletes / Coach dashboard).
   In-page links of reused components (calendar chips, activity detail back link, template runs, curve tooltips) keep the
   context via `contextualHref` / `activityBackHref`. The Coach/Rider toggle was removed.
 - Rider side: history rows and the "Gear defaults" heading show a "Set by coach <name> - date" badge
   (`CoachBadge`), settings lists the audit trail ("Coach changes"), and the `coach_edited` notification links to
-  `/settings#physiology`.
+  `/settings/physiology`.
 - All of this is convenience only; every write is checked by RLS / SECURITY DEFINER functions (see above).
 
 Choices made: "weekly volume" is the last 7 days; PBs/templates are read-only in athlete context; activity detail

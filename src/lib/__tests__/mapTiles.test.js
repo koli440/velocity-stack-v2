@@ -13,6 +13,7 @@ describe('mapTiles', () => {
   it('falls back to OSM without a key', () => {
     const t = mapTiles({ key: '' })
     assert.match(t.url, /tile\.openstreetmap\.org/)
-    assert.equal(t.tileSize, undefined)
+    assert.equal(t.tileSize, 256)
+    assert.equal(t.zoomOffset, 0)
   })
 })

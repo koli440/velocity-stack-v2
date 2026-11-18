@@ -102,9 +102,9 @@ test('every notification type resolves to a sensible link (or none)', () => {
   assert.equal(href({ type: 'follow_approved', actor_id: 'a1' }), '/riders/a1')
   assert.equal(href({ type: 'new_follower', actor_id: null }), null)
   for (const type of ['coach_invite', 'coach_request', 'coach_accepted', 'coach_ended', 'coach_replaced']) {
-    assert.equal(href({ type }), '/settings#coaching', type)
+    assert.equal(href({ type }), '/settings/coaching', type)
   }
-  assert.equal(href({ type: 'coach_edited' }), '/settings#physiology')
+  assert.equal(href({ type: 'coach_edited' }), '/settings/physiology')
   assert.equal(href({ type: 'suggestion_submitted', suggestion_id: 's1' }), '/admin/suggestions/s1')
   assert.equal(href({ type: 'suggestion_submitted' }), null)
   assert.equal(href({ type: 'suggestion_approved', suggestion_id: 's1' }), null)

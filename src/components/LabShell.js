@@ -35,25 +35,10 @@ export default function LabShell({ riderId = null, feature = null }) {
     <AdminPage
       title={active ? active.label : 'Lab'}
       description={active ? active.desc : 'Field tests, thresholds and reports for your training.'}
-      back={active ? { href: base, label: 'All lab tools' } : null}
+      crumbs={[{ label: 'Lab', href: active ? base : undefined }, ...(active ? [{ label: active.label }] : [])]}
       width="max-w-4xl"
     >
       <div className="space-y-5" data-testid="lab-shell">
-        <nav aria-label="Lab tools" className="-mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto">
-          <ul className="flex gap-2 w-max sm:w-auto sm:flex-wrap pb-1">
-            {LAB_FEATURES.map((f) => {
-              const on = active?.key === f.key
-              return (
-                <li key={f.key}>
-                  <Link href={`${base}/${f.key}`} aria-current={on ? 'page' : undefined}
-                    className={`inline-flex items-center min-h-[44px] lg:min-h-[40px] px-4 rounded-xl text-sm font-bold border whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${on ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 hover:border-orange-500'}`}>
-                    {f.label}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
         {Feature ? (
           <Feature athleteId={athleteId} viewerId={viewerId} riderId={riderId} />
         ) : (

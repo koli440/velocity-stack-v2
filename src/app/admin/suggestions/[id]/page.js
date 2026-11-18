@@ -66,7 +66,6 @@ export default function SuggestionReviewPage({ params }) {
   return (
     <AdminPage
       title={`${target?.label || s.entity_type}: ${s.target_id ? 'proposed edit' : 'proposed new entry'}`}
-      back={{ href: '/admin/suggestions', label: 'All suggestions' }}
       description="Changed fields are highlighted."
       actions={<StatusBadge status={s.status} label={STATUS_LABELS[s.status]} />}
     >

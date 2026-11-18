@@ -35,7 +35,7 @@ test('home is only active on exactly /', () => {
 })
 
 test('privacy zone lives in settings, not on the dashboard', () => {
-  const page = readFileSync(new URL('../../app/settings/page.js', import.meta.url), 'utf8')
+  const page = readFileSync(new URL('../../app/settings/privacy/page.js', import.meta.url), 'utf8')
   assert.match(page, /<PrivacyZonePanel/)
   assert.doesNotMatch(read('Dashboard.js'), /PrivacyZonePanel/)
 })

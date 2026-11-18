@@ -110,7 +110,7 @@ test('billing labels, errors and notifications', () => {
   assert.match(describeNotification({ type: 'payment_failed', actor_nickname: 'Sam' }), /failed/)
   assert.equal(notificationHref({ type: 'subscription_started' }), '/payments')
   assert.match(describeNotification({ type: 'payment_requested', actor_nickname: 'Sam' }), /pay for your plan/)
-  assert.equal(notificationHref({ type: 'payment_requested' }), '/settings#coaching')
+  assert.equal(notificationHref({ type: 'payment_requested' }), '/settings/coaching')
 })
 
 test('direct charges: Stripe-Account header on connected-account calls', async () => {

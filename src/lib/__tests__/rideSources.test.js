@@ -40,7 +40,8 @@ test('onboarding points at the connections page in priority order', () => {
 test('connections page renders cards from the registry and settings links to it', () => {
   const page = fs.readFileSync(new URL('../../components/ConnectionsPage.js', import.meta.url), 'utf8')
   assert.match(page, /RIDE_SOURCES\.map/)
+  const nav = fs.readFileSync(new URL('../navigation.js', import.meta.url), 'utf8')
+  assert.match(nav, /href: '\/connections'/)
   const settings = fs.readFileSync(new URL('../../app/settings/page.js', import.meta.url), 'utf8')
-  assert.match(settings, /href="\/connections"/)
   assert.doesNotMatch(settings, /ConnectionsPanel/)
 })

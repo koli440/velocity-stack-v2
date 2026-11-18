@@ -27,7 +27,7 @@ This short tour takes about a minute. You can skip it now and reopen it any time
     id: 'physiology',
     title: 'Set your FTP and weight',
     body: `FTP and weight drive power zones, intensity, load and every W/kg figure. Add them in **Settings**, with the date they apply from. Each ride keeps the values that were valid on its day, so history stays correct when they change.`,
-    links: [{ label: 'Open settings', href: '/settings' }],
+    links: [{ label: 'Open settings', href: '/settings/physiology' }],
   },
   {
     id: 'features',
@@ -78,7 +78,7 @@ recovery 90sec @ <150W
 - A coach can read your data and edit your FTP, weight and training settings. Changes are labelled **set by coach**, and you are notified.
 - Coaches can plan workouts and races on your calendar and follow your fitness and training load.
 - You can end coaching at any time.`,
-    links: [{ label: 'Coaching settings', href: '/settings' }],
+    links: [{ label: 'Coaching settings', href: '/settings/coaching' }],
   },
   {
     id: 'privacy',
@@ -90,7 +90,7 @@ recovery 90sec @ <150W
 - Coaches can see your data only while coaching is active.
 
 Install Velocity Stack as an app (add it to your Home Screen on iPhone) and turn on **pop-up notifications** in Settings to be told about followers, comments and coaching, even when the app is closed.`,
-    links: [{ label: 'Open settings', href: '/settings' }],
+    links: [{ label: 'Open settings', href: '/settings/privacy' }],
   },
 ]
 
@@ -98,10 +98,10 @@ Install Velocity Stack as an app (add it to your Home Screen on iPhone) and turn
 export const CHECKLIST_ITEMS = [
   { id: 'source', label: 'Connect a data source', hint: 'Garmin, Wahoo, SRM, Intervals.icu or Strava', href: '/connections', done: (f) => f.hasConnection },
   { id: 'ride', label: 'Import your first ride', hint: 'Sync, or upload a FIT file', href: '/', done: (f) => f.activityCount > 0 },
-  { id: 'ftp', label: 'Set your FTP', hint: 'Drives zones and intensity', href: '/settings#physiology', done: (f) => f.hasFtp },
-  { id: 'weight', label: 'Set your weight', hint: 'Drives every W/kg figure', href: '/settings#physiology', done: (f) => f.hasWeight },
+  { id: 'ftp', label: 'Set your FTP', hint: 'Drives zones and intensity', href: '/settings/physiology', done: (f) => f.hasFtp },
+  { id: 'weight', label: 'Set your weight', hint: 'Drives every W/kg figure', href: '/settings/physiology', done: (f) => f.hasWeight },
   { id: 'template', label: 'Run a template on a ride', hint: 'Open a ride and pick a template', href: '/templates', done: (f) => f.templateRunCount > 0 },
-  { id: 'privacy', label: 'Review your privacy zone', hint: 'Mask the area around home', href: '/settings', done: (f) => f.hasPrivacyZone },
+  { id: 'privacy', label: 'Review your privacy zone', hint: 'Mask the area around home', href: '/settings/privacy', done: (f) => f.hasPrivacyZone },
 ]
 
 export const EMPTY_FACTS = {

@@ -43,7 +43,7 @@ export default function ApplicationPage() {
   }
   const pending = app.relationship_status === 'pending'
   return (
-    <AdminPage title={`Application from ${app.rider_name}`} back={{ href: '/coach', label: 'Coach dashboard' }} width="max-w-2xl">
+    <AdminPage title={`Application from ${app.rider_name}`} crumbs={[{ label: 'Coach dashboard', href: '/coach' }, { label: 'Application' }]} width="max-w-2xl">
       <div className="space-y-4" data-testid="application-page">
         {healthFlag(app.health) && <ErrorNote>At least one PAR-Q answer is YES: consider asking for medical clearance.</ErrorNote>}
         <ApplicationView answers={app.answers} health={app.health} healthDeclined={app.health_declined} minor={app.minor} coachAnswers={app.coach_answers} questions={app.questions} />

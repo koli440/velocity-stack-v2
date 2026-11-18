@@ -42,7 +42,7 @@ export function buildNotificationEmail(notification, actor, origin) {
   const message = describeNotification(notification, actor ? { display_name: profileName(actor) } : null)
   const path = notificationHref(notification) || '/'
   const url = `${origin.replace(/\/$/, '')}${path}`
-  const settings = `${origin.replace(/\/$/, '')}/settings`
+  const settings = `${origin.replace(/\/$/, '')}/settings/preferences`
   return {
     subject: `Velocity Stack: ${message}`,
     text: `${message}\n\nOpen it: ${url}\n\nTurn off these emails in ${settings}`,

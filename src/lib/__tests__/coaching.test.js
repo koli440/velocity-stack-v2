@@ -83,7 +83,7 @@ test('coaching notifications are described and link to settings when actionable'
   assert.match(describeNotification({ type: 'coach_replaced' }, actor), /no longer have access/)
   assert.match(describeNotification({ type: 'coach_ended' }, actor), /ended/)
   assert.match(describeNotification({ type: 'coach_accepted' }, actor), /accepted/)
-  assert.equal(notificationHref({ type: 'coach_invite' }), '/settings#coaching')
+  assert.equal(notificationHref({ type: 'coach_invite' }), '/settings/coaching')
   assert.equal(notificationHref({ type: 'new_follower' }), null)
 })
 

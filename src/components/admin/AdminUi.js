@@ -1,6 +1,7 @@
 'use client'
 
 // Shared building blocks for admin sub-pages: header, cards, buttons, badges, states.
+import PageBreadcrumb from '../PageBreadcrumb'
 import Link from 'next/link'
 import Icon from '../Icon'
 
@@ -36,10 +37,11 @@ export function StatusBadge({ status, label }) {
   )
 }
 
-export function AdminPage({ title, description, back = { href: '/admin', label: 'Admin dashboard' }, width = 'max-w-4xl', actions, children }) {
+export function AdminPage({ title, description, back = null, crumbs = null, width = 'max-w-4xl', actions, children }) {
   return (
     <div className={`${width} mx-auto p-4 sm:p-6 space-y-5`}>
       <header className="space-y-2">
+        {crumbs && <PageBreadcrumb items={crumbs} />}
         {back && (
           <Link href={back.href} className="inline-flex items-center gap-1 min-h-[44px] lg:min-h-0 text-sm font-bold text-orange-700 dark:text-orange-400 hover:underline">
             <Icon name="chevronLeft" /> {back.label}

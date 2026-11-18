@@ -11,7 +11,7 @@ export default function CoachPlansPage() {
   useEffect(() => { fetchMyCoachPlan(supabase).then((r) => setState({ loading: false, ...r })) }, [])
   const { plan } = state
   return (
-    <AdminPage title="Plans" description="How many athletes you can coach. Free during early access." back={{ href: '/coach', label: 'Coach dashboard' }} width="max-w-3xl">
+    <AdminPage title="Plans" description="How many athletes you can coach. Free during early access." crumbs={[{ label: 'Coach dashboard', href: '/coach' }, { label: 'Plans' }]} width="max-w-3xl">
       <div className="space-y-4" data-testid="coach-plans">
         {state.loading && <p className={`text-sm ${adminMuted}`} role="status">Loading…</p>}
         {state.error && <ErrorNote>Plans are not available for your account yet.</ErrorNote>}

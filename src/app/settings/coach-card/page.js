@@ -91,7 +91,7 @@ export default function CoachCardSettingsPage() {
   }
 
   return (
-    <AdminPage title="Coach card" description="Your public coaching profile: how athletes find you and what you offer." back={{ href: '/settings', label: 'Settings' }} width="max-w-2xl">
+    <AdminPage title="Coach card" description="Your public coaching profile: how athletes find you and what you offer." crumbs={[{ label: 'Settings', href: '/settings' }, { label: 'Coach card' }]} width="max-w-2xl">
       {msg && (msg.error ? <ErrorNote>{msg.text}</ErrorNote> : <StatusNote>{msg.text}</StatusNote>)}
       <form onSubmit={save} className="space-y-5">
         <section className={`${adminCard} space-y-4`}>

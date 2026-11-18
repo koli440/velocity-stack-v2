@@ -56,7 +56,7 @@ export default function PaymentsPage() {
   }, [router])
   const { rider, coach, profiles } = state
   return (
-    <AdminPage title="Payments" description="Who you pay and who pays you for coaching. Card details are never shown here." back={{ href: '/settings', label: 'Settings' }} width="max-w-4xl">
+    <AdminPage title="Payments" description="Who you pay and who pays you for coaching. Card details are never shown here." crumbs={[{ label: 'Settings', href: '/settings' }, { label: 'Payments' }]} width="max-w-4xl">
       <div className="space-y-4" data-testid="payments-page">
         {state.loading && <p className={`text-sm ${adminMuted}`} role="status">Loading…</p>}
         {state.error && <ErrorNote>Could not load payments.</ErrorNote>}

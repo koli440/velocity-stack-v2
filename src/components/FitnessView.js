@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Icon from './Icon'
+import SegmentedTabs from './SegmentedTabs'
 import FitnessChart, { FITNESS_COLORS } from './FitnessChart'
 import { Metric, FitnessNotes, FITNESS_HELP } from './FitnessCard'
 import { useFitnessData } from './useFitnessData'
@@ -51,41 +52,11 @@ export default function FitnessView({ userId, coach = false }) {
         <Icon name="chart" /> Fitness, fatigue &amp; form
       </h1>
       <section className="glass-dense rounded-2xl bg-white dark:bg-surface-darkCard border border-slate-200 dark:border-surface-darkBorder p-4 space-y-4">
-        <div role="group" aria-label="Forecast horizon" className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Forecast from planned workouts</span>
-          {[{ key: 'off', label: 'Off' }, ...PROJECTION_HORIZONS].map((h) => (
-            <button
-              key={h.key}
-              type="button"
-              aria-pressed={h.key === horizonKey}
-              onClick={() => setHorizonKey(h.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${
-                h.key === horizonKey
-                  ? 'bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-brand-neon'
-                  : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-              }`}
-            >
-              {h.label}
-            </button>
-          ))}
+          <SegmentedTabs label="Forecast horizon" tabs={[['off', 'Off'], ...PROJECTION_HORIZONS.map((h) => [h.key, h.label])]} value={horizonKey} onChange={setHorizonKey} />
         </div>
-        <div role="group" aria-label="Chart range" className="flex flex-wrap gap-2">
-          {FITNESS_RANGES.map((r) => (
-            <button
-              key={r.key}
-              type="button"
-              aria-pressed={r.key === rangeKey}
-              onClick={() => setRangeKey(r.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${
-                r.key === rangeKey
-                  ? 'bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-brand-neon'
-                  : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs label="Chart range" tabs={FITNESS_RANGES.map((r) => [r.key, r.label])} value={rangeKey} onChange={setRangeKey} />
 
         {loading ? (
           <div role="status" aria-label="Loading fitness" className="h-72 rounded-xl bg-slate-100 dark:bg-white/5 animate-pulse" />

@@ -70,7 +70,7 @@ export default function CoachingButtons({ userId, rider }) {
         </button>
       )}
       {(actions.accept || actions.decline) && (
-        <Link href="/settings#coaching" className={primary}>Respond in Settings</Link>
+        <Link href="/settings/coaching" className={primary}>Respond in Settings</Link>
       )}
       {actions.cancel && state.id && (
         <button type="button" disabled={busy} className={quiet} onClick={() => run(() => endCoaching(supabase, state.id))}>

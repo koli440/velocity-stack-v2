@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Portal from './Portal'
-import { NAV_ITEMS, NAV_LOCKED_LABEL, isNavItemLocked } from '../lib/navigation'
-import { parseCoachPath, sidebarItems, isSidebarItemActive, isContextNavActive, navHref, logoHref, chromeVisibility } from '../lib/coachContext'
+import { buildNavTree } from '../lib/navigation'
+import { parseCoachPath, buildAthleteTree, logoHref, chromeVisibility } from '../lib/coachContext'
 import Icon from './Icon'
 import { supabase } from '../lib/supabase'
-import { fetchThreads, totalUnread } from '../lib/coachChat'
+import { totalUnread } from '../lib/coachChat'
+import NavTree from './NavTree'
+import useNavThreads from './useNavThreads'
 import { fetchPaymentOverview } from '../lib/coachBilling'
-import { loginHref } from '../lib/signupCatch'
+import { fetchAthleteProfile } from '../lib/coaching'
 import { useCoachModule } from './useCoachModule'
 
 export default function Sidebar({
@@ -22,13 +24,7 @@ export default function Sidebar({
   const pathname = usePathname()
   const { riderId } = parseCoachPath(pathname)
   const moduleEnabled = useCoachModule()
-  const [threads, setThreads] = useState([])
-  useEffect(() => {
-    if (!signedIn) return setThreads([])
-    let cancelled = false
-    fetchThreads(supabase).then(({ threads: t, error }) => { if (!cancelled) setThreads(error ? [] : t) })
-    return () => { cancelled = true }
-  }, [signedIn, pathname])
+  const threads = useNavThreads(signedIn)
   const [hasPayments, setHasPayments] = useState(false)
   useEffect(() => {
     if (!signedIn) return setHasPayments(false)
@@ -37,20 +33,21 @@ export default function Sidebar({
     return () => { cancelled = true }
   }, [signedIn])
   const unread = totalUnread(threads)
-  const items = sidebarItems(NAV_ITEMS, riderId, moduleEnabled, threads.length > 0, signedIn, threads, hasPayments)
+  const [athleteName, setAthleteName] = useState(null)
+  useEffect(() => {
+    setAthleteName(null)
+    if (!riderId) return
+    let cancelled = false
+    fetchAthleteProfile(supabase, riderId).then(({ athlete }) => { if (!cancelled) setAthleteName(athlete?.display_name || null) })
+    return () => { cancelled = true }
+  }, [riderId])
+  const tree = riderId ? buildAthleteTree(riderId, athleteName, moduleEnabled, threads) : buildNavTree({ signedIn, isAdmin: isAdmin && chromeVisibility(riderId).adminLink, moduleEnabled, threads, hasPayments })
   const chrome = chromeVisibility(riderId)
 
   const handleNavigate = (path) => {
     router.push(path)
     if (onClose) onClose() // close the mobile drawer after clicking
   }
-
-  const navItemClass = (active) =>
-    `w-full text-left flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
-      active
-        ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-brand-neon font-bold'
-        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'
-    }`
 
   // Close the drawer on navigation and on Escape.
   useEffect(() => {
@@ -92,46 +89,8 @@ export default function Sidebar({
             )}
           </div>
 
-          {/* Navigation */}
-          <nav className="space-y-1">
-            {items.map((item) => {
-              const locked = isNavItemLocked(item, signedIn)
-              if (locked) {
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => handleNavigate(loginHref(item.href))}
-                    title={NAV_LOCKED_LABEL}
-                    aria-label={`${item.label} (${NAV_LOCKED_LABEL})`}
-                    className={`${navItemClass(false)} opacity-60`}
-                  >
-                    <Icon name={item.icon} size={18} /> <span className="flex-1">{item.label}</span>
-                    <Icon name="lock" size={14} />
-                  </button>
-                )
-              }
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => handleNavigate(riderId ? item.href : navHref(item, riderId))}
-                  className={navItemClass(riderId ? isSidebarItemActive(item, pathname) : isContextNavActive(item, pathname, riderId))}
-                >
-                  <Icon name={item.icon} size={18} /> <span className="flex-1">{item.label}</span>
-                  {item.key === 'messages' && unread > 0 && (
-                    <span data-testid="sidebar-unread" className="rounded-full bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5" aria-label={`${unread} unread`}>{unread}</span>
-                  )}
-                </button>
-              )
-            })}
-            {signedIn && isAdmin && chrome.adminLink && (
-              <button
-                onClick={() => handleNavigate('/admin')}
-                className={navItemClass(pathname === '/admin' || pathname?.startsWith('/admin/'))}
-              >
-                <Icon name="check" size={18} /> Admin
-              </button>
-            )}
-          </nav>
+          {/* Navigation: grouped tree (the athlete tree in athlete context) */}
+          <NavTree tree={tree} pathname={pathname} signedIn={signedIn} unread={unread} touch={mobile} onNavigate={mobile ? onClose : undefined} />
         </div>
   )
 

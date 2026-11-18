@@ -1,12 +1,12 @@
 import { noindex } from '../../lib/seo'
-import AdminNav from '../../components/AdminNav'
+import { PathBreadcrumb } from '../../components/PageBreadcrumb'
 
 export const metadata = noindex('Admin')
 
 export default function Layout({ children }) {
   return (
     <>
-      <AdminNav />
+      <PathBreadcrumb className="max-w-6xl mx-auto px-4 sm:px-6 pt-4" />
       {children}
     </>
   )

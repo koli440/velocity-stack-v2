@@ -9,6 +9,7 @@ import { trackOAuthSignUpOnce } from '../lib/signupTracking'
 import { fetchTracks } from '../lib/lookups'
 import Sidebar from './Sidebar'
 import TopNav from './TopNav'
+import BottomNav, { showsBottomNav, BOTTOM_NAV_PAD } from './BottomNav'
 import Footer from './Footer'
 import AppBackground from './AppBackground'
 import OnboardingProvider from './OnboardingProvider'
@@ -199,7 +200,7 @@ export default function AppShell({ children }) {
       />
 
       {/* 2. Main application body */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0 ${showsBottomNav(!!user) ? BOTTOM_NAV_PAD : ''}`}>
         <TopNav
           user={user}
           profile={profile}
@@ -216,6 +217,7 @@ export default function AppShell({ children }) {
         {/* 3. Global footer */}
         <Footer />
       </div>
+      <BottomNav signedIn={!!user} onOpenMenu={() => setMobileMenuOpen(true)} />
     </div>
     </OnboardingProvider>
     </AuthStateContext.Provider>

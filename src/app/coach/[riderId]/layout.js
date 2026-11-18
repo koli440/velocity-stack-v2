@@ -7,13 +7,12 @@ import { supabase } from '../../../lib/supabase'
 import { chatPath } from '../../../lib/coachChat'
 import { fetchAthleteProfile } from '../../../lib/coaching'
 import { AthleteContext } from '../../../components/AthleteContext'
-import { useCoachModule } from '../../../components/useCoachModule'
 import Icon from '../../../components/Icon'
 import { adminBtn, adminCard } from '../../../components/admin/AdminUi'
-import { athletePages, athletePath, bannerText, parseCoachPath, rendersBeforeAthleteLoaded } from '../../../lib/coachContext'
+import { bannerText, parseCoachPath, rendersBeforeAthleteLoaded } from '../../../lib/coachContext'
 
 // Wraps every athlete page: verifies (via the database) that the viewer actively coaches the
-// rider, shows the persistent "Coaching: <Name> - Exit" banner and the athlete tab bar.
+// rider, shows the persistent "Coaching: <Name> - Exit" banner (athlete pages live in the menu).
 export default function AthleteLayout({ children }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -23,7 +22,6 @@ export default function AthleteLayout({ children }) {
   const [athlete, setAthlete] = useState(null)
   const [relationshipId, setRelationshipId] = useState(null)
   const [state, setState] = useState('loading') // loading | ok | denied
-  const moduleEnabled = useCoachModule()
 
   useEffect(() => {
     if (!riderId) return setState('denied')
@@ -47,13 +45,6 @@ export default function AthleteLayout({ children }) {
       cancelled = true
     }
   }, [riderId, router])
-
-  const tabClass = (active) =>
-    `inline-flex items-center min-h-[44px] lg:min-h-[40px] px-4 rounded-xl text-sm font-bold border whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 transition ${
-      active
-        ? 'bg-orange-500 border-orange-500 text-white'
-        : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 hover:border-orange-500'
-    }`
 
   if (state === 'denied') {
     return (
@@ -90,17 +81,6 @@ export default function AthleteLayout({ children }) {
           </Link>
         </span>
       </div>
-      <nav className="-mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto" aria-label="Athlete sections"><div className="flex gap-2 w-max sm:w-auto sm:flex-wrap pb-1">
-        {athletePages(moduleEnabled).map((p) => {
-          const href = athletePath(riderId, p.sub)
-          const active = p.sub ? pathname === href || pathname.startsWith(`${href}/`) : pathname === href
-          return (
-            <Link key={p.key} href={href} className={tabClass(active)}>
-              {p.label}
-            </Link>
-          )
-        })}
-      </div></nav>
       {state === 'ok' || (state === 'loading' && rendersBeforeAthleteLoaded(subPath)) ? children : <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Loading…</p>}
     </AthleteContext.Provider>
   )
