@@ -1,5 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import {
   parseCoachPath,
   athletePath,
@@ -148,4 +149,13 @@ test('lab sections: every feature has one, unsectioned ones go under Other', () 
   assert.deepEqual(labSections().map((s) => s.label), ['Tests', 'Analysis', 'Data'])
   const s = labSections([{ key: 'x', label: 'X' }, { key: 'y', label: 'Y', section: 'Data' }])
   assert.deepEqual(s.map((g) => g.label), ['Data', 'Other'])
+})
+
+test('athlete layout resolves the thread through chat_threads_summary, not the unreadable relationships table', () => {
+  const src = readFileSync(new URL('../../app/coach/[riderId]/layout.js', import.meta.url), 'utf8')
+  assert.doesNotMatch(src, /from\('coaching_relationships'\)/)
+  assert.match(src, /fetchThreads\(supabase\)/)
+  assert.match(src, /athleteThread\(threads, riderId\)/)
+  const active = { id: 'rel-1', role: 'coach', other_id: RID, status: 'active' }
+  assert.equal(c.athleteThread([{ ...active, id: 'x', role: 'rider' }, active], RID).id, 'rel-1')
 })
