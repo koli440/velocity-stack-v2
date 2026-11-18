@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { loadPublishedPosts } from '../../lib/server/blogContent'
-import { BLOG_PATH, BLOG_TITLE, BLOG_DESCRIPTION, formatPostDate, breadcrumbJsonLd } from '../../lib/blog'
+import { BLOG_PATH, BLOG_TITLE, BLOG_DESCRIPTION, formatPostDate, instantIso, breadcrumbJsonLd } from '../../lib/blog'
 import { jsonLdString } from '../../lib/trackLanding'
 import { TagList } from '../../components/blog/BlogBody'
 
@@ -33,7 +33,7 @@ export default function BlogIndexPage() {
           {posts.map((p) => (
             <li key={p.slug} className="py-6 first:pt-0">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                <time dateTime={p.date}>{formatPostDate(p.date)}</time> · {p.minutes} min read
+                <time dateTime={instantIso(p.date)}>{formatPostDate(p.date)}</time> · {p.minutes} min read
               </p>
               <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
                 <Link href={`${BLOG_PATH}/${p.slug}`} className="hover:underline">

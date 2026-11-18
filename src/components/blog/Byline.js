@@ -1,5 +1,5 @@
 import Avatar from '../Avatar'
-import { BLOG_AUTHOR, formatPostDate } from '../../lib/blog'
+import { BLOG_AUTHOR, formatPostDate, instantIso } from '../../lib/blog'
 
 export default function Byline({ avatarUrl, date, updated, minutes }) {
   return (
@@ -10,8 +10,8 @@ export default function Byline({ avatarUrl, date, updated, minutes }) {
           Written by <span className="font-bold text-slate-900 dark:text-white">{BLOG_AUTHOR.name}</span>, who {BLOG_AUTHOR.bio}
         </p>
         <p className="text-xs">
-          <time dateTime={date}>{formatPostDate(date)}</time>
-          {updated && updated !== date && <> · updated <time dateTime={updated}>{formatPostDate(updated)}</time></>}
+          <time dateTime={instantIso(date)}>{formatPostDate(date)}</time>
+          {updated && formatPostDate(updated) !== formatPostDate(date) && <> · updated <time dateTime={instantIso(updated)}>{formatPostDate(updated)}</time></>}
           {minutes ? <> · {minutes} min read</> : null}
         </p>
       </div>

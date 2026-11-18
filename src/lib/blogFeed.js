@@ -2,8 +2,10 @@
 // Pure merge logic: cards are placed by their publish date among the loaded activities and never touch the
 // activity list itself (counts, pagination, filters stay exactly as they were).
 
-// A post counts as published at midday UTC of its date, so it sits among that day's activities rather than at an edge.
-export const cardTime = (card) => Date.parse(`${card.date}T12:00:00Z`)
+import { isRealDateTime } from './blog.js'
+
+// A date-only post sits at midday UTC of its date (a timestamp post at its exact instant), so it sits among that day's activities rather than at an edge.
+export const cardTime = (card) => (isRealDateTime(card?.date) ? Date.parse(card.date) : Date.parse(`${card?.date}T12:00:00Z`))
 
 const activityTime = (act) => {
   const t = Date.parse(act?.activity_date || act?.created_at || '')

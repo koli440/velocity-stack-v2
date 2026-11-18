@@ -34,16 +34,40 @@ export function isRealDate(s) {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s
 }
 
+const DATETIME_RE = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+
+/** A full ISO timestamp with an explicit offset, e.g. 2026-11-19T08:00:00Z. */
+export function isRealDateTime(s) {
+  const m = DATETIME_RE.exec(s || '')
+  return !!m && isRealDate(m[1]) && +m[2] < 24 && +m[3] < 60 && (m[4] === undefined || +m[4] < 60) && !Number.isNaN(Date.parse(s))
+}
+
+/** Front matter `date`: date-only or a full timestamp with offset. */
+export const isPostDate = (s) => isRealDate(s) || isRealDateTime(s)
+
+/** Instant (ms) a date value stands for: a date-only value is 00:00 UTC, a timestamp is exact. NaN when invalid. */
+export const instantMs = (date) => (isRealDate(date) ? Date.parse(`${date}T00:00:00Z`) : isRealDateTime(date) ? Date.parse(date) : NaN)
+
+/** Machine-readable date for JSON-LD, Open Graph and <time>: date-only stays as written, a timestamp becomes UTC ISO. */
+export const instantIso = (date) => {
+  if (isRealDate(date)) return date
+  const ms = instantMs(date)
+  return Number.isNaN(ms) ? '' : new Date(ms).toISOString()
+}
+
 export const todayUtc = (now = new Date()) => new Date(now).toISOString().slice(0, 10)
 
-/** A post is public from 00:00 UTC on its date. Future-dated posts are hidden everywhere until then. */
-export const isPublished = (post, now = new Date()) => !!post && post.date <= todayUtc(now)
+/** A date-only post is public from 00:00 UTC on that day; a timestamp post at that exact instant. Hidden everywhere until then. */
+export const isPublished = (post, now = new Date()) => !!post && instantMs(post.date) <= new Date(now).getTime()
 
 export const publishedPosts = (posts, now = new Date()) => posts.filter((p) => isPublished(p, now))
 
 /** Newest first; the slug breaks ties so the order is stable. */
 export function sortPostsNewestFirst(posts) {
-  return [...posts].sort((a, b) => (a.date === b.date ? (a.slug < b.slug ? 1 : -1) : a.date < b.date ? 1 : -1))
+  return [...posts].sort((a, b) => {
+    const d = instantMs(b.date) - instantMs(a.date)
+    return d || (a.slug < b.slug ? 1 : -1)
+  })
 }
 
 export function wordCount(text) {
@@ -64,8 +88,8 @@ export function parseBlogPost(raw, slug) {
   }
   if (!SLUG_RE.test(slug || '')) fail('file name must be a lowercase slug (letters, digits, hyphens)')
   if (!data.title || data.title.length > 110) fail('title is required (max 110 characters)')
-  if (!isRealDate(data.date || '')) fail('date must be a real YYYY-MM-DD date')
-  if (data.updated && (!isRealDate(data.updated) || data.updated < data.date)) fail('updated must be a real YYYY-MM-DD date on or after date')
+  if (!isPostDate(data.date || '')) fail('date must be a real YYYY-MM-DD date or a full timestamp like 2026-11-19T08:00:00Z')
+  if (data.updated && (!isRealDate(data.updated) || data.updated < data.date.slice(0, 10))) fail('updated must be a real YYYY-MM-DD date on or after date')
   if (!data.summary || data.summary.length > 200) fail('summary is required (max 200 characters)')
   if (!body) fail('body is empty')
   if (/<[a-z/][^>]*>/i.test(body)) fail('HTML is not supported in the body')
@@ -100,9 +124,14 @@ export const postImage = (post) => (post.cover ? { url: post.cover, width: post.
 /** Page <title>: the post title as is when it fits (the site suffix would push it over 60 characters). */
 export const postTitleTag = (post) => truncateWords(post.title, 60)
 
+// A timestamp shows the calendar day where the audience is (Central European Time); a date-only value is shown as written.
+export const POST_TIMEZONE = 'Europe/Berlin'
+
+/** Date only, e.g. "19 November 2026"; never a time. */
 export function formatPostDate(date) {
-  if (!isRealDate(date)) return ''
-  return new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+  const ms = instantMs(date)
+  if (Number.isNaN(ms)) return ''
+  return new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: isRealDate(date) ? 'UTC' : POST_TIMEZONE })
 }
 
 /** h2/h3 headings with stable, unique anchor ids (the same text always gives the same id). */
@@ -119,7 +148,7 @@ export function headingsWithIds(blocks) {
 }
 
 export function renderBlocks(body) {
-  return headingsWithIds(parseMarkdown(body, { images: true }))
+  return headingsWithIds(parseMarkdown(body, { images: true, ordered: true }))
 }
 
 export function tocFor(post) {
@@ -178,8 +207,8 @@ export function blogPostingJsonLd(post, avatarUrl = null) {
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.summary,
-    datePublished: post.date,
-    dateModified: post.updated,
+    datePublished: instantIso(post.date),
+    dateModified: instantIso(post.updated),
     mainEntityOfPage: postCanonical(post),
     url: postUrl(post),
     image: image.url.startsWith('http') ? image.url : `${SITE_URL}${image.url}`,
@@ -214,14 +243,14 @@ const xml = (s) =>
 /** RSS 2.0 for the given (already published-only) posts. */
 export function rssXml(posts) {
   const sorted = sortPostsNewestFirst(posts)
-  const last = sorted[0] ? new Date(`${sorted[0].date}T00:00:00Z`).toUTCString() : new Date(0).toUTCString()
+  const last = sorted[0] ? new Date(instantMs(sorted[0].date)).toUTCString() : new Date(0).toUTCString()
   const items = sorted.map((p) =>
     [
       '    <item>',
       `      <title>${xml(p.title)}</title>`,
       `      <link>${xml(postUrl(p))}</link>`,
       `      <guid isPermaLink="true">${xml(postUrl(p))}</guid>`,
-      `      <pubDate>${new Date(`${p.date}T00:00:00Z`).toUTCString()}</pubDate>`,
+      `      <pubDate>${new Date(instantMs(p.date)).toUTCString()}</pubDate>`,
       `      <description>${xml(p.summary)}</description>`,
       ...p.tags.map((t) => `      <category>${xml(t)}</category>`),
       '    </item>',
