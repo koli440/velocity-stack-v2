@@ -34,7 +34,10 @@ test('coaching, admin and messages are conditional', () => {
   assert.equal(find(buildNavTree({ signedIn: true, isAdmin: true }), 'admin').children.length, ADMIN_LINKS.length)
   assert.ok(!keys(buildNavTree({ signedIn: true, threads: [] })).includes('messages'))
   assert.ok(keys(buildNavTree({ signedIn: true, threads: [th('a', 1)] })).includes('messages'))
-  assert.ok(keys(buildNavTree({ signedIn: true, hasPayments: true })).includes('payments'))
+  assert.ok(!keys(buildNavTree({ signedIn: true, hasPayments: true })).includes('payments'), 'payments is a Settings child')
+  assert.ok(find(buildNavTree({ signedIn: true, hasPayments: true }), 'settings').children.some((c) => c.href === '/payments'))
+  assert.ok(!find(buildNavTree({ signedIn: true }), 'settings').children.some((c) => c.href === '/payments'))
+  assert.equal(activeGroupKey(buildNavTree({ signedIn: true, hasPayments: true }), '/payments'), 'settings')
 })
 
 test('logged-out visitors keep locked items and the public coach directory', () => {
@@ -156,7 +159,10 @@ test('in-page tab strips are gone; pages use the breadcrumb', () => {
   const r = (p) => readFileSync(new URL(p, import.meta.url), 'utf8')
   assert.doesNotMatch(r('../../app/riders/page.js'), /SegmentedTabs/)
   assert.doesNotMatch(r('../../app/admin/layout.js'), /AdminNav/)
-  assert.doesNotMatch(r('../../components/LabShell.js'), /aria-label="Lab tools"/)
+  assert.doesNotMatch(r('../../components/LabShell.js'), /aria-label="Lab tools"|All lab tools/)
+  assert.match(r('../../components/LabShell.js'), /crumbs=\{/)
+  assert.doesNotMatch(r('../../components/admin/AdminUi.js'), /Admin dashboard/)
+  assert.doesNotMatch(r('../../app/admin/suggestions/[id]/page.js'), /All suggestions/)
   assert.doesNotMatch(r('../../app/coach/[riderId]/layout.js'), /Athlete sections/)
   assert.match(r('../../app/templates/page.js'), /<PageBreadcrumb/)
 })

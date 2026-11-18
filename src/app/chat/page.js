@@ -21,7 +21,7 @@ export default function ChatListPage() {
     })()
   }, [router])
   return (
-    <AdminPage title="Messages" description="Conversations with your coach or athletes." back={{ href: '/', label: 'Home' }} width="max-w-2xl">
+    <AdminPage title="Messages" description="Conversations with your coach or athletes." width="max-w-2xl">
       <div data-testid="chat-list" className="space-y-4">
         {state.loading && <p className="text-sm text-slate-600 dark:text-slate-300" role="status">Loading conversations…</p>}
         {state.error && <ErrorNote>Messages are not available for your account yet.</ErrorNote>}

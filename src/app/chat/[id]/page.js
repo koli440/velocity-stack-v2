@@ -9,6 +9,7 @@ import {
   MAX_MESSAGE_LENGTH, reportMessage, sendMessage,
 } from '../../../lib/coachChat'
 import { acceptCoaching, declineCoaching, fetchApplicationLinks } from '../../../lib/coaching'
+import PageBreadcrumb from '../../../components/PageBreadcrumb'
 import Icon from '../../../components/Icon'
 import { ErrorNote, StatusNote, adminBtn, adminCard, adminInput } from '../../../components/admin/AdminUi'
 
@@ -118,9 +119,7 @@ export default function ChatThreadPage() {
   const link = 'inline-flex items-center min-h-[32px] underline underline-offset-2 font-semibold'
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-3 min-h-[calc(100dvh-10rem)]" data-testid="chat-thread">
-      <Link href="/chat" className="inline-flex items-center gap-1 min-h-[44px] text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-orange-600 dark:hover:text-orange-400">
-        <Icon name="chevronLeft" /> Messages
-      </Link>
+      <PageBreadcrumb items={[{ label: 'Messages', href: '/chat' }, { label: thread.other_name || 'Conversation' }]} />
       {messages.length === 0 && <p className="text-sm text-center text-slate-600 dark:text-slate-300 py-8">No messages yet. Start the conversation below.</p>}
       <ul className="flex-1 space-y-3">
         {messages.map((m) => {

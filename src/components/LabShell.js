@@ -15,7 +15,6 @@ import LabDecoupling from './LabDecoupling'
 import LabFieldForms from './LabFieldForms'
 import { LabBikeFit, LabCadence, LabFueling, LabPedalling } from './LabMeasurements'
 import LabReports from './LabReports'
-import PageBreadcrumb from './PageBreadcrumb'
 
 const FEATURE_COMPONENTS = { protocols: LabProtocolRunner, lactate: LabLactateTest, schedule: LabScheduler, profile: LabPowerProfile, durability: LabDurability, decoupling: LabDecoupling, forms: LabFieldForms, fueling: LabFueling, fit: LabBikeFit, pedalling: LabPedalling, cadence: LabCadence, reports: LabReports }
 
@@ -36,11 +35,10 @@ export default function LabShell({ riderId = null, feature = null }) {
     <AdminPage
       title={active ? active.label : 'Lab'}
       description={active ? active.desc : 'Field tests, thresholds and reports for your training.'}
-      back={active ? { href: base, label: 'All lab tools' } : null}
+      crumbs={[{ label: 'Lab', href: active ? base : undefined }, ...(active ? [{ label: active.label }] : [])]}
       width="max-w-4xl"
     >
       <div className="space-y-5" data-testid="lab-shell">
-        <PageBreadcrumb items={[{ label: 'Lab', href: active ? base : undefined }, ...(active ? [{ label: active.label }] : [])]} />
         {Feature ? (
           <Feature athleteId={athleteId} viewerId={viewerId} riderId={riderId} />
         ) : (

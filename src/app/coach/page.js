@@ -107,7 +107,7 @@ export default function CoachDashboardPage() {
   )
 
   return (
-    <AdminPage title="Coach dashboard" description="Your athletes, applications and pending invites." back={null} width="max-w-5xl">
+    <AdminPage title="Coach dashboard" description="Your athletes, applications and pending invites." width="max-w-5xl">
       <div className="space-y-6" data-testid="coach-dashboard">
         <ChatLink />
         <CoachPlanMeter />

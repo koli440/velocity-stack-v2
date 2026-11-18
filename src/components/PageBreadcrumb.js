@@ -36,7 +36,16 @@ function FromPath({ className }) {
   const pathname = usePathname() || ''
   const search = useSearchParams()?.toString() ?? ''
   const tree = buildNavTree({ signedIn: true, isAdmin: true, moduleEnabled: true })
-  return <PageBreadcrumb items={breadcrumbTrail(tree, pathname, search)} className={className} />
+  const items = breadcrumbTrail(tree, pathname, search)
+  // Detail pages (e.g. /admin/suggestions/<id>): the section crumb becomes a link back to its list.
+  const last = items[items.length - 1]
+  if (last && !last.href) {
+    const find = (nodes) => nodes.flatMap((n) => [n, ...find(n.children || [])]).find((n) => n.label === last.label && n.href)
+    const node = find(tree)
+    const path = node?.href.split('?')[0]
+    if (node && path !== pathname) items[items.length - 1] = { ...last, href: node.href }
+  }
+  return <PageBreadcrumb items={items} className={className} />
 }
 
 /** Breadcrumb derived from the current URL and the menu tree (used by the admin layout). */

@@ -74,7 +74,6 @@ export function buildNavTree({ signedIn = true, isAdmin = false, moduleEnabled =
   const tree = [L.home, L.pbVault]
   const messages = messagesNode(threads)
   if (messages) tree.push(messages)
-  if (signedIn && hasPayments) tree.push({ key: 'payments', label: 'Payments', icon: 'notes', href: '/payments' })
 
   tree.push(group('training', 'Training', 'calendar', [L.calendar, L.fitness, L.templates]))
   tree.push(group('lab', 'Lab', 'flask', LAB_MENU_KEYS.map((k) => {
@@ -94,7 +93,7 @@ export function buildNavTree({ signedIn = true, isAdmin = false, moduleEnabled =
     })), ['/admin']))
   }
 
-  tree.push(group('settings', 'Settings', 'settings', settingsChildren(), ['/settings', '/connections']))
+  tree.push(group('settings', 'Settings', 'settings', signedIn && hasPayments ? [...settingsChildren(), { key: 'settings-payments', label: 'Payments', href: '/payments' }] : settingsChildren(), ['/settings', '/connections', '/payments']))
   tree.push(L.about, L.feedback)
   return tree
 }
