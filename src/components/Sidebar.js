@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Portal from './Portal'
-import { NAV_ITEMS, NAV_LOCKED_LABEL, isNavItemLocked } from '../lib/navigation'
+import { NAV_ITEMS, NAV_LOCKED_LABEL, isNavItemLocked, buildNavTree } from '../lib/navigation'
 import { parseCoachPath, sidebarItems, isSidebarItemActive, isContextNavActive, navHref, logoHref, chromeVisibility } from '../lib/coachContext'
 import Icon from './Icon'
 import { supabase } from '../lib/supabase'
-import { fetchThreads, totalUnread } from '../lib/coachChat'
+import { totalUnread } from '../lib/coachChat'
+import NavTree from './NavTree'
+import useNavThreads from './useNavThreads'
 import { fetchPaymentOverview } from '../lib/coachBilling'
 import { loginHref } from '../lib/signupCatch'
 import { useCoachModule } from './useCoachModule'
@@ -22,13 +24,7 @@ export default function Sidebar({
   const pathname = usePathname()
   const { riderId } = parseCoachPath(pathname)
   const moduleEnabled = useCoachModule()
-  const [threads, setThreads] = useState([])
-  useEffect(() => {
-    if (!signedIn) return setThreads([])
-    let cancelled = false
-    fetchThreads(supabase).then(({ threads: t, error }) => { if (!cancelled) setThreads(error ? [] : t) })
-    return () => { cancelled = true }
-  }, [signedIn, pathname])
+  const threads = useNavThreads(signedIn)
   const [hasPayments, setHasPayments] = useState(false)
   useEffect(() => {
     if (!signedIn) return setHasPayments(false)
@@ -38,6 +34,7 @@ export default function Sidebar({
   }, [signedIn])
   const unread = totalUnread(threads)
   const items = sidebarItems(NAV_ITEMS, riderId, moduleEnabled, threads.length > 0, signedIn, threads, hasPayments)
+  const tree = buildNavTree({ signedIn, isAdmin: isAdmin && chromeVisibility(riderId).adminLink, moduleEnabled, threads, hasPayments })
   const chrome = chromeVisibility(riderId)
 
   const handleNavigate = (path) => {
@@ -92,7 +89,8 @@ export default function Sidebar({
             )}
           </div>
 
-          {/* Navigation */}
+          {/* Navigation: grouped tree in own context, flat athlete pages in athlete context */}
+          {riderId ? (
           <nav className="space-y-1">
             {items.map((item) => {
               const locked = isNavItemLocked(item, signedIn)
@@ -132,6 +130,9 @@ export default function Sidebar({
               </button>
             )}
           </nav>
+          ) : (
+            <NavTree tree={tree} pathname={pathname} signedIn={signedIn} unread={unread} touch={mobile} onNavigate={mobile ? onClose : undefined} />
+          )}
         </div>
   )
 

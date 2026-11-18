@@ -3,19 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-export const ADMIN_LINKS = [
-  ['/admin', 'Dashboard'],
-  ['/admin/suggestions', 'Suggestions'],
-  ['/admin/exercises', 'Exercise mapping'],
-  ['/admin/comment-reports', 'Reported comments'],
-  ['/admin/template-reruns', 'Template re-run'],
-  ['/admin/partner-apps', 'Partner apps'],
-  ['/admin/coach-module', 'Coach module'],
-  ['/admin/coach-cards', 'Coach card reports'],
-  ['/admin/chat-reports', 'Chat reports'],
-  ['/admin/coach-licences', 'Coach licences'],
-  ['/admin/coach-plans', 'Coach plans'],
-]
+import { ADMIN_LINKS } from '../lib/adminLinks'
+
+export { ADMIN_LINKS }
 
 // Pill-style admin navigation; scrolls horizontally on narrow screens.
 export default function AdminNav() {
