@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Icon from './Icon'
-import { parseCoachPath, athletePath } from '../lib/coachContext'
+import { parseCoachPath, athletePath, athleteChatPath, athleteThread } from '../lib/coachContext'
 import { totalUnread } from '../lib/coachChat'
 import { badgeLabel } from '../lib/navState'
 import { useCoachModule } from './useCoachModule'
 import useNavThreads from './useNavThreads'
 
 // Fixed bottom bar below lg: Home, Calendar, Messages (only with conversations), Coaching (coach module) and Menu (opens the drawer).
-// Inside an athlete context it shows Overview, Activities, Calendar of that athlete and Menu.
+// Inside an athlete context it shows Overview, Activities, Calendar and Messages (with this athlete's unread badge) of that athlete and Menu.
 // Hidden for logged-out visitors (see showsBottomNav).
 export function showsBottomNav(signedIn) {
   return !!signedIn
@@ -51,6 +51,7 @@ export default function BottomNav({ signedIn, onOpenMenu }) {
           {link(athletePath(riderId), 'Overview', 'home', pathname === athletePath(riderId))}
           {link(athletePath(riderId, '/activities'), 'Activities', 'bike', pathname.startsWith(athletePath(riderId, '/activities')))}
           {link(athletePath(riderId, '/calendar'), 'Calendar', 'calendar', pathname.startsWith(athletePath(riderId, '/calendar')))}
+          {link(athleteChatPath(riderId), 'Messages', 'chat', pathname.startsWith(athleteChatPath(riderId)), badgeLabel(athleteThread(threads, riderId)?.unread))}
         </>
       ) : (
         <>

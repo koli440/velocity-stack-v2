@@ -2,7 +2,7 @@
 // (/coach/<riderId>/...); nothing is stored. Access is enforced by the database (is_coach_of),
 // this module just derives the context and builds hrefs.
 
-import { LAB_FEATURES, labBasePath } from './labFeatures.js'
+import { labBasePath, labMenuChildren } from './labFeatures.js'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -43,41 +43,41 @@ export function athletePath(riderId, sub = '') {
   return `${COACH_HOME_PATH}/${riderId}${sub}`
 }
 
-const ATHLETE_ICONS = Object.freeze({
-  overview: 'home',
-  activities: 'bike',
-  calendar: 'calendar',
-  fitness: 'chart',
-  'pb-vault': 'trophy',
-  templates: 'clipboard',
-  physiology: 'settings',
-  notes: 'clipboard',
-  lab: 'flask',
-})
-
-/** Thread with this athlete (coach side), else the Messages list where the start-conversation flow lives. */
-export function athleteMessagesHref(threads, riderId) {
-  const t = (threads || []).find((x) => x.role === 'coach' && String(x.other_id) === String(riderId) && x.status !== 'ended')
-  return t ? `/chat/${t.id}` : '/chat'
+/** The coach-side thread with this athlete (not ended), if the conversation list has one. */
+export function athleteThread(threads, riderId) {
+  return (threads || []).find((x) => x.role === 'coach' && String(x.other_id) === String(riderId) && x.status !== 'ended') || null
 }
 
+/** Messages of this athlete stay inside the athlete context: /coach/<riderId>/chat renders the thread with them. */
+export const athleteChatPath = (riderId) => athletePath(riderId, '/chat')
+
 /**
- * Menu tree of the athlete context: a "Viewing <name>" group with the athlete pages (the Lab carries its
- * features as sub-items), then Messages and the way back to the coach dashboard.
+ * Menu tree of the athlete context (same accordion rules as the main menu): a "Viewing <name>" header, Overview,
+ * Training (Activities, Calendar, Fitness, Templates), Personal Bests, Physiology, Lab (features under section labels),
+ * Notes (coach module), Messages with this athlete (unread badge of that thread) and the way back to the dashboard.
  */
 export function buildAthleteTree(riderId, athleteName, moduleEnabled = false, threads = []) {
-  const children = athletePages(moduleEnabled).map((p) => {
-    const item = { key: p.key, label: p.label, icon: ATHLETE_ICONS[p.key] || 'home', href: athletePath(riderId, p.sub), exact: !p.sub }
-    if (p.key === 'lab') {
-      item.children = LAB_FEATURES.map((f) => ({ key: `lab-${f.key}`, label: f.label, href: `${labBasePath(riderId)}/${f.key}` }))
-    }
-    return item
-  })
-  return [
-    { key: 'athlete', type: 'group', label: `Viewing ${athleteName || 'athlete'}`, icon: 'users', children, matches: [athletePath(riderId)] },
-    { key: 'messages', label: 'Messages', icon: 'chat', href: athleteMessagesHref(threads, riderId), exact: true },
-    { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true, leavesContext: true },
+  const leaf = (key, label, icon, sub, extra = {}) => ({ key, label, icon, href: athletePath(riderId, sub), exact: !sub, ...extra })
+  const sub = (key, label, path) => ({ key, label, href: athletePath(riderId, path) })
+  const labBase = labBasePath(riderId)
+  const tree = [
+    { key: 'athlete', type: 'header', label: `Viewing ${athleteName || 'athlete'}` },
+    leaf('overview', 'Overview', 'home', ''),
+    {
+      key: 'training', type: 'group', label: 'Training', icon: 'calendar', matches: [],
+      children: [sub('activities', 'Activities', '/activities'), sub('calendar', 'Calendar', '/calendar'), sub('fitness', 'Fitness', '/fitness'), sub('templates', 'Templates', '/templates')],
+    },
+    leaf('pb-vault', 'Personal Bests', 'trophy', '/pb-vault'),
+    leaf('physiology', 'Physiology', 'settings', '/physiology'),
+    // The lab is not part of the flagged coach business layer: any coach/athlete relationship may use it.
+    { key: 'lab', type: 'group', label: 'Lab', icon: 'flask', matches: [labBase], children: labMenuChildren(labBase) },
   ]
+  if (moduleEnabled) tree.push(leaf('notes', 'Notes', 'clipboard', '/notes'))
+  tree.push(
+    { key: 'messages', label: 'Messages', icon: 'chat', href: athleteChatPath(riderId), unread: Number(athleteThread(threads, riderId)?.unread) || 0 },
+    { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true, leavesContext: true },
+  )
+  return tree
 }
 
 /** Which global chrome pieces to show. In athlete context the coach's own tools are hidden. */

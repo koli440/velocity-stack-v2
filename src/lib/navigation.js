@@ -1,5 +1,5 @@
 import { isPublicContentPath, isPublicToolPath } from './publicPaths.js'
-import { LAB_FEATURES } from './labFeatures.js'
+import { LAB_FEATURES, labMenuChildren } from './labFeatures.js'
 import { ADMIN_LINKS } from './adminLinks.js'
 
 // Menu definition (icon = key in lib/iconSet). NAV_ITEMS is the flat list of top-level tools
@@ -83,10 +83,7 @@ export function buildNavTree({ signedIn = true, isAdmin = false, moduleEnabled =
   tree.push(group('community', 'Community', 'users', community))
 
   if (signedIn && moduleEnabled) tree.push(group('coaching', 'Coaching', 'users', [COACH_DASHBOARD], ['/coach']))
-  tree.push(group('lab', 'Lab', 'flask', LAB_MENU_KEYS.map((k) => {
-    const f = LAB_FEATURES.find((x) => x.key === k)
-    return { key: `lab-${k}`, label: f.label, href: `/lab/${k}` }
-  }), ['/lab']))
+  tree.push(group('lab', 'Lab', 'flask', labMenuChildren('/lab', LAB_FEATURES.filter((f) => LAB_MENU_KEYS.includes(f.key))), ['/lab']))
   tree.push(L.about, L.feedback)
   tree.push(group('settings', 'Settings', 'settings', signedIn && hasPayments ? [...settingsChildren(), { key: 'settings-payments', label: 'Payments', href: '/payments' }] : settingsChildren(), ['/settings', '/connections', '/payments']))
   if (signedIn && isAdmin) {
