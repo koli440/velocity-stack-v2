@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import ThemeToggle from './ThemeToggle'
 import UserMenu from './UserMenu'
 import Icon from './Icon'
+import { showsBottomNav } from './BottomNav'
 import SessionSearch from './SessionSearch'
 import NotificationBell from './NotificationBell'
 import AddSessionModal from './AddSessionModal'
@@ -36,8 +37,9 @@ export default function TopNav({
   return (
     <>
     <header className="sticky top-0 z-30 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-8 py-3.5 glass-nav bg-white/80 dark:bg-surface-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-surface-darkBorder">
-      {/* Left side: mobile hamburger + search */}
+      {/* Left side: hamburger only for logged-out visitors (signed-in users have Menu in the bottom bar) + search */}
       <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 lg:max-w-md">
+        {!showsBottomNav(!!user) && (
         <button
           onClick={onOpenMobileMenu}
           className="lg:hidden p-2 rounded-xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard text-slate-700 dark:text-white"
@@ -45,6 +47,7 @@ export default function TopNav({
         >
           <Icon name="menu" size={20} />
         </button>
+        )}
 
         {user && chrome.search && <SessionSearch userId={user?.id} tracks={tracks} />}
       </div>

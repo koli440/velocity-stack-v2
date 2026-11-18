@@ -6,7 +6,9 @@ import { ADMIN_LINKS } from '../adminLinks.js'
 import {
   isLeafActive, isNodeActive, activeGroupKey, groupContains, parseOpenGroup, serializeOpenGroup,
   withActiveGroupOpen, toggleGroup, badgeLabel, breadcrumbTrail,
+  flattenNav,
 } from '../navState.js'
+import { buildAthleteTree } from '../coachContext.js'
 
 const keys = (tree) => tree.map((n) => n.key)
 const find = (tree, key) => tree.find((n) => n.key === key)
@@ -170,4 +172,40 @@ test('in-page tab strips are gone; pages use the breadcrumb', () => {
   assert.doesNotMatch(r('../../app/admin/suggestions/[id]/page.js'), /All suggestions/)
   assert.doesNotMatch(r('../../app/coach/[riderId]/layout.js'), /Athlete sections/)
   assert.match(r('../../app/templates/page.js'), /<PageBreadcrumb/)
+})
+
+test('every helper handles every route of every menu variant (regression: admin pages crashed the breadcrumb)', () => {
+  const trees = []
+  for (const isAdmin of [true, false]) for (const moduleEnabled of [true, false]) for (const signedIn of [true, false]) {
+    trees.push(buildNavTree({ signedIn, isAdmin, moduleEnabled, threads: [th('a', 1)], hasPayments: true }))
+  }
+  trees.push(buildAthleteTree('rider-1', 'Rider', true, [th('a', 1)]), buildAthleteTree('rider-1', 'Rider', false))
+  for (const tree of trees) {
+    const nodes = flattenNav(tree)
+    assert.ok(nodes.length >= tree.length)
+    for (const n of nodes.filter((x) => x.href)) {
+      const [path, query = ''] = n.href.split('?')
+      assert.doesNotThrow(() => {
+        breadcrumbTrail(tree, path, query)
+        activeGroupKey(tree, path, query)
+        tree.forEach((t) => isNodeActive(t, path, query))
+      }, n.href)
+      assert.ok(Array.isArray(flattenNav(tree)))
+    }
+  }
+  for (const [href] of ADMIN_LINKS) {
+    const tree = buildNavTree({ signedIn: true, isAdmin: true })
+    const hit = flattenNav(tree).find((n) => n.href === href)
+    assert.ok(hit, href)
+    assert.ok(breadcrumbTrail(tree, href, '').length > 0, href)
+  }
+  assert.deepEqual(flattenNav(undefined), [])
+  assert.deepEqual(flattenNav([{ key: 'a' }, null, { key: 'b', children: [{ key: 'c' }] }]).map((n) => n.key), ['a', 'b', 'c'])
+})
+
+test('bottom bar: coaching item, hamburger only when the bar is hidden', () => {
+  const read = (p) => readFileSync(new URL(`../../components/${p}`, import.meta.url), 'utf8')
+  assert.match(read('BottomNav.js'), /useCoachModule/)
+  assert.match(read('BottomNav.js'), /'\/coach', 'Coaching'/)
+  assert.match(read('TopNav.js'), /!showsBottomNav\(!!user\)/)
 })

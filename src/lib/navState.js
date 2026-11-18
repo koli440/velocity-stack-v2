@@ -4,6 +4,11 @@ export const OPEN_GROUPS_KEY = 'velocity:nav-open-groups'
 
 export const isGroup = (node) => node?.type === 'group'
 
+/** Every node of the tree, depth first (callbacks always return arrays so leaves without children are safe). */
+export function flattenNav(nodes) {
+  return (Array.isArray(nodes) ? nodes : []).flatMap((n) => (n ? [n, ...flattenNav(n.children)] : []))
+}
+
 /** Accordion sections: groups plus top-level entries with sub-items (Rider Telemetry, Messages). */
 export const isCollapsible = (node) => isGroup(node) || (node?.children || []).length > 0
 

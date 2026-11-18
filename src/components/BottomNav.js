@@ -6,9 +6,10 @@ import Icon from './Icon'
 import { parseCoachPath, athletePath } from '../lib/coachContext'
 import { totalUnread } from '../lib/coachChat'
 import { badgeLabel } from '../lib/navState'
+import { useCoachModule } from './useCoachModule'
 import useNavThreads from './useNavThreads'
 
-// Fixed bottom bar below lg: Home, Calendar, Messages (only with conversations) and Menu (opens the drawer).
+// Fixed bottom bar below lg: Home, Calendar, Messages (only with conversations), Coaching (coach module) and Menu (opens the drawer).
 // Inside an athlete context it shows Overview, Activities, Calendar of that athlete and Menu.
 // Hidden for logged-out visitors (see showsBottomNav).
 export function showsBottomNav(signedIn) {
@@ -20,6 +21,7 @@ export const BOTTOM_NAV_PAD = 'pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:
 export default function BottomNav({ signedIn, onOpenMenu }) {
   const pathname = usePathname() || ''
   const threads = useNavThreads(signedIn)
+  const coaching = useCoachModule()
   if (!showsBottomNav(signedIn)) return null
   const { riderId } = parseCoachPath(pathname)
   const unread = badgeLabel(totalUnread(threads))
@@ -55,6 +57,7 @@ export default function BottomNav({ signedIn, onOpenMenu }) {
           {link('/', 'Home', 'home', pathname === '/')}
           {link('/calendar', 'Calendar', 'calendar', pathname === '/calendar' || pathname.startsWith('/calendar/'))}
           {threads.length > 0 && link('/chat', 'Messages', 'chat', pathname === '/chat' || pathname.startsWith('/chat/'), unread)}
+          {coaching && link('/coach', 'Coaching', 'users', pathname === '/coach' || pathname.startsWith('/coach/'))}
         </>
       )}
       <button type="button" onClick={onOpenMenu} aria-label="Open navigation menu" className={`${tab} ${tone(false)}`}>

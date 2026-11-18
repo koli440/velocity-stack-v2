@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { buildNavTree } from '../lib/navigation'
-import { breadcrumbTrail } from '../lib/navState'
+import { breadcrumbTrail, flattenNav } from '../lib/navState'
 
 /** Where-am-I trail shown above pages whose sections live in the menu, e.g. "Lab › Durability". items: [{ label, href? }]. */
 export default function PageBreadcrumb({ items = [], className = '' }) {
@@ -40,8 +40,7 @@ function FromPath({ className }) {
   // Detail pages (e.g. /admin/suggestions/<id>): the section crumb becomes a link back to its list.
   const last = items[items.length - 1]
   if (last && !last.href) {
-    const find = (nodes) => nodes.flatMap((n) => [n, ...find(n.children || [])]).find((n) => n.label === last.label && n.href)
-    const node = find(tree)
+    const node = flattenNav(tree).find((n) => n.label === last.label && n.href)
     const path = node?.href.split('?')[0]
     if (node && path !== pathname) items[items.length - 1] = { ...last, href: node.href }
   }
