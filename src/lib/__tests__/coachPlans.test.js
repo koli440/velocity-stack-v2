@@ -28,7 +28,7 @@ test('tier labels, error detection and fee text', () => {
 
 test('wiring: nav link, badges, meter and explainer exist', () => {
   const r = (p) => fs.readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8')
-  assert.match(r('components/AdminNav.js'), /\/admin\/coach-plans/)
+  assert.match(r('lib/adminLinks.js'), /\/admin\/coach-plans/)
   assert.match(r('app/coaches/page.js'), /FoundingBadge/)
   assert.match(r('app/c/[slug]/page.js'), /FoundingBadge/)
   assert.match(r('app/coach/page.js'), /CoachPlanMeter/)
