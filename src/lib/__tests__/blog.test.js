@@ -21,7 +21,9 @@ import {
   postImage,
   feedCardData,
   isBlogPath,
+  formatPostDate,
 } from '../blog.js'
+import { cardTime, mergeBlogCards } from '../blogFeed.js'
 import { loadAllPosts, loadPublishedPosts, getPublishedPost, authorAvatar, BLOG_DIR } from '../server/blogContent.js'
 import { llmsTxt, llmsFullTxt } from '../llms.js'
 import { PUBLIC_PATHS } from '../seo.js'
@@ -211,4 +213,68 @@ test('the gear/pursuit post is scheduled for 2026-11-20 and hidden before', () =
   assert.equal(loadPublishedPosts(new Date('2026-11-19T23:59:59Z')).some((x) => x.slug === p.slug), false)
   assert.equal(loadPublishedPosts(new Date('2026-11-20T00:00:00Z')).some((x) => x.slug === p.slug), true)
   assert.equal(getPublishedPost(p.slug, new Date('2026-11-19T12:00:00Z')), null)
+})
+
+const timed = (date = '2026-11-19T08:00:00Z', slug = 'timed') => parseBlogPost(`---\ntitle: Timed\ndate: ${date}\nsummary: s\n---\nBody`, slug)
+
+test('timestamp posts go live at the exact instant; date-only posts are unchanged', () => {
+  const p = timed()
+  assert.equal(isPublished(p, new Date('2026-11-19T07:59:59.999Z')), false)
+  assert.equal(isPublished(p, new Date('2026-11-19T00:00:00Z')), false)
+  assert.equal(isPublished(p, new Date('2026-11-19T08:00:00Z')), true)
+  assert.equal(isPublished(timed('2026-11-19T09:00:00+01:00'), new Date('2026-11-19T07:59:59Z')), false)
+  assert.equal(isPublished(timed('2026-11-19T09:00:00+01:00'), new Date('2026-11-19T08:00:00Z')), true)
+  const d = post('', 'x', 'dated')
+  assert.equal(isPublished(d, new Date('2026-11-30T23:59:59Z')), false)
+  assert.equal(isPublished(d, new Date('2026-12-01T00:00:00Z')), true)
+  assert.throws(() => timed('2026-11-19T08:00:00'), /date/)
+  assert.throws(() => timed('2026-11-19T25:00:00Z'), /date/)
+})
+
+test('timestamp posts sort by instant and are formatted as a date only', () => {
+  const a = timed('2026-11-19T08:00:00Z', 'a')
+  const b = timed('2026-11-19', 'b')
+  const c = timed('2026-11-18T23:30:00Z', 'c')
+  assert.deepEqual(sortPostsNewestFirst([b, c, a]).map((x) => x.slug), ['a', 'b', 'c'])
+  assert.equal(formatPostDate(a.date), '19 November 2026')
+  assert.equal(formatPostDate(b.date), '19 November 2026')
+  assert.equal(formatPostDate(c.date), '19 November 2026') // 00:30 CET
+  assert.equal(parseBlogPost('---\ntitle: T\ndate: 2026-11-19T08:00:00Z\nupdated: 2026-11-19\nsummary: s\n---\nx', 'u').updated, '2026-11-19')
+})
+
+test('timestamp dates reach RSS, JSON-LD and feed cards as the exact instant', () => {
+  const p = timed()
+  assert.match(rssXml([p]), /<pubDate>Thu, 19 Nov 2026 08:00:00 GMT<\/pubDate>/)
+  assert.equal(blogPostingJsonLd(p).datePublished, '2026-11-19T08:00:00.000Z')
+  assert.equal(cardTime(feedCardData(p)), Date.parse('2026-11-19T08:00:00Z'))
+  assert.equal(cardTime({ date: '2026-11-19' }), Date.parse('2026-11-19T12:00:00Z'))
+})
+
+test('an unpublished timestamp post is absent from every public surface', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-'))
+  fs.writeFileSync(path.join(dir, 'soon.md'), '---\ntitle: Soon\ndate: 2026-11-19T08:00:00Z\nsummary: s\n---\nBody')
+  const before = new Date('2026-11-19T07:59:59Z')
+  const visible = loadPublishedPosts(before, dir)
+  assert.deepEqual(visible, [])
+  assert.equal(getPublishedPost('soon', before, dir), null)
+  assert.ok(!rssXml(visible).includes('/blog/soon'))
+  assert.ok(!llmsTxt([], visible).includes('soon') && !llmsFullTxt([], {}, visible).includes('soon'))
+  assert.deepEqual(mergeBlogCards([], [feedCardData(loadAllPosts(dir)[0])], { hasMore: false, now: before }), [])
+  assert.equal(getPublishedPost('soon', new Date('2026-11-19T08:00:00Z'), dir).slug, 'soon')
+})
+
+test('numbered lists render only with the ordered option', async () => {
+  const { parseMarkdown } = await import('../markdownLite.js')
+  const src = '1. One **a**\n2. Two\n\n- x'
+  const blocks = parseMarkdown(src, { ordered: true })
+  assert.deepEqual(blocks.map((b) => [b.type, b.items.length]), [['ol', 2], ['ul', 1]])
+  assert.equal(parseMarkdown(src).some((b) => b.type === 'ol'), false)
+})
+
+test('the home screen post goes live 2026-11-19 09:00 CET', () => {
+  const p = loadAllPosts().find((x) => x.slug === 'add-velocity-stack-to-your-home-screen')
+  assert.equal(p.date, '2026-11-19T08:00:00Z')
+  assert.equal(loadPublishedPosts(new Date('2026-11-19T07:59:59Z')).some((x) => x.slug === p.slug), false)
+  assert.equal(loadPublishedPosts(new Date('2026-11-19T08:00:00Z')).some((x) => x.slug === p.slug), true)
+  assert.deepEqual(renderBlocks(p.body).filter((b) => b.type === 'ol').map((b) => b.items.length), [4, 4])
 })

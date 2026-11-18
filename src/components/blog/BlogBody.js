@@ -1,5 +1,9 @@
 import { Inline } from '../MarkdownBlocks'
 import { renderBlocks } from '../../lib/blog'
+import { publicImageSize } from '../../lib/server/imageSize'
+
+// Landscape illustrations use the full content width; portrait screenshots stay narrow.
+const WIDE_RATIO = 1.25
 
 // Renders a post body (lib/markdownLite blocks, never raw HTML) with stable anchors on the section headings.
 export default function BlogBody({ body }) {
@@ -37,7 +41,20 @@ export default function BlogBody({ body }) {
             </ul>
           )
         }
+        if (b.type === 'ol') {
+          return (
+            <ol key={i} className="list-decimal pl-6 space-y-1">
+              {b.items.map((item, j) => (
+                <li key={j}>
+                  <Inline nodes={item} />
+                </li>
+              ))}
+            </ol>
+          )
+        }
         if (b.type === 'img') {
+          const size = publicImageSize(b.src)
+          const wide = !!size && size.width / size.height >= WIDE_RATIO
           return (
             <figure key={i} className="my-6">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -46,7 +63,8 @@ export default function BlogBody({ body }) {
                 alt={b.alt}
                 loading="lazy"
                 decoding="async"
-                className="mx-auto h-auto w-full max-w-sm rounded-2xl border border-slate-200 dark:border-white/10"
+                {...(size ? { width: size.width, height: size.height } : {})}
+                className={`mx-auto h-auto w-full ${wide ? '' : 'max-w-sm'} rounded-2xl border border-slate-200 dark:border-white/10`}
               />
             </figure>
           )

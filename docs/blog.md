@@ -8,7 +8,7 @@ Add `content/blog/<slug>.md`. The file name is the permanent URL (`/blog/<slug>`
 ```
 ---
 title: Plain title (max 110 characters)
-date: 2026-11-06            # real YYYY-MM-DD; the day it goes public (UTC)
+date: 2026-11-06            # YYYY-MM-DD (public from 00:00 UTC) or a timestamp like 2026-11-06T08:00:00Z (public at that instant)
 summary: One line, max 200 characters. Used as the list text, meta description and feed card text.
 tags: story, track-cycling  # optional, up to 6 lowercase words
 updated: 2026-11-20         # optional, shown as "updated" and used for dateModified / sitemap lastmod
@@ -20,16 +20,21 @@ canonicalUrl: https://...   # optional, only when the post was first published e
 ---
 Body in markdown: paragraphs, `## Headings` (h2) and `###` (h3), `- lists`, **bold**, `code`, ``` code blocks ``` and
 [links](/dsl-guide). No HTML.
-Images: a line of its own, `![Alt text](/landing/gear-architect.webp)`, with any image in `public/`; alt text is required for accessibility, it renders centred (max 24rem wide) and lazy-loaded.
+Images: a line of its own, `![Alt text](/landing/gear-architect.webp)`, with any image in `public/`; alt text is required for accessibility, it renders centred and lazy-loaded with width/height set. Portrait images are max 24rem wide; landscape ones (width/height >= 1.25, PNG or WebP) use the full content width.
+Numbered lists (`1. step`) and `- ` lists are supported.
 ```
 
 Link naturally to features the post mentions (`/track`, `/dsl-guide`, `/gears`, `/velodromes`). Every `##`/`###` heading gets a stable anchor (`#version-one`); posts of 3+ minutes with 3+ headings get a table of contents. Reading time is words / 220.
 `npm test` loads every post and fails on a malformed one (`src/lib/__tests__/blog.test.js`).
 
 ## Scheduled publishing
-Set `date` to a future day. A post is public from 00:00 UTC on that date; before that it is **not** in `/blog`, the sitemap, RSS, `llms.txt`, the feed cards, and its own URL returns 404.
+Set `date` in the future. Two forms:
+- `date: 2026-11-20`: public from 00:00 UTC that day (unchanged behaviour).
+- `date: 2026-11-19T08:00:00Z` (full ISO timestamp with `Z` or an offset like `+01:00`): public at exactly that instant. 09:00 CET is `08:00:00Z` in winter, 09:00 CEST is `07:00:00Z`.
 
-No secrets, cron or deploy are needed. The pages are static with time-based revalidation (`export const revalidate = 900`): every render re-reads the files and compares the date with the current time, and Next.js re-renders at most every 15 minutes. The slug page also allows on-demand rendering (`dynamicParams`), so a post that was future-dated at build time is rendered the first time it is requested after its date. A post can therefore appear up to ~15 minutes after midnight UTC. Alternatives considered: a scheduled GitHub workflow or external cron (needs a deploy hook secret) and a client-side date check (would leak the post to crawlers and shows a flash of content).
+Before the instant the post is **not** in `/blog`, the sitemap, RSS, `llms.txt` / `llms-full.txt`, the feed cards (`/api/blog-cards`), the IndexNow list, and its own URL returns 404. After it, RSS `pubDate`, JSON-LD `datePublished`, `article:published_time` and the sitemap use the exact instant, posts sort by instant, a feed card sits at the post's instant (date-only posts: midday UTC), and the byline shows only the date (e.g. "19 November 2026"; timestamps are shown in Europe/Berlin time, date-only values as written, never a time).
+
+No secrets, cron or deploy are needed. The pages are static with time-based revalidation (`export const revalidate = 900`): every render re-reads the files and compares the instant with the current time, and Next.js re-renders at most every 15 minutes (the sitemap and llms files ~1 hour). The slug page also allows on-demand rendering (`dynamicParams`), so a post that was future-dated at build time is rendered the first time it is requested after its instant. A post therefore appears within about 15 minutes after the instant (up to ~1 hour in the sitemap and llms files). Alternatives considered: a scheduled GitHub workflow or external cron (needs a deploy hook secret) and a client-side date check (would leak the post to crawlers and shows a flash of content).
 
 After a post goes live, optionally `npm run indexnow -- --blog` pings search engines for `/blog` and the published post URLs (`--dry-run` prints the body).
 

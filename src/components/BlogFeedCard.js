@@ -8,6 +8,7 @@ import Avatar from './Avatar'
 import CalendarTile from './CalendarTile'
 import CoverArt, { COVER_BACKGROUND } from './blog/CoverArt'
 import { BLOG_AUTHOR } from '../lib/blog'
+import { cardTime } from '../lib/blogFeed'
 
 // Timeline card for a published blog post (placed by publish date in the rider's own feed, see lib/blogFeed).
 // Same hero layout as an activity card. Content is the public post only.
@@ -51,7 +52,7 @@ export default function BlogFeedCard({ card }) {
         <span className="absolute top-2.5 left-2.5 z-[2] text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-neon text-slate-950">
           New on the blog
         </span>
-        <CalendarTile date={`${card.date}T12:00:00Z`} className="absolute top-2.5 right-2.5 z-[2]" />
+        <CalendarTile date={new Date(cardTime(card)).toISOString()} className="absolute top-2.5 right-2.5 z-[2]" />
       </div>
       <div className="absolute left-4 top-36 sm:top-40 -translate-y-1/2 z-10">
         <Avatar url={card.avatarUrl} name={BLOG_AUTHOR.name} size="w-14 h-14" textSize="text-lg" className="ring-2 ring-orange-500 ring-offset-2 ring-offset-white dark:ring-offset-surface-darkCard" />

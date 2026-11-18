@@ -24,7 +24,8 @@ export function parseInline(text) {
 const IMAGE_LINE = /^!\[([^\]]*)\]\((\/(?!\/)[\w\-./]+\.(?:png|jpe?g|webp|avif|gif))\)$/i
 
 // `images: true` (blog only) turns a line that is just `![alt](/public/path.webp)` into an image block.
-export function parseMarkdown(src, { images = false } = {}) {
+// `ordered: true` (blog only) also turns `1. item` lines into an `ol` block.
+export function parseMarkdown(src, { images = false, ordered = false } = {}) {
   const blocks = []
   let list = null
   let para = []
@@ -58,6 +59,7 @@ export function parseMarkdown(src, { images = false } = {}) {
       continue
     }
     const li = /^[-*]\s+(.*)$/.exec(t)
+    const oli = ordered ? /^\d+[.)]\s+(.*)$/.exec(t) : null
     const h = /^(#{2,3})\s+(.*)$/.exec(t)
     if (!t) {
       flushPara()
@@ -68,11 +70,18 @@ export function parseMarkdown(src, { images = false } = {}) {
       blocks.push({ type: 'h', level: h[1].length, inline: parseInline(h[2]) })
     } else if (li) {
       flushPara()
-      if (!list) {
+      if (list?.type !== 'ul') {
         list = { type: 'ul', items: [] }
         blocks.push(list)
       }
       list.items.push(parseInline(li[1]))
+    } else if (oli) {
+      flushPara()
+      if (list?.type !== 'ol') {
+        list = { type: 'ol', items: [] }
+        blocks.push(list)
+      }
+      list.items.push(parseInline(oli[1]))
     } else {
       list = null
       para.push(t)

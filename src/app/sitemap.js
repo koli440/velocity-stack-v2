@@ -3,7 +3,7 @@ import { isIndexableTrack } from '../lib/trackSlug'
 import { loadPublicTracks } from '../lib/server/publicTracks'
 import { loadNews } from '../lib/server/newsContent'
 import { loadPublishedPosts } from '../lib/server/blogContent'
-import { postUrl } from '../lib/blog'
+import { postUrl, instantMs } from '../lib/blog'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -42,7 +42,7 @@ export default async function sitemap() {
 
   const pages = PUBLIC_PATHS.map((p) => ({
     url: p === '/' ? SITE_URL : `${SITE_URL}${p}`,
-    lastModified: p === '/whats-new' ? newest : p === '/blog' && posts[0] ? new Date(posts[0].updated) : SOURCES[p] ? mtime(SOURCES[p]) : new Date(),
+    lastModified: p === '/whats-new' ? newest : p === '/blog' && posts[0] ? new Date(instantMs(posts[0].updated)) : SOURCES[p] ? mtime(SOURCES[p]) : new Date(),
     changeFrequency: p === '/whats-new' || p === '/blog' ? 'weekly' : 'monthly',
     priority: p === '/' ? 1 : 0.6,
   }))
@@ -54,7 +54,7 @@ export default async function sitemap() {
   }))
   const postPages = posts.map((p) => ({
     url: postUrl(p),
-    lastModified: new Date(p.updated),
+    lastModified: new Date(instantMs(p.updated)),
     changeFrequency: 'monthly',
     priority: 0.7,
   }))
