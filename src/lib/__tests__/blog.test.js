@@ -207,12 +207,11 @@ test('body images render only with the blog option, with alt text', async () => 
   assert.equal(parseMarkdown(src).some((b) => b.type === 'img'), false)
 })
 
-test('the gear/pursuit post is scheduled for 2026-11-20 and hidden before', () => {
+test('the gear/pursuit post is scheduled for 2026-11-27 08:00Z and hidden before', () => {
   const p = loadAllPosts().find((x) => x.slug === 'gear-architect-and-pursuit-strategist')
-  assert.equal(p.date, '2026-11-20')
-  assert.equal(loadPublishedPosts(new Date('2026-11-19T23:59:59Z')).some((x) => x.slug === p.slug), false)
-  assert.equal(loadPublishedPosts(new Date('2026-11-20T00:00:00Z')).some((x) => x.slug === p.slug), true)
-  assert.equal(getPublishedPost(p.slug, new Date('2026-11-19T12:00:00Z')), null)
+  assert.equal(loadPublishedPosts(new Date('2026-11-27T07:59:59Z')).some((x) => x.slug === p.slug), false)
+  assert.equal(loadPublishedPosts(new Date('2026-11-27T08:00:00Z')).some((x) => x.slug === p.slug), true)
+  assert.equal(getPublishedPost(p.slug, new Date('2026-11-20T12:00:00Z')), null)
 })
 
 const timed = (date = '2026-11-19T08:00:00Z', slug = 'timed') => parseBlogPost(`---\ntitle: Timed\ndate: ${date}\nsummary: s\n---\nBody`, slug)
