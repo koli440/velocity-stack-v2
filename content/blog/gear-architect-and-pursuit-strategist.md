@@ -1,6 +1,6 @@
 ---
 title: "Gear Architect and Pursuit Strategist: the numbers my coach keeps in his head"
-date: 2026-11-20
+date: 2026-11-27T08:00:00Z
 summary: My coach knows what lap time a pursuit needs. I don't. So I built two tools that put the numbers on the screen, so we could finally talk about the plan.
 tags: story, gear-architect, pursuit-strategist, track-cycling
 ---
