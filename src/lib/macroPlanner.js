@@ -47,9 +47,10 @@ function median(values) {
 /**
  * Baseline from the last 6-12 complete weeks before `today`. `days` is dailyLoads().days.
  * Weeks under 40 % or over 175 % of the median weekly TL are excluded (sick, off, outlier).
+ * Weeks overlapping a logged disruption ({ start_date, end_date|null }) are excluded as 'disruption' before the median is taken.
  * status 'history' when at least 6 usable weeks exist, otherwise 'manual' (the coach enters the weekly TL).
  */
-export function computeBaseline(days, today, { maxWeeks = MAX_BASELINE_WEEKS } = {}) {
+export function computeBaseline(days, today, { maxWeeks = MAX_BASELINE_WEEKS, disruptions = [] } = {}) {
   const keys = Object.keys(days || {}).sort()
   const thisWeek = weekStartOf(today)
   const empty = { status: 'manual', weeks: [], usableWeeks: 0, weeklyTl: null, ctl: null, rampPerWeek: null, sustainedRamp: null, excluded: 0 }
@@ -67,8 +68,13 @@ export function computeBaseline(days, today, { maxWeeks = MAX_BASELINE_WEEKS } =
     weeks.push({ week_start: ws, tl: round1(tl), ctl: ctlOn.get(addDays(ws, 6)) ?? 0, excluded: null })
   }
   if (!weeks.length) return empty
-  const med = median(weeks.map((w) => w.tl))
   for (const w of weeks) {
+    const we = addDays(w.week_start, 6)
+    if ((disruptions || []).some((d) => d.start_date <= we && (d.end_date || today) >= w.week_start)) w.excluded = 'disruption'
+  }
+  const med = median(weeks.filter((w) => !w.excluded).map((w) => w.tl))
+  for (const w of weeks) {
+    if (w.excluded) continue
     if (w.tl < med * LOW_FRACTION) w.excluded = 'low'
     else if (w.tl > med * HIGH_FRACTION) w.excluded = 'high'
   }
