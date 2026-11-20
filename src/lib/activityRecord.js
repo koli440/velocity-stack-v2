@@ -69,6 +69,7 @@ export function buildActivityInsert(summary = {}, meta = {}) {
   const activityType = normalizeActivityType(metaActivityType || summary.activity_type)
   const isGym = activityType === 'gym'
   const isRun = activityType === 'run'
+  const isSwim = activityType === 'swim'
 
   const activityDate = summary.start_time || fallbackActivityDate
   const ftpWatts = Array.isArray(ftpHistory) ? ftpAt(ftpHistory, activityDate) : fallbackFtp
@@ -80,8 +81,8 @@ export function buildActivityInsert(summary = {}, meta = {}) {
   // and we have a normalized power + elapsed time to work from.
   let intensityFactor = null
   let trainingLoad = null
-  // Runs are loaded from heart rate (fitnessForm hrTSS), never from the cycling FTP.
-  if (!isGym && !isRun && ftpWatts && normalizedPower && elapsedTime) {
+  // Runs and swims are loaded from heart rate (fitnessForm hrTSS, duration fallback for swims), never from the cycling FTP.
+  if (!isGym && !isRun && !isSwim && ftpWatts && normalizedPower && elapsedTime) {
     intensityFactor = Math.round((normalizedPower / ftpWatts) * 1000) / 1000
     trainingLoad =
       Math.round(
@@ -90,15 +91,15 @@ export function buildActivityInsert(summary = {}, meta = {}) {
   }
 
   return {
-    title: title?.trim() || (isGym ? 'Gym Session' : isRun ? 'Run' : 'Track Session'),
+    title: title?.trim() || (isGym ? 'Gym Session' : isRun ? 'Run' : isSwim ? 'Swim' : 'Track Session'),
     user_id: userId,
     // Rides leave both columns out (the database default is 'ride'), so ride inserts do not depend on the migration.
-    ...(isGym || isRun ? { activity_type: activityType } : {}),
+    ...(isGym || isRun || isSwim ? { activity_type: activityType } : {}),
     ...(isGym && summary.calories != null ? { calories: summary.calories } : {}),
-    track_id: isGym || isRun ? null : trackId || null,
+    track_id: isGym || isRun || isSwim ? null : trackId || null,
     ride_type: isGym ? null : rideType || null,
-    chainring: !isGym && !isRun && chainring ? parseInt(chainring) : null,
-    cog: !isGym && !isRun && cog ? parseInt(cog) : null,
+    chainring: !isGym && !isRun && !isSwim && chainring ? parseInt(chainring) : null,
+    cog: !isGym && !isRun && !isSwim && cog ? parseInt(cog) : null,
     crank_length_mm: crankLengthMm,
     activity_date: activityDate,
     start_time: summary.start_time ?? null,

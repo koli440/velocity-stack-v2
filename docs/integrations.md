@@ -96,6 +96,12 @@ Each card shows a health line (Syncing normally / Sync looks delayed after 60 mi
 - Strava rate limit or other transient errors: shown as "Last sync issue", retried automatically.
 - Not configured on this deployment (missing env vars): the Strava card says so; the run endpoints answer 503.
 
+## Swims
+- Imported by every source that delivers them, tagged `activity_type = 'swim'` with the flavour in `ride_type` (`pool_swim` | `open_water_swim`). Strava / Intervals.icu: `Swim` (pool) and `OpenWaterSwim`; Garmin: `LAP_SWIMMING`, `SWIMMING`, `OPEN_WATER_SWIMMING` and FIT sport `swimming`; Wahoo: workout types 25 (pool) and 26 (open water); .fit upload: `swimming` (`sub_sport = open_water` = open water). Strava and Intervals cannot tell pool from open water, so those default to pool and GPS in the recording upgrades the swim to open water. The GPS route map therefore only appears for open-water swims.
+- Pool swims often have no streams: Strava / Intervals.icu fall back to the summary (distance, time, heart rate) like gym sessions.
+- Load: with usable heart rate and LTHR the normal HR-based TL is used; otherwise a default intensity of 0.6 x duration (36 TL per hour, marked as an estimate). Swims count in CTL/ATL/TSB, the calendar load and the coach fitness feed. No FTP-based TL, gear or track.
+- Shown in metres (km from 10 km) with a pace per 100 m; power, cadence and torque views are hidden. Swims never link to planned workouts or races, and are excluded from the Garmin/Wahoo workout push. The partner API accepts rides only.
+
 ## Gym sessions (#326)
 - Imported by every source, tagged `activity_type = 'gym'`; rides are unchanged. Intervals.icu: `WeightTraining`, `Workout`, `Crossfit`, `HighIntensityIntervalTraining`; Strava: the same `sport_type`s; Garmin: `.fit` session sport; Wahoo: workout types 42 (WORKOUT) and 43 (CARDIO_CLASS); .fit upload (single and bulk): session `sport = training` or `sub_sport` `strength_training` / `hiit` (`api/analyze.py`).
 - Sets: `.fit` files with `set` / `exercise_title` messages (upload, bulk, Intervals.icu file, Wahoo file) store exercises and sets (`gym_exercises`, `gym_sets`); the activity page shows them next to the HR series. Strava sessions and any summary-only import keep summary + HR only. History: a one-time backfill re-open (migration `20270114000000`) imports earlier gym sessions within the usual quotas and the Strava budget, and a repair of 3 sessions per run adds sets to file-backed sessions imported earlier (no Strava requests).

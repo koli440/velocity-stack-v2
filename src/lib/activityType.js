@@ -3,9 +3,9 @@
 // Activity type (issue #326): 'ride' (default, every existing activity), 'run' or 'gym' (strength / workout
 // sessions). Pure helpers shared by the importers, the upload paths and the UI.
 
-export const ACTIVITY_TYPES = Object.freeze(['ride', 'run', 'gym'])
+export const ACTIVITY_TYPES = Object.freeze(['ride', 'run', 'swim', 'gym'])
 export const DEFAULT_ACTIVITY_TYPE = 'ride'
-export const ACTIVITY_TYPE_LABELS = Object.freeze({ ride: 'Ride', run: 'Run', gym: 'Gym' })
+export const ACTIVITY_TYPE_LABELS = Object.freeze({ ride: 'Ride', run: 'Run', swim: 'Swim', gym: 'Gym' })
 
 /** Unknown / missing values are rides (existing rows have no type in older payloads). */
 export function normalizeActivityType(value) {
@@ -20,7 +20,9 @@ export const isGymActivity = (a) => normalizeActivityType(a?.activity_type ?? a?
  */
 export const isRunActivity = (a) => normalizeActivityType(a?.activity_type ?? a?.activityType) === 'run'
 
-export const isTrackActivity = (a) => !isGymActivity(a) && !isRunActivity(a) && Boolean(a?.track_id ?? a?.trackId ?? a?.tracks?.name)
+export const isSwimActivity = (a) => normalizeActivityType(a?.activity_type ?? a?.activityType) === 'swim'
+
+export const isTrackActivity = (a) => !isGymActivity(a) && !isRunActivity(a) && !isSwimActivity(a) && Boolean(a?.track_id ?? a?.trackId ?? a?.tracks?.name)
 
 /** Strava `sport_type` / Intervals.icu `type` values that are gym sessions. */
 export const GYM_SPORT_TYPES = Object.freeze(['WeightTraining', 'Workout', 'Crossfit', 'HighIntensityIntervalTraining'])

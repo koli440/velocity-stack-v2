@@ -7,6 +7,7 @@
 import { analyzeStreams } from '../streamAnalysis.js'
 import { ImportError } from './importErrors.js'
 import { gymSummaryFromMeta } from '../gymAnalysis.js'
+import { isSwimRideType } from '../sportType.js'
 import {
   STRAVA_STREAM_KEYS,
   isStravaRide,
@@ -265,6 +266,7 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
           max_heartrate: item.max_heartrate,
           calories: item.calories,
           gym: item.activity_type === 'gym',
+          distance: item.distance_m,
           sport: item.sport,
         }
       } else {
@@ -276,7 +278,7 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
         detail.gym = isStravaGym(detail)
         detail.sport = stravaSport(detail)
         if (!detail.gym && !isStravaRide(detail)) {
-          throw new ImportError(`Strava activity ${id} is not a ride, run or gym session.`, 422)
+          throw new ImportError(`Strava activity ${id} is not a ride, run, swim or gym session.`, 422)
         }
       }
 
@@ -303,6 +305,34 @@ export function createStravaProvider({ accessToken, fetchImpl = fetch, budget = 
           summary: { ...(analyzed?.summary || {}), ...meta.summary, start_time: detail.start_date || null },
           curves: analyzed?.curves || meta.curves,
           time_series: analyzed?.time_series || meta.time_series,
+        }
+      }
+
+      if (isSwimRideType(detail.sport)) {
+        // Pool swims usually have no streams: fall back to the list/detail fields (distance, time, heart rate).
+        let analyzed = null
+        try {
+          analyzed = await this.analyzeStreamsFor(id, gearing)
+        } catch (e) {
+          if (!(e instanceof ImportError) || e.status !== 404) throw e
+        }
+        const meta = gymSummaryFromMeta({
+          startTime: detail.start_date || null,
+          elapsedS: detail.elapsed_time,
+          movingS: detail.moving_time,
+          avgHr: detail.average_heartrate,
+          maxHr: detail.max_heartrate,
+        })
+        const { activity_type: _t, ...base } = meta.summary
+        const dist = Number(detail.distance)
+        return {
+          activityType: 'swim',
+          sport: detail.sport,
+          title: detail.name || null,
+          startDateLocal: detail.start_date_local ? String(detail.start_date_local).replace(/Z$/, '') : null,
+          summary: { ...(analyzed?.summary || {}), ...base, ...(Number.isFinite(dist) && dist > 0 ? { distance_m: dist } : {}), start_time: detail.start_date || null },
+          curves: analyzed?.curves || {},
+          time_series: analyzed?.time_series || {},
         }
       }
 

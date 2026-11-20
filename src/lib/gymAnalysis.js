@@ -11,6 +11,12 @@ import { sportFromFit, sportInfo } from './sportType.js'
 
 const GYM_SUMMARY_KEYS = ['start_time', 'elapsed_time_s', 'moving_time_s', 'avg_hr', 'max_hr', 'calories']
 
+/** A swim with GPS was outdoors; providers that cannot tell pool from open water (Strava, Intervals) default to pool. */
+function swimFlavour(sport, timeSeries) {
+  const lat = timeSeries?.latitude
+  return Array.isArray(lat) && lat.some((v) => Number.isFinite(v)) ? 'open_water_swim' : sport
+}
+
 /**
  * @param {{ summary?: object, curves?: object, time_series?: object }} analysis - api/analyze.py shape
  * @param {string|null} [sportHint] - canonical sport key from the provider (src/lib/sportType.js); beats the FIT sport
@@ -26,10 +32,12 @@ export function prepareAnalysis(analysis, activityType = null, sportHint = null)
     const sport = sportInfo(sportHint) && sportInfo(sportHint).activityType !== 'gym' ? sportHint : sportFromFit(summary)
     const info = sportInfo(sport)
     const isRun = type === 'run' || info?.activityType === 'run'
+    const isSwim = !isRun && (type === 'swim' || info?.activityType === 'swim')
+    const flavour = isSwim ? swimFlavour(info?.activityType === 'swim' ? sport : 'pool_swim', analysis?.time_series) : null
     return {
-      activityType: isRun ? 'run' : 'ride',
-      sport: isRun ? (info?.activityType === 'run' ? sport : 'run') : sport,
-      rideType: isRun ? (info?.activityType === 'run' ? info.rideType : 'run') : info?.rideType ?? null,
+      activityType: isRun ? 'run' : isSwim ? 'swim' : 'ride',
+      sport: isSwim ? flavour : isRun ? (info?.activityType === 'run' ? sport : 'run') : sport,
+      rideType: isSwim ? flavour : isRun ? (info?.activityType === 'run' ? info.rideType : 'run') : info?.rideType ?? null,
       summary,
       curves: analysis?.curves || {},
       time_series: analysis?.time_series || {},

@@ -58,7 +58,8 @@ function rideSeconds(a) {
  * Stored training_load (power/FTP in effect on the ride date, set at import) wins. Without it an
  * hrTSS-style estimate is used: hours x (avg HR / threshold HR)^2 x 100, with the threshold HR taken
  * from the ride's LT2 snapshot or the lactate-threshold history valid on that date. No threshold HR
- * or no average HR/duration -> skipped (no duration-only guess: it would ignore intensity entirely).
+ * or no average HR/duration -> skipped (no duration-only guess for rides/runs: it would ignore intensity entirely).
+ * Swims are the exception: without a usable HR they get SWIM_DEFAULT_INTENSITY x duration, so they still count toward fitness.
  */
 export function activityLoad(activity, ltHistory = []) {
   if (activity?.activity_type === 'gym') {
@@ -69,13 +70,21 @@ export function activityLoad(activity, ltHistory = []) {
   const stored = num(activity?.training_load)
   if (stored !== null && stored >= 0) return { load: stored, estimated: false }
   const secs = rideSeconds(activity || {})
+  const isSwim = activity?.activity_type === 'swim'
   const avgHr = num(activity?.avg_hr)
-  if (!(secs >= 300 && secs <= 86400) || avgHr === null || avgHr < 40 || avgHr > 230) return null
-  const lthr = num(activity.lt2_hr_at_activity) ?? num(resolveLtAt(ltHistory, localDayKey(activity.activity_date))?.lt2_hr)
-  if (lthr === null || lthr < 30 || lthr > 250) return null
+  const lthr = num(activity?.lt2_hr_at_activity) ?? num(resolveLtAt(ltHistory, localDayKey(activity?.activity_date))?.lt2_hr)
+  const hrUsable = avgHr !== null && avgHr >= 40 && avgHr <= 230 && lthr !== null && lthr >= 30 && lthr <= 250
+  if (!(secs >= 300 && secs <= 86400)) return null
+  if (!hrUsable) {
+    // Swims without a usable heart rate (wrist HR rarely works in water) still count: duration at a conservative intensity.
+    return isSwim ? { load: round1((secs / 3600) * SWIM_DEFAULT_INTENSITY * SWIM_DEFAULT_INTENSITY * 100), estimated: true } : null
+  }
   const intensity = Math.min(avgHr / lthr, 1.15)
   return { load: round1((secs / 3600) * intensity * intensity * 100), estimated: true }
 }
+
+/** Intensity factor assumed for a swim without heart rate: 0.6 -> 36 load per hour (an easy aerobic session). */
+export const SWIM_DEFAULT_INTENSITY = 0.6
 
 /**
  * Daily totals keyed by local day: { [day]: { load, estimatedLoad, rides, estimatedRides } } where
@@ -203,7 +212,7 @@ export function fitnessSummary(days, today, firstDay = null) {
 /** Activity rows for the series, newest window only (`days` + warm-up), paginated past the 1000-row cap. */
 export async function fetchFitnessActivities(client, { userId, days = 365, now = new Date(), pageSize = 1000, includeGym = true } = {}) {
   if (!userId) return { data: [], firstDay: null, error: null }
-  const types = includeGym ? ['ride', 'run', 'gym'] : ['ride', 'run']
+  const types = includeGym ? ['ride', 'run', 'swim', 'gym'] : ['ride', 'run', 'swim']
   const since = new Date(now.getFullYear(), now.getMonth(), now.getDate() - days - WARMUP_DAYS).toISOString()
   const rows = []
   for (let from = 0; ; from += pageSize) {
@@ -224,7 +233,7 @@ export async function fetchFitnessActivities(client, { userId, days = 365, now =
     .from('activities')
     .select('activity_date')
     .eq('user_id', userId)
-    .in('activity_type', ['ride', 'run'])
+    .in('activity_type', ['ride', 'run', 'swim'])
     .order('activity_date', { ascending: true })
     .limit(1)
   if (firstError) return { data: [], firstDay: null, error: firstError }

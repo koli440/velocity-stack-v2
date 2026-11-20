@@ -4,7 +4,7 @@
 // friendly errors, derives status / labels, suggests activity matches and builds the readable structure summary.
 
 import { addDays, dayKey, parseDayKey } from './calendar.js'
-import { isGymActivity, isRunActivity } from './activityType.js'
+import { isGymActivity, isRunActivity, isSwimActivity } from './activityType.js'
 import { ftpAt } from './ftpHistory.js'
 import { ltFromHistoryEntry, resolveLtAt } from './lactateThresholds.js'
 import { FTP_LT1_FRACTION, FTP_LT2_FRACTION, computeZones, resolveZonesAt, zonePctsFromEntry } from './powerZones.js'
@@ -277,7 +277,7 @@ export const AUTO_LINK_DURATION_TOLERANCE = 0.25
 export const AUTO_LINK_MARGIN = 0.1
 
 /** The calendar derives the discipline of an activity from its track. */
-export const activityDiscipline = (a) => (isGymActivity(a) ? 'gym' : isRunActivity(a) ? 'run' : a?.track_id || a?.trackId ? 'track' : 'ride')
+export const activityDiscipline = (a) => (isGymActivity(a) ? 'gym' : isRunActivity(a) ? 'run' : isSwimActivity(a) ? 'swim' : a?.track_id || a?.trackId ? 'track' : 'ride')
 
 /**
  * Picks the planned workout a NEW activity should be linked to automatically, or null (then the user still
@@ -291,7 +291,8 @@ export const activityDiscipline = (a) => (isGymActivity(a) ? 'gym' : isRunActivi
  *     that beats the runner-up by AUTO_LINK_MARGIN; an exact tie goes to the earliest created; else null.
  */
 export function pickAutoLinkCandidate(workouts, activity, localDay) {
-  if (!activity) return null
+  // Swims have no planned-workout discipline: they are never linked automatically.
+  if (!activity || isSwimActivity(activity)) return null
   const runActivity = isRunActivity(activity)
   const gymActivity = isGymActivity(activity)
   // Runs only complete run workouts, run workouts only runs; gym sessions only gym workouts and rides never complete a gym workout.
@@ -375,7 +376,7 @@ export const dayOfLocalStamp = (stamp) => {
 export function linkableActivities(workout, workouts, activities) {
   const linkedElsewhere = new Set((workouts || []).filter((w) => w.activity_id && w.id !== workout.id).map((w) => w.activity_id))
   return (activities || [])
-    .filter((a) => a && a.kind !== 'planned' && dayKey(a.date) === workout.workout_date && !linkedElsewhere.has(a.id) && (a.discipline === 'gym') === (workout.discipline === 'gym') && (a.discipline === 'run') === (workout.discipline === 'run'))
+    .filter((a) => a && a.kind !== 'planned' && a.discipline !== 'swim' && dayKey(a.date) === workout.workout_date && !linkedElsewhere.has(a.id) && (a.discipline === 'gym') === (workout.discipline === 'gym') && (a.discipline === 'run') === (workout.discipline === 'run'))
     .sort((a, b) => (b.discipline === workout.discipline) - (a.discipline === workout.discipline) || a.date - b.date || String(a.id).localeCompare(String(b.id)))
 }
 

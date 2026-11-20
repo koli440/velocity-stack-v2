@@ -43,7 +43,7 @@ import { computeDurationalCurve } from '../../../lib/streamAnalysis'
 import ActivityComments from '../../../components/ActivityComments'
 import ActivityReactions from '../../../components/ActivityReactions'
 import GymSessionSection from '../../../components/GymSessionSection'
-import { isTrackActivity, isRunActivity } from '../../../lib/activityType'
+import { isTrackActivity, isRunActivity, isSwimActivity } from '../../../lib/activityType'
 import { activitySport, isSportFlavour, SPORT_TEXT_CLASS } from '../../../lib/sportType'
 
 const ActivityMap = dynamic(() => import('../../../components/ActivityMap'), {
@@ -374,6 +374,9 @@ function ActivityDetail() {
 
   const actWhen = activity.activity_date || activity.created_at
   const isGym = activity.activity_type === 'gym'
+  const isSwim = activity.activity_type === 'swim'
+  // Gym sessions and swims have no cycling templates, power curves or gearing.
+  const isOffBike = isGym || isSwim
   const riderName = authorName(rider)
 
   return (
@@ -395,7 +398,7 @@ function ActivityDetail() {
           ) : null}
           <div className="space-y-1 min-w-0">
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white break-words">
-              {activity.title || (activity.activity_type === 'gym' ? 'Gym Session' : isRunActivity(activity) ? activitySport(activity).label : 'Velodrome Session')}
+              {activity.title || (activity.activity_type === 'gym' ? 'Gym Session' : isRunActivity(activity) || isSwimActivity(activity) ? activitySport(activity).label : 'Velodrome Session')}
             </h1>
             {activity.activity_type === 'gym' && (
               <p className="mt-1 text-xs font-bold text-violet-600 dark:text-violet-400" data-testid="detail-gym-tag">
@@ -606,7 +609,7 @@ function ActivityDetail() {
       {/* 4. Durational Curves Chart: current ride vs. a selectable baseline/"history
            curve" (all-time, last 30/90 days, this calendar year, last floating year,
            or a custom day-picker range) - issue #28 */}
-      {!isGym && (
+      {!isOffBike && (
         <DurationalCurvesChart
           curves={effectiveCurves}
           masterCurves={masterCurves}
@@ -618,11 +621,11 @@ function ActivityDetail() {
       )}
 
       {/* 4b. Template execution card: Phase 2 declarative evaluation + benchmarking */}
-      {!sharedView && !isGym && (
+      {!sharedView && !isOffBike && (
         <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} onVisibleWindowsChange={setHighlightWindows} />
       )}
       {/* Athlete context: an active coach runs his own / system templates on the athlete's activity. */}
-      {sharedView && !isGym && coachRiderId && coachRiderId === activity?.user_id && (
+      {sharedView && !isOffBike && coachRiderId && coachRiderId === activity?.user_id && (
         <TemplateRunsSection activityId={activityId} activity={activity} tracks={tracks} riderId={coachRiderId} onVisibleWindowsChange={setHighlightWindows} />
       )}
 
@@ -630,7 +633,7 @@ function ActivityDetail() {
       <ActivityComments activityId={activityId} />
 
       {/* 5. Bottom panel: velodrome, ride type, gears and gear segments (own activities only) */}
-      {!sharedView && !isGym && (
+      {!sharedView && !isOffBike && (
       <div className="bg-white dark:bg-surface-darkCard p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Icon name="settings" /> Track & Gearing Setup for this Ride
@@ -673,7 +676,7 @@ function ActivityDetail() {
       )}
 
       {/* 5b. Coach editor (athlete context): ride type, gears and segments via the audited RPC */}
-      {sharedView && !isGym && coachRiderId && coachRiderId === activity?.user_id && (
+      {sharedView && !isOffBike && coachRiderId && coachRiderId === activity?.user_id && (
       <div className="bg-white dark:bg-surface-darkCard p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-surface-darkBorder shadow-xs">
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white mb-1 flex items-center gap-2">
           <Icon name="settings" /> Ride type &amp; gears (coach)

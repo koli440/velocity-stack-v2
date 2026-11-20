@@ -116,7 +116,7 @@ export function localStampFromSeconds(startSeconds, offsetSeconds) {
 
 /**
  * Activity API appendix A name (activityType in the push) -> 'ride' | 'run' | 'gym' | 'skip'; null when absent (decide
- * from the file). Cycling and running variants are imported; swimming and the other sports are not.
+ * from the file). Cycling, running and swimming variants are imported; the other sports are not.
  */
 export function classifyGarminActivityType(activityType) {
   const t = String(activityType ?? '').trim()

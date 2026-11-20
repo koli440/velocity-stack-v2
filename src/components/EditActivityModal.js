@@ -48,7 +48,7 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
     e.preventDefault()
     setSaving(true)
     setError('')
-    const isRun = activity.activity_type === 'run'
+    const isRun = activity.activity_type === 'run' || activity.activity_type === 'swim'
     const isGym = !isRun && rideType === 'gym'
     const hasGear = rideTypeHasGear(rideType)
     // An unset ride type is road: leave it (and the hidden gear) alone unless the user picks a type.
@@ -129,8 +129,8 @@ function EditActivityModalInner({ isOpen, onClose, activity, tracks = [], client
           Race
         </label>
 
-        {activity.activity_type === 'run' ? (
-          <p className="text-[11px] text-slate-400" data-testid="edit-run-type">{rideTypeLabel(activity.ride_type)} · imported run (gear does not apply)</p>
+        {activity.activity_type === 'run' || activity.activity_type === 'swim' ? (
+          <p className="text-[11px] text-slate-400" data-testid="edit-run-type">{rideTypeLabel(activity.ride_type)} · {activity.activity_type === 'swim' ? 'imported swim' : 'imported run'} (gear does not apply)</p>
         ) : (
         <RideGearEditor
           allowGym

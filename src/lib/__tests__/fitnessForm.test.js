@@ -217,8 +217,8 @@ test('gym: includeGym=false queries exactly the old types; default includes gym'
     },
   }
   await gymFetch(client, { userId: 'u', includeGym: false })
-  assert.deepEqual(typesSeen.flat(), ['ride', 'run', 'ride', 'run'])
+  assert.deepEqual(typesSeen.flat(), ['ride', 'run', 'swim', 'ride', 'run', 'swim'])
   typesSeen.length = 0
   await gymFetch(client, { userId: 'u' })
-  assert.deepEqual(typesSeen[0], ['ride', 'run', 'gym'])
+  assert.deepEqual(typesSeen[0], ['ride', 'run', 'swim', 'gym'])
 })

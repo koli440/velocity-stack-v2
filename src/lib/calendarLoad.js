@@ -221,7 +221,7 @@ export function monthTotals(rows) {
     count: 0,
     durationS: 0,
     distanceM: 0,
-    byDiscipline: { ride: 0, run: 0, gym: 0, other: 0 },
+    byDiscipline: { ride: 0, run: 0, swim: 0, gym: 0, other: 0 },
     planned: { count: 0, durationS: 0, durationPartial: false, load: 0, loadPartial: false },
     tl: { completed: 0, measured: 0, estimated: 0, unscored: 0, excludedGym: 0, projected: 0, plannedRemainingUnknown: 0 },
   }
@@ -242,7 +242,7 @@ export function monthTotals(rows) {
         t.count += 1
         t.durationS += e.durationS || 0
         t.distanceM += e.distanceM || 0
-        const d = e.discipline === 'run' ? 'run' : e.discipline === 'gym' ? 'gym' : e.discipline === 'ride' || e.discipline === 'track' ? 'ride' : 'other'
+        const d = e.discipline === 'run' ? 'run' : e.discipline === 'swim' ? 'swim' : e.discipline === 'gym' ? 'gym' : e.discipline === 'ride' || e.discipline === 'track' ? 'ride' : 'other'
         t.byDiscipline[d] += 1
       }
       if (c.tl) {

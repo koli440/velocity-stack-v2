@@ -101,13 +101,15 @@ def derive_speed_and_distance_from_gps(gps_points):
     return speed_kmh, round(distance_m, 1)
 
 def classify_activity(sport, sub_sport):
-    """'gym' for strength / training sessions, 'run' for running, 'ride' for everything else (existing behaviour)."""
+    """'gym' for strength / training sessions, 'run' for running, 'swim' for swimming, 'ride' for everything else (existing behaviour)."""
     sport = str(sport or '').lower()
     sub_sport = str(sub_sport or '').lower()
     if sport == 'training' or sub_sport in ('strength_training', 'hiit'):
         return 'gym'
     if sport == 'running':
         return 'run'
+    if sport == 'swimming':
+        return 'swim'
     return 'ride'
 
 def read_session_info(fitfile):
@@ -120,6 +122,10 @@ def read_session_info(fitfile):
             'calories': vals.get('total_calories'),
             'start_time': vals.get('start_time'),
             'elapsed_time_s': vals.get('total_elapsed_time'),
+            'timer_time_s': vals.get('total_timer_time'),
+            'distance_m': vals.get('total_distance'),
+            'avg_hr': vals.get('avg_heart_rate'),
+            'max_hr': vals.get('max_heart_rate'),
         }
     return {}
 
@@ -318,7 +324,7 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         elapsed_time_s = float(max(len(watts_stream) - 1, 0))
 
     # Strength files may carry no (or sparse) records: the session message still knows start and duration.
-    if activity_type == 'gym':
+    if activity_type in ('gym', 'swim'):
         if start_time is None and session_info.get('start_time') is not None:
             start_time = session_info['start_time']
         if session_info.get('elapsed_time_s') is not None:
@@ -347,6 +353,13 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
 
     elevation_gain_m, elevation_loss_m = compute_elevation_changes(altitude_stream)
 
+    # Pool swims: the session message is the reliable source (per-length records carry no GPS or speed).
+    if activity_type == 'swim':
+        if session_info.get('distance_m') is not None:
+            distance_m = round(float(session_info['distance_m']), 1)
+        if session_info.get('timer_time_s') is not None:
+            moving_time_s = float(session_info['timer_time_s'])
+
     summary = {
         'max_power_w': int(max(watts_stream)) if watts_stream else None,
         'max_cadence_rpm': int(max(cadence_stream)) if cadence_stream else None,
@@ -361,8 +374,8 @@ def analyze_fit_file(file_path, chainring=None, cog=None, is_fixed_gear=False):
         'avg_power_w': round(safe_mean(watts_stream)) if watts_stream else None,
         'avg_cadence_rpm': round(safe_mean(cadence_stream)) if cadence_stream else None,
         'avg_torque_nm': safe_mean(torque_stream),
-        'avg_hr': round(safe_mean(hr_stream)) if hr_stream else None,
-        'max_hr': int(max(hr_stream)) if hr_stream else None,
+        'avg_hr': round(safe_mean(hr_stream)) if hr_stream else (int(session_info['avg_hr']) if activity_type == 'swim' and session_info.get('avg_hr') is not None else None),
+        'max_hr': int(max(hr_stream)) if hr_stream else (int(session_info['max_hr']) if activity_type == 'swim' and session_info.get('max_hr') is not None else None),
         'normalized_power_w': compute_normalized_power(watts_stream),
         'elevation_gain_m': elevation_gain_m,
         'elevation_loss_m': elevation_loss_m,

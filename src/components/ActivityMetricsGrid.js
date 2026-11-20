@@ -24,6 +24,8 @@ import { weightFromActivity } from '../lib/weightHistory'
 import { ftpFromActivity } from '../lib/ftpHistory'
 import { wattsPerKg } from '../lib/wkg'
 import Icon from './Icon'
+import { activityLoad } from '../lib/fitnessForm'
+import { formatSwimDistance, formatSwimPace } from '../lib/swim'
 
 function formatDuration(totalSeconds) {
   if (totalSeconds == null) return '—'
@@ -330,7 +332,20 @@ export default function ActivityMetricsGrid({ activity, curvesMap = {}, masterCu
 
   if (!activity) return null
 
-  const visibleMetrics = metrics.filter((m) => !hiddenIds.includes(m.id))
+  const isSwim = activity.activity_type === 'swim'
+  const swimIds = ['start_time', 'distance', 'swim_pace', 'moving_time', 'elapsed_time', 'training_load', 'avg_hr', 'max_hr']
+  const swimDist = isSwim ? formatSwimDistance(activity.distance_m) : null
+  const swimPace = isSwim ? formatSwimPace(activity.distance_m, activity.moving_time_s) : null
+  const shown = isSwim
+    ? metrics
+        .filter((m) => swimIds.includes(m.id))
+        .map((m) => (m.id === 'distance' ? { ...m, value: swimDist ? `${swimDist.value} ${swimDist.unit}` : '—' } : m.id === 'training_load' ? { ...m, value: (activity.training_load ?? activityLoad(activity)?.load) != null ? Math.round(activity.training_load ?? activityLoad(activity).load) : '—', hint: undefined } : m))
+    : metrics
+  if (isSwim) {
+    const at = shown.findIndex((m) => m.id === 'distance')
+    shown.splice(at + 1, 0, { id: 'swim_pace', group: 'Time & Distance', label: 'Pace /100 m', value: swimPace || '—' })
+  }
+  const visibleMetrics = shown.filter((m) => !hiddenIds.includes(m.id))
   const groups = []
   visibleMetrics.forEach((m) => {
     let group = groups.find((g) => g.name === m.group)

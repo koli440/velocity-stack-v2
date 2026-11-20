@@ -258,8 +258,8 @@ export function createGarminProvider({ service, userId, accessToken, fetchImpl =
       // The pushed Appendix A type names the flavour (MTB, gravel, trail run...); the file's own sport is the fallback.
       const sport = sportFromGarminType(ev.activity_type) || garminSportFromSummary(parsed.summary)
       const kind = sport ? sportInfo(sport).activityType : 'skip'
-      console.info(`Garmin import: activity ${id} analysed as ${sport ?? 'skip'} (type=${ev.activity_type ?? 'unknown'}, sport=${parsed.summary?.sport ?? 'unknown'}, ${blob.size} bytes)${kind === 'skip' ? ': skipped, not a cycling, running or gym session' : ''}`)
-      // Settled either way: a file that is neither cycling, running nor strength is never imported, and one that was
+      console.info(`Garmin import: activity ${id} analysed as ${sport ?? 'skip'} (type=${ev.activity_type ?? 'unknown'}, sport=${parsed.summary?.sport ?? 'unknown'}, ${blob.size} bytes)${kind === 'skip' ? ': skipped, not a cycling, running, swimming or gym session' : ''}`)
+      // Settled either way: a file that is neither cycling, running, swimming nor strength is never imported, and one that was
       // analysed is not downloaded again (the import itself skips duplicates).
       await setStatus(id, { status: kind === 'skip' ? 'skipped' : 'imported', last_error: null })
       if (kind === 'skip') return { skip: true }

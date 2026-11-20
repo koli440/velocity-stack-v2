@@ -26,7 +26,8 @@ import ReactionButton from './ReactionButton'
 import { fetchReactionInfo, setActivityReaction, toggledState } from '../lib/activityReactions'
 import { fetchCommentInfo, fetchUnreadCounts, commentCountLabel } from '../lib/activityComments'
 import { rideTypeHasGear } from '../lib/rideType'
-import { isTrackActivity, isRunActivity } from '../lib/activityType'
+import { isTrackActivity, isRunActivity, isSwimActivity } from '../lib/activityType'
+import { formatSwimDistance, formatSwimPace } from '../lib/swim'
 import { activitySport, isSportFlavour, SPORT_TAG_CLASS } from '../lib/sportType'
 
 // Intensity bar fill width (0-100%) driven by intensity_factor (IF ~1.0+ = full).
@@ -277,13 +278,18 @@ export default function ActivityFeed({
           const act = row.activity
           const badges = hydrateBadges(act.badges)
           const cover = coverPhotos?.get(act.id)
-          const dist = formatDistance(act.distance_m)
+          const swim = isSwimActivity(act)
+          const dist = swim ? null : formatDistance(act.distance_m)
+          const swimDist = swim ? formatSwimDistance(act.distance_m) : null
+          const swimPace = swim ? formatSwimPace(act.distance_m, act.moving_time_s) : null
           const time = formatMovingTime(act.moving_time_s)
           const rider = act.author || defaultAuthor
           const riderName = authorName(rider)
           const when = act.activity_date || act.created_at
           const stats = [
             dist && { value: dist, unit: 'km' },
+            swimDist && { value: swimDist.value, unit: swimDist.unit },
+            swimPace && { value: swimPace, unit: '/100 m' },
             time && { value: time, unit: 'time' },
             act.avg_power_w && { value: Math.round(act.avg_power_w), unit: 'W avg', tone: 'text-purple-700 dark:text-purple-300' },
             act.avg_power_w && act.weight_at_activity_kg && { value: (act.avg_power_w / act.weight_at_activity_kg).toFixed(2), unit: 'W/kg', tone: 'text-purple-700 dark:text-purple-300' },
@@ -364,7 +370,7 @@ export default function ActivityFeed({
                   href={withReturnTo(activityHref(act), returnTo)}
                   className="mt-2 block text-base font-black text-slate-900 dark:text-white group-hover:text-orange-500 transition after:absolute after:inset-0 after:content-['']"
                 >
-                  {act.title || (act.activity_type === 'gym' ? 'Gym Session' : isRunActivity(act) ? activitySport(act).label : 'Velodrome Session')}
+                  {act.title || (act.activity_type === 'gym' ? 'Gym Session' : isRunActivity(act) || isSwimActivity(act) ? activitySport(act).label : 'Velodrome Session')}
                 </Link>
                 {act.activity_type === 'gym' && (
                   <div className="mt-1" data-testid="feed-gym-tag">

@@ -13,7 +13,7 @@
 import { analyzeStreams } from '../streamAnalysis.js'
 import { ImportError } from './importErrors.js'
 import { isGymSportType } from '../activityType.js'
-import { sportFromIntervals } from '../sportType.js'
+import { isSwimRideType, sportFromIntervals } from '../sportType.js'
 import { gymSummaryFromMeta } from '../gymAnalysis.js'
 import { newestFirst, rideTimeMs } from '../syncPlan.js'
 
@@ -233,6 +233,13 @@ export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchI
       const analyzed = analyzeStreams(streamsData, gearing)
       if (!analyzed) {
         if (activityType === 'gym') return gymFallback()
+        if (isSwimRideType(sport)) {
+          // Pool swims often have no streams: keep distance, time and heart rate from the activity metadata.
+          const m = gymFallback()
+          const { activity_type: _t, ...base } = m.summary
+          const dist = Number(meta?.distance)
+          return { ...m, activityType: 'swim', sport, summary: { ...base, ...(Number.isFinite(dist) && dist > 0 ? { distance_m: dist } : {}) } }
+        }
         throw new ImportError(`No data is available in Intervals.icu for ride ${actId}.`, 404)
       }
       return { title, startDateLocal, ...typeField, ...analyzed }
