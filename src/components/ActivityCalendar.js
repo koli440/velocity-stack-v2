@@ -703,15 +703,16 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
 
   return (
     <div className="glass-card bg-white dark:bg-surface-darkCard p-3 sm:p-5 rounded-2xl border border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-4">
-      <div data-testid="calendar-sticky-header" className="lg:sticky lg:top-[4.25rem] lg:z-20 lg:-mx-5 lg:-mt-5 lg:px-5 lg:pt-4 lg:pb-2 lg:rounded-t-2xl glass-dense lg:bg-white dark:lg:bg-surface-darkCard lg:border-b lg:border-slate-200 dark:lg:border-surface-darkBorder lg:shadow-sm space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <button aria-label="Previous" className={btn} onClick={() => goToMonth(shiftMonth(anchor, -1), false)}>‹</button>
-          <button className={btn} onClick={() => goToMonth(startOfDay(new Date()), true)}>Today</button>
-          <button aria-label="Next" className={btn} onClick={() => goToMonth(shiftMonth(anchor, 1), false)}>›</button>
+      <div data-testid="calendar-sticky-header" className="sticky top-[3.75rem] lg:top-[4.25rem] z-20 -mx-3 -mt-3 px-3 pt-2 pb-2 lg:-mx-5 lg:-mt-5 lg:px-5 lg:pt-4 rounded-t-2xl glass-dense bg-white dark:bg-surface-darkCard border-b border-slate-200 dark:border-surface-darkBorder shadow-sm space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <button aria-label="Previous" className={`${btn} min-h-[44px] min-w-[44px] lg:min-h-0 lg:min-w-0`} onClick={() => goToMonth(shiftMonth(anchor, -1), false)}>‹</button>
+          <button className={`${btn} min-h-[44px] lg:min-h-0 hidden lg:block`} onClick={() => goToMonth(startOfDay(new Date()), true)}>Today</button>
+          <button aria-label="Next" className={`${btn} min-h-[44px] min-w-[44px] lg:min-h-0 lg:min-w-0`} onClick={() => goToMonth(shiftMonth(anchor, 1), false)}>›</button>
         </div>
-        <h2 className="text-base font-extrabold text-slate-900 dark:text-white capitalize">{title}</h2>
-        <span className="hidden sm:block w-[7.5rem]" aria-hidden />
+        <h2 className="min-w-0 truncate text-base font-extrabold text-slate-900 dark:text-white capitalize">{title}</h2>
+        <button className={`${btn} min-h-[44px] lg:hidden`} onClick={() => goToMonth(startOfDay(new Date()), true)}>Today</button>
+        <span className="hidden lg:block w-[7.5rem]" aria-hidden />
       </div>
       <MonthSummary rows={rows} />
       <div className="hidden lg:grid grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5 text-[10px] uppercase tracking-widest font-bold text-slate-400">
@@ -736,7 +737,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                   data-today={cell.isToday ? 'true' : undefined}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => dropOnDay(e, cell.date)}
-                  className={`scroll-mt-24 lg:scroll-mt-44 rounded-xl border p-1.5 ${slimOnMobile ? 'min-h-[1.75rem] py-0.5 opacity-80 lg:py-1.5 lg:opacity-100' : 'min-h-[3rem]'} lg:min-h-[6.5rem] flex flex-col gap-1 ${hideOnMobile ? 'hidden lg:flex' : ''} ${
+                  className={`scroll-mt-40 lg:scroll-mt-44 rounded-xl border p-1.5 ${slimOnMobile ? 'min-h-[1.75rem] py-0.5 opacity-80 lg:py-1.5 lg:opacity-100' : 'min-h-[3rem]'} lg:min-h-[6.5rem] flex flex-col gap-1 ${hideOnMobile ? 'hidden lg:flex' : ''} ${
                     cell.isToday
                       ? 'border-emerald-500 bg-emerald-500/5'
                       : 'border-slate-200 dark:border-slate-800'
