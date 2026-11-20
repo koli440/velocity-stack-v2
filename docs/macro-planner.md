@@ -1,4 +1,4 @@
-# Macro planner (coach tool, v1)
+# Macro planner (coach tool)
 
 Long-term, high-level planning towards ONE A-race date, tied to the athlete's real fitness history. No workouts: the
 unit is a **planned week** (target TL, focus label, note and a rough hard/easy/rest day shape). Coaches plan; the
@@ -16,8 +16,9 @@ item, no pages that answer, every RPC refuses, and the tables stay empty.
 - **v1 scope**: one A race, mesocycle templates (3+1, 2+1, 4+1, custom), load projection (planned vs actual CTL / ATL / TSB to race
   day), feasibility check, taper model by race length with a predicted race-day form (TSB) that is always labelled an *estimate*.
 - **Athlete**: read-only timeline at `/training-plan` (only a plan the coach has *published*, only while that coach is the active coach).
-- **Not in v1** (do not build): illness / injury disruption handling and replanning (next step; suggest-only, the coach approves),
-  B/C races, calendar bands, athlete-editable plans.
+- **Not built** (decided): calendar bands, athlete-editable plans, and the planner for self-coached athletes (a premium coach feature;
+  `coach_id <> rider_id` plus `is_coach_of` make it impossible server-side). Phase 2 (illness/injury, adherence, B/C races, availability,
+  sharing, Lab hint) is described in "Adapting the plan".
 
 ## Flag (same mechanism as `coach_module`)
 `20270186000000_macro_planner.sql`:
@@ -71,6 +72,30 @@ the page answers "not available for your account yet"). Same cards, inputs and b
 ceiling, goal, starting TL), generated week table with editable target / focus / note / day shape, projection chart, feasibility and race-day estimate,
 publish / unpublish. Athlete: `/training-plan` (menu item shown only when a published plan exists), read-only.
 
+## Adapting the plan (phase 2, same `macro_planner` flag)
+Migration `20270187000000_macro_planner_adapt.sql`, engine `src/lib/macroPlannerAdapt.js` (pure, unit tested), UI `src/components/PlannerAdapt.js`.
+Principle: the engine only SUGGESTS. Every option carries a recomputed projection, feasibility verdict and estimated race-day form next to the
+unchanged plan; nothing changes until the coach applies one, and `macro_plan_apply` replaces the weeks and writes an append-only row in
+`macro_plan_audit` (before/after weeks and goal) in one transaction. Clients have no table privileges; every RPC checks flag and relationship.
+- **Disruptions** (`macro_plan_disruptions`: illness/injury, mild/moderate/severe, start, optional end, note). Return ramp as a share of the pre-break
+  weekly TL (mean of up to 4 undisturbed weeks before the break, else the planned target): the break length is multiplied by the severity
+  (1 / 1.5 / 2) and picks a tier, e.g. up to 7 effective days illness 50/70/85 %, injury 60/80/90 %; longer breaks give longer, lower ramps; illness is
+  always more conservative. Open-ended disruptions assume they end today. Options: **shift forward** (ramp, then the normal progression at the ramp
+  ceiling), **compress** (climb up to 12 %/week to regain the original peak; higher risk, feasibility says so), **lower the goal** (gentler ramp
+  and a goal CTL equal to what it reaches). Weeks overlapping a disruption are excluded from the baseline and from adherence. The UI shows a
+  "not medical advice" notice.
+- **Adherence**: planned vs actual TL for completed weeks. Green 85-115 %, amber 70-130 %, else red; weeks with a disruption or no target are not
+  scored. A review is proposed (`macro_plan_reviews`, once per week, dismiss/done are never reopened) when the last two scored weeks are red in the
+  same direction or the last three are all off target in the same direction. The review offers a "rebase" option from the recent actual load.
+- **B and C races** (`macro_plan_races`, before the A race): B = race week at 75 % TL with a hard race day, then a recovery week; C = train through, race
+  day hard. Races past, in the A taper, outside the plan or in the same week as a higher-priority race are ignored (reason returned). Applied on
+  generation and inside every option.
+- **Availability** (`macro_plan_availability`: Monday, 0-100 %, reason): suggests scaling the week's target (<= 50 % removes hard days, 0 % = rest).
+- **Sharing** (`macro_plans.share_reasoning`, default off): per-week and plan rationale are returned by `my_macro_plan` only when on. Disruptions,
+  availability, reviews and the audit trail are never returned to the athlete.
+- **Lab hint**: the Lab phenotype (power profile of the last 90 days and weight) shows a text hint for the focus labels; it never edits the plan.
+All of these are estimates, not predictions or medical advice.
+
 ## Rules followed
 Owner-scoped queries (`scopeToOwner`, explicit rider ids), additive idempotent migrations with new higher versions, adversarial DB harness
-`scripts/db-harness/macro-planner-adversarial.mjs`, pure logic in `src/lib` with unit tests, news entry, no external secrets.
+`scripts/db-harness/macro-planner-adversarial.mjs` and `macro-planner-adapt-adversarial.mjs`, pure logic in `src/lib` with unit tests, news entry, no external secrets.

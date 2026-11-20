@@ -50,3 +50,19 @@ export function macroPlanSaveMessage(error) {
   if (/not coaching/i.test(msg)) return 'You are not coaching this athlete.'
   return msg && msg.length <= 160 && !/violates|constraint|syntax/i.test(msg) ? msg : 'Could not save the plan.'
 }
+
+// ---- Adapting the plan (disruptions, B/C races, availability, reviews, sharing, audit) ------------------------
+
+const call = async (client, fn, args) => {
+  const { data, error } = await client.rpc(fn, args)
+  return error ? { data: null, error } : { data, error: null }
+}
+
+export const saveDisruption = (client, planId, d) => call(client, 'macro_plan_disruption_save', { p_plan: planId, p: d })
+export const deleteDisruption = (client, planId, id) => call(client, 'macro_plan_disruption_delete', { p_plan: planId, p_id: id })
+export const setMinorRaces = (client, planId, races) => call(client, 'macro_plan_races_set', { p_plan: planId, p: races })
+export const setAvailability = (client, planId, rows) => call(client, 'macro_plan_availability_set', { p_plan: planId, p: rows })
+export const setReview = (client, planId, week, reason, status) => call(client, 'macro_plan_review_set', { p_plan: planId, p_week: week, p_reason: reason, p_status: status })
+export const setShareReasoning = (client, planId, share, rationale) => call(client, 'macro_plan_share_set', { p_plan: planId, p_share: !!share, p_rationale: rationale || '' })
+/** Applies one coach-approved option (weeks + optional goal) and writes the audit row in one transaction. */
+export const applyPlanOption = (client, planId, payload) => call(client, 'macro_plan_apply', { p_plan: planId, p: payload })
