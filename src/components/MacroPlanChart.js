@@ -14,7 +14,7 @@ export function ProjectionChart({ rows, raceDate, label }) {
   return (
     <div role="img" aria-label={label} className="w-full h-72 sm:h-80">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={rows} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+        <ComposedChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={grid} opacity={0.2} />
           <XAxis dataKey="day" tickFormatter={shortDay} tickLine={false} axisLine={{ stroke: '#cbd5e1', opacity: 0.6 }} tick={axis} minTickGap={32} />
           <YAxis tickLine={false} axisLine={false} tick={axis} domain={['auto', 'auto']} width={40} />
@@ -39,7 +39,7 @@ export function WeeklyTargetChart({ weeks, actual = {}, label }) {
   return (
     <div role="img" aria-label={label} className="w-full h-56 sm:h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+        <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={grid} opacity={0.2} />
           <XAxis dataKey="week" tickFormatter={shortDay} tickLine={false} axisLine={{ stroke: '#cbd5e1', opacity: 0.6 }} tick={axis} minTickGap={24} />
           <YAxis tickLine={false} axisLine={false} tick={axis} width={40} />
