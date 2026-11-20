@@ -66,4 +66,10 @@ export const setReview = (client, planId, week, reason, status) => call(client, 
 export const setShareReasoning = (client, planId, share, rationale) => call(client, 'macro_plan_share_set', { p_plan: planId, p_share: !!share, p_rationale: rationale || '' })
 /** Applies one coach-approved option (weeks + optional goal) and writes the audit row in one transaction. */
 export const applyPlanOption = (client, planId, payload) => call(client, 'macro_plan_apply', { p_plan: planId, p: payload })
+/** Plan guidance for a rider's calendar; null when there is none or the viewer may not see it (the RPC enforces this). */
+export async function fetchMacroPlanCalendar(client, riderId) {
+  const { data, error } = await client.rpc('macro_plan_calendar', { p_rider: riderId })
+  return error ? null : data || null
+}
+export const setCalendarShare = (client, planId, share) => call(client, 'macro_plan_calendar_share_set', { p_plan: planId, p_share: !!share })
 export const acknowledgePlanAttention = (client, planId) => call(client, 'macro_plan_attention_ack', { p_plan: planId })

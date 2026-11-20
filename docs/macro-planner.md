@@ -13,11 +13,11 @@ item, no pages that answer, every RPC refuses, and the tables stay empty.
   history only through the coach-gated `coach_fitness_activities()` RPC (see docs/coaching.md). With too little history the coach enters
   a manual starting weekly TL instead.
 - **Races**: the planner has no free-form race entry; see "Races come from the calendar".
-- **Location**: coach page per athlete, `/coach/<riderId>/planner` (needs an ACTIVE coaching relationship). No calendar bands in v1.
+- **Location**: coach page per athlete, `/coach/<riderId>/planner` (needs an ACTIVE coaching relationship). Plan guidance in the athlete's calendar: see "Plan guidance in the calendar" (supersedes the earlier "no calendar bands" decision).
 - **v1 scope**: one A race, mesocycle templates (3+1, 2+1, 4+1, custom), load projection (planned vs actual CTL / ATL / TSB to race
   day), feasibility check, taper model by race length with a predicted race-day form (TSB) that is always labelled an *estimate*.
 - **Athlete**: read-only timeline at `/training-plan` (only a plan the coach has *published*, only while that coach is the active coach).
-- **Not built** (decided): calendar bands, athlete-editable plans, and the planner for self-coached athletes (a premium coach feature;
+- **Not built** (decided): athlete-editable plans, and the planner for self-coached athletes (a premium coach feature;
   `coach_id <> rider_id` plus `is_coach_of` make it impossible server-side). Phase 2 (illness/injury, adherence, B/C races, availability,
   sharing, Lab hint) is described in "Adapting the plan".
 
@@ -115,6 +115,21 @@ with a link to `/coach/<riderId>/calendar`, where the coach adds the race under 
 - **Athlete**: `my_macro_plan` strips `attention`, race ids and missing B/C races.
 - **Race length**: calendar races have no distance/duration column (only the free-text "Format / distance" and a discipline), so the taper's `race_length`
   stays a planner setting; the calendar's format text, location and date are shown as context.
+
+## Plan guidance in the calendar
+The coach plans workouts against the plan, so the athlete's calendar (`/coach/<riderId>/calendar`) shows the plan as guidance:
+a slim band above each planned week (phase such as Build 2/3, Recovery or Taper 1/2, focus, target TL, TL done, TL of
+workouts already scheduled, TL still to schedule, A/B/C race markers, optional reasoning) and a small per-day hint (Plan: Hard,
+Easy or Rest) from the week's day shape. Done and scheduled TL come from the calendar's own week load; nothing extra is stored.
+- Visibility, enforced by the RPC `macro_plan_calendar(p_rider)` (no secrets needed): the coach sees it with the flag on and an
+  active unblocked relationship (drafts too). The athlete sees it only for a published plan with `macro_plans.share_calendar = true`
+  (per plan, default off, set by the coach with `macro_plan_calendar_share_set`, separate from sharing the reasoning), while the coach
+  still has the flag and an active relationship. Everyone else, and anyone with the flag off, gets NULL. The athlete JSON has no
+  attention flag, race ids, missing races or share flags; rationale only when `share_reasoning` is on.
+- Approved only: the RPC reads the stored weeks and races, which only change through the coach's save or apply-option (audited).
+  Suggestions, disruptions, availability and reviews are computed client-side or kept out of this payload, so an unapproved
+  suggestion is never shown as the plan.
+- Pure helpers: `src/lib/macroPlannerCalendarView.js` (tested). Harness: `scripts/db-harness/macro-planner-guidance-adversarial.mjs`.
 
 ## Rules followed
 Owner-scoped queries (`scopeToOwner`, explicit rider ids), additive idempotent migrations with new higher versions, adversarial DB harness

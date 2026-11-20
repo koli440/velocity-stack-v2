@@ -8,6 +8,8 @@ import { withReturnTo } from '../lib/returnTo'
 import Icon from './ActivityIcons'
 import { PLANNED_STATUS_ICONS, PUSH_STATE_ICONS, CALENDAR_ICONS } from '../lib/calendarIcons'
 import { supabase } from '../lib/supabase'
+import { fetchMacroPlanCalendar } from '../lib/macroPlannerFlag'
+import { weekGuidance, raceMarkers, dayHint, weekProgress } from '../lib/macroPlannerCalendarView'
 import { formatDate } from '../lib/dateFormat'
 import CalendarNoteDialog from './CalendarNoteDialog'
 import CalendarRaceDialog from './CalendarRaceDialog'
@@ -421,6 +423,28 @@ function MonthSummary({ rows }) {
   )
 }
 
+// Macro plan guidance for one week (coach always, athlete only when shared): target, phase, focus, races, TL still to schedule.
+function PlanBand({ guidance, progress, races, viewer }) {
+  if (!guidance) return null
+  const label = [guidance.phase, guidance.focus].filter(Boolean).join(' · ')
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg border border-dashed border-indigo-400/60 bg-indigo-500/5 px-2 py-1 text-[11px] text-indigo-800 dark:text-indigo-200" data-testid="plan-band" title={guidance.note || undefined}>
+      <span className="inline-flex items-center gap-1 font-bold"><Icon name="trend" size={12} /> Plan{viewer === 'coach' ? '' : ' (shared by your coach)'}</span>
+      {label && <span className="font-semibold">{label}</span>}
+      {progress && (
+        <span data-testid="plan-band-tl">
+          target <b>TL {progress.target}</b> · done {progress.done}{progress.scheduled > 0 ? ` · scheduled ~${progress.scheduled}` : ''}
+          {progress.toSchedule > 0 ? <> · <b data-testid="plan-band-remaining">{progress.toSchedule} to schedule</b></> : ' · on target'}
+        </span>
+      )}
+      {races.map((r, i) => <span key={i} className="font-bold text-rose-600 dark:text-rose-300"><Icon name={CALENDAR_ICONS.race} size={11} /> {r.role} · {r.name}</span>)}
+      {guidance.rationale && <span className="basis-full opacity-80">{guidance.rationale}</span>}
+    </div>
+  )
+}
+
+const HINT_STYLES = { H: 'text-rose-600 dark:text-rose-300', E: 'text-emerald-700 dark:text-emerald-300', R: 'text-slate-500 dark:text-slate-400' }
+
 function WeekSummary({ summary }) {
   const stat = (value, label) => (
     <div className="text-center lg:text-left">
@@ -509,6 +533,7 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
   const [pdialog, setPdialog] = useState(null) // { day: Date, id: string|null }
   const [pushRows, setPushRows] = useState(new Map())
   const [pushTick, setPushTick] = useState(0)
+  const [planGuide, setPlanGuide] = useState(null)
 
   const { start, end, startISO, endISO } = useMemo(() => monthRange(anchor), [anchor])
 
@@ -559,6 +584,17 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
     const id = setInterval(() => setTodayKey((k) => { const n = dayKey(new Date()); return n === k ? k : n }), 60000)
     return () => clearInterval(id)
   }, [])
+  // Plan guidance: the RPC returns nothing unless the viewer may see it (coach with the flag, or athlete when shared).
+  useEffect(() => {
+    if (!riderId) return undefined
+    let cancelled = false
+    fetchMacroPlanCalendar(supabase, riderId).then((p) => !cancelled && setPlanGuide(p)).catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [riderId])
+  const guideWeeks = useMemo(() => weekGuidance(planGuide), [planGuide])
+  const guideRaces = useMemo(() => raceMarkers(planGuide), [planGuide])
   const loadContext = useRiderLoadContext(riderId)
   // The rider's "include gym in fitness" choice (default on). Gym TL stays visible when off, but is dimmed and not counted.
   const [includeGym, setIncludeGym] = useState(true)
@@ -728,9 +764,15 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
       )}
 
       <div className={`space-y-2 ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
-        {rows.map((row, ri) => (
-          <div key={ri} className="grid grid-cols-1 lg:grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5">
-            {row.cells.map((cell) => {
+        {rows.map((row, ri) => {
+          const weekKey = dayKey(row.cells[0].date)
+          const guidance = guideWeeks.get(weekKey)
+          const weekRaces = row.cells.flatMap((c) => guideRaces.get(c.key) || [])
+          return (
+          <div key={ri} className="space-y-1">
+          {guidance && <PlanBand guidance={guidance} progress={weekProgress(guidance, row.summary.tl)} races={weekRaces} viewer={planGuide?.viewer} />}
+          <div className="grid grid-cols-1 lg:grid-cols-[repeat(7,minmax(0,1fr))_9rem] gap-1.5">
+            {row.cells.map((cell, ci) => {
               const hideOnMobile = !isShownOnMobile(cell)
               const slimOnMobile = isEmptyDay(cell)
               return (
@@ -780,6 +822,10 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
                     </button>
                     </span>
                   </div>
+                  {(() => {
+                    const hint = dayHint(guidance, ci)
+                    return hint && <span className={`text-[10px] font-bold uppercase tracking-wide ${HINT_STYLES[hint.code]}`} data-testid="plan-day-hint" title="Plan day shape">Plan: {hint.label}</span>
+                  })()}
                   {cell.notes.map((n) => <NoteChip key={n.id} note={n} onOpen={(note) => setDialog({ day: cell.date, note })} />)}
                   {cell.races.map((r) => <RaceChip key={r.id} race={r} form={raceForms.get(r.id)} onOpen={(race) => setRdialog({ day: cell.date, race })} />)}
                   {cell.events.map((e) => (e.kind === 'planned'
@@ -794,7 +840,9 @@ export default function ActivityCalendar({ riderId: riderIdProp, fetchEvents = d
             })}
             <WeekSummary summary={row.summary} />
           </div>
-        ))}
+          </div>
+          )
+        })}
       </div>
       {dialog && (
         <CalendarNoteDialog
