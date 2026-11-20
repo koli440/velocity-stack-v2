@@ -9,7 +9,9 @@ import { ProjectionChart, WeeklyTargetChart } from '../../../../components/Macro
 import Icon from '../../../../components/Icon'
 import PlannerAdapt from '../../../../components/PlannerAdapt'
 import { ErrorNote, StatusNote, StatusBadge, adminBtn, adminCard, adminInput, adminMuted } from '../../../../components/admin/AdminUi'
-import { fetchMacroPlan, saveMacroPlan, publishMacroPlan, deleteMacroPlan, macroPlanSaveMessage } from '../../../../lib/macroPlannerFlag'
+import Link from 'next/link'
+import { fetchMacroPlan, saveMacroPlan, publishMacroPlan, deleteMacroPlan, acknowledgePlanAttention, macroPlanSaveMessage } from '../../../../lib/macroPlannerFlag'
+import { selectableRaces, raceOptionLabel, attentionMessage, canAcknowledge, fetchUpcomingCalendarRaces, addRaceToCalendarHref } from '../../../../lib/macroPlannerCalendar'
 import {
   TEMPLATES,
   DEFAULT_RAMP_CEILING_PCT,
@@ -42,9 +44,9 @@ const WARNING_TEXT = {
   no_recovery: (w) => `${w.weeks} build weeks in a row without a recovery week.`,
 }
 
-const defaults = { raceName: '', raceDate: '', raceLength: 'medium', template: '3+1', buildWeeks: 3, recoveryWeeks: 1, ceiling: DEFAULT_RAMP_CEILING_PCT, startTl: '', goalCtl: '' }
+const defaults = { raceId: '', raceName: '', raceDate: '', raceLength: 'medium', template: '3+1', buildWeeks: 3, recoveryWeeks: 1, ceiling: DEFAULT_RAMP_CEILING_PCT, startTl: '', goalCtl: '' }
 
-// Coach planner for one athlete: one A race, weekly TL targets (no workouts), projection and feasibility.
+// Coach planner for one athlete: one A race (selected from the athlete's calendar), weekly TL targets (no workouts), projection and feasibility.
 export default function AthletePlannerPage() {
   const { riderId, athlete } = useAthlete()
   const enabled = useMacroPlanner()
@@ -58,6 +60,7 @@ export default function AthletePlannerPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
+  const [calRaces, setCalRaces] = useState([])
 
   const baseline = useMemo(() => computeBaseline(daily, today, { disruptions: plan?.disruptions || [] }), [daily, today, plan?.disruptions])
 
@@ -65,7 +68,7 @@ export default function AthletePlannerPage() {
     setPlan(p)
     if (!p) return
     setForm({
-      raceName: p.race_name, raceDate: p.race_date, raceLength: p.race_length, template: p.template, buildWeeks: p.build_weeks,
+      raceId: p.race_id || '', raceName: p.race_name, raceDate: p.race_date, raceLength: p.race_length, template: p.template, buildWeeks: p.build_weeks,
       recoveryWeeks: p.recovery_weeks, ceiling: Number(p.ramp_ceiling_pct), startTl: String(p.start_weekly_tl), goalCtl: p.goal_ctl ? String(p.goal_ctl) : '',
     })
     setWeeks(p.weeks || [])
@@ -83,6 +86,39 @@ export default function AthletePlannerPage() {
   useEffect(() => {
     if (enabled) load()
   }, [enabled, load])
+
+  // The athlete's upcoming calendar races (RLS lets the active coach read them).
+  const loadCalendar = useCallback(async () => {
+    if (!riderId || !today) return
+    const res = await fetchUpcomingCalendarRaces(supabase, riderId, today)
+    if (!res.error) setCalRaces(res.data)
+  }, [riderId, today])
+
+  useEffect(() => {
+    if (enabled) loadCalendar()
+  }, [enabled, loadCalendar])
+
+  const raceOptions = useMemo(() => {
+    const opts = selectableRaces(calRaces, { today, usedIds: (plan?.races || []).map((r) => r.race_id) })
+    return form.raceId && !opts.some((r) => r.id === form.raceId) && form.raceDate
+      ? [{ id: form.raceId, name: form.raceName, race_date: form.raceDate }, ...opts]
+      : opts
+  }, [calRaces, today, plan?.races, form.raceId, form.raceName, form.raceDate])
+
+  const pickRace = (id) => {
+    const r = raceOptions.find((x) => x.id === id)
+    setForm((f) => ({ ...f, raceId: id, raceName: r?.name || '', raceDate: r?.race_date || '' }))
+    setDirty(true)
+  }
+  const pickedRace = raceOptions.find((r) => r.id === form.raceId)
+  const ack = async () => {
+    setBusy(true)
+    const res = await acknowledgePlanAttention(supabase, plan.id)
+    setBusy(false)
+    if (res.error) return setError(macroPlanSaveMessage(res.error))
+    setNotice('Marked as reviewed.')
+    load()
+  }
 
   // Suggest the baseline weekly TL once, for a new plan.
   useEffect(() => {
@@ -124,7 +160,8 @@ export default function AthletePlannerPage() {
       rampCeilingPct: Number(form.ceiling), startWeeklyTl: startTl, goalCtl: Number(form.goalCtl) || null, days: daily, baselineStatus: baseline.status,
     })
     if (g.error) return setError(g.error)
-    const withRaces = plan?.races?.length ? applyMinorRaces(g.weeks, plan.races, { raceDate: form.raceDate, today }).weeks : g.weeks
+    const minor = (plan?.races || []).filter((r) => !r.missing)
+    const withRaces = minor.length ? applyMinorRaces(g.weeks, minor, { raceDate: form.raceDate, today }).weeks : g.weeks
     setWeeks(withRaces)
     setGoalReachable(g.goalReachable)
     setDirty(true)
@@ -136,12 +173,12 @@ export default function AthletePlannerPage() {
   }
 
   const save = async () => {
-    if (!form.raceName.trim()) return setError('Give the race a name.')
+    if (!form.raceId) return setError('Select the race from the athlete\'s calendar.')
     if (!weeks.length) return setError('Generate the weeks first.')
     setBusy(true)
     setError(null)
     const res = await saveMacroPlan(supabase, {
-      rider_id: riderId, race_name: form.raceName.trim(), race_date: form.raceDate, race_length: form.raceLength, template: form.template,
+      rider_id: riderId, race_id: form.raceId, race_length: form.raceLength, template: form.template,
       build_weeks: Number(form.buildWeeks), recovery_weeks: Number(form.recoveryWeeks), ramp_ceiling_pct: Number(form.ceiling),
       start_weekly_tl: startTl, baseline_source: baselineSource, goal_ctl: Number(form.goalCtl) || null, weeks,
     })
@@ -149,6 +186,7 @@ export default function AthletePlannerPage() {
     if (res.error) return setError(macroPlanSaveMessage(res.error))
     setNotice('Plan saved.')
     load()
+    loadCalendar()
   }
 
   const togglePublish = async () => {
@@ -206,15 +244,35 @@ export default function AthletePlannerPage() {
         )}
       </section>
 
+      {plan && (attentionMessage(plan.attention)) && (
+        <section className="rounded-2xl border border-amber-300 bg-amber-50 p-4 space-y-2 dark:border-amber-700 dark:bg-amber-950/30" data-testid="attention-banner">
+          <h2 className="text-lg font-black text-slate-900 dark:text-white">Needs attention</h2>
+          <p className="text-sm text-slate-800 dark:text-slate-200">{attentionMessage(plan.attention)}</p>
+          {canAcknowledge(plan.attention) && <button type="button" className={adminBtn.primary} onClick={ack} disabled={busy}>Mark as reviewed</button>}
+        </section>
+      )}
+
       <section className={`${adminCard} space-y-3`}>
         <h2 className="text-lg font-black text-slate-900 dark:text-white">A race</h2>
+        <p className={`text-sm ${adminMuted}`}>Races come from the athlete&apos;s calendar: name and date follow the calendar entry.</p>
+        {!raceOptions.length && (
+          <p className="text-sm text-slate-800 dark:text-slate-200" data-testid="no-calendar-race">
+            The athlete has no upcoming race in their calendar. <Link className="font-semibold underline" href={addRaceToCalendarHref(riderId)}>Add the race to the athlete&apos;s calendar first</Link>, then select it here.
+          </p>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Race name
-            <input className={input} maxLength={80} value={form.raceName} onChange={(e) => set({ raceName: e.target.value })} />
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Calendar race
+            <select className={input} value={form.raceId} onChange={(e) => pickRace(e.target.value)}>
+              <option value="">Select a race…</option>
+              {raceOptions.map((r) => <option key={r.id} value={r.id}>{raceOptionLabel(r)}</option>)}
+            </select>
           </label>
-          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Race date
-            <input className={input} type="date" min={today} value={form.raceDate} onChange={(e) => set({ raceDate: e.target.value })} />
-          </label>
+          <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">Race (from the calendar)
+            <p className="mt-1 text-sm font-normal text-slate-800 dark:text-slate-200" data-testid="a-race-summary">
+              {form.raceDate ? <>{form.raceName} · {form.raceDate}{pickedRace?.format_note ? ` · ${pickedRace.format_note}` : ''}</> : 'No race selected'}
+            </p>
+            <Link className="text-xs font-semibold underline" href={addRaceToCalendarHref(riderId)}>Edit or add races in the calendar</Link>
+          </div>
           <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Race length (sets the taper)
             <select className={input} value={form.raceLength} onChange={(e) => set({ raceLength: e.target.value })}>
               {Object.entries(LENGTHS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
