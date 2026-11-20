@@ -21,12 +21,13 @@ test('mobile drawer is portalled above the header and backdrop', () => {
   assert.match(src, /key === 'Escape'/)
 })
 
-test('calendar toolbar and weekday row stay pinned under the top bar on desktop', () => {
+test('calendar toolbar and weekday row stay pinned under the top bar on mobile and desktop', () => {
   const src = read('ActivityCalendar.js')
   const m = src.match(/data-testid="calendar-sticky-header" className="([^"]+)"/)
   assert.ok(m, 'sticky header wrapper exists')
-  assert.match(m[1], /lg:sticky/)
-  assert.match(m[1], /lg:z-20/)
+  assert.match(m[1], /\bsticky\b/)
+  assert.match(m[1], /\bz-20\b/)
+  assert.match(m[1], /top-\[3\.75rem\]/)
   assert.match(m[1], /glass-dense/)
   assert.match(src, /lg:scroll-mt-44/)
   const header = src.slice(src.indexOf('calendar-sticky-header'), src.indexOf('aria-busy'))
