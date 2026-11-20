@@ -273,3 +273,28 @@ export function assessFeasibility({ weeks, projection, sustained, rampCeilingPct
   const goalMissed = Number(goalCtl) > 0 && goalReachable === false
   return { planned, sustained: sustained ?? null, reference, usedDefault: sustained === null || sustained === undefined, verdict, goalMissed, warnings }
 }
+
+/** One row per day for charting: actual / plan / forecast fitness and forecast form. */
+export function chartRows(projection) {
+  const rows = new Map()
+  const put = (series, key, extra) => {
+    for (const p of series || []) {
+      const row = rows.get(p.day) || { day: p.day }
+      row[key] = p.fitness
+      if (extra) row[extra] = p.form
+      rows.set(p.day, row)
+    }
+  }
+  put(projection?.plan, 'planCtl')
+  put(projection?.forecast, 'forecastCtl', 'forecastForm')
+  put(projection?.actual, 'actualCtl')
+  return [...rows.values()].sort((a, b) => (a.day < b.day ? -1 : 1))
+}
+
+/** Actual weekly TL for weeks that have started (null for future weeks). `days` is dailyLoads().days. */
+export function actualWeekTl(days, weekStart, today) {
+  if (weekStart > today) return null
+  let tl = 0
+  for (let i = 0; i < 7; i += 1) tl += days?.[addDays(weekStart, i)]?.load || 0
+  return Math.round(tl)
+}
