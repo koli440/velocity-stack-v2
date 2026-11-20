@@ -34,3 +34,8 @@ test('calendar toolbar and weekday row stay pinned under the top bar on mobile a
   assert.match(header, /aria-label="Previous"/)
   assert.match(header, /Week total/)
 })
+
+test('root layout does not add a second mobile-web-app-capable meta (iOS viewport regression)', () => {
+  const src = readFileSync(new URL('../../app/layout.js', import.meta.url), 'utf8')
+  assert.doesNotMatch(src, /mobile-web-app-capable/)
+})
