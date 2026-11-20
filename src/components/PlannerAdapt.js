@@ -7,7 +7,7 @@ import { ErrorNote, StatusNote, StatusBadge, adminBtn, adminCard, adminInput, ad
 import { computeProfile, mergeBests } from '../lib/labPowerProfile'
 import { fetchWeightHistory, weightAt } from '../lib/weightHistory'
 import {
-  saveDisruption, deleteDisruption, setMinorRaces, setAvailability, setReview, setShareReasoning, applyPlanOption, macroPlanSaveMessage,
+  saveDisruption, deleteDisruption, setMinorRaces, setAvailability, setReview, setShareReasoning, fetchMacroPlanCalendar, setCalendarShare, applyPlanOption, macroPlanSaveMessage,
 } from '../lib/macroPlannerFlag'
 import {
   suggestDisruptionOptions, suggestAvailabilityOption, suggestAdherenceOption, weekAdherence, adherenceReview, focusHint,
@@ -61,6 +61,7 @@ export default function PlannerAdapt({ plan, weeks, daily, today, baseline, ride
   const [calRaces, setCalRaces] = useState([])
   const [avForm, setAvForm] = useState({ week_start: weekStartOf(today), availability_pct: 50, reason: 'travel', note: '' })
   const [share, setShare] = useState(!!plan.share_reasoning)
+  const [shareCal, setShareCal] = useState(false)
   const [rationale, setRationale] = useState(plan.plan_rationale || '')
   const [phenotype, setPhenotype] = useState(null)
 
@@ -113,6 +114,11 @@ export default function PlannerAdapt({ plan, weeks, daily, today, baseline, ride
     })()
     return () => { live = false }
   }, [riderId, today])
+  useEffect(() => {
+    let live = true
+    fetchMacroPlanCalendar(supabase, riderId).then((g) => live && g && setShareCal(g.share_calendar === true))
+    return () => { live = false }
+  }, [riderId])
   const hint = focusHint(phenotype, plan.race_length)
 
   const run = async (fn, okText) => {
@@ -309,6 +315,15 @@ export default function PlannerAdapt({ plan, weeks, daily, today, baseline, ride
         </label>
         <button type="button" className={adminBtn.primary} disabled={busy} onClick={() => run(() => setShareReasoning(supabase, plan.id, share, rationale), 'Saved.')}>Save sharing</button>
         <p className={`text-xs ${adminMuted}`}>Off by default. Per-week reasoning is edited in the weeks table. Disruptions, availability and the audit trail are never shown to the athlete.</p>
+      </section>
+
+      <section className={`${adminCard} space-y-3`} data-testid="share-calendar">
+        <h2 className={h2}>Plan in the calendar</h2>
+        <p className="text-sm text-slate-800 dark:text-slate-200">You always see this plan as guidance (week target, focus, day shape, races, remaining TL) in the athlete&apos;s calendar, so you can schedule workouts against it.</p>
+        <label className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-200">
+          <input type="checkbox" checked={shareCal} disabled={busy || plan.status !== 'published'} onChange={(e) => run(() => setCalendarShare(supabase, plan.id, e.target.checked).then((r) => { if (!r.error) setShareCal(e.target.checked); return r }), 'Saved.')} /> Also show it in the athlete&apos;s own calendar
+        </label>
+        <p className={`text-xs ${adminMuted}`}>Off by default, and only for a published plan. Only the plan you saved or applied is shown, never suggestions.</p>
       </section>
 
       {hint && (
