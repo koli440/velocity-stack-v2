@@ -14,7 +14,6 @@ export const viewport = {
 export const metadata = {
   applicationName: 'VelocityStack',
   appleWebApp: { capable: true, title: 'VelocityStack', statusBarStyle: 'black-translucent' },
-  other: { 'mobile-web-app-capable': 'yes' },
   metadataBase: new URL(SITE_URL),
   title: { default: 'VelocityStack | Velodrome Telemetry Platform', template: '%s | VelocityStack' },
   description: SITE_DESCRIPTION,
