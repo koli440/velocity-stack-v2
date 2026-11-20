@@ -204,6 +204,35 @@ export const TITLE_POOLS = Object.freeze({
     'Cadence on Foot', 'Feet Don\'t Fail Me Now', 'Sneaker Safari', 'Step Count Boost', 'Heel to Toe Tales',
     'Run Report Pending', 'Legs and Lungs Limited',
   ],
+  // ---- swims
+  swim_pool: [
+    'Lane Lord', 'Chlorine Chronicles', 'Wall Push Wizardry', 'Lengths of Madness', 'Black Line Fever',
+    'Flip Turn Fiasco', 'Pool Noodle Nemesis', 'Lap Counter Lost Count', 'Goggle Marks Edition', 'Splash Zone Regular',
+    'Swimcap Syndicate', 'Shallow End Heroics', 'Kickboard Confessions', 'Deep End Diaries', 'Lane Four Legend',
+    'Pruney Fingers Club', 'Back and Forth Business', 'Drip Dry Mission', 'Aquatic Admin', 'Bubble Trouble',
+    'The Chlorine Cure', 'Wet Hair, Don\'t Care',
+  ],
+  swim_open: [
+    'Cold Water Courage', 'Open Water Odyssey', 'Sighting Practice Gone Wrong', 'Wetsuit Wrestling', 'Buoy Hunter',
+    'Lake Legend', 'Seaweed Salute', 'Currents and Consequences', 'Wild Swim Wanderer', 'Swim Where the Fish Are',
+    'Murky Water Mission', 'Neoprene Nonsense', 'Shiver Me Timbers', 'Plunge and Persist', 'Not a Sea Monster',
+    'Goggle Fog Gamble', 'Straight Line Optimism', 'Drafting a Duck', 'Tow Float Tales', 'The Great Outdoors, Wet Edition',
+    'Cold Plunge Pioneer', 'Dive Right In',
+  ],
+  swim_long: [
+    'Endless Lengths', 'Fish Impression Marathon', 'Distance Dolphin', 'Lap Count Amnesia', 'Mermaid Mileage',
+    'Aquatic Endurance Act', 'Swim Until Pruned', 'Kilometre of Kicks', 'Metronome in the Water', 'The Long Swim Home',
+    'Pool Hours Banked', 'Slow and Soggy', 'Steady Strokes Society', 'Lengths for Days', 'Waterlogged Warrior',
+    'Stroke Rate Serenity', 'Chlorine Cardio', 'Never-Ending Lane', 'Open Wide, Swim Wide', 'Fin-ish Line',
+    'Torpedo Territory', 'Big Swim Energy',
+  ],
+  swim_generic: [
+    'Swim Session Splash', 'Wet Workout Wonders', 'In the Water Again', 'Make a Splash', 'Stroke of Genius',
+    'Swimmer\'s Log', 'Dolphin Dreams', 'Swim Report Pending', 'Fish Out of Training', 'Aqua Appointment',
+    'Water You Doing', 'Paddle Power', 'Towel Time Required', 'The Wet Stuff', 'Freestyle Frenzy',
+    'Stroke Stories', 'Float On Workout', 'Waves of Effort', 'Surface Tension Session', 'Hold Your Breath Hour',
+    'Splashdown Specials', 'Gills Optional',
+  ],
   // ---- gym
   gym_short: [
     'Quick Pump', 'Iron Snack', 'Lunch Break Lifts', 'Express Iron', 'Speed Dating with Dumbbells',
@@ -240,9 +269,9 @@ export const TITLE_POOLS = Object.freeze({
 const SOURCE_WORDS = 'garmin|strava|wahoo|intervals(?:\\.icu)?|srm|elemnt|zwift|app|partner'
 const DAYPART = 'morning|lunch|afternoon|evening|night|midday'
 const ACTIVITY_WORDS =
-  'ride|run|workout|walk|weight training|strength training|strength|virtual ride|virtual run|e-?bike ride|ebike ride|mountain bike ride|gravel ride|trail run|cycling|running|indoor cycling|road cycling|gravel cycling|mountain biking|treadmill running|trail running|indoor running|track running|activity|session|gym session|track session'
+  'ride|run|workout|walk|weight training|strength training|strength|virtual ride|virtual run|e-?bike ride|ebike ride|mountain bike ride|gravel ride|trail run|cycling|running|indoor cycling|road cycling|gravel cycling|mountain biking|treadmill running|trail running|indoor running|track running|swim|swimming|pool swim|lap swimming|open water swim|open water swimming|activity|session|gym session|track session'
 const GENERIC_PATTERNS = [
-  new RegExp(`^(?:${SOURCE_WORDS})\\s+(?:sync|gym session|activity|ride|run|import)$`, 'i'),
+  new RegExp(`^(?:${SOURCE_WORDS})\\s+(?:sync|gym session|activity|ride|run|swim|import)$`, 'i'),
   new RegExp(`^(?:(?:${DAYPART})\\s+)?(?:${ACTIVITY_WORDS})$`, 'i'),
   /^velodrome flying laps$/i,
   /^[\d\s\-_.:T]+$/, // pure timestamps / numeric file names
@@ -376,6 +405,15 @@ export function runCharacter({ sport = null, summary = {} }) {
   return 'run_generic'
 }
 
+export function swimCharacter({ sport = null, summary = {} }) {
+  const elapsed = num(summary.elapsed_time_s) || 0
+  const m = num(summary.distance_m) || 0
+  if (m >= 3000 || elapsed >= 75 * 60) return 'swim_long'
+  if (sport === 'open_water_swim') return 'swim_open'
+  if (sport === 'pool_swim' || m > 0) return 'swim_pool'
+  return 'swim_generic'
+}
+
 export function gymCharacter({ summary = {} }) {
   const elapsed = num(summary.elapsed_time_s)
   const avgHr = num(summary.avg_hr)
@@ -396,6 +434,9 @@ const RIDE_FLAVOUR_POOL = {
 /** Which title pool fits this activity: { pool, alt } where alt is the flavour pool a seeded coin can pick instead. */
 export function chooseCategory({ activityType = 'ride', sport = null, rideType = null, summary = {}, ftpWatts = null, timeSeries = null }) {
   if (activityType === 'gym' || sport === 'gym') return { pool: gymCharacter({ summary }), alt: null }
+  if (activityType === 'swim' || ['pool_swim', 'open_water_swim'].includes(sport)) {
+    return { pool: swimCharacter({ sport, summary }), alt: null }
+  }
   if (activityType === 'run' || ['run', 'trail_run', 'treadmill_run'].includes(sport)) {
     return { pool: runCharacter({ sport, summary }), alt: null }
   }
@@ -461,7 +502,7 @@ export function rerollActivityTitle({ activity, ftpWatts = null, recentNames = [
     avg_speed_kmh: a.avg_speed_kmh, max_speed_kmh: a.max_speed_kmh,
   }
   const rt = a.ride_type
-  const sport = ['run', 'trail_run', 'treadmill_run'].includes(rt) ? rt : RIDE_FLAVOUR_POOL[rt] ? rt : null
+  const sport = ['run', 'trail_run', 'treadmill_run', 'pool_swim', 'open_water_swim'].includes(rt) ? rt : RIDE_FLAVOUR_POOL[rt] ? rt : null
   const args = {
     activityType: a.activity_type || 'ride', sport, rideType: rt || null, summary, ftpWatts,
     timeSeries: a.time_series || null,

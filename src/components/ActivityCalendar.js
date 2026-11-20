@@ -75,7 +75,7 @@ const defaultFetchNotes = (args) => fetchNotesInRange(supabase, args)
 const defaultFetchPlanned = (args) => fetchPlannedInRange(supabase, args)
 const defaultFetchRaces = (args) => fetchRacesInRange(supabase, args)
 
-const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike', gym: 'flame', run: 'run' }
+const DISCIPLINE_ICON = { track: 'velodrome', ride: 'bike', gym: 'flame', run: 'run', swim: 'swim' }
 
 // Shared stacked layout: meta line (icon, label, right-aligned extras), name on its own line, wrapping stats.
 function ChipBody({ icon, iconClass, label, extras, name, stats }) {
@@ -141,6 +141,8 @@ function EventChip({ event, race, returnTo, tl, tlHint }) {
               ? 'border-violet-300/70 dark:border-violet-500/40 bg-violet-500/5'
               : event.discipline === 'run'
                 ? 'border-sky-300/70 dark:border-sky-500/40 bg-sky-500/5'
+                : event.discipline === 'swim'
+                ? 'border-cyan-300/70 dark:border-cyan-500/40 bg-cyan-500/5'
                 : event.discipline === 'track'
                 ? 'border-amber-300/70 dark:border-amber-500/40 bg-amber-500/5'
                 : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60'
@@ -148,7 +150,7 @@ function EventChip({ event, race, returnTo, tl, tlHint }) {
     >
       <ChipBody
         icon={race ? CALENDAR_ICONS.race : planned ? DISCIPLINE_ICON[event.discipline] || 'bike' : event.sportIcon || DISCIPLINE_ICON[event.discipline] || 'bike'}
-        iconClass={race ? 'text-rose-500' : event.discipline === 'gym' ? 'text-violet-600 dark:text-violet-400' : event.discipline === 'run' ? 'text-sky-600 dark:text-sky-400' : event.discipline === 'track' ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-brand-neon'}
+        iconClass={race ? 'text-rose-500' : event.discipline === 'gym' ? 'text-violet-600 dark:text-violet-400' : event.discipline === 'run' ? 'text-sky-600 dark:text-sky-400' : event.discipline === 'swim' ? 'text-cyan-600 dark:text-cyan-400' : event.discipline === 'track' ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-brand-neon'}
         label={race ? `Race · ${race.priority}` : planned ? 'Planned' : activityChipLabel(event)}
         extras={(event.isRace || pushed) && (
           <>
@@ -383,7 +385,7 @@ function MonthSummary({ rows }) {
   if (t.count === 0 && t.planned.count === 0) return null
   const tlO = overPlan(t.tl.completed, t.planned.load, { measured: t.tl.measured, partial: t.planned.loadPartial })
   const timeO = overPlan(t.durationS, t.planned.durationS, { partial: t.planned.durationPartial })
-  const types = [['ride', 'ride'], ['run', 'run'], ['gym', 'gym']].filter(([k]) => t.byDiscipline[k] > 0).map(([k, l]) => `${t.byDiscipline[k]} ${l}`).join(' · ')
+  const types = [['ride', 'ride'], ['run', 'run'], ['swim', 'swim'], ['gym', 'gym']].filter(([k]) => t.byDiscipline[k] > 0).map(([k, l]) => `${t.byDiscipline[k]} ${l}`).join(' · ')
   const chip = 'rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[11px] font-bold text-slate-700 dark:text-slate-200'
   const overChip = (o, unit) => o.over && <span title={o.partialPlan ? 'Over the known part of the plan; some workouts have no estimate' : undefined} className="rounded px-1 bg-amber-500 text-slate-900 dark:bg-amber-400">{o.partialPlan ? `+${unit(o.excess)} over` : `+${o.overPct}% over`}</span>
   const tlText = `TL ${t.tl.completed}${t.tl.estimated > 0 ? ` (${t.tl.measured} + ~${t.tl.estimated} est.)` : ''}`

@@ -20,6 +20,8 @@ export const DETECTED_RIDE_TYPES = Object.freeze([
   { key: 'run', label: 'Run', hasGear: false },
   { key: 'trail_run', label: 'Trail run', hasGear: false },
   { key: 'treadmill_run', label: 'Treadmill run', hasGear: false },
+  { key: 'pool_swim', label: 'Pool swim', hasGear: false },
+  { key: 'open_water_swim', label: 'Open water swim', hasGear: false },
 ])
 const ALL_RIDE_TYPES = [...RIDE_TYPES, ...DETECTED_RIDE_TYPES]
 

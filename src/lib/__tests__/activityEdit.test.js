@@ -97,7 +97,7 @@ test('switching back to ride sets activity_type ride and the chosen ride type', 
   const { updates } = buildActivityUpdates({ title: 'R', trackId: 't1', visibility: 'private', rideType: 'road', activityType: 'ride' })
   assert.equal(updates.activity_type, 'ride')
   assert.equal(updates.ride_type, 'road')
-  assert.equal(buildActivityUpdates({ title: 'R', visibility: 'private', activityType: 'swim' }).error, 'Invalid activity type')
+  assert.equal(buildActivityUpdates({ title: 'R', visibility: 'private', activityType: 'padel' }).error, 'Invalid activity type')
   assert.equal('activity_type' in buildActivityUpdates({ title: 'R', visibility: 'private', rideType: 'road' }).updates, false)
 })
 

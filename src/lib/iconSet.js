@@ -51,6 +51,7 @@ export const ICON_SET = {
   heart: { group: 'domain', replaces: '❤️', svg: '<path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z"/>' },
   flame: { group: 'domain', replaces: '🔥', svg: '<path d="M12 22a6 6 0 0 0 6-6c0-4-3-6-4-10-3 2-5 5-5 8-1-1-2-2-2-4-2 2-1 4-1 6a6 6 0 0 0 6 6z"/>' },
   run: { group: 'domain', replaces: '🏃', svg: '<circle cx="14.5" cy="4.5" r="1.8"/><path d="M12 8.5l-3.5 2.5-2 3.5M12 8.5l3 3.5 3 .5M12 8.5l-1 5 3 3 .5 4.5M10.5 13.5L8 20"/>' },
+  swim: { group: 'domain', replaces: '🏊', svg: '<circle cx="16.5" cy="6.5" r="1.8"/><path d="M4 13l5-3 4 2 3-3"/><path d="M3 17c1.5 0 1.5 1.5 3 1.5S7.5 17 9 17s1.5 1.5 3 1.5 1.5-1.5 3-1.5 1.5 1.5 3 1.5 1.5-1.5 3-1.5"/>' },
   gravel: { group: 'domain', replaces: '', svg: '<circle cx="6" cy="15" r="3.5"/><circle cx="18" cy="15" r="3.5"/><path d="M6 15l4-7h5l3 7M10 8l3 7"/><path d="M3 21h.01M8 21h.01M13 21h.01M18 21h.01M21 21h.01"/>' },
   ebike: { group: 'domain', replaces: '', svg: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-8h5l3 8M10 8l3 8"/><path d="M13 2l-2 3h3l-2 3"/>' },
   trainer: { group: 'domain', replaces: '', svg: '<circle cx="6" cy="14" r="3.5"/><circle cx="18" cy="14" r="3.5"/><path d="M6 14l4-7h5l3 7M10 7l3 7"/><path d="M3 20h18"/>' },

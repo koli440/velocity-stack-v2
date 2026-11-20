@@ -5,13 +5,14 @@
 // activity feed all read the same keys.
 //
 // A canonical sport is stored as:
-//   activities.activity_type  'ride' | 'run' | 'gym'
+//   activities.activity_type  'ride' | 'run' | 'swim' | 'gym'
 //   activities.ride_type      the flavour: road (default, unset), mtb, gravel, ebike, indoor, virtual, track (rides)
-//                             run, trail_run, treadmill_run (runs); null for gym sessions
-// Anything else (swim, walk, ski...) maps to null and is not imported by the providers.
+//                             run, trail_run, treadmill_run (runs); pool_swim, open_water_swim (swims); null for gym sessions
+// Anything else (walk, ski...) maps to null and is not imported by the providers.
 
 export const RIDE_SPORTS = Object.freeze(['road', 'mtb', 'gravel', 'ebike', 'indoor', 'virtual'])
 export const RUN_SPORTS = Object.freeze(['run', 'trail_run', 'treadmill_run'])
+export const SWIM_SPORTS = Object.freeze(['pool_swim', 'open_water_swim'])
 
 /** key -> { activityType, rideType, label, icon, tone }. `rideType` is null where the DB default applies. */
 export const SPORTS = Object.freeze({
@@ -24,11 +25,14 @@ export const SPORTS = Object.freeze({
   run: { activityType: 'run', rideType: 'run', label: 'Run', icon: 'run', tone: 'sky' },
   trail_run: { activityType: 'run', rideType: 'trail_run', label: 'Trail run', icon: 'run', tone: 'sky' },
   treadmill_run: { activityType: 'run', rideType: 'treadmill_run', label: 'Treadmill run', icon: 'run', tone: 'sky' },
+  pool_swim: { activityType: 'swim', rideType: 'pool_swim', label: 'Pool swim', icon: 'swim', tone: 'cyan' },
+  open_water_swim: { activityType: 'swim', rideType: 'open_water_swim', label: 'Open water swim', icon: 'swim', tone: 'cyan' },
   gym: { activityType: 'gym', rideType: null, label: 'Gym', icon: 'flame', tone: 'violet' },
 })
 
 export const RUN_RIDE_TYPES = Object.freeze(['run', 'trail_run', 'treadmill_run'])
 export const isRunRideType = (v) => RUN_RIDE_TYPES.includes(v)
+export const isSwimRideType = (v) => SWIM_SPORTS.includes(v)
 
 export const sportInfo = (key) => (key && SPORTS[key]) || null
 
@@ -38,6 +42,7 @@ const STRAVA = {
   Ride: 'road', Handcycle: 'road', VirtualRide: 'virtual', EBikeRide: 'ebike', EMountainBikeRide: 'ebike',
   GravelRide: 'gravel', MountainBikeRide: 'mtb',
   Run: 'run', TrailRun: 'trail_run', VirtualRun: 'treadmill_run',
+  Swim: 'pool_swim', OpenWaterSwim: 'open_water_swim',
   WeightTraining: 'gym', Workout: 'gym', Crossfit: 'gym', HighIntensityIntervalTraining: 'gym',
 }
 // Intervals.icu uses the same activity type names as Strava.
@@ -48,6 +53,7 @@ const WAHOO = {
   0: 'road', 11: 'gravel', 12: 'indoor', 13: 'mtb', 14: 'road', 15: 'road', 16: 'road', 49: 'indoor', 61: 'indoor',
   64: 'ebike', 68: 'virtual', 70: 'road',
   1: 'run', 3: 'run', 4: 'trail_run', 5: 'treadmill_run', 67: 'run', 71: 'treadmill_run',
+  25: 'pool_swim', 26: 'open_water_swim',
   42: 'gym', 43: 'gym',
 }
 export const sportFromWahoo = (typeId) => WAHOO[Number(typeId)] ?? null
@@ -59,6 +65,7 @@ const GARMIN_RIDES = {
   INDOOR_CYCLING: 'indoor', VIRTUAL_RIDE: 'virtual', HANDCYCLING: 'road',
   RUNNING: 'run', STREET_RUNNING: 'run', TRACK_RUNNING: 'run', TRAIL_RUNNING: 'trail_run', ULTRA_RUN: 'trail_run',
   TREADMILL_RUNNING: 'treadmill_run', INDOOR_RUNNING: 'treadmill_run', VIRTUAL_RUN: 'treadmill_run',
+  LAP_SWIMMING: 'pool_swim', SWIMMING: 'pool_swim', OPEN_WATER_SWIMMING: 'open_water_swim',
   STRENGTH_TRAINING: 'gym',
 }
 /** Garmin Activity API appendix A name -> canonical sport (null = not imported, 'unknown' handled by the caller). */
@@ -82,6 +89,7 @@ export function sportFromFit(summary) {
     if (sub === 'treadmill' || sub === 'indoor_running' || sub === 'virtual_activity') return 'treadmill_run'
     return 'run'
   }
+  if (sport === 'swimming') return sub === 'open_water' ? 'open_water_swim' : 'pool_swim'
   return null
 }
 
@@ -92,7 +100,7 @@ export function sportFromFit(summary) {
 export function resolveRideType(sport, chosen) {
   const info = sportInfo(sport)
   if (!info) return chosen ?? null
-  if (info.activityType === 'run') return info.rideType
+  if (info.activityType === 'run' || info.activityType === 'swim') return info.rideType
   if (info.activityType === 'gym') return null
   return info.rideType || chosen || null
 }
@@ -104,6 +112,10 @@ export function activitySport(a) {
   const type = a?.activity_type ?? a?.activityType
   if (type === 'gym') return { key: 'gym', ...pick(SPORTS.gym) }
   const rideType = a?.ride_type ?? a?.rideType
+  if (type === 'swim') {
+    const key = isSwimRideType(rideType) ? rideType : 'pool_swim'
+    return { key, ...pick(SPORTS[key]) }
+  }
   if (type === 'run') return { key: isRunRideType(rideType) ? rideType : 'run', ...pick(SPORTS[isRunRideType(rideType) ? rideType : 'run']) }
   if (a?.track_id || a?.trackId || a?.tracks?.name || rideType === 'track') return { key: 'track', label: 'Track', icon: 'velodrome', tone: 'amber' }
   const key = RIDE_SPORTS.includes(rideType) ? rideType : 'road'
@@ -113,11 +125,12 @@ export function activitySport(a) {
 const pick = ({ label, icon, tone }) => ({ label, icon, tone })
 
 export const isRunActivity = (a) => (a?.activity_type ?? a?.activityType) === 'run'
+export const isSwimActivity = (a) => (a?.activity_type ?? a?.activityType) === 'swim'
 
 /** A non-default sport worth a tag in lists: runs and non-road ride flavours (road rides, track and gym have their own). */
 export const isSportFlavour = (a) => {
   const type = a?.activity_type ?? a?.activityType
-  if (type === 'run') return true
+  if (type === 'run' || type === 'swim') return true
   if (type === 'gym') return false
   const key = activitySport(a).key
   return key !== 'road' && key !== 'track'
@@ -128,10 +141,12 @@ export const SPORT_TAG_CLASS = Object.freeze({
   sky: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
   violet: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
   amber: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  cyan: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
 })
 export const SPORT_TEXT_CLASS = Object.freeze({
   emerald: 'text-emerald-600 dark:text-emerald-400',
   sky: 'text-sky-600 dark:text-sky-400',
   violet: 'text-violet-600 dark:text-violet-400',
   amber: 'text-amber-600 dark:text-amber-400',
+  cyan: 'text-cyan-600 dark:text-cyan-400',
 })

@@ -196,7 +196,7 @@ export default function FitUploader({
       const activityRecord = buildActivityInsert(prepared.summary, {
         title: finalTitle,
         userId: currentUser.id,
-        trackId: prepared.activityType === 'run' ? null : selectedTrack,
+        trackId: prepared.activityType === 'run' || prepared.activityType === 'swim' ? null : selectedTrack,
         rideType: flavourRideType,
         chainring: parseGear(chainring, cog).chainring,
         cog: parseGear(chainring, cog).cog,

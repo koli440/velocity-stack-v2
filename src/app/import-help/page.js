@@ -67,7 +67,7 @@ export default function ImportHelpPage() {
         <p>
           Any <code className={CODE}>.fit</code> file works, including ones you downloaded or exported yourself from
           Garmin, Wahoo or another device. Import single files, several at once, or a <code className={CODE}>.zip</code>{' '}
-          export. You can also connect Garmin on the Connections page to receive new rides and gym sessions
+          export. You can also connect Garmin on the Connections page to receive new rides, runs, swims and gym sessions
           automatically (Garmin only sends activities recorded after you connect, so import older ones from files).
         </p>
         <p className="mt-2">

@@ -20,22 +20,22 @@ test('every provider maps to the same canonical sports', () => {
   assert.equal(sportFromStrava('VirtualRide'), 'virtual')
   assert.equal(sportFromStrava('TrailRun'), 'trail_run')
   assert.equal(sportFromStrava('VirtualRun'), 'treadmill_run')
-  assert.equal(sportFromStrava('Swim'), null)
+  assert.equal(sportFromStrava('Swim'), 'pool_swim')
   assert.equal(sportFromWahoo(13), 'mtb')
   assert.equal(sportFromWahoo('5'), 'treadmill_run')
   assert.equal(sportFromWahoo(4), 'trail_run')
-  assert.equal(sportFromWahoo(25), null)
+  assert.equal(sportFromWahoo(25), 'pool_swim')
   assert.equal(sportFromGarminType('MOUNTAIN_BIKING'), 'mtb')
   assert.equal(sportFromGarminType('GRAVEL_CYCLING'), 'gravel')
   assert.equal(sportFromGarminType('TREADMILL_RUNNING'), 'treadmill_run')
   assert.equal(sportFromGarminType('TRAIL_RUNNING_V2'), 'trail_run')
-  assert.equal(sportFromGarminType('LAP_SWIMMING'), null)
+  assert.equal(sportFromGarminType('LAP_SWIMMING'), 'pool_swim')
   assert.equal(sportFromFit({ sport: 'cycling', sub_sport: 'mountain' }), 'mtb')
   assert.equal(sportFromFit({ sport: 'cycling', sub_sport: 'virtual_activity' }), 'virtual')
   assert.equal(sportFromFit({ sport: 'cycling' }), 'road')
   assert.equal(sportFromFit({ sport: 'running', sub_sport: 'trail' }), 'trail_run')
   assert.equal(sportFromFit({ sport: 'running', sub_sport: 'treadmill' }), 'treadmill_run')
-  assert.equal(sportFromFit({ sport: 'swimming' }), null)
+  assert.equal(sportFromFit({ sport: 'swimming' }), 'pool_swim')
 })
 
 test('ride type: detected flavour beats the default, plain road keeps the rider choice, runs own theirs', () => {
@@ -117,14 +117,14 @@ test('runs link to run planned workouts only', () => {
 })
 
 test('listings tag the canonical sport and include runs and flavours', () => {
-  const s = filterStravaActivities([{ id: 1, sport_type: 'MountainBikeRide' }, { id: 2, sport_type: 'TrailRun' }, { id: 3, sport_type: 'Swim' }, { id: 4, sport_type: 'EMountainBikeRide' }])
+  const s = filterStravaActivities([{ id: 1, sport_type: 'MountainBikeRide' }, { id: 2, sport_type: 'TrailRun' }, { id: 3, sport_type: 'Walk' }, { id: 4, sport_type: 'EMountainBikeRide' }])
   assert.deepEqual(s.map((a) => [a.id, a.sport]), [[1, 'mtb'], [2, 'trail_run'], [4, 'ebike']])
-  const i = filterActivities([{ id: 'a', type: 'GravelRide' }, { id: 'b', type: 'Run' }, { id: 'c', type: 'Swim' }, { id: 'd', type: 'WeightTraining' }])
+  const i = filterActivities([{ id: 'a', type: 'GravelRide' }, { id: 'b', type: 'Run' }, { id: 'c', type: 'Walk' }, { id: 'd', type: 'WeightTraining' }])
   assert.deepEqual(i.map((a) => [a.id, a.sport]), [['a', 'gravel'], ['b', 'run'], ['d', 'gym']])
   const w = filterWahooRides([
     { id: 1, workout_type_id: 13, workout_summary: { file: { url: 'u' } } },
     { id: 2, workout_type_id: 1, workout_summary: { file: { url: 'u' } } },
-    { id: 3, workout_type_id: 25, workout_summary: { file: { url: 'u' } } },
+    { id: 3, workout_type_id: 99, workout_summary: { file: { url: 'u' } } },
   ])
   assert.deepEqual(w.map((x) => [x.id, x.sport]), [['1', 'mtb'], ['2', 'run']])
 })

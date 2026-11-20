@@ -117,7 +117,7 @@ export function activityToEvent(row) {
     kind: 'activity',
     date,
     title: row.title || 'Untitled session',
-    discipline: row.activity_type === 'gym' ? 'gym' : row.activity_type === 'run' ? 'run' : row.track_id ? 'track' : 'ride',
+    discipline: row.activity_type === 'gym' ? 'gym' : row.activity_type === 'run' ? 'run' : row.activity_type === 'swim' ? 'swim' : row.track_id ? 'track' : 'ride',
     sport: sport.key,
     sportLabel: sport.label,
     sportIcon: sport.icon,
@@ -146,7 +146,7 @@ export function activityToEvent(row) {
  * (velodrome session). Visual only: every ride flavour counts as a ride.
  */
 export const activityChipLabel = (event) =>
-  event?.sportLabel || (event?.discipline === 'gym' ? 'Gym' : event?.discipline === 'track' ? 'Track' : event?.discipline === 'run' ? 'Run' : 'Ride')
+  event?.sportLabel || (event?.discipline === 'gym' ? 'Gym' : event?.discipline === 'track' ? 'Track' : event?.discipline === 'run' ? 'Run' : event?.discipline === 'swim' ? 'Swim' : 'Ride')
 
 /** Groups events by local day key, sorted by time within each day. */
 export function groupEventsByDay(events) {

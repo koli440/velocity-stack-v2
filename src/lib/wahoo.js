@@ -79,6 +79,13 @@ export function isWahooRunWorkout(w) {
   return WAHOO_RUN_TYPE_IDS.includes(Number(w?.workout_type_id))
 }
 
+/** Swims (pool 25, open water 26). */
+export const WAHOO_SWIM_TYPE_IDS = [25, 26]
+
+export function isWahooSwimWorkout(w) {
+  return WAHOO_SWIM_TYPE_IDS.includes(Number(w?.workout_type_id))
+}
+
 /** Strength / gym-class workouts (issue #326): WORKOUT (42) and CARDIO_CLASS (43). */
 export const WAHOO_GYM_TYPE_IDS = [42, 43]
 
@@ -123,7 +130,7 @@ export function localStamp(startsIso, timeZone) {
 export function isImportableWorkout(w) {
   const s = w?.workout_summary
   if (isWahooGymWorkout(w)) return s?.manual !== true
-  return (isWahooCyclingWorkout(w) || isWahooRunWorkout(w)) && !!s?.file?.url && s.manual !== true
+  return (isWahooCyclingWorkout(w) || isWahooRunWorkout(w) || isWahooSwimWorkout(w)) && !!s?.file?.url && s.manual !== true
 }
 
 /** Wahoo workout (with embedded workout_summary) -> the shared "ride" shape used by selectNewRides. */

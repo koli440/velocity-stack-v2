@@ -1,6 +1,7 @@
 // Hero card content (issue #216): the activity's power-over-time series when it has a
 // persisted power_preview, otherwise a distance / time / speed summary.
 import { powerPreviewSeries } from './powerPreview.js'
+import { formatSwimDistance, formatSwimPace } from './swim.js'
 
 function formatTime(sec) {
   if (!sec) return null
@@ -13,6 +14,15 @@ function formatTime(sec) {
 }
 
 export function summaryMetrics(act) {
+  if (act?.activity_type === 'swim') {
+    const dist = formatSwimDistance(act.distance_m)
+    const pace = formatSwimPace(act.distance_m, act.moving_time_s)
+    return [
+      dist && { key: 'distance', value: dist.value, unit: dist.unit },
+      act.moving_time_s > 0 && { key: 'time', value: formatTime(act.moving_time_s), unit: 'time' },
+      pace && { key: 'pace', value: pace, unit: '/100 m' },
+    ].filter(Boolean)
+  }
   const speed = Number(act?.avg_speed_kmh)
   const items = [
     act?.distance_m > 0 && { key: 'distance', value: (act.distance_m / 1000).toFixed(1), unit: 'km' },
