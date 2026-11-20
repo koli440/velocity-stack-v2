@@ -66,3 +66,4 @@ export const setReview = (client, planId, week, reason, status) => call(client, 
 export const setShareReasoning = (client, planId, share, rationale) => call(client, 'macro_plan_share_set', { p_plan: planId, p_share: !!share, p_rationale: rationale || '' })
 /** Applies one coach-approved option (weeks + optional goal) and writes the audit row in one transaction. */
 export const applyPlanOption = (client, planId, payload) => call(client, 'macro_plan_apply', { p_plan: planId, p: payload })
+export const acknowledgePlanAttention = (client, planId) => call(client, 'macro_plan_attention_ack', { p_plan: planId })

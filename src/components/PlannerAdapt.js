@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { ErrorNote, StatusNote, StatusBadge, adminBtn, adminCard, adminInput, adminMuted } from './admin/AdminUi'
@@ -12,6 +13,7 @@ import {
   suggestDisruptionOptions, suggestAvailabilityOption, suggestAdherenceOption, weekAdherence, adherenceReview, focusHint,
 } from '../lib/macroPlannerAdapt'
 import { weekStartOf } from '../lib/macroPlanner'
+import { selectableRaces, raceOptionLabel, fetchUpcomingCalendarRaces, addRaceToCalendarHref } from '../lib/macroPlannerCalendar'
 
 const input = `${adminInput} !py-2`
 const h2 = 'text-lg font-black text-slate-900 dark:text-white'
@@ -55,7 +57,8 @@ export default function PlannerAdapt({ plan, weeks, daily, today, baseline, ride
   const [busy, setBusy] = useState(false)
   const [options, setOptions] = useState(null)
   const [dForm, setDForm] = useState({ kind: 'illness', severity: 'moderate', start_date: today, end_date: '', note: '' })
-  const [raceForm, setRaceForm] = useState({ name: '', race_date: '', priority: 'B' })
+  const [raceForm, setRaceForm] = useState({ race_id: '', priority: 'B' })
+  const [calRaces, setCalRaces] = useState([])
   const [avForm, setAvForm] = useState({ week_start: weekStartOf(today), availability_pct: 50, reason: 'travel', note: '' })
   const [share, setShare] = useState(!!plan.share_reasoning)
   const [rationale, setRationale] = useState(plan.plan_rationale || '')
@@ -63,15 +66,25 @@ export default function PlannerAdapt({ plan, weeks, daily, today, baseline, ride
 
   const disruptions = useMemo(() => plan.disruptions || [], [plan.disruptions])
   const races = useMemo(() => plan.races || [], [plan.races])
+  const activeRaces = useMemo(() => races.filter((r) => !r.missing), [races])
   const availability = useMemo(() => plan.availability || [], [plan.availability])
   const reviews = useMemo(() => plan.reviews || [], [plan.reviews])
+  useEffect(() => {
+    let live = true
+    fetchUpcomingCalendarRaces(supabase, riderId, today).then((res) => { if (live && !res.error) setCalRaces(res.data) })
+    return () => { live = false }
+  }, [riderId, today, plan.races])
+  const raceChoices = useMemo(
+    () => selectableRaces(calRaces, { today, usedIds: [plan.race_id, ...races.map((r) => r.race_id)], before: plan.race_date }),
+    [calRaces, today, plan.race_id, plan.race_date, races]
+  )
   const goalCtl = plan.goal_ctl ? Number(plan.goal_ctl) : null
 
   const ctx = useMemo(() => ({
     weeks, today, raceDate: plan.race_date, raceLength: plan.race_length, buildWeeks: plan.build_weeks, recoveryWeeks: plan.recovery_weeks,
     rampCeilingPct: Number(plan.ramp_ceiling_pct), goalCtl, days: daily, startWeeklyTl: Number(plan.start_weekly_tl), baselineStatus: baseline.status,
-    sustained: baseline.sustainedRamp, races,
-  }), [weeks, today, plan, goalCtl, daily, baseline, races])
+    sustained: baseline.sustainedRamp, races: activeRaces,
+  }), [weeks, today, plan, goalCtl, daily, baseline, activeRaces])
 
   const rows = useMemo(() => weekAdherence({ weeks, days: daily, today, disruptions }), [weeks, daily, today, disruptions])
   const review = useMemo(() => adherenceReview(rows), [rows])
@@ -145,7 +158,7 @@ export default function PlannerAdapt({ plan, weeks, daily, today, baseline, ride
     const d = { kind: dForm.kind, severity: dForm.severity, start_date: dForm.start_date, end_date: dForm.end_date || null, note: dForm.note }
     run(() => saveDisruption(supabase, plan.id, d), 'Disruption logged. Nothing in the plan has changed.')
   }
-  const saveRaces = (next) => run(() => setMinorRaces(supabase, plan.id, next.map(({ name, race_date, priority }) => ({ name, race_date, priority }))), 'Races saved. They are applied when you regenerate the weeks or apply an option.')
+  const saveRaces = (next) => run(() => setMinorRaces(supabase, plan.id, next.filter((r) => r.race_id).map(({ race_id, priority }) => ({ race_id, priority }))), 'Races saved. They are applied when you regenerate the weeks or apply an option.')
   const saveAv = (next) => run(() => setAvailability(supabase, plan.id, next.map(({ week_start, availability_pct, reason, note }) => ({ week_start, availability_pct, reason, note: note || '' }))), 'Availability saved. Nothing in the plan has changed yet.')
 
   const scored = rows.filter((r) => r.light !== 'skip')
@@ -239,17 +252,29 @@ export default function PlannerAdapt({ plan, weeks, daily, today, baseline, ride
         <h2 className={h2}>B and C races</h2>
         <p className={`text-sm ${adminMuted}`}>B race: mini-taper in race week and an easier week after. C race: train through. Both must be before the A race.</p>
         {races.map((r) => (
-          <div key={r.id || `${r.name}${r.race_date}`} className="flex flex-wrap items-center gap-2 text-sm text-slate-800 dark:text-slate-200">
+          <div key={r.id || `${r.name}${r.race_date}`} className="flex flex-wrap items-center gap-2 text-sm text-slate-800 dark:text-slate-200" data-testid={r.missing ? 'minor-race-missing' : 'minor-race'}>
             <span><strong>{r.priority}</strong> {r.name} · {r.race_date}</span>
+            {r.missing && <span className="font-semibold text-amber-700 dark:text-amber-300">Deleted from the athlete&apos;s calendar, no longer used in the plan</span>}
             <button type="button" className={adminBtn.danger} onClick={() => saveRaces(races.filter((x) => x !== r))} disabled={busy}>Remove</button>
           </div>
         ))}
-        <div className="grid gap-3 sm:grid-cols-3">
-          <label className={label}>Name<input className={input} maxLength={80} value={raceForm.name} onChange={(e) => setRaceForm({ ...raceForm, name: e.target.value })} /></label>
-          <label className={label}>Date<input className={input} type="date" min={today} max={plan.race_date} value={raceForm.race_date} onChange={(e) => setRaceForm({ ...raceForm, race_date: e.target.value })} /></label>
-          <label className={label}>Priority<select className={input} value={raceForm.priority} onChange={(e) => setRaceForm({ ...raceForm, priority: e.target.value })}><option value="B">B (mini-taper)</option><option value="C">C (train through)</option></select></label>
-        </div>
-        <button type="button" className={adminBtn.primary} disabled={busy || !raceForm.name.trim() || !raceForm.race_date} onClick={async () => { if (await saveRaces([...races, { ...raceForm, name: raceForm.name.trim() }])) setRaceForm({ ...raceForm, name: '', race_date: '' }) }}>Add race</button>
+        {!raceChoices.length ? (
+          <p className="text-sm text-slate-800 dark:text-slate-200" data-testid="no-minor-calendar-race">
+            No other upcoming race before the A race in the athlete&apos;s calendar. <Link className="font-semibold underline" href={addRaceToCalendarHref(riderId)}>Add it to the athlete&apos;s calendar first</Link>, then select it here.
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className={label}>Calendar race
+              <select className={input} value={raceForm.race_id} onChange={(e) => setRaceForm({ ...raceForm, race_id: e.target.value })}>
+                <option value="">Select a race…</option>
+                {raceChoices.map((r) => <option key={r.id} value={r.id}>{raceOptionLabel(r)}</option>)}
+              </select>
+            </label>
+            <label className={label}>Role in the plan<select className={input} value={raceForm.priority} onChange={(e) => setRaceForm({ ...raceForm, priority: e.target.value })}><option value="B">B (mini-taper)</option><option value="C">C (train through)</option></select></label>
+          </div>
+        )}
+        <button type="button" className={adminBtn.primary} disabled={busy || !raceForm.race_id || races.some((r) => r.missing)} onClick={async () => { if (await saveRaces([...races, { ...raceForm }])) setRaceForm({ ...raceForm, race_id: '' }) }}>Add race</button>
+        {races.some((r) => r.missing) && <p className={`text-xs ${adminMuted}`}>Remove the deleted race first.</p>}
         <p className={`text-xs ${adminMuted}`}>Races are applied whenever the weeks are regenerated or an option is applied; the weeks table is not changed by adding a race.</p>
       </section>
 

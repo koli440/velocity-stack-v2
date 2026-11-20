@@ -12,6 +12,7 @@ item, no pages that answer, every RPC refuses, and the tables stay empty.
   sports where the platform already counts them, honours the rider's "include gym in fitness" setting). The coach reads the athlete's
   history only through the coach-gated `coach_fitness_activities()` RPC (see docs/coaching.md). With too little history the coach enters
   a manual starting weekly TL instead.
+- **Races**: the planner has no free-form race entry; see "Races come from the calendar".
 - **Location**: coach page per athlete, `/coach/<riderId>/planner` (needs an ACTIVE coaching relationship). No calendar bands in v1.
 - **v1 scope**: one A race, mesocycle templates (3+1, 2+1, 4+1, custom), load projection (planned vs actual CTL / ATL / TSB to race
   day), feasibility check, taper model by race length with a predicted race-day form (TSB) that is always labelled an *estimate*.
@@ -87,7 +88,7 @@ unchanged plan; nothing changes until the coach applies one, and `macro_plan_app
 - **Adherence**: planned vs actual TL for completed weeks. Green 85-115 %, amber 70-130 %, else red; weeks with a disruption or no target are not
   scored. A review is proposed (`macro_plan_reviews`, once per week, dismiss/done are never reopened) when the last two scored weeks are red in the
   same direction or the last three are all off target in the same direction. The review offers a "rebase" option from the recent actual load.
-- **B and C races** (`macro_plan_races`, before the A race): B = race week at 75 % TL with a hard race day, then a recovery week; C = train through, race
+- **B and C races** (`macro_plan_races`, before the A race; selected from the athlete's calendar): B = race week at 75 % TL with a hard race day, then a recovery week; C = train through, race
   day hard. Races past, in the A taper, outside the plan or in the same week as a higher-priority race are ignored (reason returned). Applied on
   generation and inside every option.
 - **Availability** (`macro_plan_availability`: Monday, 0-100 %, reason): suggests scaling the week's target (<= 50 % removes hard days, 0 % = rest).
@@ -95,6 +96,25 @@ unchanged plan; nothing changes until the coach applies one, and `macro_plan_app
   availability, reviews and the audit trail are never returned to the athlete.
 - **Lab hint**: the Lab phenotype (power profile of the last 90 days and weight) shows a text hint for the focus labels; it never edits the plan.
 All of these are estimates, not predictions or medical advice.
+
+## Races come from the calendar
+Migration `20270188000000_macro_planner_calendar_races.sql`, helpers `src/lib/macroPlannerCalendar.js`, harness `macro-planner-calendar-adversarial.mjs`.
+The A race and the B/C races are existing `calendar_races` rows of the athlete (see docs/coaching.md for calendar races). The coach SELECTS one and
+the planner role (A, B, C) is the planner's own; the calendar's own A/B/C priority is not used. An athlete with no suitable race gets an empty state
+with a link to `/coach/<riderId>/calendar`, where the coach adds the race under the existing calendar permissions (rider or active coach).
+- **Link**: `macro_plans.race_id` and `macro_plan_races.race_id` reference `calendar_races(id) ON DELETE SET NULL`. `macro_plan_save` requires a
+  `race_id` that belongs to the plan's athlete; `macro_plan_races_set` takes `[{race_id, priority}]` (not the A race, before the A race). Name and date are copied
+  from the calendar server-side (payload names/dates are ignored), so the engine and the athlete page keep working on the same fields.
+- **Follows the calendar**: triggers on `calendar_races` copy a rename or date change into the plan. A date change sets `attention = 'race_moved'`;
+  the coach checks the weeks and marks the plan reviewed (`macro_plan_attention_ack`) or saves it again with the weeks ending in the new race week.
+- **No silent loss**: deleting a linked race keeps the plan and sets `attention = 'race_deleted'` (A race; the stored name/date remain visible, save is
+  blocked until another calendar race is selected) or marks the B/C row `missing` (shown with a warning, ignored by the engine, derived flag `minor_race_deleted`;
+  remove it to continue). The triggers swallow their own errors, so the calendar can never be broken by the planner, and they touch no row when no plan exists.
+- **Existing plans** (created before this change) are linked to a calendar race of the same athlete with the same date and name; otherwise they are
+  flagged `race_unlinked` / `missing` and the coach selects the race.
+- **Athlete**: `my_macro_plan` strips `attention`, race ids and missing B/C races.
+- **Race length**: calendar races have no distance/duration column (only the free-text "Format / distance" and a discipline), so the taper's `race_length`
+  stays a planner setting; the calendar's format text, location and date are shown as context.
 
 ## Rules followed
 Owner-scoped queries (`scopeToOwner`, explicit rider ids), additive idempotent migrations with new higher versions, adversarial DB harness
