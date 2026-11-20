@@ -45,6 +45,7 @@ Web Push: `MIG=<repo>/supabase/migrations/20270137000000_web_push.sql node harne
 Admin Respect stats RPC: `MIG=<repo>/supabase/migrations/20270140000000_admin_respect_stats.sql node harness.mjs <repo>/supabase/migrations ./admin-respect-adversarial.mjs`
 
 Coach module flag + notes: `MIG=<repo>/supabase/migrations/20270151000000_coach_module_flag_and_notes.sql node harness.mjs <repo>/supabase/migrations ./coach-notes-adversarial.mjs`
+Macro planner flag + plans: `MIG=<repo>/supabase/migrations/20270186000000_macro_planner.sql node harness.mjs <repo>/supabase/migrations ./macro-planner-adversarial.mjs`
 Coach card + directory: `MIG=<repo>/supabase/migrations/20270152000000_coach_cards.sql node harness.mjs <repo>/supabase/migrations ./coach-card-adversarial.mjs`
 Coach card media: `MIG=<repo>/supabase/migrations/20270157000000_coach_card_media.sql node harness.mjs <repo>/supabase/migrations ./coach-card-media-adversarial.mjs`
 Lab protocol runner: `MIG=<repo>/supabase/migrations/20270158000000_lab_runs.sql node harness.mjs <repo>/supabase/migrations ./lab-runs-adversarial.mjs`

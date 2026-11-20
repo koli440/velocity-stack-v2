@@ -7,6 +7,7 @@ export const ADMIN_LINKS = [
   ['/admin/template-reruns', 'Template re-run'],
   ['/admin/partner-apps', 'Partner apps'],
   ['/admin/coach-module', 'Coach module'],
+  ['/admin/macro-planner', 'Macro planner'],
   ['/admin/coach-cards', 'Coach card reports'],
   ['/admin/chat-reports', 'Chat reports'],
   ['/admin/coach-licences', 'Coach licences'],
