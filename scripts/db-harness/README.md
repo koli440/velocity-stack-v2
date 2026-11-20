@@ -72,4 +72,6 @@ Coach billing: `MIG=<repo>/supabase/migrations/20270156000000_coach_billing.sql 
 Coach plans: `MIG=<repo>/supabase/migrations/20270182000000_coach_plans.sql node harness.mjs <repo>/supabase/migrations ./coach-plans-adversarial.mjs`
 Direct charges: `MIG=<repo>/supabase/migrations/20270183000000_coach_billing_direct_charges.sql node harness.mjs <repo>/supabase/migrations ./billing-direct-charges-adversarial.mjs`
 
+Macro planner guidance in the calendar (coach / shared-with-athlete visibility): `node harness.mjs <repo>/supabase/migrations ./macro-planner-guidance-adversarial.mjs`.
+
 Macro planner races from the calendar: `node harness.mjs <repo>/supabase/migrations ./macro-planner-calendar-adversarial.mjs` (the earlier macro planner harnesses use free-form races, so run them against a migrations dir without `20270188000000_macro_planner_calendar_races.sql`).
