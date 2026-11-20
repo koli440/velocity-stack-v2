@@ -74,6 +74,8 @@ export function selectNewRides(rides, existing = [], source = 'intervals') {
 /** Auth failures are fatal (status 'error' until the user reconnects); everything else is retried. */
 export function classifySyncError(err, provider = 'intervals') {
   const status = err?.status
+  // Problems of one ride are never connection-wide: skip the ride, keep syncing.
+  if (err?.perRide) return { fatal: false, message: String(err?.message || 'Ride failed').slice(0, 300) }
   if (provider === 'wahoo' || provider === 'garmin') {
     const label = PROVIDER_LABELS[provider]
     const fatal = err?.fatal === true || status === 401
