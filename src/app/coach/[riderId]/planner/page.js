@@ -5,6 +5,8 @@ import { supabase } from '../../../../lib/supabase'
 import { useAthlete } from '../../../../components/AthleteContext'
 import { useMacroPlanner } from '../../../../components/useMacroPlanner'
 import { useFitnessData } from '../../../../components/useFitnessData'
+import { formatDate } from '../../../../lib/dateFormat'
+import AutoTextarea from '../../../../components/AutoTextarea'
 import { ProjectionChart, WeeklyTargetChart } from '../../../../components/MacroPlanChart'
 import Icon from '../../../../components/Icon'
 import PlannerAdapt from '../../../../components/PlannerAdapt'
@@ -335,28 +337,29 @@ export default function AthletePlannerPage() {
           <section className={`${adminCard} space-y-3`}>
             <h2 className="text-lg font-black text-slate-900 dark:text-white">Weeks</h2>
             <WeeklyTargetChart weeks={weeks} actual={actualByWeek} label="Weekly target TL" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-slate-600 dark:text-slate-300">
-                    <th className="pr-2 py-1">Week</th><th className="pr-2">Kind</th><th className="pr-2">Target TL</th><th className="pr-2">Actual</th><th className="pr-2">Focus</th><th className="pr-2">Shape (M-S)</th><th className="pr-2">Note</th><th>Reasoning</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {weeks.map((w, i) => (
-                    <tr key={w.week_start} className="border-t border-slate-200 dark:border-slate-700 align-top">
-                      <td className="pr-2 py-2 whitespace-nowrap text-slate-900 dark:text-white">{w.week_start}</td>
-                      <td className="pr-2 py-1">
-                        <select aria-label={`Kind ${w.week_start}`} className={`${input} min-w-[7rem]`} value={w.kind} onChange={(e) => editWeek(i, { kind: e.target.value })}>
+            <ul className="space-y-3">
+              {weeks.map((w, i) => {
+                const lbl = 'block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1'
+                return (
+                  <li key={w.week_start} className="rounded-xl border border-slate-200 dark:border-surface-darkBorder bg-white dark:bg-surface-darkCard p-3 space-y-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <span className="font-black text-slate-900 dark:text-white">Week of {formatDate(new Date(`${w.week_start}T12:00:00`), { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">Actual TL <strong className="tabular-nums">{actualByWeek[w.week_start] ?? '-'}</strong></span>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[9rem_6rem_1fr_auto]">
+                      <label className="block"><span className={lbl}>Kind</span>
+                        <select aria-label={`Kind ${w.week_start}`} className={input} value={w.kind} onChange={(e) => editWeek(i, { kind: e.target.value })}>
                           {Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                         </select>
-                      </td>
-                      <td className="pr-2 py-1">
-                        <input aria-label={`Target TL ${w.week_start}`} className={`${input} w-24`} type="number" min="0" max="5000" value={w.target_tl} onChange={(e) => editWeek(i, { target_tl: Math.max(0, Number(e.target.value) || 0), tl_overridden: true })} />
-                      </td>
-                      <td className="pr-2 py-2 tabular-nums text-slate-700 dark:text-slate-300">{actualByWeek[w.week_start] ?? '-'}</td>
-                      <td className="pr-2 py-1"><input aria-label={`Focus ${w.week_start}`} className={`${input} min-w-[8rem]`} maxLength={40} value={w.focus || ''} onChange={(e) => editWeek(i, { focus: e.target.value })} /></td>
-                      <td className="pr-2 py-1">
+                      </label>
+                      <label className="block"><span className={lbl}>Target TL</span>
+                        <input aria-label={`Target TL ${w.week_start}`} className={`${input} tabular-nums`} type="number" inputMode="numeric" min="0" max="5000" value={w.target_tl} onChange={(e) => editWeek(i, { target_tl: Math.max(0, Number(e.target.value) || 0), tl_overridden: true })} />
+                      </label>
+                      <label className="block"><span className={lbl}>Focus</span>
+                        <input aria-label={`Focus ${w.week_start}`} className={input} maxLength={40} value={w.focus || ''} onChange={(e) => editWeek(i, { focus: e.target.value })} />
+                      </label>
+                      <div>
+                        <span className={lbl}>Days (Mon-Sun)</span>
                         <div className="flex gap-1">
                           {w.day_shape.split('').map((c, d) => (
                             <button
@@ -364,22 +367,28 @@ export default function AthletePlannerPage() {
                               type="button"
                               title={{ H: 'Hard', E: 'Easy', R: 'Rest' }[c]}
                               aria-label={`${DAY_LETTERS[d]} ${{ H: 'hard', E: 'easy', R: 'rest' }[c]}, ${w.week_start}`}
-                              className={`h-9 w-9 rounded-lg border text-xs font-black ${SHAPE_CLASS[c]}`}
+                              className={`h-11 w-11 rounded-lg border text-xs font-black ${SHAPE_CLASS[c]}`}
                               onClick={() => editWeek(i, { day_shape: w.day_shape.slice(0, d) + SHAPE_NEXT[c] + w.day_shape.slice(d + 1) })}
                             >
                               {c}
                             </button>
                           ))}
                         </div>
-                      </td>
-                      <td className="pr-2 py-1"><input aria-label={`Note ${w.week_start}`} className={`${input} min-w-[10rem]`} maxLength={500} value={w.note || ''} onChange={(e) => editWeek(i, { note: e.target.value })} /></td>
-                      <td className="py-1"><input aria-label={`Reasoning ${w.week_start}`} className={`${input} min-w-[10rem]`} maxLength={500} value={w.rationale || ''} onChange={(e) => editWeek(i, { rationale: e.target.value })} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className={`text-xs ${adminMuted}`}>H hard, E easy, R rest: tap a day to change it. Changing a target marks the week as a manual override.</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <label className="block"><span className={lbl}>Note</span>
+                        <AutoTextarea aria-label={`Note ${w.week_start}`} className={input} maxLength={500} value={w.note || ''} onChange={(e) => editWeek(i, { note: e.target.value })} />
+                      </label>
+                      <label className="block"><span className={lbl}>Reasoning</span>
+                        <AutoTextarea aria-label={`Reasoning ${w.week_start}`} className={input} maxLength={500} value={w.rationale || ''} onChange={(e) => editWeek(i, { rationale: e.target.value })} />
+                      </label>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+            <p className={`text-xs ${adminMuted}`}>Legend: H hard, E easy, R rest. Tap a day to change it. Changing a target marks the week as a manual override.</p>
           </section>
 
           <div className="flex flex-wrap gap-2">
