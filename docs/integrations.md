@@ -84,7 +84,9 @@ Riders with long Strava histories are pointed to the data-export ZIP import on t
 ## Strava analysis and repair
 - Strava has no .fit export, so rides are analysed from streams (`analyzeStreams`) into the same `{ summary, curves, time_series }`
   shape as the .fit path (`api/analyze.py`), including `time_series.heartrate` and the `HeartRate` curve.
-- If saving `activity_curves` fails, the import is rolled back and reported as failed (retried on the next run) instead of
+- A ride Intervals.icu has no data for (e.g. Strava-linked or manual entry) is skipped and reported in `last_error` ("N ride(s) failed to import") instead of being treated as rejected credentials; only 401/403/404 from listing or auth park a connection in `error`. Migration `20270189000000_intervals_sync_unstick.sql` re-activates connections parked by that bug.
+
+If saving `activity_curves` fails, the import is rolled back and reported as failed (retried on the next run) instead of
   leaving a ride without curves.
 - Each Strava sync run also repairs earlier imports: rides without `activity_curves` rows get them rebuilt from the stored
   `curves_data` (no Strava request); rides without `time_series.heartrate` are re-fetched and re-analysed (max 3 per run,
