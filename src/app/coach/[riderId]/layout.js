@@ -65,7 +65,7 @@ export default function AthleteLayout({ children }) {
       <div
         role="status"
         data-testid="coach-banner"
-        className="sticky top-16 z-20 -mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-2xl bg-orange-600 text-white px-4 py-2.5 shadow-md"
+        className="relative -mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-2xl bg-orange-600 text-white px-4 py-2.5 shadow-md"
       >
         <span className="text-sm font-extrabold">{bannerText(athlete?.display_name)}</span>
         <span className="flex flex-wrap items-center gap-x-2">
