@@ -70,9 +70,12 @@ const group = (key, label, icon, children, matches = []) => ({ key, label, icon,
  * Menu tree for the current user (own context). Entries: leaves ({ key, label, href, children? }) and
  * groups ({ type: 'group', children }). Messages carries the live conversation list as children.
  */
-export function buildNavTree({ signedIn = true, isAdmin = false, moduleEnabled = false, threads = [], hasPayments = false } = {}) {
+export function buildNavTree({ signedIn = true, isAdmin = false, moduleEnabled = false, threads = [], hasPayments = false, hasPlan = false } = {}) {
   const tree = [L.home]
-  tree.push(group('training', 'Training', 'calendar', [L.calendar, L.fitness, L.templates]))
+  // Read-only plan from the athlete's coach; only present once a plan is published (docs/macro-planner.md).
+  const training = [L.calendar, L.fitness, L.templates]
+  if (signedIn && hasPlan) training.push({ key: 'training-plan', label: 'Training plan', href: '/training-plan' })
+  tree.push(group('training', 'Training', 'calendar', training))
   const messages = messagesNode(threads)
   if (messages) tree.push(messages)
   tree.push(L.pbVault)

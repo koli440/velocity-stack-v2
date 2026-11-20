@@ -354,3 +354,6 @@ Business tooling for coaches, built in phases (spec decisions are recorded per P
 
 ### Ending coaching needs confirmation
 Every "End coaching" / "Revoke access" action on an active relationship (settings panel, rider profile; coach and athlete side) opens `EndCoachingDialog` (`lib/endCoaching.js` holds the wording). It states what is deleted (coach notes 30 days after ending; shared notes stay as the athlete's copy), what the other side keeps (read-only chat access) and what is lost, offers the coach a notes export (.txt) first, and requires typing the person's name (or `END` when the name is unknown) before the button enables. Cancelling a pending request or invite deletes nothing and stays one click. The RPC `end_coaching` is unchanged.
+
+## Macro planner (feature flag `macro_planner`, default off)
+Long-term, high-level planning towards one A race (weekly TL targets, no workouts). Separate flag, same pattern as the coach module. See `docs/macro-planner.md`.

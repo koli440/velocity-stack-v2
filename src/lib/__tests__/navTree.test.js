@@ -211,3 +211,10 @@ test('bottom bar: coaching item, hamburger only when the bar is hidden', () => {
   assert.match(read('BottomNav.js'), /'\/coach', 'Coaching'/)
   assert.match(read('TopNav.js'), /!showsBottomNav\(!!user\)/)
 })
+
+test('training plan entry only with a published plan', () => {
+  const keys = (o) => flattenNav(buildNavTree(o)).map((n) => n.key)
+  assert.ok(!keys({}).includes('training-plan'))
+  assert.ok(keys({ hasPlan: true }).includes('training-plan'))
+  assert.ok(!keys({ hasPlan: true, signedIn: false }).includes('training-plan'))
+})

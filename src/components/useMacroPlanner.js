@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { fetchMacroPlannerEnabled } from '../lib/macroPlannerFlag'
+import { fetchMacroPlannerEnabled, fetchMyMacroPlan } from '../lib/macroPlannerFlag'
 
 let cache = null // { userId, value, at }
 
@@ -25,4 +25,28 @@ export function useMacroPlanner() {
     }
   }, [])
   return enabled
+}
+
+let planCache = null // { userId, value, at }
+
+// The athlete's published plan from their coach (null when none, signed out, or the coach flag is off). Cached for a minute.
+export function useMyMacroPlan(signedIn = true) {
+  const [plan, setPlan] = useState(() => (planCache && Date.now() - planCache.at < 60000 ? planCache.value : null))
+  useEffect(() => {
+    if (!signedIn) return setPlan(null)
+    let cancelled = false
+    ;(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id || null
+      if (!userId) return !cancelled && setPlan(null)
+      if (planCache && planCache.userId === userId && Date.now() - planCache.at < 60000) return !cancelled && setPlan(planCache.value)
+      const value = await fetchMyMacroPlan(supabase)
+      planCache = { userId, value, at: Date.now() }
+      if (!cancelled) setPlan(value)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [signedIn])
+  return plan
 }
