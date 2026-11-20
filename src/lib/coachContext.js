@@ -54,9 +54,9 @@ export const athleteChatPath = (riderId) => athletePath(riderId, '/chat')
 /**
  * Menu tree of the athlete context (same accordion rules as the main menu): a "Viewing <name>" header, Overview,
  * Training (Activities, Calendar, Fitness, Templates), Personal Bests, Physiology, Lab (features under section labels),
- * Notes (coach module), Messages with this athlete (unread badge of that thread) and the way back to the dashboard.
+ * Notes (coach module), Planner (macro planner flag), Messages with this athlete (unread badge of that thread) and the way back to the dashboard.
  */
-export function buildAthleteTree(riderId, athleteName, moduleEnabled = false, threads = []) {
+export function buildAthleteTree(riderId, athleteName, moduleEnabled = false, threads = [], plannerEnabled = false) {
   const leaf = (key, label, icon, sub, extra = {}) => ({ key, label, icon, href: athletePath(riderId, sub), exact: !sub, ...extra })
   const sub = (key, label, path) => ({ key, label, href: athletePath(riderId, path) })
   const labBase = labBasePath(riderId)
@@ -73,6 +73,8 @@ export function buildAthleteTree(riderId, athleteName, moduleEnabled = false, th
     { key: 'lab', type: 'group', label: 'Lab', icon: 'flask', matches: [labBase], children: labMenuChildren(labBase) },
   ]
   if (moduleEnabled) tree.push(leaf('notes', 'Notes', 'clipboard', '/notes'))
+  // Macro planner: only with its own `macro_planner` flag (docs/macro-planner.md).
+  if (plannerEnabled) tree.push(leaf('planner', 'Planner', 'trend', '/planner'))
   tree.push(
     { key: 'messages', label: 'Messages', icon: 'chat', href: athleteChatPath(riderId), unread: Number(athleteThread(threads, riderId)?.unread) || 0 },
     { key: 'coach-home', label: 'Coach dashboard', icon: 'users', href: COACH_HOME_PATH, exact: true, leavesContext: true },

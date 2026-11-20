@@ -13,6 +13,7 @@ import useNavThreads from './useNavThreads'
 import { fetchPaymentOverview } from '../lib/coachBilling'
 import { fetchAthleteProfile } from '../lib/coaching'
 import { useCoachModule } from './useCoachModule'
+import { useMacroPlanner } from './useMacroPlanner'
 
 export default function Sidebar({
   isOpen = false,
@@ -24,6 +25,7 @@ export default function Sidebar({
   const pathname = usePathname()
   const { riderId } = parseCoachPath(pathname)
   const moduleEnabled = useCoachModule()
+  const plannerEnabled = useMacroPlanner()
   const threads = useNavThreads(signedIn)
   const [hasPayments, setHasPayments] = useState(false)
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function Sidebar({
     fetchAthleteProfile(supabase, riderId).then(({ athlete }) => { if (!cancelled) setAthleteName(athlete?.display_name || null) })
     return () => { cancelled = true }
   }, [riderId])
-  const tree = riderId ? buildAthleteTree(riderId, athleteName, moduleEnabled, threads) : buildNavTree({ signedIn, isAdmin: isAdmin && chromeVisibility(riderId).adminLink, moduleEnabled, threads, hasPayments })
+  const tree = riderId ? buildAthleteTree(riderId, athleteName, moduleEnabled, threads, plannerEnabled) : buildNavTree({ signedIn, isAdmin: isAdmin && chromeVisibility(riderId).adminLink, moduleEnabled, threads, hasPayments })
   const chrome = chromeVisibility(riderId)
 
   const handleNavigate = (path) => {

@@ -141,3 +141,12 @@ test('feasibility: ok within the sustained ramp, unrealistic far above it, overr
   assert.equal(assessFeasibility({ weeks: g.weeks, projection: p, sustained: null }).usedDefault, true)
   assert.equal(assessFeasibility({ weeks: g.weeks, projection: p, sustained: 8, goalCtl: 300, goalReachable: false }).goalMissed, true)
 })
+
+test('chart rows merge the series by day; actual weekly TL is null for future weeks', async () => {
+  const { chartRows, actualWeekTl } = await import('../macroPlanner.js')
+  const rows = chartRows({ plan: [{ day: 'b', fitness: 2 }, { day: 'a', fitness: 1 }], forecast: [{ day: 'a', fitness: 3, form: -4 }], actual: [{ day: 'a', fitness: 5 }] })
+  assert.deepEqual(rows, [{ day: 'a', planCtl: 1, forecastCtl: 3, forecastForm: -4, actualCtl: 5 }, { day: 'b', planCtl: 2 }])
+  const days = { [MONDAY]: { load: 100 }, [addDays(MONDAY, 2)]: { load: 50.4 } }
+  assert.equal(actualWeekTl(days, MONDAY, TODAY), 150)
+  assert.equal(actualWeekTl(days, addDays(MONDAY, 7), TODAY), null)
+})
