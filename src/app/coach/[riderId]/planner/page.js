@@ -7,6 +7,7 @@ import { useMacroPlanner } from '../../../../components/useMacroPlanner'
 import { useFitnessData } from '../../../../components/useFitnessData'
 import { ProjectionChart, WeeklyTargetChart } from '../../../../components/MacroPlanChart'
 import Icon from '../../../../components/Icon'
+import PlannerAdapt from '../../../../components/PlannerAdapt'
 import { ErrorNote, StatusNote, StatusBadge, adminBtn, adminCard, adminInput, adminMuted } from '../../../../components/admin/AdminUi'
 import { fetchMacroPlan, saveMacroPlan, publishMacroPlan, deleteMacroPlan, macroPlanSaveMessage } from '../../../../lib/macroPlannerFlag'
 import {
@@ -19,6 +20,7 @@ import {
   chartRows,
   actualWeekTl,
 } from '../../../../lib/macroPlanner'
+import { applyMinorRaces } from '../../../../lib/macroPlannerAdapt'
 
 const input = `${adminInput} !py-2`
 const LENGTHS = { short: 'Short (up to ~2 h)', medium: 'Medium (2-5 h)', long: 'Long (5-10 h)', ultra: 'Ultra (10 h+)' }
@@ -57,7 +59,7 @@ export default function AthletePlannerPage() {
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
 
-  const baseline = useMemo(() => computeBaseline(daily, today), [daily, today])
+  const baseline = useMemo(() => computeBaseline(daily, today, { disruptions: plan?.disruptions || [] }), [daily, today, plan?.disruptions])
 
   const hydrate = useCallback((p) => {
     setPlan(p)
@@ -122,7 +124,8 @@ export default function AthletePlannerPage() {
       rampCeilingPct: Number(form.ceiling), startWeeklyTl: startTl, goalCtl: Number(form.goalCtl) || null, days: daily, baselineStatus: baseline.status,
     })
     if (g.error) return setError(g.error)
-    setWeeks(g.weeks)
+    const withRaces = plan?.races?.length ? applyMinorRaces(g.weeks, plan.races, { raceDate: form.raceDate, today }).weeks : g.weeks
+    setWeeks(withRaces)
     setGoalReachable(g.goalReachable)
     setDirty(true)
   }
@@ -278,7 +281,7 @@ export default function AthletePlannerPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-slate-600 dark:text-slate-300">
-                    <th className="pr-2 py-1">Week</th><th className="pr-2">Kind</th><th className="pr-2">Target TL</th><th className="pr-2">Actual</th><th className="pr-2">Focus</th><th className="pr-2">Shape (M-S)</th><th>Note</th>
+                    <th className="pr-2 py-1">Week</th><th className="pr-2">Kind</th><th className="pr-2">Target TL</th><th className="pr-2">Actual</th><th className="pr-2">Focus</th><th className="pr-2">Shape (M-S)</th><th className="pr-2">Note</th><th>Reasoning</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -311,7 +314,8 @@ export default function AthletePlannerPage() {
                           ))}
                         </div>
                       </td>
-                      <td className="py-1"><input aria-label={`Note ${w.week_start}`} className={`${input} min-w-[10rem]`} maxLength={500} value={w.note || ''} onChange={(e) => editWeek(i, { note: e.target.value })} /></td>
+                      <td className="pr-2 py-1"><input aria-label={`Note ${w.week_start}`} className={`${input} min-w-[10rem]`} maxLength={500} value={w.note || ''} onChange={(e) => editWeek(i, { note: e.target.value })} /></td>
+                      <td className="py-1"><input aria-label={`Reasoning ${w.week_start}`} className={`${input} min-w-[10rem]`} maxLength={500} value={w.rationale || ''} onChange={(e) => editWeek(i, { rationale: e.target.value })} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -330,6 +334,7 @@ export default function AthletePlannerPage() {
             {plan && <button type="button" className={adminBtn.danger} onClick={remove} disabled={busy}>Delete plan</button>}
           </div>
           {plan && dirty && <p className={`text-xs ${adminMuted}`}>Save your changes before publishing.</p>}
+          {plan && <PlannerAdapt plan={plan} weeks={weeks} daily={daily} today={today} baseline={baseline} riderId={riderId} dirty={dirty} reload={load} />}
         </>
       )}
     </div>

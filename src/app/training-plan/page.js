@@ -48,6 +48,12 @@ export default function TrainingPlanPage() {
       <section className={`${adminCard} p-4`}>
         <h2 className="font-semibold">{plan.race_name || 'A race'}</h2>
         <p className={adminMuted}>{plan.race_date}{days >= 0 ? ` · ${days} day${days === 1 ? '' : 's'} to go` : ''}</p>
+        {(plan.races || []).length > 0 && (
+          <ul className={`${adminMuted} text-sm mt-2`} data-testid="minor-races">
+            {plan.races.map((r) => <li key={r.id || `${r.name}${r.race_date}`}>{r.priority} race: {r.name} · {r.race_date}</li>)}
+          </ul>
+        )}
+        {plan.plan_rationale ? <p className="text-sm mt-2" data-testid="plan-rationale">{plan.plan_rationale}</p> : null}
       </section>
       <section className={`${adminCard} p-4`}>
         <h2 className="font-semibold mb-2">Weekly training load targets</h2>
@@ -72,6 +78,7 @@ export default function TrainingPlanPage() {
                 ) : null}
               </div>
               {w.note ? <p className={`${adminMuted} text-sm`}>{w.note}</p> : null}
+              {w.rationale ? <p className="text-sm italic">Why: {w.rationale}</p> : null}
             </li>
           ))}
         </ul>
