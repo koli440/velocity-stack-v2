@@ -6,6 +6,18 @@ const POINTS = [
   ['Templates and planning', 'Write intervals in a simple DSL and plan sessions with your coach.'],
 ]
 
+const LINKS = [
+  ['/track', 'For track riders'],
+  ['/how-it-works', 'How it works'],
+  ['/coaching', 'Coaching'],
+  ['/analysis-templates', 'Analysis templates'],
+  ['/velodromes', 'Velodromes'],
+  ['/dsl-guide', 'DSL guide'],
+  ['/about', 'About'],
+  ['/whats-new', "What's new"],
+  ['/blog', 'Blog'],
+]
+
 // Server-rendered so it is present in the initial HTML.
 export default function Landing() {
   return (
@@ -36,12 +48,15 @@ export default function Landing() {
           </li>
         ))}
       </ul>
-      <p className="text-sm text-slate-500">
-        <Link href="/about" className="hover:underline">About</Link> ·{' '}
-        <Link href="/dsl-guide" className="hover:underline">DSL guide</Link> ·{' '}
-        <Link href="/whats-new" className="hover:underline">What&apos;s new</Link> ·{' '}
-        <Link href="/blog" className="hover:underline">Blog</Link>
-      </p>
+      <p className="text-sm text-slate-500">Free for riders and coaches, for now.</p>
+      <nav aria-label="Explore VelocityStack" className="text-sm text-slate-500">
+        {LINKS.map(([href, label], i) => (
+          <span key={href}>
+            {i > 0 && ' · '}
+            <Link href={href} className="hover:underline">{label}</Link>
+          </span>
+        ))}
+      </nav>
     </section>
   )
 }

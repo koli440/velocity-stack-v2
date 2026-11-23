@@ -16,6 +16,8 @@ const PAGES = [
   ['Import Garmin rides', '/import/garmin', 'Connect Garmin Connect and import older rides from a Garmin data export'],
   ['Import .fit files', '/import/fit', 'Import single, bulk or zipped .fit files from any bike computer'],
   ['Gear Architect', '/gears', 'Gear inch and development calculator'],
+  ['Coaching', '/coaching', 'Free coaching for track cyclists: rider consent, what coaches can see and change, templates and planned workouts'],
+  ['Analysis templates gallery', '/analysis-templates', 'Example analysis templates with their syntax for pursuits, flying 200s, threshold and over-unders'],
   ['Template syntax guide', '/dsl-guide', 'How to write interval templates'],
   ['About', '/about', 'Feature overview and coaching privacy model'],
   ["What's new", '/whats-new', 'Recent features and improvements'],
