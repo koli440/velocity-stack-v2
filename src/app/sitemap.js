@@ -23,6 +23,8 @@ const SOURCES = {
   '/gears': 'src/app/gears/page.js',
   '/pursuit': 'src/app/pursuit/page.js',
   '/track': 'src/app/track/page.js',
+  '/coaching': 'src/app/coaching/page.js',
+  '/analysis-templates': 'src/app/analysis-templates/page.js',
   '/velodromes': 'src/app/velodromes/page.js',
 }
 

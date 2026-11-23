@@ -15,6 +15,7 @@ const JSON_LD = {
   description: SITE_DESCRIPTION,
   applicationCategory: 'SportsApplication',
   operatingSystem: 'Any',
+  isAccessibleForFree: true,
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 }
 

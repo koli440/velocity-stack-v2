@@ -21,7 +21,7 @@ export default function Footer() {
           <span>Dedicated Velodrome Telemetry</span>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           {showLinks && <>
           <Link
             href="/about"
@@ -61,6 +61,22 @@ export default function Footer() {
 
           <Link href="/track" className="hover:text-slate-900 dark:hover:text-white transition">
             For track riders
+          </Link>
+
+          <Link href="/how-it-works" className="hover:text-slate-900 dark:hover:text-white transition">
+            How it works
+          </Link>
+
+          <Link href="/coaching" className="hover:text-slate-900 dark:hover:text-white transition">
+            Coaching
+          </Link>
+
+          <Link href="/analysis-templates" className="hover:text-slate-900 dark:hover:text-white transition">
+            Analysis templates
+          </Link>
+
+          <Link href="/velodromes" className="hover:text-slate-900 dark:hover:text-white transition">
+            Velodromes
           </Link>
 
           <Link href="/terms" className="hover:text-slate-900 dark:hover:text-white transition">
