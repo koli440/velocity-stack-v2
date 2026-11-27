@@ -75,6 +75,10 @@ export default function Footer() {
             Analysis templates
           </Link>
 
+          <Link href="/claude" className="hover:text-slate-900 dark:hover:text-white transition">
+            Claude
+          </Link>
+
           <Link href="/velodromes" className="hover:text-slate-900 dark:hover:text-white transition">
             Velodromes
           </Link>

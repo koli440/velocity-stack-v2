@@ -1,5 +1,5 @@
 // Content pages that are public (crawlable, usable logged out). Edit controls inside them stay signed-in only.
-const EXACT = ['/about', '/dsl-guide', '/whats-new', '/how-it-works', '/velodromes', '/coaches', '/coaching', '/analysis-templates']
+const EXACT = ['/about', '/dsl-guide', '/whats-new', '/how-it-works', '/velodromes', '/coaches', '/coaching', '/analysis-templates', '/claude']
 
 // Free calculators usable without an account. Personal extras inside them stay signed-in only.
 export const PUBLIC_TOOL_PATHS = ['/gears', '/pursuit']

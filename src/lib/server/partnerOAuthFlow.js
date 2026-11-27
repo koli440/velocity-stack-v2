@@ -8,12 +8,43 @@ import {
   CODE_TTL_S, ACCESS_TTL_S, REFRESH_TTL_S, newToken, hashToken, safeEqual, verifyPkce, isValidChallenge,
   isAllowedRedirectUri, resolveScopes, buildRedirect, oauthError,
 } from '../partnerOAuth.js'
+import { isCimdClientId, newCimdApp, CIMD_REFRESH_MS } from '../cimd.js'
 
 const iso = (ms) => new Date(ms).toISOString()
 
 /** Validates an authorize request; returns { app, scopes } or { error } (never redirect on a bad client/redirect). */
+/**
+ * The app behind a client_id. A client_id that is a trusted CIMD URL (cimd.js) is created on first use from its
+ * metadata document and refreshed at most daily (a failed refresh keeps the stored data). Never throws.
+ */
+export async function resolveClient(store, clientId, { now = Date.now() } = {}) {
+  if (!clientId) return null
+  const id = String(clientId)
+  const app = await store.getAppByClientId(id)
+  if (!isCimdClientId(id) || !store.fetchCimd) return app
+  if (app && app.cimd_fetched_at && now - Date.parse(app.cimd_fetched_at) < CIMD_REFRESH_MS) return app
+  try {
+    const fields = await store.fetchCimd(id)
+    if (!app) {
+      await store.insertCimdApp(newCimdApp(id, fields, new Date(now)))
+      const created = await store.getAppByClientId(id)
+      if (created) await store.audit({ app_id: created.id, user_id: null, event: 'cimd_registered', metadata: { client_id: id } })
+      return created
+    }
+    if (!app.owner_user_id) {
+      // Only ownerless (CIMD-created) rows are refreshed; status and scopes stay as the admin left them.
+      await store.updateCimdApp(app.id, { name: fields.name, homepage_url: fields.homepage_url, redirect_uris: fields.redirect_uris, cimd_fetched_at: new Date(now).toISOString() })
+      return { ...app, ...fields }
+    }
+    return app
+  } catch (err) {
+    console.warn('CIMD client could not be resolved:', err?.message)
+    return app
+  }
+}
+
 export async function validateAuthorizeRequest(store, q) {
-  const app = q.client_id ? await store.getAppByClientId(String(q.client_id)) : null
+  const app = q.client_id ? await resolveClient(store, q.client_id) : null
   if (!app || app.status !== 'approved') return { error: 'Unknown or unapproved application.' }
   if (!isAllowedRedirectUri(q.redirect_uri, app.redirect_uris)) return { error: 'Redirect URI is not registered for this application.' }
   const redirectError = (error, description) => ({ redirectError: { error, description }, app })

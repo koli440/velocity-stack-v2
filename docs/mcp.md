@@ -19,6 +19,43 @@ there are no new secrets and no JWT signing.
 
 Riders can disconnect the app on the Connections page (revokes the grants); tokens of a suspended app stop working at once.
 
+User-facing help: the public page `/claude` (what Claude can do, connecting, permissions, tools, example prompts,
+privacy). It is the documentation link of the directory listing and the protected resource metadata.
+
+## Claude Connectors Directory
+
+Listing in Claude's directory (claude.ai/directory/manage → Submit new → MCP connector) makes the connector available
+to every Velocity Stack user without a custom connector. What it needs from us:
+
+- **Authentication: Anthropic-held client credentials.** Register a dedicated production app at `/developers` (for
+  example owned by the team account, not a personal test app): redirect URIs `https://claude.ai/api/mcp/auth_callback`
+  and `https://claude.com/api/mcp/auth_callback`, the four MCP scopes, confidential. Approve it, then enter its client
+  id and secret in the portal's Authentication step. Every rider then authorizes through that one app.
+- **Claude Code** signs in with its Client ID Metadata Document instead (next section), so it needs no app.
+- **Listing data:** name, one-liner, description, categories, icon, docs URL `https://www.velocity-stack.app/claude`,
+  privacy policy `https://www.velocity-stack.app/privacy`, support contact, company details.
+- **Reviewer access:** a test account with a populated history (activities with power and HR, planned workouts, FTP,
+  zones, a race), plus confirmation that every tool was run.
+- **Tool rules** (checked by `mcpDirectory.test.js`): every tool has a title; read tools `readOnlyHint: true`; every tool
+  that changes stored data (`create/update/move/skip/delete_planned_workout`, `run_template`) `destructiveHint: true`,
+  so Claude asks before calling it; names <= 64 characters; no catch-all tool.
+
+## Claude Code and other CIMD clients
+
+`src/lib/cimd.js`: a client may use an https URL as `client_id` (Client ID Metadata Document). Only URLs on trusted
+hosts (`claude.ai`, `claude.com`) are accepted, so the server never fetches arbitrary URLs. On the first authorize
+request the document is fetched (no redirects, 5 s, 10 kB), validated (`client_id` matches, `client_name`, valid
+`redirect_uris`, public client) and stored as an **ownerless, approved** `developer_apps` row (`owner_user_id` NULL,
+no secret, the four MCP scopes, slug `cimd-<hash>`, audit event `cimd_registered`). It is re-read at most daily
+(`cimd_fetched_at`); a failed fetch keeps the stored row; name / redirect URIs are refreshed, status and scopes are
+never touched, so an admin can suspend it at `/admin/partner-apps` like any app. The authorization server metadata
+advertises `client_id_metadata_document_supported: true`.
+
+Redirect URIs: a registered loopback `http://localhost/...`, `http://127.0.0.1/...` or `http://[::1]/...` URI matches
+on any port (RFC 8252 §7.3; Claude Code listens on an ephemeral port). Everything else is an exact match.
+
+Claude Code: `claude mcp add --transport http velocity-stack https://www.velocity-stack.app/api/mcp`, then `/mcp`.
+
 ## Endpoint
 
 `POST /api/mcp` - MCP Streamable HTTP, stateless: every POST carries one JSON-RPC message (or a batch of up to 20)
@@ -32,9 +69,10 @@ client's version is echoed when supported). Methods: `initialize`, `ping`, `tool
   (plus `error="invalid_token"` when a token was sent).
 - `tools/list` only lists tools whose scope the token has (and `get_macro_plan` only when the planner is available).
   A tool called without its scope returns a tool error naming the missing scope.
-- Rate limit: each `tools/call` counts against the app's per-minute limit (`partner_rate_hit`, same counter and
-  `developer_apps.rate_limit_per_min` as the partner API); over the limit → `429` with `Retry-After`, logged as
-  `rate_limited` in `partner_audit_log`.
+- Rate limit **per rider**: each `tools/call` counts against `developer_apps.rate_limit_per_user_min` (default 60) for
+  that app and rider (`partner_user_rate_hit`, `partner_user_rate_counters`, `20270191000000_mcp_directory.sql`), so one
+  directory app shared by all riders never throttles them together. Over the limit → `429` with `Retry-After`,
+  logged as `rate_limited` (`window: user_minute`) in `partner_audit_log`.
 - Audit: every successful write tool call is logged in `partner_audit_log` as `mcp_write` with `{ tool }`; the admin
   page shows it with the other partner events.
 
@@ -46,7 +84,8 @@ client's version is echoed when supported). Methods: `initialize`, `ping`, `tool
   (the consent page), `token_endpoint` `/api/oauth/token`, `revocation_endpoint` `/api/oauth/revoke`, PKCE `S256`
   only, `client_secret_basic` / `client_secret_post` / `none`. No `offline_access` (refresh tokens are always issued).
 - The origin comes from the request (`appOrigin`), so previews describe themselves. No dynamic client
-  registration: apps are registered at `/developers` and approved by an admin.
+  registration: apps are registered at `/developers` and approved by an admin; trusted CIMD clients (Claude Code)
+  are created automatically (see above). `resource_documentation` points to `/claude`.
 
 ## Scopes
 
@@ -116,5 +155,7 @@ query by the token's user id explicitly, like `/api/v1`.
 
 ## Tests
 
+`src/lib/__tests__/mcpDirectory.test.js`: loopback port matching, CIMD validation / fetch limits / first-use
+creation / refresh / suspension, the Claude Code sign-in end to end, tool annotations, per-rider limit, `/claude` page.
 `src/lib/__tests__/mcp.test.js`: JSON-RPC handling, version negotiation, scope filtering and refusal, input
 validation, data-call mapping, error mapping, discovery documents, output views and the migration's grants.

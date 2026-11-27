@@ -17,6 +17,7 @@ const PAGES = [
   ['Import .fit files', '/import/fit', 'Import single, bulk or zipped .fit files from any bike computer'],
   ['Gear Architect', '/gears', 'Gear inch and development calculator'],
   ['Coaching', '/coaching', 'Free coaching for track cyclists: rider consent, what coaches can see and change, templates and planned workouts'],
+  ['Use with Claude', '/claude', 'Connect Claude (MCP connector) to plan workouts and review rides, templates and fitness'],
   ['Analysis templates gallery', '/analysis-templates', 'Example analysis templates with their syntax for pursuits, flying 200s, threshold and over-unders'],
   ['Template syntax guide', '/dsl-guide', 'How to write interval templates'],
   ['About', '/about', 'Feature overview and coaching privacy model'],

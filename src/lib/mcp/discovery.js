@@ -21,7 +21,7 @@ export function protectedResourceMetadata(origin) {
     scopes_supported: [...MCP_SCOPES],
     bearer_methods_supported: ['header'],
     resource_name: 'Velocity Stack',
-    resource_documentation: `${o}/developers/docs`,
+    resource_documentation: `${o}/claude`,
   }
 }
 
@@ -40,6 +40,8 @@ export function authorizationServerMetadata(origin) {
     revocation_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post', 'none'],
     // No offline_access: refresh tokens are always issued, and clients must not request unknown scopes.
     scopes_supported: [...PARTNER_SCOPES],
+    // Trusted client metadata documents (Claude Code) are accepted as client_id (src/lib/cimd.js).
+    client_id_metadata_document_supported: true,
     service_documentation: `${o}/developers/docs`,
   }
 }

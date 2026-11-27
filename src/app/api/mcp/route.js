@@ -42,19 +42,14 @@ export async function POST(req) {
     return rpcErrorResponse(400, RPC_ERRORS.PARSE, 'Parse error')
   }
 
-  // Per-app request limit (same counter as the partner API), counted only for tool calls.
+  // Per-rider request limit (all riders share one directory app), counted only for tool calls.
   const calls = countToolCalls(payload)
   if (calls > 0) {
-    let hits = null
-    for (let i = 0; i < calls; i++) {
-      const { data, error } = await service.rpc('partner_rate_hit', { p_app: auth.appId })
-      if (error || typeof data !== 'number') break
-      hits = data
-    }
-    if (hits != null) {
-      const d = minuteDecision(hits, auth.app.rate_limit_per_min ?? 60)
+    const { data: hits, error } = await service.rpc('partner_user_rate_hit', { p_app: auth.appId, p_user: auth.userId, p_hits: calls })
+    if (!error && typeof hits === 'number') {
+      const d = minuteDecision(hits, auth.app.rate_limit_per_user_min ?? 60)
       if (!d.allowed) {
-        await service.from('partner_audit_log').insert({ app_id: auth.appId, user_id: auth.userId, event: 'rate_limited', metadata: { window: 'minute', via: 'mcp' } })
+        await service.from('partner_audit_log').insert({ app_id: auth.appId, user_id: auth.userId, event: 'rate_limited', metadata: { window: 'user_minute', via: 'mcp' } })
         return rpcErrorResponse(429, RPC_ERRORS.INTERNAL, 'Too many requests, slow down', { 'Retry-After': String(d.retryAfterS) })
       }
     }
