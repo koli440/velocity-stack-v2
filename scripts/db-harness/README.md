@@ -76,3 +76,4 @@ Macro planner guidance in the calendar (coach / shared-with-athlete visibility):
 
 Macro planner races from the calendar: `node harness.mjs <repo>/supabase/migrations ./macro-planner-calendar-adversarial.mjs` (the earlier macro planner harnesses use free-form races, so run them against a migrations dir without `20270188000000_macro_planner_calendar_races.sql`).
 MCP races / notes wrappers: `MIG=<repo>/supabase/migrations/20270191000000_mcp_races_notes.sql node harness.mjs <repo>/supabase/migrations ./mcp-races-notes-adversarial.mjs`
+Admin MCP stats: `MIG=<repo>/supabase/migrations/20270193000000_admin_mcp_stats.sql node harness.mjs <repo>/supabase/migrations ./admin-mcp-stats-adversarial.mjs`

@@ -62,9 +62,18 @@ export async function POST(req) {
     const { error } = await service.from('partner_audit_log').insert({ app_id: auth.appId, user_id: auth.userId, event: 'mcp_write', metadata: { tool } })
     if (error) console.warn('mcp audit failed:', error.message)
   }
+  // Admin dashboard counters (mcp_usage_hit): tool name and error flag only, never arguments. Best effort.
+  const recordUsage = async (tool, isError) => {
+    const { error } = await service.rpc('mcp_usage_hit', { p_app: auth.appId, p_user: auth.userId, p_tool: tool, p_error: isError })
+    if (error) console.warn('mcp usage counter failed:', error.message)
+  }
   const server = {
     listTools: async () => listTools(auth.scopes, await caps()),
-    callTool: async (name, args) => callTool(name, args, { scopes: auth.scopes, data, caps: CAPS_TOOLS.has(name) ? await caps() : NO_CAPS, onWrite }),
+    callTool: async (name, args) => {
+      const result = await callTool(name, args, { scopes: auth.scopes, data, caps: CAPS_TOOLS.has(name) ? await caps() : NO_CAPS, onWrite })
+      if (!result?.unknownTool) await recordUsage(name, !!result?.isError)
+      return result
+    },
   }
 
   const r = await handlePost(payload, server)

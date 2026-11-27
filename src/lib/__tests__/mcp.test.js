@@ -424,3 +424,17 @@ for (const [file, min] of [['20270190000000_mcp_connector.sql', 9], ['2027019100
     assert.match(body.slice(0, body.indexOf('$$;')), /mcp_(token_user|resolve_rider)\(p_token_hash/, f)
   }
 })
+
+test('MCP usage counters for the admin dashboard are service-role only and store no arguments', () => {
+  const sql = readFileSync(new URL('../../../supabase/migrations/20270193000000_admin_mcp_stats.sql', import.meta.url), 'utf8')
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.mcp_usage_hit\(UUID, UUID, TEXT, BOOLEAN\) FROM PUBLIC, anon, authenticated;/)
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.mcp_usage_hit\(UUID, UUID, TEXT, BOOLEAN\) TO service_role;/)
+  for (const t of ['mcp_tool_usage', 'mcp_active_riders']) {
+    assert.match(sql, new RegExp(`REVOKE ALL ON public\\.${t} FROM PUBLIC, anon, authenticated;`), t)
+    assert.match(sql, new RegExp(`ALTER TABLE public\\.${t} ENABLE ROW LEVEL SECURITY;`), t)
+  }
+  // The admin RPC stays admin-only.
+  assert.match(sql, /NOT public\.is_admin\(auth\.uid\(\)\)/)
+  // Every registered tool name fits the counter's tool-name rule.
+  for (const name of Object.keys(TOOLS)) assert.match(name, /^[a-z][a-z0-9_]{0,63}$/)
+})
