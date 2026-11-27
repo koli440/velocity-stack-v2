@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import { reviewPath } from '../../lib/suggestions'
 import { formatDateTime } from '../../lib/dateFormat'
-import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth, respectSummary, respectTiers, pbVaultSummary, eventCount, toolUsageSummary, fallbackLabel, disciplineLabel, blogPostRows } from '../../lib/adminDashboard'
+import { dayLabel, maxCount, pct, providerHealth, providerLabel, sumSeries, TYPE_LABELS, trend, withAllProviders, failureRate, partnerAppHealth, respectSummary, respectTiers, pbVaultSummary, eventCount, toolUsageSummary, mcpSummary, partnerAppKind, fallbackLabel, disciplineLabel, blogPostRows } from '../../lib/adminDashboard'
 import SegmentedTabs from '../../components/SegmentedTabs'
 import Icon from '../../components/Icon'
 
@@ -447,17 +447,18 @@ export default function AdminDashboardPage() {
                   <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-sm" data-testid="partner-stats-table">
                       <thead><tr className={`text-left text-xs font-bold ${muted} border-b border-slate-200 dark:border-slate-700`}>
-                        <th className="pr-3 py-2">App</th><th className="pr-3">Riders</th><th className="pr-3">24h / 7d / 30d / all</th><th className="pr-3">Imported / dup / failed</th><th className="pr-3">Fail %</th><th className="pr-3">Activities</th><th className="pr-3">429 7d</th><th className="pr-3">Refresh 7d</th><th className="pr-3">Reuse</th><th>Last upload</th>
+                        <th className="pr-3 py-2">App</th><th className="pr-3">Riders</th><th className="pr-3">24h / 7d / 30d / all</th><th className="pr-3">Imported / dup / failed</th><th className="pr-3">Fail %</th><th className="pr-3">Activities</th><th className="pr-3">MCP calls 7d / riders 7d</th><th className="pr-3">429 7d</th><th className="pr-3">Refresh 7d</th><th className="pr-3">Reuse</th><th>Last upload</th>
                       </tr></thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-700 [&>tr:nth-child(even)]:bg-slate-50 dark:[&>tr:nth-child(even)]:bg-slate-800/40">
                         {partner.apps.map((a) => (
                           <tr key={a.id}>
-                            <td className="pr-3 py-2"><Link href="/admin/partner-apps" className="underline font-bold">{a.name}</Link> <span className={`text-xs ${a.status === 'approved' ? (partnerAppHealth(a) === 'warn' ? TONES.warn : TONES.good) : muted}`}>{a.status === 'approved' && partnerAppHealth(a) === 'warn' ? 'check' : a.status}</span></td>
+                            <td className="pr-3 py-2"><Link href="/admin/partner-apps" className="underline font-bold">{a.name}</Link>{partnerAppKind(a) && <span className={`ml-1 text-xs ${muted}`} title="Client ID Metadata Document client (e.g. Claude Code)">{partnerAppKind(a)}</span>} <span className={`text-xs ${a.status === 'approved' ? (partnerAppHealth(a) === 'warn' ? TONES.warn : TONES.good) : muted}`}>{a.status === 'approved' && partnerAppHealth(a) === 'warn' ? 'check' : a.status}</span></td>
                             <td className="pr-3">{a.riders}</td>
                             <td className="pr-3 font-mono">{a.uploads_24h} / {a.uploads_7d} / {a.uploads_30d} / {a.uploads_total}</td>
                             <td className="pr-3 font-mono">{a.imported} / {a.duplicate} / {a.failed}</td>
                             <td className="pr-3">{failureRate(a)}%</td>
                             <td className="pr-3">{a.activities}</td>
+                            <td className="pr-3 font-mono">{a.mcp_calls_7d ?? 0} / {a.mcp_riders_7d ?? 0}</td>
                             <td className="pr-3">{a.rate_limited_7d}</td>
                             <td className="pr-3">{a.refreshes_7d}</td>
                             <td className={`pr-3 ${a.reuse_revocations ? `${TONES.bad} font-bold` : ''}`}>{a.reuse_revocations}</td>
@@ -471,7 +472,7 @@ export default function AdminDashboardPage() {
                     {partner.apps.map((a) => (
                       <li key={a.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 space-y-1">
                         <div className="flex justify-between gap-2">
-                          <Link href="/admin/partner-apps" className="underline font-bold">{a.name}</Link>
+                          <span><Link href="/admin/partner-apps" className="underline font-bold">{a.name}</Link>{partnerAppKind(a) && <span className={`ml-1 text-xs ${muted}`}>{partnerAppKind(a)}</span>}</span>
                           <span className={`text-xs font-bold ${a.status === 'approved' ? (partnerAppHealth(a) === 'warn' ? TONES.warn : TONES.good) : muted}`}>{a.status === 'approved' && partnerAppHealth(a) === 'warn' ? 'check' : a.status}</span>
                         </div>
                         <Field label="Riders">{a.riders}</Field>
@@ -479,6 +480,7 @@ export default function AdminDashboardPage() {
                         <Field label="Imported / dup / failed">{a.imported} / {a.duplicate} / {a.failed}</Field>
                         <Field label="Fail %">{failureRate(a)}%</Field>
                         <Field label="Activities">{a.activities}</Field>
+                        <Field label="MCP calls 7d / riders 7d">{a.mcp_calls_7d ?? 0} / {a.mcp_riders_7d ?? 0}</Field>
                         <Field label="429 7d">{a.rate_limited_7d}</Field>
                         <Field label="Refresh 7d">{a.refreshes_7d}</Field>
                         <Field label="Reuse" className={a.reuse_revocations ? TONES.bad : ''}>{a.reuse_revocations}</Field>
@@ -487,6 +489,44 @@ export default function AdminDashboardPage() {
                     ))}
                   </ul>
                   {partner.apps.length === 0 && <p className={`text-sm ${muted}`}>No apps registered yet.</p>}
+
+                  {(() => {
+                    const m = mcpSummary(partner.mcp)
+                    return (
+                      <div className="space-y-3" data-testid="mcp-stats">
+                        <h3 className={subheading}>Claude connector (MCP)</h3>
+                        <StatGrid cols="sm:grid-cols-4">
+                          <Stat label="Riders 7d / 30d" value={`${m.riders7d} / ${m.riders30d}`} />
+                          <Stat label="Tool calls 7d" value={m.calls7d} hint={`${m.calls30d} in 30 days`} />
+                          <Stat label="Tool errors 7d" value={`${m.errorRate7d}%`} tone={m.errors7d && m.errorRate7d >= 20 ? 'warn' : undefined} hint={`${m.errors7d} calls`} />
+                          <Stat label="Calendar writes 7d" value={m.writes7d} />
+                          <Stat label="Rate limited 7d" value={m.rateLimited7d} tone={m.rateLimited7d ? 'warn' : undefined} />
+                          <Stat label="CIMD clients" value={m.cimdClients} hint="e.g. Claude Code" />
+                        </StatGrid>
+                        <Bars series={m.callsByDay} label="Tool calls" tone="bg-violet-500" />
+                        {m.tools.length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm" data-testid="mcp-tools-table">
+                              <caption className="sr-only">MCP tool calls in the last 30 days</caption>
+                              <thead><tr className={`text-left text-xs font-bold ${muted} border-b border-slate-200 dark:border-slate-700`}>
+                                <th className="pr-3 py-2">Tool</th><th className="pr-3">Calls 7d</th><th className="pr-3">Calls 30d</th><th>Errors 30d</th>
+                              </tr></thead>
+                              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                {m.tools.map((t) => (
+                                  <tr key={t.tool}>
+                                    <td className="pr-3 py-1.5 font-mono">{t.tool}</td>
+                                    <td className="pr-3">{t.calls7d}</td>
+                                    <td className="pr-3">{t.calls30d}</td>
+                                    <td className={t.errors30d && t.errorRate >= 20 ? `${TONES.warn} font-bold` : ''}>{t.errors30d}{t.errors30d ? ` (${t.errorRate}%)` : ''}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : <p className={`text-sm ${muted}`}>No tool calls in the last 30 days.</p>}
+                      </div>
+                    )
+                  })()}
 
                   <h3 className={subheading}>Recent upload failures</h3>
                   <ul className="text-sm divide-y divide-slate-200 dark:divide-slate-700">

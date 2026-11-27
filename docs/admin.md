@@ -26,6 +26,15 @@ DB test: `scripts/db-harness/admin-dashboard-adversarial.mjs` (see its README).
 
 The dashboard's "Third-party apps" panel is fed by `admin_partner_stats(p_days)` (`20270134000000_admin_partner_stats.sql`), a separate admin-only SECURITY DEFINER function (raises `Admin only`). It returns app counts by status, connected riders, a per-app table (riders, uploads 24h/7d/30d/all, imported/duplicate/failed, failure rate, activities, 429s, refreshes, refresh-reuse revocations, last upload), a daily upload series and recent failure texts. Aggregates only; no rider identities. Rows link to `/admin/partner-apps`.
 
+Claude connector (MCP), added by `20270193000000_admin_mcp_stats.sql`: every known tool call on `/api/mcp` is counted by
+`mcp_usage_hit` (service role only) into `mcp_tool_usage` (app, UTC day, tool, calls, errors: no arguments, no rider)
+and `mcp_active_riders` (app, day, rider; used only to count distinct riders). Both keep 90 days. `admin_partner_stats`
+adds per-app columns (`kind` `cimd|registered`, MCP calls 7d/30d, errors 7d, riders 7d, calendar writes 7d from the
+`mcp_write` audit events) and an `mcp` block: riders 7d/30d, tool calls 7d/30d, error rate, calendar writes, MCP rate
+limits (`rate_limited` with `via: mcp`), CIMD clients (ownerless apps such as Claude Code), calls per day and a per-tool
+table (calls 7d/30d, errors 30d). The panel shows them under "Claude connector (MCP)"; CIMD apps are tagged in the
+app table. Harness: `scripts/db-harness/admin-mcp-stats-adversarial.mjs`.
+
 ## Respect stats
 
 The "Respect" panel is fed by `admin_respect_stats(p_days)` (`20270140000000_admin_respect_stats.sql`), another admin-only SECURITY DEFINER function (raises `Admin only`) that follows the 7/30/90-day period buttons. It returns total respects (period and all time), distinct reactors, receivers and reacted-to activities, average per reacted activity, a daily series, the share of active users (signed in or uploaded in the window) who gave / received a Respect, splits by activity type and public vs non-public, reaction notifications sent (and respects they cover), and how many users turned reactions or reaction notifications off. Bots are excluded; aggregates only, no rider identities. Rate-limit hits are not shown because they are not recorded.

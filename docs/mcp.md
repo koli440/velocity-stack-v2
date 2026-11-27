@@ -75,6 +75,8 @@ client's version is echoed when supported). Methods: `initialize`, `ping`, `tool
   logged as `rate_limited` (`window: user_minute`) in `partner_audit_log`.
 - Audit: every successful write tool call is logged in `partner_audit_log` as `mcp_write` with `{ tool }`; the admin
   page shows it with the other partner events.
+- Usage counters: every known tool call (read or write, success or tool error) is counted per app, UTC day and tool
+  by `mcp_usage_hit` for the admin dashboard (docs/admin.md, "Third-party app stats"). Tool name and error flag only.
 
 ## Discovery
 

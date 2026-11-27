@@ -75,6 +75,31 @@ export function partnerAppHealth(app) {
   return 'ok'
 }
 
+/**
+ * Claude / MCP figures of admin_partner_stats().mcp, with safe defaults for an older RPC without the block.
+ * errorRate7d: share of tool calls in the last 7 days that returned a tool error (%).
+ */
+export function mcpSummary(mcp) {
+  const m = mcp || {}
+  const n = (v) => Number(v) || 0
+  return {
+    calls7d: n(m.calls_7d),
+    calls30d: n(m.calls_30d),
+    errors7d: n(m.errors_7d),
+    errorRate7d: pct(m.errors_7d, m.calls_7d),
+    riders7d: n(m.riders_7d),
+    riders30d: n(m.riders_30d),
+    writes7d: n(m.writes_7d),
+    rateLimited7d: n(m.rate_limited_7d),
+    cimdClients: n(m.cimd_clients),
+    callsByDay: Array.isArray(m.calls_by_day) ? m.calls_by_day : [],
+    tools: (Array.isArray(m.tools) ? m.tools : []).map((t) => ({ tool: String(t.tool), calls7d: n(t.calls_7d), calls30d: n(t.calls_30d), errors30d: n(t.errors_30d), errorRate: pct(t.errors_30d, t.calls_30d) })),
+  }
+}
+
+/** Short label of how an app was registered: 'CIMD' for Client ID Metadata Document clients (e.g. Claude Code). */
+export const partnerAppKind = (app) => (app?.kind === 'cimd' ? 'CIMD' : null)
+
 /** Average with one decimal (e.g. reactions per reacted activity); 0 when the divisor is 0. */
 export function average(total, count) {
   const c = Number(count) || 0

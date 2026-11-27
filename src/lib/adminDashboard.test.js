@@ -40,7 +40,7 @@ test('labels', () => {
   assert.equal(dayLabel('2027-03-09'), '9/3')
 })
 
-import { failureRate, partnerAppHealth } from './adminDashboard.js'
+import { failureRate, partnerAppHealth, mcpSummary, partnerAppKind } from './adminDashboard.js'
 
 test('partner failure rate and health', () => {
   assert.equal(failureRate({ imported: 6, duplicate: 2, failed: 2 }), 20)
@@ -97,4 +97,28 @@ test('tool usage helpers sum weekly events and labels', () => {
   assert.equal(disciplineLabel({ discipline: 'Pursuit', distance_m: 4000 }), 'Pursuit · 4000 m')
   assert.equal(disciplineLabel({ discipline: 'Pursuit' }), 'Pursuit')
   assert.equal(toolUsageSummary(undefined).myPacingPct, 0)
+})
+
+test('mcpSummary: defaults for an older RPC, error rates, tool rows', () => {
+  const empty = mcpSummary(undefined)
+  assert.equal(empty.calls7d, 0)
+  assert.equal(empty.errorRate7d, 0)
+  assert.deepEqual(empty.tools, [])
+  assert.deepEqual(empty.callsByDay, [])
+  const m = mcpSummary({
+    calls_7d: 40, calls_30d: 90, errors_7d: 10, riders_7d: 3, riders_30d: 5, writes_7d: 7, rate_limited_7d: 1, cimd_clients: 1,
+    calls_by_day: [{ day: '2026-11-27', count: 40 }],
+    tools: [{ tool: 'list_planned_workouts', calls_7d: 20, calls_30d: 50, errors_30d: 5 }, { tool: 'create_race', calls_7d: '2', calls_30d: '4', errors_30d: null }],
+  })
+  assert.equal(m.errorRate7d, 25)
+  assert.equal(m.riders30d, 5)
+  assert.equal(m.cimdClients, 1)
+  assert.deepEqual(m.tools[0], { tool: 'list_planned_workouts', calls7d: 20, calls30d: 50, errors30d: 5, errorRate: 10 })
+  assert.deepEqual(m.tools[1], { tool: 'create_race', calls7d: 2, calls30d: 4, errors30d: 0, errorRate: 0 })
+})
+
+test('partnerAppKind marks CIMD clients only', () => {
+  assert.equal(partnerAppKind({ kind: 'cimd' }), 'CIMD')
+  assert.equal(partnerAppKind({ kind: 'registered' }), null)
+  assert.equal(partnerAppKind({}), null)
 })
