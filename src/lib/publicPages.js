@@ -8,6 +8,11 @@ export const COACHING_TITLE = 'Track cycling coaching platform, free'
 export const COACHING_DESCRIPTION =
   'Free coaching for track cyclists: coach athletes with their consent, review rides with analytic templates and plan workouts. Riders stay in control.'
 
+export const CLAUDE_PATH = '/claude'
+export const CLAUDE_TITLE = 'Use VelocityStack with Claude'
+export const CLAUDE_DESCRIPTION =
+  'Connect Claude to VelocityStack to plan workouts in your calendar and review rides, templates and fitness. What it can do, permissions and privacy.'
+
 export const TEMPLATES_PATH = '/analysis-templates'
 export const TEMPLATES_TITLE = 'Cycling analysis templates: examples'
 export const TEMPLATES_DESCRIPTION =
@@ -94,3 +99,16 @@ export const templatesJsonLd = () => {
   }
   return ld
 }
+
+export const claudeJsonLd = () =>
+  pageJsonLd({
+    path: CLAUDE_PATH,
+    name: CLAUDE_TITLE,
+    description: CLAUDE_DESCRIPTION,
+    audienceType: 'Cyclists and cycling coaches using Claude',
+    featureList: [
+      'Plan, edit, move, skip and delete workouts in the VelocityStack calendar from Claude',
+      'Review activities, power and heart-rate data, analysis templates and fitness in Claude',
+      'OAuth consent with per-permission scopes; disconnect any time',
+    ],
+  })

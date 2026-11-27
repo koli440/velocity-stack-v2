@@ -27,17 +27,34 @@ export function verifyPkce(verifier, challenge) {
 }
 export const isValidChallenge = (c) => /^[A-Za-z0-9\-_]{43}$/.test(String(c ?? ''))
 
-/** Exact match only (no prefix/wildcard); https required except loopback for local development. */
+const LOOPBACK_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+
+/**
+ * Exact match (no prefix/wildcard); https required except loopback for local development. For a registered
+ * loopback http URI any port is accepted (RFC 8252 section 7.3: native apps such as Claude Code listen on an
+ * ephemeral port); scheme, host, path and query must still match exactly.
+ */
 export function isAllowedRedirectUri(uri, registered = []) {
-  if (!registered.includes(uri)) return false
-  return isValidRedirectUri(uri)
+  if (!isValidRedirectUri(uri)) return false
+  if (registered.includes(uri)) return true
+  const u = new URL(uri)
+  if (u.protocol !== 'http:' || !LOOPBACK_HOSTS.includes(u.hostname)) return false
+  const portless = (x) => `${x.protocol}//${x.hostname}${x.pathname}${x.search}`
+  return registered.some((r) => {
+    try {
+      const v = new URL(r)
+      return v.protocol === 'http:' && LOOPBACK_HOSTS.includes(v.hostname) && portless(v) === portless(u)
+    } catch {
+      return false
+    }
+  })
 }
 export function isValidRedirectUri(uri) {
   try {
     const u = new URL(uri)
     if (u.hash) return false
     if (u.protocol === 'https:') return true
-    return u.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(u.hostname)
+    return u.protocol === 'http:' && LOOPBACK_HOSTS.includes(u.hostname)
   } catch {
     return false
   }

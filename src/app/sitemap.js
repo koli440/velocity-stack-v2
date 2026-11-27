@@ -25,6 +25,7 @@ const SOURCES = {
   '/track': 'src/app/track/page.js',
   '/coaching': 'src/app/coaching/page.js',
   '/analysis-templates': 'src/app/analysis-templates/page.js',
+  '/claude': 'src/app/claude/page.js',
   '/velodromes': 'src/app/velodromes/page.js',
 }
 

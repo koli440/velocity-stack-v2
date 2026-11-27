@@ -222,8 +222,9 @@ const STRUCTURE_HELP =
   'Bands: %FTP, W, Z1-Z6, %LT1/%LT2, bpm, %HRmax, rpm, km/h. Durations h/min/sec, distances km/m. ' +
   'Full guide: https://www.velocity-stack.app/dsl-guide'
 
-const RO = { readOnlyHint: true, openWorldHint: false }
-const WRITE = { readOnlyHint: false, destructiveHint: false, openWorldHint: false }
+const RO = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
+// Every tool that changes stored data is marked destructive (directory review rule), so Claude confirms it.
+const WRITE = { readOnlyHint: false, destructiveHint: true, openWorldHint: false }
 
 /**
  * name -> { scope, title, description, inputSchema, annotations, write, when?(caps), run(args, ctx) }
@@ -364,7 +365,7 @@ export const TOOLS = {
     title: 'Delete a planned workout',
     description: 'Deletes a planned workout from the calendar (also removes it from connected devices on the next push).',
     inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'], additionalProperties: false },
-    annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    annotations: { ...WRITE, idempotentHint: true },
     write: true,
     async run(args, { data }) {
       onlyKeys(args, ['id'])
@@ -437,7 +438,7 @@ export const TOOLS = {
       required: ['activity_id', 'template_id'],
       additionalProperties: false,
     },
-    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { ...WRITE, idempotentHint: true },
     write: true,
     async run(args, { data }) {
       onlyKeys(args, ['activity_id', 'template_id'])

@@ -2,6 +2,7 @@
 // Supabase (service role) implementation of the store used by partnerOAuthFlow.js.
 
 import { getServiceClient } from './connections.js'
+import { fetchCimd } from '../cimd.js'
 
 export function createPartnerStore(db = getServiceClient()) {
   if (!db) return null
@@ -9,6 +10,15 @@ export function createPartnerStore(db = getServiceClient()) {
   return {
     getAppByClientId: (clientId) => one(db.from('developer_apps').select('*').eq('client_id', clientId)),
     getAppById: (id) => one(db.from('developer_apps').select('*').eq('id', id)),
+    fetchCimd: (clientId) => fetchCimd(clientId),
+    // Unique client_id / slug: a concurrent first use simply loses and re-reads the winner's row.
+    async insertCimdApp(row) {
+      const { error } = await db.from('developer_apps').insert(row)
+      if (error && error.code !== '23505') throw error
+    },
+    async updateCimdApp(id, fields) {
+      await db.from('developer_apps').update(fields).eq('id', id).is('owner_user_id', null)
+    },
     async saveCode(row) {
       const { error } = await db.from('oauth_authorization_codes').insert(row)
       if (error) throw error

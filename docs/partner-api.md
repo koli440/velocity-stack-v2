@@ -39,4 +39,5 @@ Third-party apps without a .fit export (e.g. indoor-cycling games) connect a rid
 - The same OAuth provider also secures an MCP endpoint, `POST https://www.velocity-stack.app/api/mcp` (Streamable HTTP), so Claude can plan workouts in the rider's calendar and evaluate completed training. Discovery: `/.well-known/oauth-protected-resource` and `/.well-known/oauth-authorization-server`.
 - Extra scopes: `plans:read`, `plans:write`, `activities:read` (with `profile:read`).
 - Claude setup: register an app at `/developers` with redirect URI `https://claude.ai/api/mcp/auth_callback` (also `https://claude.com/api/mcp/auth_callback`) and all four scopes, wait for approval, then add a custom connector in Claude with the URL above and the client id and secret.
-- Tools, limits and the database wrappers are described in `docs/mcp.md`.
+- Claude Code needs no app: it signs in with its client metadata document (`client_id` = an https URL on claude.ai / claude.com), and loopback redirect URIs match on any port.
+- Rider-facing help: https://www.velocity-stack.app/claude. Tools, limits, directory listing and the database wrappers are described in `docs/mcp.md`.
