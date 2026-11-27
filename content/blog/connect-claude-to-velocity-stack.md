@@ -1,25 +1,29 @@
 ---
-title: Connect Claude to Velocity Stack and talk to your training
-date: 2026-11-27
-summary: Claude can now plan workouts in your Velocity Stack calendar and review your rides. How to connect it, what it can do, and what it can't see.
-tags: guide, claude, ai, planning
+title: "Training with AI: connect Claude to Velocity Stack"
+date: 2026-12-01T08:00:00Z
+summary: Use Claude as an AI training assistant: plan structured cycling workouts from your own power data, review rides and check fitness. Set up in two minutes.
+tags: guide, ai, claude, training, planning, coaching
 ---
 I plan most of my training in my head on the way home from the track, and then it takes ten minutes of clicking to get it into the calendar. Reviewing a session is similar: the numbers are all there, but I have to go and look for them.
 
-So Velocity Stack now has a connector for Claude. Once you connect it, you can ask Claude about your training in plain language. It reads your rides, fitness and calendar, and it can plan workouts for you. It uses your own FTP, zones and templates, the same numbers the app uses.
+So Velocity Stack now works with Claude. Once you connect it, you can talk to your training in plain language. Claude reads your rides, fitness and calendar, and it can plan structured workouts for you. It uses your own FTP, zones and templates, the same numbers the app uses, not generic guesses.
 
 ## Connect it in two minutes
 
-You need a Velocity Stack account and a Claude account.
+You need a Velocity Stack account and a Claude account. The connector is listed in Claude's directory: [VelocityStack on claude.ai](https://claude.ai/directory/velocity-stack).
 
-1. In Claude, open **Settings → Connectors** and find **VelocityStack** in the directory.
+1. Open the [VelocityStack connector](https://claude.ai/directory/velocity-stack) in Claude's directory, or go to **Settings → Connectors** in Claude and search for **VelocityStack**.
 2. Click **Connect**. Claude sends you to Velocity Stack.
 3. Sign in, read the list of permissions and press **Allow**.
 4. Back in Claude, start a chat and ask about your training.
 
 That's it. Nothing to install, no keys to copy. Each rider connects their own account, and Claude only ever sees the account that approved the connection.
 
-If you use **Claude Code**, run `claude mcp add --transport http velocity-stack https://www.velocity-stack.app/api/mcp` and then `/mcp` to sign in.
+If you use **Claude Code**, run this and then `/mcp` to sign in:
+
+```
+claude mcp add --transport http velocity-stack https://www.velocity-stack.app/api/mcp
+```
 
 ## What you can ask
 
@@ -78,8 +82,26 @@ If you coach athletes on Velocity Stack, Claude can plan in your active athletes
 
 The full list of tools and permissions is on the [Claude page](/claude).
 
+## Questions
+
+### Can AI plan my cycling training?
+
+Yes, with your own data. Connected to Velocity Stack, Claude plans structured workouts from your FTP, zones, races, recent training load and fitness, and puts them straight into your calendar. You still decide: Claude asks before every change.
+
+### Is Claude a replacement for my coach?
+
+No. It's a fast way to plan, adjust and review. If you have a coach, they can keep planning in your calendar as before, and they can use Claude to do it too.
+
+### Which devices get the workouts Claude plans?
+
+The same ones as any planned workout in Velocity Stack: Garmin, Wahoo and Intervals.icu, when you've turned the push on in your settings.
+
+### Does Claude see where I ride?
+
+No. GPS data is never shared with Claude.
+
 ## Try it
 
-Connect it, then ask Claude what your last week of training looked like. That's a good way to see what it can do.
+[Connect VelocityStack in Claude](https://claude.ai/directory/velocity-stack), then ask Claude what your last week of training looked like. That's a good way to see what it can do.
 
 If something doesn't work, or you'd like Claude to be able to do something it can't yet, tell me on the [feedback](/feedback) page.

@@ -14,9 +14,11 @@ const h2 = 'text-2xl font-black text-slate-900 dark:text-white'
 const h3 = 'font-bold text-slate-900 dark:text-white'
 const link = 'font-semibold text-emerald-600 dark:text-brand-neon hover:underline'
 const code = 'rounded bg-slate-100 dark:bg-slate-900 px-1 font-mono text-[13px]'
+const btnSecondary = 'inline-flex items-center justify-center px-6 py-3 rounded-xl border border-slate-300 dark:border-surface-darkBorder font-bold text-base text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-white/5'
 const btnPrimary = 'inline-flex items-center justify-center px-6 py-3 rounded-xl bg-emerald-500 dark:bg-brand-neon text-slate-950 font-bold text-base hover:opacity-90'
 
 const MCP_URL = 'https://www.velocity-stack.app/api/mcp'
+const DIRECTORY_URL = 'https://claude.ai/directory/velocity-stack'
 
 const CAN_DO = [
   ['calendar', 'Plan your training', 'Add workouts to your calendar with an interval structure, change, move, skip or delete them, and keep your races and day notes up to date. Structured rides reach Garmin, Wahoo or Intervals.icu like any planned workout, when you have turned that on.'],
@@ -69,7 +71,8 @@ export default function ClaudePage() {
           thresholds, templates and fitness. You approve exactly what it may do, and you can disconnect it any time.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-          <CarryLink href="/register" className={btnPrimary}>Create a free account</CarryLink>
+          <a href={DIRECTORY_URL} className={btnPrimary} target="_blank" rel="noopener noreferrer">Connect in Claude</a>
+          <CarryLink href="/register" className={btnSecondary}>Create a free account</CarryLink>
         </div>
       </header>
 
@@ -88,7 +91,10 @@ export default function ClaudePage() {
       <section aria-labelledby="connect" className="space-y-4">
         <h2 id="connect" className={h2}>Connect</h2>
         <ol className="list-decimal pl-5 space-y-2">
-          <li>In Claude, open <strong>Settings &rarr; Connectors</strong> and pick <strong>VelocityStack</strong> from the directory (or add it from the connector list in a chat).</li>
+          <li>
+            Open <a href={DIRECTORY_URL} className={link} target="_blank" rel="noopener noreferrer">VelocityStack in Claude&apos;s connector directory</a>, or in Claude open{' '}
+            <strong>Settings &rarr; Connectors</strong> and search for <strong>VelocityStack</strong>.
+          </li>
           <li>Click <strong>Connect</strong>. You are sent to VelocityStack: sign in, check the permissions and press <strong>Allow</strong>.</li>
           <li>Back in Claude, ask about your training. Claude asks before it changes anything in your calendar.</li>
         </ol>

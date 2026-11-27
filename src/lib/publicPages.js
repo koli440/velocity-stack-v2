@@ -11,7 +11,7 @@ export const COACHING_DESCRIPTION =
 export const CLAUDE_PATH = '/claude'
 export const CLAUDE_TITLE = 'Use VelocityStack with Claude'
 export const CLAUDE_DESCRIPTION =
-  'Connect Claude to VelocityStack to plan workouts in your calendar and review rides, templates and fitness. What it can do, permissions and privacy.'
+  'Train with AI: connect Claude to VelocityStack to plan cycling workouts in your calendar and review rides, templates and fitness. Permissions, privacy.'
 
 export const TEMPLATES_PATH = '/analysis-templates'
 export const TEMPLATES_TITLE = 'Cycling analysis templates: examples'
@@ -105,7 +105,7 @@ export const claudeJsonLd = () =>
     path: CLAUDE_PATH,
     name: CLAUDE_TITLE,
     description: CLAUDE_DESCRIPTION,
-    audienceType: 'Cyclists and cycling coaches using Claude',
+    audienceType: 'Cyclists and cycling coaches training with AI (Claude)',
     featureList: [
       'Plan, edit, move, skip and delete workouts in the VelocityStack calendar from Claude',
       'Review activities, power and heart-rate data, analysis templates and fitness in Claude',
