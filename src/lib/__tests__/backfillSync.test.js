@@ -236,3 +236,24 @@ test('runIntervalsSync hands each Strava rider a fair share of the backfill budg
   })
   assert.equal(results.length, 3)
 })
+
+test('a ride without data (perRide 404) is skipped, not treated as bad credentials', async () => {
+  const noData = Object.assign(new Error('No data'), { status: 404, perRide: true })
+  const todo = [R('a', '2026-03-01T00:00:00'), R('b', '2026-02-01T00:00:00'), R('c', '2026-01-01T00:00:00')]
+  const out = await processRides(todo, {
+    providerName: 'intervals',
+    concurrency: 1,
+    importOne: async (r) => { if (r.id === 'b') throw noData; return { status: 'imported' } },
+  })
+  assert.equal(out.handled, 3)
+  assert.equal(out.stop, null)
+  assert.equal(out.fatalMessage, null)
+  assert.equal(out.failed, 1)
+})
+
+test('a plain 404 without perRide on Intervals is still fatal', async () => {
+  const out = await processRides([R('a', '2026-03-01T00:00:00')], {
+    providerName: 'intervals', concurrency: 1, importOne: async () => { throw Object.assign(new Error('x'), { status: 404 }) },
+  })
+  assert.equal(out.stop, 'fatal')
+})

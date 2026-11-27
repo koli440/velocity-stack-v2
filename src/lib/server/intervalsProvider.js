@@ -240,7 +240,10 @@ export function createIntervalsProvider({ athleteId, apiKey, accessToken, fetchI
           const dist = Number(meta?.distance)
           return { ...m, activityType: 'swim', sport, summary: { ...base, ...(Number.isFinite(dist) && dist > 0 ? { distance_m: dist } : {}) } }
         }
-        throw new ImportError(`No data is available in Intervals.icu for ride ${actId}.`, 404)
+        // A single ride without data (e.g. a Strava-linked or manual entry) must never be mistaken for bad credentials.
+        const noData = new ImportError(`No data is available in Intervals.icu for ride ${actId}.`, 404)
+        noData.perRide = true
+        throw noData
       }
       return { title, startDateLocal, ...typeField, ...analyzed }
     },
