@@ -75,3 +75,4 @@ Direct charges: `MIG=<repo>/supabase/migrations/20270183000000_coach_billing_dir
 Macro planner guidance in the calendar (coach / shared-with-athlete visibility): `node harness.mjs <repo>/supabase/migrations ./macro-planner-guidance-adversarial.mjs`.
 
 Macro planner races from the calendar: `node harness.mjs <repo>/supabase/migrations ./macro-planner-calendar-adversarial.mjs` (the earlier macro planner harnesses use free-form races, so run them against a migrations dir without `20270188000000_macro_planner_calendar_races.sql`).
+MCP races / notes wrappers: `MIG=<repo>/supabase/migrations/20270191000000_mcp_races_notes.sql node harness.mjs <repo>/supabase/migrations ./mcp-races-notes-adversarial.mjs`

@@ -53,9 +53,13 @@ client's version is echoed when supported). Methods: `initialize`, `ping`, `tool
 | Scope | Consent label | Tools |
 | --- | --- | --- |
 | `profile:read` | Read your FTP, weight and units | `get_athlete` |
-| `plans:read` | Read the planned workouts in your calendar (and your training plan) | `list_planned_workouts`, `get_macro_plan` |
-| `plans:write` | Plan, edit, move, skip and delete workouts in your calendar | `create_planned_workout`, `update_planned_workout`, `move_planned_workout`, `skip_planned_workout`, `delete_planned_workout` |
+| `plans:read` | Read the planned workouts, races and notes in your calendar (and your training plan) | `list_planned_workouts`, `get_macro_plan`, `list_races`, `list_notes` |
+| `plans:write` | Plan, edit, move, skip and delete workouts, and add, edit and delete races and notes in your calendar | `create_planned_workout`, `update_planned_workout`, `move_planned_workout`, `skip_planned_workout`, `delete_planned_workout`, `create_race`, `update_race`, `delete_race`, `create_note`, `update_note`, `delete_note` |
 | `activities:read` | Read your activities, fitness and analysis results, and run your analysis templates on them | `list_activities`, `get_activity`, `list_templates`, `run_template`, `get_fitness` |
+
+Races and notes are part of the calendar, so they use the calendar scopes `plans:read` / `plans:write` instead of
+new scopes: existing connections keep working without re-registering the app or reconnecting (only the consent
+labels were extended).
 
 Defined in `src/lib/partnerScopes.js` (the `/developers` form and the consent page use them); `developer_apps.scopes`
 needs no schema change.
@@ -70,11 +74,27 @@ short messages (never internals).
   `computeZones` as the app), upcoming calendar races (goals), and `coached_athletes` for coaches.
 - `list_planned_workouts(from, to, athlete_id?)` - status `planned|completed|skipped|missed` (derived like the
   calendar), DSL structure, summary lines, estimated duration and load.
+- Planned-workout estimates (`estimated_duration_s`, `estimated_load`, `estimated_load_assumes_thresholds`) come from
+  the calendar's own code path: `workoutSummary` / `plannedToEvent` with the RIDER's load context
+  (`{ ftpHistory, ltHistory, zoneHistory }`, loaded like `useRiderLoadContext` by `data.loadContext`), so
+  `estimated_load` is exactly the "~TL" the calendar shows (watt, zone and %LT bands count; runs have none). The
+  context is loaded once per rider, only for the `rider_id` of rows the wrappers returned; when it cannot be loaded
+  the estimate falls back like the calendar (only %FTP bands). Every tool that returns planned workouts uses it.
 - `create_planned_workout(date, discipline, title, description?, structure?, athlete_id?)` - `structure` is the
   interval DSL (docs/template-dsl.md); it is parsed with the template parser (`parseStructure`) and stored as the
   usual snapshot (DSL + manifest), so the auto push to Intervals.icu / Wahoo / Garmin picks it up on its next cycle.
 - `update_planned_workout(id, title?, description?, discipline?, date?, structure?)` (`structure: ""` removes it),
   `move_planned_workout(id, date)`, `skip_planned_workout(id, skipped = true)`, `delete_planned_workout(id)`.
+- `list_races(from, to, athlete_id?)` - calendar races (goals): id, date, time, name, discipline
+  (`ride|track|other`), priority (`A` = main goal, `B`, `C`), location, format, notes, linked activity, added by coach.
+- `create_race(date, name, discipline = ride, priority = B, location?, notes?, athlete_id?)`,
+  `update_race(id, date?, name?, discipline?, priority?, location?, notes?)` (fields left out stay; time, format and
+  the activity link are not touched), `delete_race(id)`. Validated with the app's `validateRace` (name <= 80,
+  location <= 120, notes <= 1000).
+- `list_notes(from, to, athlete_id?)` - calendar notes: id, date, title, text, written by coach.
+- `create_note(date, text, title?, athlete_id?)` - the app's notes have a title (<= 80, shown in the calendar cell)
+  and a text (<= 1000): without `title` the first line of `text` is the title (cut at 80) and the full text is kept
+  when it is longer. `update_note(id, date?, title?, text?)`, `delete_note(id)`. Validated with `validateNote`.
 - `list_activities(from, to, limit <= 100)` - newest first, compact summary with the linked planned workout.
   Day bounds are UTC.
 - `get_activity(id, split_minutes = 5)` - summary, power / HR peaks (activity curves), time in power zones (the
@@ -91,7 +111,7 @@ short messages (never internals).
   from their coach. Own account: `my_macro_plan()` (published plan of the active coach); coach: `macro_plan_get`.
   Read only.
 
-Coaches: the planning tools and `get_macro_plan` accept `athlete_id` (an ACTIVE coaching relationship, checked in
+Coaches: the planning, race and note tools and `get_macro_plan` accept `athlete_id` (an ACTIVE coaching relationship, checked in
 the database by `is_coach_of`; workouts are stamped `set_by_coach` as in the app). Activity, template and fitness
 tools work on the token user's own account only in v1 (coaches read athletes' training through the coach-gated RPCs
 in the app).
@@ -111,10 +131,20 @@ passes only the token's SHA-256 hash to the wrappers, which resolve the user the
   (→ `planned_workout_set_structure`), `mcp_planned_delete`, `mcp_macro_plan_get`.
 - `EXECUTE` for `service_role` only (revoked from `PUBLIC`, `anon`, `authenticated`). Additive, idempotent.
 
+Races and notes (`20270191000000_mcp_races_notes.sql`): `mcp_races_list`, `mcp_race_create`, `mcp_race_update`,
+`mcp_race_delete`, `mcp_notes_list`, `mcp_note_create`, `mcp_note_update`, `mcp_note_delete`. The app writes these
+tables directly under RLS (no RPCs), so the wrappers act as the token user (`mcp_act_as`, so the stamp triggers set
+`created_by` / `updated_by` / `set_by_coach` and enforce the per-day limits as in the app) and check the RLS rule
+explicitly (`rider_id = user OR is_coach_of(rider_id)`; unknown or foreign ids give "Race not found" /
+"Note not found"). Only the app's client-writable columns can be written; `rider_id` never changes. Constraint
+violations become "Invalid race values" / "Invalid note values". Service role only. Harness:
+`scripts/db-harness/mcp-races-notes-adversarial.mjs`.
+
 Own-account reads (activities, curves, template runs, thresholds, fitness) use the service client and filter every
 query by the token's user id explicitly, like `/api/v1`.
 
 ## Tests
 
-`src/lib/__tests__/mcp.test.js`: JSON-RPC handling, version negotiation, scope filtering and refusal, input
+`src/lib/__tests__/mcp.test.js`: JSON-RPC handling, planned load = calendar TL (watt-band examples), race and note
+tools, version negotiation, scope filtering and refusal, input
 validation, data-call mapping, error mapping, discovery documents, output views and the migration's grants.
