@@ -165,7 +165,7 @@ test('the MCP route limits per rider, not per app', () => {
   assert.match(route, /partner_user_rate_hit/)
   assert.match(route, /rate_limit_per_user_min/)
   assert.ok(!/'partner_rate_hit'/.test(route))
-  const sql = fs.readFileSync('supabase/migrations/20270191000000_mcp_directory.sql', 'utf8')
+  const sql = fs.readFileSync('supabase/migrations/20270192000000_mcp_directory.sql', 'utf8')
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.partner_user_rate_hit\(UUID, UUID, INTEGER\) FROM PUBLIC, anon, authenticated;/)
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.partner_user_rate_hit\(UUID, UUID, INTEGER\) TO service_role;/)
 })

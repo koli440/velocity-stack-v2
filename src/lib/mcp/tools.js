@@ -3,8 +3,10 @@
 
 import {
   PLANNED_DISCIPLINES, PLANNED_TITLE_MAX, PLANNED_DESCRIPTION_MAX, isDayKey, parseStructure, validatePlanned,
-  plannedStatus, summarizeStructure,
+  plannedStatus, plannedToEvent, workoutSummary,
 } from '../plannedWorkouts.js'
+import { RACE_DISCIPLINES, RACE_PRIORITIES, RACE_NAME_MAX, RACE_LOCATION_MAX, RACE_NOTES_MAX, validateRace } from '../calendarRaces.js'
+import { NOTE_TITLE_MAX, NOTE_BODY_MAX, validateNote } from '../calendarNotes.js'
 import { textResult } from './protocol.js'
 
 export class ToolError extends Error {}
@@ -85,9 +87,15 @@ export function structureArg(v) {
 
 // ---- Output views ------------------------------------------------------------------------------
 
-export function plannedView(w, today = new Date()) {
+/**
+ * A planned_workouts row -> tool output. `loadContext` is the RIDER's { ftpHistory, ltHistory, zoneHistory }
+ * (data.loadContext). Summary, duration and load come from the calendar's own code path (workoutSummary /
+ * plannedToEvent with the same load context as useRiderLoadContext), so `estimated_load` is the calendar's "~TL".
+ */
+export function plannedView(w, today = new Date(), loadContext = null) {
   if (!w) return null
-  const summary = w.structure_manifest ? summarizeStructure(w.structure_manifest) : null
+  const summary = workoutSummary(w, loadContext)
+  const event = plannedToEvent(w, today, loadContext)
   return {
     id: w.id,
     athlete_id: w.rider_id,
@@ -99,10 +107,109 @@ export function plannedView(w, today = new Date()) {
     structure: w.structure_dsl || null,
     structure_summary: summary ? summary.lines : null,
     estimated_duration_s: summary?.durationS ?? null,
-    estimated_load: w.discipline === 'run' ? null : summary?.load ?? null,
+    estimated_load: event.load,
+    estimated_load_assumes_thresholds: event.load != null && !!summary?.loadAssumed,
     completed_activity_id: w.activity_id || null,
     planned_by_coach: !!w.set_by_coach,
   }
+}
+
+/**
+ * Views of planned workouts returned by the (authorizing) wrappers. The load context is fetched for the rider
+ * those rows belong to - a rider the wrapper already let the token user see - once per rider.
+ */
+export async function plannedViews(rows, { data, now }) {
+  const list = (rows || []).filter(Boolean)
+  const contexts = new Map()
+  for (const id of new Set(list.map((w) => w.rider_id).filter(Boolean))) contexts.set(id, await riderLoadContext(data, id))
+  return list.map((w) => plannedView(w, now, contexts.get(w.rider_id) || null))
+}
+
+async function riderLoadContext(data, riderId) {
+  if (typeof data?.loadContext !== 'function') return null
+  try {
+    return (await data.loadContext(riderId)) || null
+  } catch {
+    // Like the calendar: estimates fall back (only %FTP bands) when the histories cannot be loaded.
+    return null
+  }
+}
+
+const plannedOne = async (row, ctx) => (row ? (await plannedViews([row], ctx))[0] : null)
+
+export function raceView(r) {
+  if (!r) return null
+  return {
+    id: r.id,
+    athlete_id: r.rider_id,
+    date: r.race_date,
+    time: r.race_time ? String(r.race_time).slice(0, 5) : null,
+    name: r.name,
+    discipline: r.discipline,
+    priority: r.priority,
+    location: r.location || null,
+    format: r.format_note || null,
+    notes: r.notes || '',
+    activity_id: r.activity_id || null,
+    added_by_coach: !!r.set_by_coach,
+  }
+}
+
+export function noteView(n) {
+  if (!n) return null
+  return {
+    id: n.id,
+    athlete_id: n.rider_id,
+    date: n.note_date,
+    title: n.title,
+    text: n.body || '',
+    written_by_coach: !!n.set_by_coach,
+    updated_at: n.updated_at || null,
+  }
+}
+
+/** Race fields given (partial), validated with the app's validateRace against a valid baseline. */
+export function raceFields(args, { create = false } = {}) {
+  const draft = {}
+  if (args.name !== undefined) draft.name = stringArg(args.name, 'name')
+  if (args.discipline !== undefined) draft.discipline = args.discipline
+  if (args.priority !== undefined) draft.priority = typeof args.priority === 'string' ? args.priority.toUpperCase() : args.priority
+  if (args.location !== undefined) draft.location = stringArg(args.location, 'location')
+  if (args.notes !== undefined) draft.notes = stringArg(args.notes, 'notes')
+  if (create && draft.name === undefined) fail('name is required')
+  const v = validateRace({ name: 'x', discipline: 'ride', priority: 'B', ...draft })
+  if (v.error) fail(v.error)
+  const out = {}
+  for (const [k, col] of [['name', 'name'], ['discipline', 'discipline'], ['priority', 'priority'], ['location', 'location'], ['notes', 'notes']]) {
+    if (draft[k] !== undefined) out[col] = v.value[col]
+  }
+  return out
+}
+
+/**
+ * Note fields: the app's notes have a title (<= 80) and a text (<= 1000). Without a title the first line of
+ * the text becomes the title (cut at 80 characters); the full text is kept when it is longer than that.
+ */
+export function noteFields(args, { create = false } = {}) {
+  const draft = {}
+  const text = args.text !== undefined ? stringArg(args.text, 'text') : undefined
+  if (args.title !== undefined) draft.title = stringArg(args.title, 'title')
+  if (text !== undefined) {
+    const t = text.trim()
+    if (draft.title === undefined && create) {
+      const first = t.split('\n')[0].trim()
+      if (!first) fail('text must not be empty')
+      draft.title = first.length > NOTE_TITLE_MAX ? `${first.slice(0, NOTE_TITLE_MAX - 1).trimEnd()}…` : first
+      draft.body = t === draft.title ? '' : t
+    } else draft.body = t
+  }
+  if (create && draft.title === undefined) fail('text is required')
+  const v = validateNote({ title: 'x', body: '', ...draft })
+  if (v.error) fail(v.error)
+  const out = {}
+  if (draft.title !== undefined) out.title = v.value.title
+  if (draft.body !== undefined) out.body = v.value.body
+  return out
 }
 
 // ---- Tool definitions --------------------------------------------------------------------------
@@ -148,12 +255,12 @@ export const TOOLS = {
       additionalProperties: false,
     },
     annotations: RO,
-    async run(args, { data, now }) {
+    async run(args, ctx) {
       onlyKeys(args, ['from', 'to', 'athlete_id'])
       const { from, to } = rangeArgs(args, MAX_RANGE_DAYS)
       const riderId = uuidArg(args.athlete_id, 'athlete_id', { optional: true })
-      const rows = await data.listPlanned({ riderId, from, to })
-      return { workouts: rows.map((w) => plannedView(w, now)) }
+      const rows = await ctx.data.listPlanned({ riderId, from, to })
+      return { workouts: await plannedViews(rows, ctx) }
     },
   },
 
@@ -176,7 +283,8 @@ export const TOOLS = {
     },
     annotations: WRITE,
     write: true,
-    async run(args, { data, now }) {
+    async run(args, ctx) {
+      const { data } = ctx
       onlyKeys(args, ['date', 'discipline', 'title', 'description', 'structure', 'athlete_id'])
       const date = dayArg(args.date, 'date')
       const st = structureArg(args.structure) || { dsl: null, manifest: null }
@@ -184,7 +292,7 @@ export const TOOLS = {
       if (v.error) fail(v.error)
       const riderId = uuidArg(args.athlete_id, 'athlete_id', { optional: true })
       const row = await data.createPlanned({ riderId, date, discipline: v.value.discipline, title: v.value.title, description: v.value.description, dsl: st.dsl, manifest: st.manifest })
-      return { workout: plannedView(row, now) }
+      return { workout: await plannedOne(row, ctx) }
     },
   },
 
@@ -207,7 +315,8 @@ export const TOOLS = {
     },
     annotations: WRITE,
     write: true,
-    async run(args, { data, now }) {
+    async run(args, ctx) {
+      const { data } = ctx
       onlyKeys(args, ['id', 'title', 'description', 'discipline', 'date', 'structure'])
       const id = uuidArg(args.id, 'id')
       const fields = plainFields(args)
@@ -216,7 +325,7 @@ export const TOOLS = {
       let row = null
       if (Object.keys(fields).length) row = await data.updatePlanned(id, fields)
       if (st) row = await data.setStructure(id, st)
-      return { workout: plannedView(row, now) }
+      return { workout: await plannedOne(row, ctx) }
     },
   },
 
@@ -227,11 +336,11 @@ export const TOOLS = {
     inputSchema: { type: 'object', properties: { id: { type: 'string' }, date: dateProp('New day, YYYY-MM-DD') }, required: ['id', 'date'], additionalProperties: false },
     annotations: WRITE,
     write: true,
-    async run(args, { data, now }) {
+    async run(args, ctx) {
       onlyKeys(args, ['id', 'date'])
       const id = uuidArg(args.id, 'id')
-      const row = await data.updatePlanned(id, { workout_date: dayArg(args.date, 'date') })
-      return { workout: plannedView(row, now) }
+      const row = await ctx.data.updatePlanned(id, { workout_date: dayArg(args.date, 'date') })
+      return { workout: await plannedOne(row, ctx) }
     },
   },
 
@@ -242,12 +351,12 @@ export const TOOLS = {
     inputSchema: { type: 'object', properties: { id: { type: 'string' }, skipped: { type: 'boolean', default: true } }, required: ['id'], additionalProperties: false },
     annotations: WRITE,
     write: true,
-    async run(args, { data, now }) {
+    async run(args, ctx) {
       onlyKeys(args, ['id', 'skipped'])
       const id = uuidArg(args.id, 'id')
       if (args.skipped != null && typeof args.skipped !== 'boolean') fail('skipped must be true or false')
-      const row = await data.updatePlanned(id, { status: args.skipped === false ? 'planned' : 'skipped' })
-      return { workout: plannedView(row, now) }
+      const row = await ctx.data.updatePlanned(id, { status: args.skipped === false ? 'planned' : 'skipped' })
+      return { workout: await plannedOne(row, ctx) }
     },
   },
 
@@ -362,6 +471,186 @@ export const TOOLS = {
       return { plan: plan || null }
     },
   },
+  list_races: {
+    scope: 'plans:read',
+    title: 'List races (goals)',
+    description: 'Races and events in the calendar between two dates (inclusive, max 366 days): name, priority (A = main goal, B, C), discipline, location, notes.',
+    inputSchema: {
+      type: 'object',
+      properties: { from: dateProp('First day, YYYY-MM-DD'), to: dateProp('Last day, YYYY-MM-DD'), athlete_id: athleteIdProp },
+      required: ['from', 'to'],
+      additionalProperties: false,
+    },
+    annotations: RO,
+    async run(args, { data }) {
+      onlyKeys(args, ['from', 'to', 'athlete_id'])
+      const { from, to } = rangeArgs(args, MAX_RANGE_DAYS)
+      const riderId = uuidArg(args.athlete_id, 'athlete_id', { optional: true })
+      return { races: ((await data.listRaces({ riderId, from, to })) || []).map(raceView) }
+    },
+  },
+
+  create_race: {
+    scope: 'plans:write',
+    title: 'Add a race (goal)',
+    description: 'Adds a race or event to the athlete\'s calendar. priority A = main goal of the season, B = important, C = training race.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        date: dateProp('Race day, YYYY-MM-DD'),
+        name: { type: 'string', maxLength: RACE_NAME_MAX },
+        discipline: { type: 'string', enum: [...RACE_DISCIPLINES], default: 'ride', description: 'ride (road, gravel, MTB, ...), track or other' },
+        priority: { type: 'string', enum: [...RACE_PRIORITIES], default: 'B' },
+        location: { type: 'string', maxLength: RACE_LOCATION_MAX },
+        notes: { type: 'string', maxLength: RACE_NOTES_MAX },
+        athlete_id: athleteIdProp,
+      },
+      required: ['date', 'name'],
+      additionalProperties: false,
+    },
+    annotations: WRITE,
+    write: true,
+    async run(args, { data }) {
+      onlyKeys(args, ['date', 'name', 'discipline', 'priority', 'location', 'notes', 'athlete_id'])
+      const date = dayArg(args.date, 'date')
+      const fields = { discipline: 'ride', priority: 'B', ...raceFields(args, { create: true }) }
+      const riderId = uuidArg(args.athlete_id, 'athlete_id', { optional: true })
+      return { race: raceView(await data.createRace({ riderId, date, fields })) }
+    },
+  },
+
+  update_race: {
+    scope: 'plans:write',
+    title: 'Edit a race',
+    description: 'Changes date, name, discipline, priority, location or notes of a race. Fields left out stay as they are.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Race id (see list_races)' },
+        date: dateProp('New day, YYYY-MM-DD'),
+        name: { type: 'string', maxLength: RACE_NAME_MAX },
+        discipline: { type: 'string', enum: [...RACE_DISCIPLINES] },
+        priority: { type: 'string', enum: [...RACE_PRIORITIES] },
+        location: { type: 'string', maxLength: RACE_LOCATION_MAX },
+        notes: { type: 'string', maxLength: RACE_NOTES_MAX },
+      },
+      required: ['id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE,
+    write: true,
+    async run(args, { data }) {
+      onlyKeys(args, ['id', 'date', 'name', 'discipline', 'priority', 'location', 'notes'])
+      const id = uuidArg(args.id, 'id')
+      const fields = raceFields(args)
+      if (args.date !== undefined) fields.race_date = dayArg(args.date, 'date')
+      if (!Object.keys(fields).length) fail('Nothing to update')
+      return { race: raceView(await data.updateRace(id, fields)) }
+    },
+  },
+
+  delete_race: {
+    scope: 'plans:write',
+    title: 'Delete a race',
+    description: 'Deletes a race from the calendar.',
+    inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'], additionalProperties: false },
+    annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    write: true,
+    async run(args, { data }) {
+      onlyKeys(args, ['id'])
+      const id = uuidArg(args.id, 'id')
+      await data.deleteRace(id)
+      return { deleted: id }
+    },
+  },
+
+  list_notes: {
+    scope: 'plans:read',
+    title: 'List calendar notes',
+    description: 'Day notes in the calendar between two dates (inclusive, max 366 days), e.g. sickness, travel, availability. Notes are shared between the athlete and their coach.',
+    inputSchema: {
+      type: 'object',
+      properties: { from: dateProp('First day, YYYY-MM-DD'), to: dateProp('Last day, YYYY-MM-DD'), athlete_id: athleteIdProp },
+      required: ['from', 'to'],
+      additionalProperties: false,
+    },
+    annotations: RO,
+    async run(args, { data }) {
+      onlyKeys(args, ['from', 'to', 'athlete_id'])
+      const { from, to } = rangeArgs(args, MAX_RANGE_DAYS)
+      const riderId = uuidArg(args.athlete_id, 'athlete_id', { optional: true })
+      return { notes: ((await data.listNotes({ riderId, from, to })) || []).map(noteView) }
+    },
+  },
+
+  create_note: {
+    scope: 'plans:write',
+    title: 'Add a calendar note',
+    description: `Adds a note to a day of the calendar (visible to the athlete and their coach). Without a title the first line of the text is the title (max ${NOTE_TITLE_MAX} characters); text up to ${NOTE_BODY_MAX} characters.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        date: dateProp('Day, YYYY-MM-DD'),
+        text: { type: 'string', maxLength: NOTE_BODY_MAX },
+        title: { type: 'string', maxLength: NOTE_TITLE_MAX, description: 'Optional short title shown in the calendar cell' },
+        athlete_id: athleteIdProp,
+      },
+      required: ['date', 'text'],
+      additionalProperties: false,
+    },
+    annotations: WRITE,
+    write: true,
+    async run(args, { data }) {
+      onlyKeys(args, ['date', 'text', 'title', 'athlete_id'])
+      const date = dayArg(args.date, 'date')
+      if (args.text == null) fail('text is required')
+      const fields = { body: '', ...noteFields(args, { create: true }) }
+      const riderId = uuidArg(args.athlete_id, 'athlete_id', { optional: true })
+      return { note: noteView(await data.createNote({ riderId, date, fields })) }
+    },
+  },
+
+  update_note: {
+    scope: 'plans:write',
+    title: 'Edit a calendar note',
+    description: 'Changes the day, title or text of a calendar note. Fields left out stay as they are.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Note id (see list_notes)' },
+        date: dateProp('New day, YYYY-MM-DD'),
+        title: { type: 'string', maxLength: NOTE_TITLE_MAX },
+        text: { type: 'string', maxLength: NOTE_BODY_MAX },
+      },
+      required: ['id'],
+      additionalProperties: false,
+    },
+    annotations: WRITE,
+    write: true,
+    async run(args, { data }) {
+      onlyKeys(args, ['id', 'date', 'title', 'text'])
+      const id = uuidArg(args.id, 'id')
+      const fields = noteFields(args)
+      if (args.date !== undefined) fields.note_date = dayArg(args.date, 'date')
+      if (!Object.keys(fields).length) fail('Nothing to update')
+      return { note: noteView(await data.updateNote(id, fields)) }
+    },
+  },
+
+  delete_note: {
+    scope: 'plans:write',
+    title: 'Delete a calendar note',
+    description: 'Deletes a calendar note.',
+    inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'], additionalProperties: false },
+    annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    write: true,
+    async run(args, { data }) {
+      onlyKeys(args, ['id'])
+      const id = uuidArg(args.id, 'id')
+      await data.deleteNote(id)
+      return { deleted: id }
+    },
+  },
 }
 
 function plainFields(args) {
@@ -401,6 +690,7 @@ export function toolErrorMessage(err) {
     'Planned workout not found', 'Rider not found', 'Too many planned workouts on this day', 'A completed workout cannot be skipped',
     'Invalid workout values', 'Structure is too long', 'Structure contains invalid characters', 'Invalid structure', 'Pick a range',
     'Macro planner is not enabled', 'You are not coaching this rider', 'Activity not found', 'Template not available', 'Not found',
+    'Race not found', 'Too many races on this day', 'Invalid race values', 'Note not found', 'Too many notes on this day', 'Invalid note values',
   ]
   const hit = known.find((k) => msg.includes(k))
   return hit ? msg.slice(msg.indexOf(hit)).split('\n')[0].slice(0, 200) : 'Something went wrong. Please try again.'

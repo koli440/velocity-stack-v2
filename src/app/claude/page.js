@@ -19,7 +19,7 @@ const btnPrimary = 'inline-flex items-center justify-center px-6 py-3 rounded-xl
 const MCP_URL = 'https://www.velocity-stack.app/api/mcp'
 
 const CAN_DO = [
-  ['calendar', 'Plan your training', 'Add workouts to your calendar with an interval structure, change, move, skip or delete them. Structured rides reach Garmin, Wahoo or Intervals.icu like any planned workout, when you have turned that on.'],
+  ['calendar', 'Plan your training', 'Add workouts to your calendar with an interval structure, change, move, skip or delete them, and keep your races and day notes up to date. Structured rides reach Garmin, Wahoo or Intervals.icu like any planned workout, when you have turned that on.'],
   ['chart', 'Review your rides', 'Activities with power, heart rate, cadence, peaks, time in zones and splits, next to the planned workout they completed. No GPS data is shared.'],
   ['clipboard', 'Run analysis templates', 'Run your own, public or system templates on a ride and see every interval it found, stored just as if you had run it yourself.'],
   ['trend', 'Check fitness and form', 'Fitness, fatigue and form from your training load, the weekly ramp and the daily trend, plus your FTP, weight, zones and upcoming races.'],
@@ -33,6 +33,14 @@ const TOOLS = [
   ['move_planned_workout', 'Moves a planned workout to another day.'],
   ['skip_planned_workout', 'Marks a planned workout as skipped, or planned again.'],
   ['delete_planned_workout', 'Deletes a planned workout.'],
+  ['list_races', 'Races (goals) in your calendar, with priority A, B or C.'],
+  ['create_race', 'Adds a race to your calendar.'],
+  ['update_race', 'Changes a race.'],
+  ['delete_race', 'Deletes a race.'],
+  ['list_notes', 'Day notes such as sickness, travel or availability.'],
+  ['create_note', 'Adds a note to a day.'],
+  ['update_note', 'Changes a note.'],
+  ['delete_note', 'Deletes a note.'],
   ['list_activities', 'Completed activities between two dates.'],
   ['get_activity', 'Details of one activity: summary, peaks, zones, splits, template results.'],
   ['list_templates', 'Analysis templates you can run.'],
