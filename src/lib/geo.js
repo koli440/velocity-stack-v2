@@ -12,6 +12,7 @@ export const FAQ = [
   ['What are analytic templates?', 'Templates describe the efforts you care about, for example repeated flying 200s or pursuit blocks, in a short text syntax. VelocityStack finds each effort in a ride, checks it against the plan and measures it, and statistics build up over all runs.'],
   ['What is a flying 200?', 'A flying 200 is the fastest 200 metres of a sprint effort, timed after a rolling lead-in. It is the standard measure of a track sprinter\'s top speed.'],
   ['Which velodromes are covered?', 'The public velodrome directory lists tracks with length, surface, location and the disciplines that fit them. Riders can suggest new tracks and corrections.'],
+  ['Can I train with AI in VelocityStack?', 'Yes. Connect Claude through the VelocityStack connector in Claude\'s directory (https://claude.ai/directory/velocity-stack). Claude can then plan structured workouts in your calendar from your own FTP, zones, races and fitness, review your rides and run your analysis templates. It asks before every change, and GPS data is never shared.'],
   ['Is VelocityStack free?', 'Yes. You can sign up for free.'],
 ]
 
