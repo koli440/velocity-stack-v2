@@ -22,6 +22,9 @@ components:
           scopes:
             activities:write: Upload rides to the rider's account
             profile:read: Read FTP, weight and units
+            plans:read: Read planned workouts (MCP endpoint /api/mcp, see docs/mcp.md)
+            plans:write: Plan, edit, move, skip and delete workouts (MCP endpoint)
+            activities:read: Read activities, fitness and template results; run templates (MCP endpoint)
   headers:
     RetryAfter:
       description: Seconds until the limit resets.

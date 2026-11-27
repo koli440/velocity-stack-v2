@@ -33,3 +33,10 @@ Third-party apps without a .fit export (e.g. indoor-cycling games) connect a rid
 - Riders see their connected apps on the Connections page and can disconnect them (revokes the grants). Registration, approval, suspension, disconnects and rate-limit hits are written to `partner_audit_log`.
 
 - Partner activities show a "via <app name>" badge on feed cards and the activity detail (`activities.source = 'partner'`, `shared_activities.import_source = 'partner:<slug>'`; approved apps' names are readable by signed-in riders).
+
+## Claude and other MCP clients
+
+- The same OAuth provider also secures an MCP endpoint, `POST https://www.velocity-stack.app/api/mcp` (Streamable HTTP), so Claude can plan workouts in the rider's calendar and evaluate completed training. Discovery: `/.well-known/oauth-protected-resource` and `/.well-known/oauth-authorization-server`.
+- Extra scopes: `plans:read`, `plans:write`, `activities:read` (with `profile:read`).
+- Claude setup: register an app at `/developers` with redirect URI `https://claude.ai/api/mcp/auth_callback` (also `https://claude.com/api/mcp/auth_callback`) and all four scopes, wait for approval, then add a custom connector in Claude with the URL above and the client id and secret.
+- Tools, limits and the database wrappers are described in `docs/mcp.md`.
