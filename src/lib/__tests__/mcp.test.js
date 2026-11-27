@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 import { handlePost, handleMessage, negotiateVersion, countToolCalls, LATEST_PROTOCOL_VERSION } from '../mcp/protocol.js'
-import { TOOLS, listTools, callTool, toolErrorMessage, structureArg, rangeArgs, dayArg, plannedView } from '../mcp/tools.js'
+import { TOOLS, listTools, callTool, toolErrorMessage, structureArg, rangeArgs, dayArg, plannedView, plannedViews, raceView, noteView, raceFields, noteFields } from '../mcp/tools.js'
+import { plannedToEvent } from '../plannedWorkouts.js'
 import { protectedResourceMetadata, authorizationServerMetadata, wwwAuthenticate, MCP_SCOPES } from '../mcp/discovery.js'
 import { computeSplits, templateRunView, activitySummaryView, fitnessView, nextDay, safeLike, MAX_SPLITS } from '../mcp/views.js'
 import { PARTNER_SCOPES, SCOPE_LABELS } from '../partnerScopes.js'
@@ -15,6 +16,8 @@ const ID = '11111111-2222-4333-8444-555555555555'
 function fakeData(over = {}) {
   const calls = []
   const rec = (name) => async (...args) => {
+    // The planned-load context is a read helper: not recorded (and null) unless a test provides it.
+    if (name === 'loadContext' && !over.loadContext) return null
     calls.push([name, ...args])
     return over[name] ? over[name](...args) : { id: ID, rider_id: ID, workout_date: '2026-12-01', discipline: 'ride', title: 'T', description: '', status: 'planned' }
   }
@@ -79,7 +82,11 @@ test('every tool has a known scope and an object input schema', () => {
 test('tools/list only shows tools the token has scopes for', () => {
   const names = (scopes, caps) => listTools(scopes, caps).map((t) => t.name)
   assert.deepEqual(names(['activities:write']), [])
-  assert.deepEqual(names(['plans:read']), ['list_planned_workouts'])
+  assert.deepEqual(names(['plans:read']), ['list_planned_workouts', 'list_races', 'list_notes'])
+  for (const n of ['create_race', 'update_race', 'delete_race', 'create_note', 'update_note', 'delete_note']) {
+    assert.ok(names(['plans:write']).includes(n), n)
+    assert.ok(!names(['plans:read']).includes(n), n)
+  }
   assert.ok(names(ALL).includes('create_planned_workout'))
   assert.ok(!names(['plans:read', 'activities:read']).includes('create_planned_workout'))
   // The macro plan tool only when the planner is available.
@@ -201,6 +208,151 @@ test('planned workout view derives status and structure summary', () => {
   assert.equal(plannedView({ ...w, activity_id: ID }).status, 'completed')
 })
 
+// ---- Planned load = the calendar's "~TL" (bug: MCP returned 8 / null) ---------------------------
+
+const FTP285 = { ftpHistory: [{ effective_from: '2026-01-01', ftp_w: 285 }], ltHistory: [], zoneHistory: [] }
+const plannedRow = (dsl, over = {}) => ({
+  id: ID, rider_id: ID, workout_date: '2026-12-01', discipline: 'ride', title: 'T', status: 'planned', activity_id: null,
+  structure_dsl: dsl, structure_manifest: structureArg(dsl).manifest, ...over,
+})
+const TODAY = new Date('2026-11-27T12:00:00Z')
+
+test('estimated_load equals the calendar TL for watt bands (3x15min @ 255-270W, FTP 285 -> 71)', () => {
+  const w = plannedRow('warmup 15min\n3x\nwork 15min @ 255-270W\nrecovery 5min @ <55%FTP\ncooldown 10min')
+  const v = plannedView(w, TODAY, FTP285)
+  assert.equal(v.estimated_duration_s, 85 * 60)
+  assert.equal(v.estimated_load, 71)
+  assert.equal(v.estimated_load, plannedToEvent(w, TODAY, FTP285).load)
+  // Without the rider's thresholds only the %FTP recovery counted: that was the wrong 8.
+  assert.equal(plannedView(w, TODAY).estimated_load, 8)
+})
+
+test('estimated_load of a single watt step (work 120min @ 185-225W, FTP 285) is the calendar TL, not null', () => {
+  const w = plannedRow('work 120min @ 185-225W')
+  const v = plannedView(w, TODAY, FTP285)
+  assert.equal(v.estimated_duration_s, 7200)
+  assert.equal(v.estimated_load, 103)
+  assert.equal(v.estimated_load, plannedToEvent(w, TODAY, FTP285).load)
+  assert.equal(plannedView(w, TODAY).estimated_load, null)
+  assert.equal(plannedView({ ...w, discipline: 'run' }, TODAY, FTP285).estimated_load, null)
+})
+
+test('every planned-workout tool loads the rider\'s load context once and returns the calendar TL', async () => {
+  const dsl = 'warmup 15min\n3x\nwork 15min @ 255-270W\nrecovery 5min @ <55%FTP\ncooldown 10min'
+  const row = plannedRow(dsl)
+  const { data, calls } = fakeData({
+    loadContext: async () => FTP285,
+    listPlanned: async () => [row, { ...row, id: '11111111-2222-4333-8444-666666666666' }],
+    createPlanned: async () => row, updatePlanned: async () => row, setStructure: async () => row,
+  })
+  const ctx = { scopes: ALL, data }
+  const list = parse(await callTool('list_planned_workouts', { from: '2026-12-01', to: '2026-12-07' }, ctx))
+  assert.deepEqual(list.workouts.map((w) => w.estimated_load), [71, 71])
+  assert.equal(calls.filter((c) => c[0] === 'loadContext').length, 1)
+  assert.deepEqual(calls.find((c) => c[0] === 'loadContext'), ['loadContext', ID])
+  for (const [tool, args] of [
+    ['create_planned_workout', { date: '2026-12-01', discipline: 'ride', title: 'x', structure: dsl }],
+    ['update_planned_workout', { id: ID, structure: dsl }],
+    ['move_planned_workout', { id: ID, date: '2026-12-02' }],
+    ['skip_planned_workout', { id: ID, skipped: false }],
+  ]) {
+    const r = await callTool(tool, args, ctx)
+    assert.equal(parse(r).workout.estimated_load, 71, tool)
+  }
+  // A failing context load falls back like the calendar does (no error).
+  const broken = fakeData({ loadContext: async () => { throw new Error('db down') }, listPlanned: async () => [row] })
+  const r = parse(await callTool('list_planned_workouts', { from: '2026-12-01', to: '2026-12-07' }, { scopes: ALL, data: broken.data }))
+  assert.equal(r.workouts[0].estimated_load, 8)
+  assert.deepEqual(await plannedViews([], { data: broken.data }), [])
+})
+
+// ---- Races and notes ----------------------------------------------------------------------------
+
+const RACE = { id: ID, rider_id: ID, race_date: '2027-05-10', race_time: '09:30:00', name: 'Gran Fondo', discipline: 'ride', priority: 'A', location: 'Prague', format_note: '', notes: 'Goal', activity_id: null, set_by_coach: true }
+const NOTE = { id: ID, rider_id: ID, note_date: '2026-12-03', title: 'Ill', body: 'Fever, no training', set_by_coach: false, updated_at: '2026-11-27T10:00:00Z' }
+
+test('race tools validate with the app rules and map to the data calls', async () => {
+  const { data, calls } = fakeData({ listRaces: async () => [RACE], createRace: async () => RACE, updateRace: async () => RACE })
+  const ctx = { scopes: ALL, data, onWrite: async (n) => calls.push(['audit', n]) }
+  const list = parse(await callTool('list_races', { from: '2027-01-01', to: '2027-12-31', athlete_id: ID }, ctx))
+  assert.deepEqual(list.races[0], raceView(RACE))
+  assert.equal(list.races[0].time, '09:30')
+  assert.equal(list.races[0].added_by_coach, true)
+  assert.deepEqual(calls.at(-1), ['listRaces', { riderId: ID, from: '2027-01-01', to: '2027-12-31' }])
+
+  const bad = async (tool, args, re) => {
+    const n = calls.length
+    const r = await callTool(tool, args, ctx)
+    assert.equal(r.isError, true, JSON.stringify(args))
+    assert.match(r.content[0].text, re)
+    assert.equal(calls.length, n)
+  }
+  await bad('create_race', { date: '2027-05-10' }, /name/)
+  await bad('create_race', { date: '2027-05-10', name: 'x', priority: 'D' }, /priority/)
+  await bad('create_race', { date: '2027-05-10', name: 'x', discipline: 'run' }, /discipline/)
+  await bad('create_race', { date: '2027-05-10', name: 'x'.repeat(81) }, /80/)
+  await bad('create_race', { date: '2027-05-10', name: 'x', location: 'y'.repeat(121) }, /120/)
+  await bad('create_race', { date: '2027-05-10', name: 'x', notes: 'y'.repeat(1001) }, /1000/)
+  await bad('create_race', { date: 'May', name: 'x' }, /date/)
+  await bad('update_race', { id: ID }, /Nothing to update/)
+  await bad('update_race', { id: ID, name: '  ' }, /name/)
+  await bad('delete_race', { id: 'nope' }, /UUID/)
+
+  await callTool('create_race', { date: '2027-05-10', name: ' Gran Fondo ', priority: 'a', location: ' Prague ' }, ctx)
+  assert.deepEqual(calls.at(-2), ['createRace', { riderId: null, date: '2027-05-10', fields: { discipline: 'ride', priority: 'A', name: 'Gran Fondo', location: 'Prague' } }])
+  assert.deepEqual(calls.at(-1), ['audit', 'create_race'])
+  await callTool('update_race', { id: ID, date: '2027-05-11', priority: 'B' }, ctx)
+  assert.deepEqual(calls.at(-2), ['updateRace', ID, { priority: 'B', race_date: '2027-05-11' }])
+  await callTool('delete_race', { id: ID }, ctx)
+  assert.deepEqual(calls.at(-2), ['deleteRace', ID])
+  assert.deepEqual(raceFields({ notes: '  ' }), { notes: '' })
+})
+
+test('note tools: title from the first line, app limits, partial updates', async () => {
+  const { data, calls } = fakeData({ listNotes: async () => [NOTE], createNote: async () => NOTE, updateNote: async () => NOTE })
+  const ctx = { scopes: ALL, data, onWrite: async (n) => calls.push(['audit', n]) }
+  const list = parse(await callTool('list_notes', { from: '2026-12-01', to: '2026-12-31' }, ctx))
+  assert.deepEqual(list.notes, [noteView(NOTE)])
+  assert.equal(list.notes[0].text, 'Fever, no training')
+
+  await callTool('create_note', { date: '2026-12-03', text: '  Travel to Mallorca  ' }, ctx)
+  assert.deepEqual(calls.at(-2), ['createNote', { riderId: null, date: '2026-12-03', fields: { body: '', title: 'Travel to Mallorca' } }])
+  await callTool('create_note', { date: '2026-12-03', text: 'Ill\nFever since Monday', athlete_id: ID }, ctx)
+  assert.deepEqual(calls.at(-2), ['createNote', { riderId: ID, date: '2026-12-03', fields: { title: 'Ill', body: 'Ill\nFever since Monday' } }])
+  await callTool('create_note', { date: '2026-12-03', title: 'Camp', text: 'Altitude camp week' }, ctx)
+  assert.deepEqual(calls.at(-2)[1].fields, { title: 'Camp', body: 'Altitude camp week' })
+  const long = noteFields({ text: 'x'.repeat(200) }, { create: true })
+  assert.equal(long.title.length, 80)
+  assert.equal(long.body.length, 200)
+
+  const bad = async (tool, args, re) => {
+    const n = calls.length
+    const r = await callTool(tool, args, ctx)
+    assert.equal(r.isError, true, JSON.stringify(args))
+    assert.match(r.content[0].text, re)
+    assert.equal(calls.length, n)
+  }
+  await bad('create_note', { date: '2026-12-03' }, /text/)
+  await bad('create_note', { date: '2026-12-03', text: '   ' }, /text|title/)
+  await bad('create_note', { date: '2026-12-03', text: 'y'.repeat(1001) }, /1000/)
+  await bad('create_note', { date: '2026-12-03', text: 'a', title: 'x'.repeat(81) }, /80/)
+  await bad('create_note', { date: '2026-12-03', text: 'a', body: 'b' }, /Unknown argument/)
+  await bad('update_note', { id: ID }, /Nothing to update/)
+
+  await callTool('update_note', { id: ID, text: 'Better now' }, ctx)
+  assert.deepEqual(calls.at(-2), ['updateNote', ID, { body: 'Better now' }])
+  await callTool('update_note', { id: ID, date: '2026-12-04', title: 'Sick' }, ctx)
+  assert.deepEqual(calls.at(-2), ['updateNote', ID, { title: 'Sick', note_date: '2026-12-04' }])
+  await callTool('delete_note', { id: ID }, ctx)
+  assert.deepEqual(calls.at(-2), ['deleteNote', ID])
+})
+
+test('race / note database errors are mapped to their messages', () => {
+  for (const m of ['Race not found', 'Too many races on this day', 'Invalid race values', 'Note not found', 'Too many notes on this day', 'Invalid note values']) {
+    assert.equal(toolErrorMessage(new Error(m)), m)
+  }
+})
+
 // ---- Discovery ----------------------------------------------------------------------------------
 
 test('discovery documents point at the existing OAuth provider', () => {
@@ -256,10 +408,11 @@ test('fitness view and small helpers', () => {
 
 // ---- Migration ----------------------------------------------------------------------------------
 
-test('MCP wrappers are SECURITY DEFINER and executable by the service role only', () => {
-  const sql = readFileSync(new URL('../../../supabase/migrations/20270190000000_mcp_connector.sql', import.meta.url), 'utf8')
+for (const [file, min] of [['20270190000000_mcp_connector.sql', 9], ['20270191000000_mcp_races_notes.sql', 8]]) test(`MCP wrappers in ${file} are SECURITY DEFINER and executable by the service role only`, () => {
+  const sql = readFileSync(new URL(`../../../supabase/migrations/${file}`, import.meta.url), 'utf8')
   const fns = [...sql.matchAll(/CREATE OR REPLACE FUNCTION public\.(mcp_\w+)\(/g)].map((m) => m[1])
-  assert.ok(fns.length >= 9)
+  assert.ok(fns.length >= min)
+  assert.equal((sql.match(/SECURITY DEFINER/g) || []).length, fns.length)
   for (const f of fns) {
     assert.match(sql, new RegExp(`REVOKE ALL ON FUNCTION public\\.${f}\\([^)]*\\) FROM PUBLIC, anon, authenticated;`), f)
     assert.match(sql, new RegExp(`GRANT EXECUTE ON FUNCTION public\\.${f}\\([^)]*\\) TO service_role;`), f)

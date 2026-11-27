@@ -10,6 +10,9 @@ export const INSTRUCTIONS = [
   'Plan workouts with create_planned_workout; give an interval structure in the Velocity Stack interval DSL',
   '(e.g. "warmup 15min\\n4x\\nwork 8min @ 95-105%FTP\\nrecovery 4min @ <55%FTP\\ncooldown 10min") so the workout is pushed to',
   'Garmin / Wahoo / Intervals.icu when the athlete enabled that. Dates are calendar days (YYYY-MM-DD).',
+  'estimated_load of a planned workout is the same "~TL" estimate the calendar shows.',
+  'Races (goals; priority A = main goal) are managed with list_races / create_race / update_race / delete_race,',
+  'day notes (sickness, travel, availability) with list_notes / create_note / update_note / delete_note.',
   'Evaluate training with list_activities, get_activity, run_template and get_fitness (fitness = CTL, fatigue = ATL, form = TSB).',
   'Coaches can pass athlete_id (see get_athlete -> coached_athletes) to plan in an athlete\'s calendar.',
 ].join(' ')

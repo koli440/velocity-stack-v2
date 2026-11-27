@@ -71,6 +71,29 @@ export function createMcpData({ service, tokenHash, userId }) {
     deletePlanned: (id) => rpc('mcp_planned_delete', { p_id: id }),
     getMacroPlan: ({ riderId }) => rpc('mcp_macro_plan_get', { p_rider: riderId }),
 
+    /**
+     * The rider's { ftpHistory, ltHistory, zoneHistory } for the planned-load estimate, loaded exactly like the
+     * calendar's useRiderLoadContext (a history that fails to load is empty). Only called with the rider_id of
+     * rows the mcp_planned_* wrappers returned, i.e. the token user or an athlete they actively coach.
+     */
+    async loadContext(riderId) {
+      const hist = (p) => p.then((r) => r?.history || []).catch(() => [])
+      const [ftpHistory, ltHistory, zoneHistory] = await Promise.all([
+        hist(fetchFtpHistory(service, riderId)), hist(fetchLtHistory(service, riderId)), hist(fetchZoneHistory(service, riderId)),
+      ])
+      return { ftpHistory, ltHistory, zoneHistory }
+    },
+
+    listRaces: ({ riderId, from, to }) => rpc('mcp_races_list', { p_rider: riderId, p_from: from, p_to: to }).then((r) => r || []),
+    createRace: ({ riderId, date, fields }) => rpc('mcp_race_create', { p_rider: riderId, p_date: date, p_fields: fields }),
+    updateRace: (id, fields) => rpc('mcp_race_update', { p_id: id, p_fields: fields }),
+    deleteRace: (id) => rpc('mcp_race_delete', { p_id: id }),
+
+    listNotes: ({ riderId, from, to }) => rpc('mcp_notes_list', { p_rider: riderId, p_from: from, p_to: to }).then((r) => r || []),
+    createNote: ({ riderId, date, fields }) => rpc('mcp_note_create', { p_rider: riderId, p_date: date, p_fields: fields }),
+    updateNote: (id, fields) => rpc('mcp_note_update', { p_id: id, p_fields: fields }),
+    deleteNote: (id) => rpc('mcp_note_delete', { p_id: id }),
+
     async listActivities({ from, to, limit }) {
       const rows = check(
         await service.from('activities').select(ACTIVITY_SUMMARY_COLUMNS).eq('user_id', userId)
